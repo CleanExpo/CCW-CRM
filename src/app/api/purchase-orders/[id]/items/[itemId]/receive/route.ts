@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { purchaseOrderToApi } from '@/lib/db/purchase-order-serialize';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import type { Prisma } from '@prisma/client';
 
 const INCLUDE = {
@@ -13,6 +14,9 @@ export async function POST(
   context: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
     const { id: poId, itemId } = await context.params;
     const body = (await request.json()) as { quantity_received?: number };
     const qtyIn = Math.max(0, Math.floor(Number(body.quantity_received ?? 0)));
@@ -22,7 +26,12 @@ export async function POST(
 
     const updatedPo = await prisma.$transaction(async (tx) => {
       const line = await tx.purchaseOrderLine.findFirst({
-        where: { id: itemId, purchaseOrderId: poId },
+        where: {
+          id: itemId,
+          purchaseOrderId: poId,
+          purchaseOrder: { ownerUserId: scope.userId },
+          product: { ownerUserId: scope.userId },
+        },
         include: { product: true },
       });
       if (!line) {
