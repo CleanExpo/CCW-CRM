@@ -29,10 +29,11 @@ export async function GET(request: Request) {
     };
 
     // 1. Cin7 full sync (products → customers → orders → inventory)
+    // Entity path must match `cin7/sync/[entityType]` (use `orders`, not `sales`).
     const cin7Endpoints = [
       "/api/integrations/cin7/sync/products",
       "/api/integrations/cin7/sync/customers",
-      "/api/integrations/cin7/sync/sales",
+      "/api/integrations/cin7/sync/orders",
       "/api/integrations/cin7/sync/inventory",
     ];
 
@@ -53,11 +54,8 @@ export async function GET(request: Request) {
       }
     }
 
-    // 2. Xero sync (invoices, contacts)
-    const xeroEndpoints = [
-      "/api/integrations/xero/sync/contacts",
-      "/api/integrations/xero/sync/invoices",
-    ];
+    // 2. Xero — bulk order → invoice (uses env or cookie Xero tokens per child request)
+    const xeroEndpoints = ["/api/integrations/xero/sync-all?max_orders=30"];
 
     for (const endpoint of xeroEndpoints) {
       const name = endpoint.split("/").pop() || endpoint;
@@ -76,10 +74,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Shopify sync (products, orders)
+    // 3. Shopify — import recent orders, then push inventory levels (needs env tokens + CRON_INTEGRATION_USER_ID for imports)
     const shopifyEndpoints = [
-      "/api/integrations/shopify/sync/products",
-      "/api/integrations/shopify/sync/orders",
+      "/api/integrations/shopify/import-orders?max_orders=25",
+      "/api/integrations/shopify/sync-all-inventory?max_products=200",
     ];
 
     for (const endpoint of shopifyEndpoints) {
@@ -106,6 +104,8 @@ export async function GET(request: Request) {
       success: allSuccess,
       timestamp: new Date().toISOString(),
       schedule: "Daily 11:00 PM AEST (13:00 UTC)",
+      note:
+        "For Cin7 and Shopify order imports, set CRON_INTEGRATION_USER_ID to a valid app user id; integrations must be configured via env or cookies on the server.",
       summary: {
         total: Object.keys(results).length,
         succeeded: Object.keys(results).length - failedCount,
