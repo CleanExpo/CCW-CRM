@@ -21,8 +21,54 @@ export function getXeroClientSecret(): string {
   return process.env.XERO_CLIENT_SECRET?.trim() || '';
 }
 
+/** Normalize so trailing slashes don’t break OAuth (Xero matches redirect URIs exactly). */
+export function normalizeXeroRedirectUri(uri: string): string {
+  const t = uri.trim();
+  if (!t) return '';
+  try {
+    const u = new URL(t);
+    if (u.pathname.length > 1 && u.pathname.endsWith('/')) {
+      u.pathname = u.pathname.slice(0, -1);
+    }
+    return u.href;
+  } catch {
+    return t.replace(/\/+$/, '');
+  }
+}
+
+/** Production / primary OAuth redirect (must be registered in your Xero app). */
 export function getXeroRedirectUri(): string {
-  return process.env.XERO_REDIRECT_URI?.trim() || '';
+  return normalizeXeroRedirectUri(process.env.XERO_REDIRECT_URI?.trim() || '');
+}
+
+/** Optional second redirect for local dev (`http://localhost:3000/...`) — register both URIs in Xero. */
+export function getXeroRedirectUriLocal(): string {
+  return normalizeXeroRedirectUri(process.env.XERO_REDIRECT_URI_LOCAL?.trim() || '');
+}
+
+/**
+ * Pick the redirect URI that matches how the user reached this app (authorize vs callback).
+ * Token exchange must use the same redirect_uri as the authorize request.
+ */
+export function resolveXeroRedirectUri(request: NextRequest): string {
+  const primary = getXeroRedirectUri();
+  const local = getXeroRedirectUriLocal();
+  const origin = request.nextUrl.origin;
+
+  const matchesOrigin = (uri: string) => {
+    if (!uri) return false;
+    try {
+      return new URL(uri).origin === origin;
+    } catch {
+      return false;
+    }
+  };
+
+  if (local && matchesOrigin(local)) return local;
+  if (primary && matchesOrigin(primary)) return primary;
+  if (primary) return primary;
+  if (local) return local;
+  return '';
 }
 
 export function getConfiguredTokenSource(request?: NextRequest): {
@@ -46,7 +92,9 @@ export function getConfiguredTokenSource(request?: NextRequest): {
 }
 
 export function hasLiveClientCredentials(): boolean {
-  return Boolean(getXeroClientId() && getXeroClientSecret() && getXeroRedirectUri());
+  const redirectOk =
+    Boolean(getXeroRedirectUri()) || Boolean(getXeroRedirectUriLocal());
+  return Boolean(getXeroClientId() && getXeroClientSecret() && redirectOk);
 }
 
 /** Resolve organisation name for the connected tenant (falls back to null on error). */
@@ -70,11 +118,14 @@ export async function fetchXeroOrganisationName(
   return typeof name === 'string' && name.trim() ? name.trim() : null;
 }
 
-export function buildXeroAuthorizeUrl(state: string): string {
+export function buildXeroAuthorizeUrl(state: string, request?: NextRequest): string {
+  const redirectUri = request
+    ? resolveXeroRedirectUri(request)
+    : getXeroRedirectUri() || getXeroRedirectUriLocal();
   const q = new URLSearchParams({
     response_type: 'code',
     client_id: getXeroClientId(),
-    redirect_uri: getXeroRedirectUri(),
+    redirect_uri: redirectUri,
     scope: getXeroScopes(),
     state,
   });
