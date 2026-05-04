@@ -66,6 +66,11 @@ export async function updateSession(request: NextRequest) {
     '/api/cron',
     '/api/auth',
     '/api/public',
+    // OAuth redirects must load without a prior session (provider sends user back to callback).
+    '/api/integrations/xero/callback',
+    '/api/integrations/xero/auth',
+    '/api/integrations/shopify/callback',
+    '/api/integrations/shopify/authorize',
   ];
   const isPublicPath = publicPaths.some(
     (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
