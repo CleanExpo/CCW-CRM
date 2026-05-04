@@ -6,6 +6,10 @@ export function getSendGridMode(): 'demo' | 'live' {
   return process.env.SENDGRID_MODE === 'demo' ? 'demo' : 'live';
 }
 
+export function isSendGridDemoMode(): boolean {
+  return getSendGridMode() === 'demo';
+}
+
 /** Cookie overrides environment (per-browser testing / overrides). */
 export function getSendGridApiKey(request?: NextRequest): string | null {
   const fromCookie = request?.cookies.get('sendgrid_api_key')?.value?.trim();

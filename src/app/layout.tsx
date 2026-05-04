@@ -28,13 +28,21 @@ async function getLocale(): Promise<Locale> {
 /**
  * Load messages for the current locale
  */
-async function getMessages(locale: Locale) {
-  try {
-    return (await import(`@/i18n/messages/${locale}.json`)).default;
-  } catch (error) {
-    // Fallback to English if locale messages not found
-    return (await import(`@/i18n/messages/en.json`)).default;
-  }
+async function getMessages(locale: Locale): Promise<Record<string, unknown>> {
+  const load = async (code: string): Promise<Record<string, unknown> | undefined> => {
+    try {
+      const mod = await import(`@/i18n/messages/${code}.json`);
+      const data = mod.default;
+      return data && typeof data === 'object' ? (data as Record<string, unknown>) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const primary = await load(locale);
+  if (primary) return primary;
+  const fallback = await load('en');
+  return fallback ?? {};
 }
 
 export const viewport: Viewport = {

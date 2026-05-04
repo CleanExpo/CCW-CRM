@@ -13,12 +13,15 @@ import { type ReactNode } from 'react';
 interface I18nProviderProps {
   children: ReactNode;
   locale: string;
-  messages: Record<string, string | Record<string, unknown>>;
+  /** next-intl accepts nested JSON objects from locale files */
+  messages: Record<string, unknown>;
 }
 
 export function I18nProvider({ children, locale, messages }: I18nProviderProps) {
+  const safeMessages =
+    messages && typeof messages === 'object' ? messages : ({} as I18nProviderProps['messages']);
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={safeMessages}>
       {children}
     </NextIntlClientProvider>
   );

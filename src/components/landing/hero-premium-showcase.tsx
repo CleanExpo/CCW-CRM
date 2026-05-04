@@ -155,14 +155,16 @@ export function HeroPremiumShowcase() {
                 { icon: Package, label: 'SKU health', tone: 'text-sky-400', bar: 'w-[88%]' },
                 { icon: Truck, label: 'In transit', tone: 'text-violet-400', bar: 'w-[56%]' },
                 { icon: BarChart3, label: 'Margin pulse', tone: 'text-amber-400', bar: 'w-[64%]' },
-              ].map((row) => (
+              ].map((row) => {
+                const RowIcon = row.icon;
+                return (
                 <div
                   key={row.label}
                   className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.04]"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <row.icon className={cn('h-4 w-4', row.tone)} />
+                      <RowIcon className={cn('h-4 w-4', row.tone)} />
                       <span className="text-sm font-medium text-zinc-200">{row.label}</span>
                     </div>
                     <span className={cn('text-[10px] font-semibold uppercase', row.tone)}>On track</span>
@@ -176,7 +178,8 @@ export function HeroPremiumShowcase() {
                     />
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
             <p className="border-t border-white/[0.06] pt-3 text-center text-[11px] leading-relaxed text-zinc-300">
               One spine for sales, warehouse &amp; finance — built for equipment wholesalers.
