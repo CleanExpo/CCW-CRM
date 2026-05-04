@@ -1,5 +1,4 @@
-import Script from 'next/script';
-
+/** Inline JSON-LD script tag — avoids `next/script` lazy-loading quirks in Webpack dev. */
 interface JsonLdProps {
   data: Record<string, unknown> | Record<string, unknown>[];
   id?: string;
@@ -7,10 +6,10 @@ interface JsonLdProps {
 
 export function JsonLd({ data, id }: JsonLdProps) {
   return (
-    <Script
+    <script
       id={id || 'json-ld'}
       type="application/ld+json"
-      strategy="afterInteractive"
+      suppressHydrationWarning
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(Array.isArray(data) ? data : data),
       }}

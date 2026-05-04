@@ -62,8 +62,17 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
 
   const cin7Mode = getCin7Mode();
   const cin7Checks: IntegrationDiagnostic['checks'] = [];
-  if (!has(process.env.CIN7_CORE_ACCOUNT_ID)) cin7Checks.push({ level: 'error', message: 'Missing CIN7_CORE_ACCOUNT_ID' });
-  if (!has(process.env.CIN7_CORE_APPLICATION_KEY)) cin7Checks.push({ level: 'error', message: 'Missing CIN7_CORE_APPLICATION_KEY' });
+  const cin7CoreReady =
+    has(process.env.CIN7_CORE_ACCOUNT_ID) && has(process.env.CIN7_CORE_APPLICATION_KEY);
+  const cin7OmniReady =
+    has(process.env.CIN7_OMNI_USERNAME) && has(process.env.CIN7_OMNI_API_KEY);
+  if (!cin7CoreReady && !cin7OmniReady) {
+    cin7Checks.push({
+      level: 'error',
+      message:
+        'Missing Cin7 credentials: set Core (CIN7_CORE_ACCOUNT_ID + CIN7_CORE_APPLICATION_KEY) and/or Omni (CIN7_OMNI_USERNAME + CIN7_OMNI_API_KEY).',
+    });
+  }
   if (cin7Mode === 'demo') cin7Checks.push({ level: 'warning', message: 'CIN7_MODE is demo; switch to live for production sync.' });
   diagnostics.push({
     key: 'cin7',

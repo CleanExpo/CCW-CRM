@@ -45,12 +45,56 @@ import { useToast } from '@/hooks/use-toast';
 import type { Cin7ConnectionStatus } from '@/lib/api/cin7';
 import { configureCin7, connectCin7, disconnectCin7 } from '@/lib/api/cin7';
 
-const configureSchema = z.object({
-  core_account_id: z.string().min(1, 'Account ID is required'),
-  core_application_key: z.string().min(1, 'Application Key is required'),
-  omni_username: z.string().optional(),
-  omni_api_key: z.string().optional(),
-});
+const configureSchema = z
+  .object({
+    core_account_id: z.string().optional(),
+    core_application_key: z.string().optional(),
+    omni_username: z.string().optional(),
+    omni_api_key: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const coreId = data.core_account_id?.trim() ?? '';
+    const coreKey = data.core_application_key?.trim() ?? '';
+    const omniUser = data.omni_username?.trim() ?? '';
+    const omniKey = data.omni_api_key?.trim() ?? '';
+    const coreComplete = Boolean(coreId && coreKey);
+    const omniComplete = Boolean(omniUser && omniKey);
+    if (!coreComplete && !omniComplete) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Provide Cin7 Core (Account ID + Application Key) and/or Cin7 Omni (Username + API Key).',
+      });
+    }
+    if (coreId && !coreKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['core_application_key'],
+        message: 'Application Key is required when Account ID is set.',
+      });
+    }
+    if (!coreId && coreKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['core_account_id'],
+        message: 'Account ID is required when Application Key is set.',
+      });
+    }
+    if (omniUser && !omniKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['omni_api_key'],
+        message: 'Omni API Key is required when Username is set.',
+      });
+    }
+    if (!omniUser && omniKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['omni_username'],
+        message: 'Omni Username is required when API Key is set.',
+      });
+    }
+  });
 
 type ConfigureFormValues = z.infer<typeof configureSchema>;
 
@@ -85,12 +129,20 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
   const handleSave = async (values: ConfigureFormValues) => {
     setSaving(true);
     try {
-      await configureCin7({
-        core_account_id: values.core_account_id,
-        core_application_key: values.core_application_key,
-        omni_username: values.omni_username || undefined,
-        omni_api_key: values.omni_api_key || undefined,
-      });
+      const payload: Parameters<typeof configureCin7>[0] = {};
+      const cid = values.core_account_id?.trim();
+      const ckey = values.core_application_key?.trim();
+      const ou = values.omni_username?.trim();
+      const ok = values.omni_api_key?.trim();
+      if (cid && ckey) {
+        payload.core_account_id = cid;
+        payload.core_application_key = ckey;
+      }
+      if (ou && ok) {
+        payload.omni_username = ou;
+        payload.omni_api_key = ok;
+      }
+      await configureCin7(payload);
       toast({
         title: 'Credentials Saved',
         description: 'Cin7 integration is now active',
@@ -192,12 +244,12 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isConnected && status?.core_connected && (
+            {isConnected && Boolean(status?.core_connected) && (
               <Badge variant="outline" className="text-xs">
                 Core
               </Badge>
             )}
-            {isConnected && status?.omni_connected && (
+            {isConnected && Boolean(status?.omni_connected) && (
               <Badge variant="outline" className="text-xs">
                 Omni
               </Badge>
@@ -311,7 +363,9 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                 <div className="text-muted-foreground text-sm">
                   <p className="font-medium">Enter your Cin7 API credentials</p>
                   <p className="mt-1 text-xs">
-                    Find these in your Cin7 Core account under Settings → API.
+                    Use <strong className="font-medium">Cin7 Core</strong> (Settings → API) and/or{' '}
+                    <strong className="font-medium">Cin7 Omni</strong> (API username + connection key).
+                    At least one complete pair is required.
                   </p>
                 </div>
               </div>
@@ -322,7 +376,7 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                 {/* Cin7 Core credentials */}
                 <div className="space-y-3">
                   <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Cin7 Core (required)
+                    Cin7 Core (optional if using Omni)
                   </p>
                   <FormField
                     control={form.control}
@@ -368,7 +422,7 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                     onClick={() => setShowOmni((v) => !v)}
                     className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-xs font-semibold tracking-wide uppercase"
                   >
-                    <span>Cin7 Omni (optional)</span>
+                    <span>Cin7 Omni (optional if using Core)</span>
                     {showOmni ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (

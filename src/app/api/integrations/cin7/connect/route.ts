@@ -1,19 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCin7RegisteredConnectors } from '@/lib/integrations/cin7-connectors';
 import { getCin7CoreCredentials, getCin7Mode, pingCin7Core } from '@/lib/integrations/cin7-core';
+import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 
 export async function POST(request: NextRequest) {
-  const creds = getCin7CoreCredentials(request);
-  if (!creds) {
-    return NextResponse.json({ detail: 'Cin7 Core credentials are not configured.' }, { status: 400 });
+  const coreCreds = getCin7CoreCredentials(request);
+  const omniCreds = getCin7OmniCredentials(request);
+
+  if (!coreCreds && !omniCreds) {
+    return NextResponse.json(
+      { detail: 'Cin7 is not configured. Add Core and/or Omni credentials first.' },
+      { status: 400 }
+    );
   }
 
-  const apiOk = await pingCin7Core(creds);
-  if (!apiOk) {
+  const coreOk = coreCreds ? await pingCin7Core(coreCreds) : false;
+  const omniOk = omniCreds ? await pingCin7Omni(omniCreds) : false;
+
+  if (!coreOk && !omniOk) {
+    const detailParts: string[] = [];
+    if (coreCreds) {
+      detailParts.push(
+        'Cin7 Core did not accept these credentials (check keys and API connector IP allowlisting).'
+      );
+    }
+    if (omniCreds) {
+      detailParts.push('Cin7 Omni did not accept these credentials (check username and API key).');
+    }
     return NextResponse.json(
       {
-        detail:
-          'Cannot reach Cin7 Core API with these credentials. Confirm keys and IP allowlisting for your API connectors.',
+        detail: detailParts.join(' ') || 'Cannot reach Cin7 with the configured credentials.',
         connector_allowlist: getCin7RegisteredConnectors(),
       },
       { status: 401 }
@@ -21,19 +37,23 @@ export async function POST(request: NextRequest) {
   }
 
   const mode = getCin7Mode();
-  const omniConfigured = Boolean(
-    (request.cookies.get('cin7_omni_username')?.value?.trim() &&
-      request.cookies.get('cin7_omni_api_key')?.value?.trim()) ||
-      (process.env.CIN7_OMNI_USERNAME?.trim() && process.env.CIN7_OMNI_API_KEY?.trim())
-  );
+
+  let msg: string;
+  if (coreOk && omniOk) {
+    msg = 'Connected to Cin7 Core and Omni.';
+  } else if (coreOk) {
+    msg = 'Connected to Cin7 Core.';
+  } else {
+    msg = 'Connected to Cin7 Omni.';
+  }
 
   const response = NextResponse.json({
     connected: true,
     mode,
-    core_connected: true,
-    omni_connected: omniConfigured,
+    core_connected: coreOk,
+    omni_connected: omniOk,
     connector_allowlist: getCin7RegisteredConnectors(),
-    message: 'Connected to Cin7 Core.',
+    message: msg,
   });
   response.cookies.set('cin7_connected', '1', {
     httpOnly: true,

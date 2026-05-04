@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pg'],
   typedRoutes: false,
   productionBrowserSourceMaps: false,
+  // Prevents Webpack from mis-resolving CJS/ESM interop for these packages
+  // (can surface as _interop_require_wildcard._ is not a function in dev).
+  transpilePackages: [
+    'framer-motion',
+    'next-intl',
+    'recharts',
+    'react-hot-toast',
+    'react-error-boundary',
+  ],
   async redirects() {
     return [
       { source: '/orders/fulfilment', destination: '/dashboard/operations/fulfilment', permanent: false },

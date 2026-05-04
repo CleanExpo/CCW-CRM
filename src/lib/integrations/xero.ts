@@ -49,6 +49,27 @@ export function hasLiveClientCredentials(): boolean {
   return Boolean(getXeroClientId() && getXeroClientSecret() && getXeroRedirectUri());
 }
 
+/** Resolve organisation name for the connected tenant (falls back to null on error). */
+export async function fetchXeroOrganisationName(
+  accessToken: string,
+  tenantId: string
+): Promise<string | null> {
+  const res = await fetch('https://api.xero.com/api.xro/2.0/Organisation', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      'Xero-tenant-id': tenantId,
+    },
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const data = (await res.json().catch(() => ({}))) as {
+    Organisations?: Array<{ Name?: string }>;
+  };
+  const name = data.Organisations?.[0]?.Name;
+  return typeof name === 'string' && name.trim() ? name.trim() : null;
+}
+
 export function buildXeroAuthorizeUrl(state: string): string {
   const q = new URLSearchParams({
     response_type: 'code',

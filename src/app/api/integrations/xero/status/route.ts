@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  fetchXeroOrganisationName,
   getConfiguredTokenSource,
   getXeroMode,
   hasLiveClientCredentials,
@@ -35,10 +36,12 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  const displayName = await fetchXeroOrganisationName(tokens.accessToken, tokens.tenantId);
+
   return NextResponse.json({
     connected: true,
     mode: 'live',
     tenant_id: tokens.tenantId,
-    tenant_name: tokens.tenantId,
+    tenant_name: displayName ?? tokens.tenantId,
   });
 }

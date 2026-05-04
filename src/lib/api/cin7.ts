@@ -29,8 +29,8 @@ export interface Cin7ConnectionStatus {
  * Credentials for configuring the Cin7 integration
  */
 export interface Cin7ConfigureRequest {
-  core_account_id: string;
-  core_application_key: string;
+  core_account_id?: string;
+  core_application_key?: string;
   omni_username?: string;
   omni_api_key?: string;
 }
