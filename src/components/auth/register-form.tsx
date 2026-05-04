@@ -58,7 +58,7 @@ export function RegisterForm() {
       toast.success(response.message || `Account created — welcome, ${response.user.email}`);
 
       if (response.access_token) {
-        window.location.href = '/dashboard';
+        window.location.href = '/settings/welcome?from=register';
       } else {
         window.location.href = '/login?registered=1';
       }
