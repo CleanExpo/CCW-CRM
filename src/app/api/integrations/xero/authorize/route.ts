@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { buildXeroAuthorizeUrl, getXeroMode, hasLiveClientCredentials } from '@/lib/integrations/xero';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const mode = getXeroMode();
   if (mode === 'demo') {
     return NextResponse.json({
@@ -21,7 +21,7 @@ export async function GET() {
   }
 
   const state = randomUUID();
-  const authorizationUrl = buildXeroAuthorizeUrl(state);
+  const authorizationUrl = buildXeroAuthorizeUrl(state, request);
   return NextResponse.json({
     mode: 'live',
     authorization_url: authorizationUrl,
