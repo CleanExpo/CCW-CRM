@@ -477,6 +477,8 @@ export {
 // SendGrid API client
 export {
   getSendGridStatus,
+  configureSendGrid,
+  disconnectSendGrid,
   sendEmail,
   listConversations,
   getConversation,

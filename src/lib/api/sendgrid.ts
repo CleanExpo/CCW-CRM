@@ -13,15 +13,20 @@ import { apiClient } from './client';
 export interface SendGridConnectionStatus {
   connected: boolean;
   mode: 'demo' | 'live' | 'not_configured';
-  from_email?: string;
-  from_name?: string;
+  from_email?: string | null;
+  from_name?: string | null;
+  environment_key_configured?: boolean;
+  api_key_source?: 'cookie' | 'environment' | null;
+  api_verified?: boolean | null;
+  browser_overrides_active?: boolean;
   ai_auto_response_enabled?: boolean;
   ai_confidence_threshold?: number;
   message?: string;
 }
 
+/** api_key optional when SENDGRID_API_KEY is set on the server (shared testing). */
 export interface SendGridConfigureRequest {
-  api_key: string;
+  api_key?: string;
   from_email?: string;
   from_name?: string;
 }
@@ -110,6 +115,10 @@ export async function configureSendGrid(
   data: SendGridConfigureRequest
 ): Promise<SendGridConnectionStatus> {
   return apiClient.post<SendGridConnectionStatus>('/api/integrations/sendgrid/configure', data);
+}
+
+export async function disconnectSendGrid(): Promise<SendGridConnectionStatus> {
+  return apiClient.post<SendGridConnectionStatus>('/api/integrations/sendgrid/disconnect', {});
 }
 
 // ============================================
