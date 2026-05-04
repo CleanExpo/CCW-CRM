@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthenticatedUserOrCron } from '@/lib/auth/data-scope';
 import { getConfiguredShopifyFromRequest } from '@/lib/integrations/shopify';
 import { findVariantInventoryItemId, setInventoryLevel } from '@/lib/integrations/shopify-ops';
 
 export async function POST(request: NextRequest) {
+  if (!(await requireAuthenticatedUserOrCron(request))) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
   const creds = getConfiguredShopifyFromRequest(request);
   if (!creds) {
     return NextResponse.json({ detail: 'Shopify is not configured or token is missing.' }, { status: 401 });
