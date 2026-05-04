@@ -3,7 +3,7 @@ import {
   getXeroClientId,
   getXeroClientSecret,
   getXeroMode,
-  getXeroRedirectUri,
+  resolveXeroRedirectUri,
 } from '@/lib/integrations/xero';
 
 const SETTINGS_URL = '/settings/integrations';
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: getXeroRedirectUri(),
+        redirect_uri: resolveXeroRedirectUri(request),
         client_id: getXeroClientId(),
         client_secret: getXeroClientSecret(),
       }),
