@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthenticatedUserOrCron } from '@/lib/auth/data-scope';
 
 export async function POST(request: NextRequest) {
+  if (!(await requireAuthenticatedUserOrCron(request))) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
   const maxOrders = Math.max(1, Math.min(100, Number(request.nextUrl.searchParams.get('max_orders') || 10)));
   const rows = await prisma.order.findMany({
     where: { status: { in: ['confirmed', 'delivered'] } },
@@ -20,6 +25,9 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           cookie: request.headers.get('cookie') || '',
+          ...(request.headers.get('authorization')
+            ? { Authorization: request.headers.get('authorization')! }
+            : {}),
         },
       });
       if (res.ok) synced += 1;
