@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api/client';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
-import { AlertTriangle, BookOpen, Bot, CheckCircle2, Globe, Settings, XCircle } from 'lucide-react';
+import { AlertTriangle, BookOpen, Bot, CheckCircle2, Globe, Settings, Video, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -65,7 +65,7 @@ function IntegrationsContent() {
   const [claudeStatus, setClaudeStatus] = useState<{ mode: string; status: string } | null>(null);
   const [diagnostics, setDiagnostics] = useState<
     Array<{
-      key: 'xero' | 'shopify' | 'cin7' | 'sendgrid';
+      key: 'xero' | 'shopify' | 'cin7' | 'sendgrid' | 'ap2' | 'heygen';
       label: string;
       level: 'ok' | 'warning' | 'error';
       liveReady: boolean;
@@ -133,7 +133,7 @@ function IntegrationsContent() {
     try {
       const response = await apiClient.get<{
         items: Array<{
-          key: 'xero' | 'shopify' | 'cin7' | 'sendgrid';
+          key: 'xero' | 'shopify' | 'cin7' | 'sendgrid' | 'ap2' | 'heygen';
           label: string;
           level: 'ok' | 'warning' | 'error';
           liveReady: boolean;
@@ -424,7 +424,7 @@ function IntegrationsContent() {
 
           {/* AI Services */}
           <SectionShell title="AI Services" description="Health and mode for AI-backed assistants and automations.">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Google Gemini */}
               <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">
@@ -482,6 +482,26 @@ function IntegrationsContent() {
                     decisions.
                   </p>
                 )}
+              </div>
+              {/* HeyGen video (API stubs until wired) */}
+              <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm lg:col-span-1">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Video className="text-primary h-5 w-5" /> HeyGen video
+                  </div>
+                  <span className="flex items-center gap-1 text-xs text-amber-600">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Stub routes
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Avatar video generation endpoints exist under{' '}
+                  <code className="bg-muted rounded px-1">/api/integrations/heygen/*</code> and return
+                  HTTP 501 until HeyGen is fully wired.
+                </p>
+                <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
+                  Set <code className="bg-muted rounded px-1">HEYGEN_API_KEY</code> when implementing the
+                  handlers.
+                </p>
               </div>
             </div>
           </SectionShell>
