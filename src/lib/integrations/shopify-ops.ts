@@ -211,6 +211,34 @@ export function gidToLegacyId(gid: string): string {
   return parts[parts.length - 1] || gid;
 }
 
+export async function findProductVariantBySku(
+  adminHost: string,
+  accessToken: string,
+  sku: string
+): Promise<{ productId: string; variantId: string } | null> {
+  const q = `
+    query VariantBySku($q: String!) {
+      productVariants(first: 1, query: $q) {
+        edges {
+          node {
+            id
+            product { id }
+          }
+        }
+      }
+    }
+  `;
+  const data = await shopifyGraphql<{
+    productVariants: { edges: { node: { id: string; product: { id: string } } }[] };
+  }>(adminHost, accessToken, q, { q: `sku:${sku}` });
+  const node = data.productVariants?.edges?.[0]?.node;
+  if (!node?.product?.id || !node?.id) return null;
+  return {
+    productId: gidToLegacyId(node.product.id),
+    variantId: gidToLegacyId(node.id),
+  };
+}
+
 export async function findVariantInventoryItemId(
   adminHost: string,
   accessToken: string,
