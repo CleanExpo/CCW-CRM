@@ -5,7 +5,7 @@ import { getXeroMode } from '@/lib/integrations/xero';
 type Level = 'ok' | 'warning' | 'error';
 
 export interface IntegrationDiagnostic {
-  key: 'xero' | 'shopify' | 'cin7' | 'sendgrid';
+  key: 'xero' | 'shopify' | 'cin7' | 'sendgrid' | 'ap2' | 'heygen';
   label: string;
   level: Level;
   liveReady: boolean;
@@ -24,7 +24,21 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
   const xeroChecks: IntegrationDiagnostic['checks'] = [];
   if (!has(process.env.XERO_CLIENT_ID)) xeroChecks.push({ level: 'error', message: 'Missing XERO_CLIENT_ID' });
   if (!has(process.env.XERO_CLIENT_SECRET)) xeroChecks.push({ level: 'error', message: 'Missing XERO_CLIENT_SECRET' });
-  if (!has(process.env.XERO_REDIRECT_URI)) xeroChecks.push({ level: 'error', message: 'Missing XERO_REDIRECT_URI' });
+  const redirectRaw = process.env.XERO_REDIRECT_URI?.trim() || '';
+  if (!redirectRaw) xeroChecks.push({ level: 'error', message: 'Missing XERO_REDIRECT_URI' });
+  else if (redirectRaw.includes('/settings/') && !redirectRaw.includes('/api/integrations/xero/callback')) {
+    xeroChecks.push({
+      level: 'error',
+      message:
+        'XERO_REDIRECT_URI must be the API callback (…/api/integrations/xero/callback), not the settings page URL.',
+    });
+  } else if (!redirectRaw.includes('/api/integrations/xero/callback')) {
+    xeroChecks.push({
+      level: 'warning',
+      message:
+        'Expected path /api/integrations/xero/callback — must match Xero Developer Portal → App → Redirect URI exactly (scheme, host, no trailing slash mismatch).',
+    });
+  }
   if (xeroMode === 'demo') xeroChecks.push({ level: 'warning', message: 'XERO_MODE is demo; switch to live for real OAuth sync.' });
   diagnostics.push({
     key: 'xero',
@@ -93,6 +107,41 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
     liveReady: sendgridChecks.every((c) => c.level !== 'error'),
     mode: 'live',
     checks: sendgridChecks.length > 0 ? sendgridChecks : [{ level: 'ok', message: 'SendGrid environment looks ready.' }],
+  });
+
+  const ap2Checks: IntegrationDiagnostic['checks'] = [
+    {
+      level: 'warning',
+      message:
+        'AP2 API routes are placeholder (HTTP 501) until a Google AP2 backend is connected; the UI can still show the flow structure.',
+    },
+  ];
+  diagnostics.push({
+    key: 'ap2',
+    label: 'AP2 (Agent Payments)',
+    level: 'warning',
+    liveReady: false,
+    mode: 'live',
+    checks: ap2Checks,
+  });
+
+  const heygenChecks: IntegrationDiagnostic['checks'] = [];
+  const heygenKeySet = has(process.env.HEYGEN_API_KEY);
+  if (!heygenKeySet) {
+    heygenChecks.push({
+      level: 'warning',
+      message: 'HEYGEN_API_KEY is not set; video routes return 501 until the integration is implemented.',
+    });
+  } else {
+    heygenChecks.push({ level: 'ok', message: 'HeyGen API key is present; wire route handlers to enable video.' });
+  }
+  diagnostics.push({
+    key: 'heygen',
+    label: 'HeyGen',
+    level: heygenChecks.some((c) => c.level === 'error') ? 'error' : heygenKeySet ? 'ok' : 'warning',
+    liveReady: false,
+    mode: 'live',
+    checks: heygenChecks,
   });
 
   return diagnostics;
