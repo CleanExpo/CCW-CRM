@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { requireAuthScope } from '@/lib/auth/data-scope';
+import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
 import {
   fetchCin7CustomerPage,
   fetchCin7ProductPage,
@@ -22,9 +22,15 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ entityType: string }> }
 ) {
-  const scope = await requireAuthScope(request);
+  const scope = await requireAuthScopeOrCronIntegrationJob(request);
   if (!scope) {
-    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json(
+      {
+        detail:
+          'Not authenticated. For cron, send Authorization: Bearer CRON_SECRET and set CRON_INTEGRATION_USER_ID.',
+      },
+      { status: 401 }
+    );
   }
 
   const { entityType } = await context.params;
