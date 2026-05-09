@@ -27,7 +27,7 @@ export default function SetupPage() {
       description:
         "Enter your Cin7 Core Account ID and Application Key to sync products, customers, orders, and inventory.",
       status: "pending",
-      href: "/settings/integrations",
+      href: "/dashboard/settings/integrations",
       externalLink: "https://inventory.dearsystems.com/Integration#apikeys",
     },
     {
@@ -36,7 +36,7 @@ export default function SetupPage() {
       description:
         "Authorise your Xero account to sync invoices, contacts, and payments automatically.",
       status: "pending",
-      href: "/settings/integrations",
+      href: "/dashboard/settings/integrations",
       externalLink: "https://developer.xero.com/app/manage",
     },
     {
@@ -45,7 +45,7 @@ export default function SetupPage() {
       description:
         "Enter your Shopify store domain and access token to sync online orders and product listings.",
       status: "pending",
-      href: "/settings/integrations",
+      href: "/dashboard/settings/integrations",
       externalLink: "https://admin.shopify.com/store",
     },
   ]);
