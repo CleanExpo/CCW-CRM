@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { lineToApi, refreshGrnTotals } from '@/lib/db/grn-serialize';
 
 export async function POST(
@@ -7,8 +8,15 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const { id: grnId } = await context.params;
-    const grn = await prisma.goodsReceipt.findUnique({ where: { id: grnId } });
+    const grn = await prisma.goodsReceipt.findFirst({
+      where: { id: grnId, ownerUserId: scope.userId },
+    });
     if (!grn) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
     if (grn.status !== 'draft') {
       return NextResponse.json({ detail: 'Can only edit draft receipts' }, { status: 400 });
@@ -32,7 +40,9 @@ export async function POST(
     let productId: string | null = body.product_id ?? null;
 
     if (productId) {
-      const p = await prisma.product.findUnique({ where: { id: productId } });
+      const p = await prisma.product.findFirst({
+        where: { id: productId, ownerUserId: scope.userId },
+      });
       if (!p) {
         return NextResponse.json({ detail: 'Product not found' }, { status: 400 });
       }
