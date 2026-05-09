@@ -54,6 +54,8 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  /** When true, item is visible but not linked (placeholder). */
+  comingSoon?: boolean;
 }
 
 interface NavGroup {
@@ -132,7 +134,12 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Invoices', href: '/dashboard/finance/invoices', icon: Receipt },
       { name: 'BAS Report', href: '/dashboard/finance/invoices/bas', icon: FileText },
-      { name: 'Bank Feeds', href: '/dashboard/finance/bank-feeds', icon: Landmark },
+      {
+        name: 'Bank Feeds',
+        href: '/dashboard/finance/bank-feeds',
+        icon: Landmark,
+        comingSoon: true,
+      },
       { name: 'Emails', href: '/dashboard/finance/emails', icon: Mail },
     ],
   },
@@ -140,12 +147,22 @@ const navGroups: NavGroup[] = [
     id: 'admin',
     label: 'Workspace',
     items: [
-      { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge },
-      { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle },
-      { name: 'Alerts', href: '/dashboard/alerts', icon: Bell },
-      { name: 'AI Assistant', href: '/dashboard/ai-reports/ai-assistant', icon: Bot },
+      { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge, comingSoon: true },
+      { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle, comingSoon: true },
+      { name: 'Alerts', href: '/dashboard/alerts', icon: Bell, comingSoon: true },
+      {
+        name: 'AI Assistant',
+        href: '/dashboard/ai-reports/ai-assistant',
+        icon: Bot,
+        comingSoon: true,
+      },
       { name: 'Team', href: '/dashboard/settings/team', icon: Users },
-      { name: 'Billing', href: '/dashboard/settings/billing', icon: CreditCard },
+      {
+        name: 'Billing',
+        href: '/dashboard/settings/billing',
+        icon: CreditCard,
+        comingSoon: true,
+      },
       { name: 'Integrations', href: '/dashboard/settings/integrations', icon: Settings },
       { name: 'Shadow programme', href: '/dashboard/settings/shadow', icon: Eye },
     ],
@@ -157,7 +174,9 @@ const DEFAULT_OPEN = ['operations', 'crm', 'inventory'];
 /** Highlight the nav item whose href is the longest prefix of pathname (avoids parent+child both active). */
 function getActiveNavHref(pathname: string, items: NavItem[]): string | null {
   let best: { href: string; len: number } | null = null;
-  for (const { href } of items) {
+  for (const item of items) {
+    if (item.comingSoon) continue;
+    const { href } = item;
     if (pathname === href || pathname.startsWith(`${href}/`)) {
       if (!best || href.length > best.len) best = { href, len: href.length };
     }
@@ -166,6 +185,22 @@ function getActiveNavHref(pathname: string, items: NavItem[]): string | null {
 }
 
 function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  if (item.comingSoon) {
+    return (
+      <div
+        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500"
+        aria-disabled="true"
+        title="Coming soon"
+      >
+        <item.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+        <span className="min-w-0 flex-1 truncate">{item.name}</span>
+        <span className="shrink-0 rounded-md border border-white/10 bg-zinc-900/80 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          Soon
+        </span>
+      </div>
+    );
+  }
+
   return (
     <Link
       href={item.href}
@@ -271,7 +306,7 @@ export function Sidebar() {
   // Auto-expand the group containing the active route
   useEffect(() => {
     for (const group of filteredNavGroups) {
-      if (group.items.some((item) => pathname.startsWith(item.href))) {
+      if (group.items.some((item) => !item.comingSoon && pathname.startsWith(item.href))) {
         setOpenGroups((prev) => {
           if (prev.has(group.id)) return prev;
           const next = new Set(prev);
@@ -366,7 +401,11 @@ export function Sidebar() {
                   className="mt-0.5 space-y-0.5"
                 >
                   {group.items.map((item) => (
-                    <NavLink key={item.name} item={item} isActive={activeNavHref === item.href} />
+                    <NavLink
+                      key={`${group.id}-${item.href}`}
+                      item={item}
+                      isActive={!item.comingSoon && activeNavHref === item.href}
+                    />
                   ))}
                 </motion.div>
               )}
