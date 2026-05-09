@@ -229,7 +229,7 @@ export default function MarketplacePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/settings/integrations" className="hover:bg-muted rounded-md p-1">
+          <Link href="/dashboard/settings/integrations" className="hover:bg-muted rounded-md p-1">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
