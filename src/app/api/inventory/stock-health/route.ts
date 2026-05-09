@@ -1,13 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const threshold = parseInt(searchParams.get('threshold') || '20', 10);
 
     const products = await prisma.product.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ownerUserId: scope.userId },
       select: { id: true, sku: true, name: true, stock: true, warehouseLocation: true },
     });
 
