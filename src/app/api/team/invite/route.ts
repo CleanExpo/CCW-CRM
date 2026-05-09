@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
 import { getAuthClaimsFromRequest } from '@/lib/auth/request-token';
-import { findAppUserByEmail, insertAppUser } from '@/lib/auth/app-user-repo';
+import { findAppUserByEmail, findAppUserById, insertAppUser } from '@/lib/auth/app-user-repo';
 import { hashPassword } from '@/lib/auth/password';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
 
@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
   if (!claims) return jsonDetail('Not authenticated', 401);
   if (claims.role !== 'owner' && claims.role !== 'admin') return jsonDetail('Forbidden', 403);
 
+  const inviter = await findAppUserById(claims.sub);
+  if (!inviter?.isActive) return jsonDetail('Not authenticated', 401);
+
   const parsedBody = await readJsonBody(request);
   if (!parsedBody.ok) return parsedBody.response;
   const parsed = inviteSchema.safeParse(parsedBody.body);
@@ -44,6 +47,7 @@ export async function POST(request: NextRequest) {
     password_hash: await hashPassword(temporary_password),
     is_admin: parsed.data.role === 'owner' || parsed.data.role === 'admin',
     role: parsed.data.role,
+    workspace_id: inviter.workspaceId,
   });
 
   return jsonOk({
