@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import type { BankAccount as BankAccountRow } from '@prisma/client';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 function toApi(a: BankAccountRow) {
   return {
@@ -19,10 +20,15 @@ function toApi(a: BankAccountRow) {
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const rows = await prisma.bankAccount.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ownerUserId: scope.userId },
       orderBy: { createdAt: 'asc' },
     });
     return NextResponse.json(rows.map(toApi));
@@ -33,6 +39,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       account_name?: string;
       account_number?: string;
@@ -45,6 +56,7 @@ export async function POST(request: NextRequest) {
 
     const row = await prisma.bankAccount.create({
       data: {
+        ownerUserId: scope.userId,
         accountName: String(body.account_name ?? ''),
         accountNumber: String(body.account_number ?? ''),
         bsb: String(body.bsb ?? ''),
