@@ -58,7 +58,7 @@ import {
   Store,
   LogOut,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface NavItem {
   name: string;
@@ -170,12 +170,24 @@ const navGroups: NavGroup[] = [
       { name: 'Mobile Orders', href: '/settings/mobile', icon: Camera },
       { name: 'Shadow Mode', href: '/settings/shadow', icon: Eye },
       { name: 'Client Onboarding', href: '/settings/onboarding', icon: UserCog },
+      { name: 'Getting started', href: '/settings/welcome', icon: Sparkles },
       { name: 'Settings', href: '/settings/integrations', icon: Settings },
     ],
   },
 ];
 
 const DEFAULT_OPEN = ['operations', 'crm', 'inventory'];
+
+/** Highlight the nav item whose href is the longest prefix of pathname (avoids parent+child both active). */
+function getActiveNavHref(pathname: string, items: NavItem[]): string | null {
+  let best: { href: string; len: number } | null = null;
+  for (const { href } of items) {
+    if (pathname === href || pathname.startsWith(`${href}/`)) {
+      if (!best || href.length > best.len) best = { href, len: href.length };
+    }
+  }
+  return best?.href ?? null;
+}
 
 function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   return (
@@ -251,20 +263,31 @@ export function Sidebar() {
     };
   }, []);
 
-  const filteredNavGroups = navGroups.filter((group) => {
-    // Prevent a privileged-link flash before role is loaded.
-    if (!roleResolved) {
-      return group.id !== 'admin' && group.id !== 'finance';
-    }
-    if (!userRole || userRole === 'owner' || userRole === 'admin') return true;
-    if (userRole === 'billing') {
-      return group.id === 'finance' || group.id === 'admin';
-    }
-    if (userRole === 'member') {
-      return group.id !== 'admin' && group.id !== 'finance';
-    }
-    return true;
-  });
+  const filteredNavGroups = useMemo(
+    () =>
+      navGroups.filter((group) => {
+        // Prevent a privileged-link flash before role is loaded.
+        if (!roleResolved) {
+          return group.id !== 'admin' && group.id !== 'finance';
+        }
+        if (!userRole || userRole === 'owner' || userRole === 'admin') return true;
+        if (userRole === 'billing') {
+          return group.id === 'finance' || group.id === 'admin';
+        }
+        if (userRole === 'member') {
+          return group.id !== 'admin' && group.id !== 'finance';
+        }
+        return true;
+      }),
+    [userRole, roleResolved]
+  );
+
+  const flatNavItems = useMemo(() => filteredNavGroups.flatMap((g) => g.items), [filteredNavGroups]);
+
+  const activeNavHref = useMemo(
+    () => getActiveNavHref(pathname, flatNavItems),
+    [pathname, flatNavItems]
+  );
 
   // Auto-expand the group containing the active route
   useEffect(() => {
@@ -278,7 +301,7 @@ export function Sidebar() {
         });
       }
     }
-  }, [pathname, userRole]);
+  }, [pathname, userRole, filteredNavGroups]);
 
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => {
@@ -331,13 +354,13 @@ export function Sidebar() {
         {/* Dashboard — always visible, no group */}
         <NavLink
           item={{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }}
-          isActive={pathname === '/dashboard'}
+          isActive={pathname === '/dashboard' || pathname === '/dashboard/'}
         />
 
         {/* Grouped navigation */}
           {filteredNavGroups.map((group) => {
           const isOpen = openGroups.has(group.id);
-          const hasActiveItem = group.items.some((item) => pathname.startsWith(item.href));
+          const hasActiveItem = group.items.some((item) => activeNavHref === item.href);
           return (
             <div key={group.id}>
               <button
@@ -366,7 +389,7 @@ export function Sidebar() {
                   className="mt-0.5 space-y-0.5"
                 >
                   {group.items.map((item) => (
-                    <NavLink key={item.name} item={item} isActive={pathname === item.href} />
+                    <NavLink key={item.name} item={item} isActive={activeNavHref === item.href} />
                   ))}
                 </motion.div>
               )}
