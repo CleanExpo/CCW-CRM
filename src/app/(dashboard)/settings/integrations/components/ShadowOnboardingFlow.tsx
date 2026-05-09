@@ -325,7 +325,7 @@ export function ShadowOnboardingFlow() {
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
-                    <Button onClick={() => router.push('/settings/shadow')}>
+                    <Button onClick={() => router.push('/dashboard/settings/shadow')}>
                       <Eye className="mr-2 h-4 w-4" />
                       Shadow Dashboard
                     </Button>
