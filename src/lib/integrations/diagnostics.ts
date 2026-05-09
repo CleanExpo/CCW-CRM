@@ -26,7 +26,10 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
   if (!has(process.env.XERO_CLIENT_SECRET)) xeroChecks.push({ level: 'error', message: 'Missing XERO_CLIENT_SECRET' });
   const redirectRaw = process.env.XERO_REDIRECT_URI?.trim() || '';
   if (!redirectRaw) xeroChecks.push({ level: 'error', message: 'Missing XERO_REDIRECT_URI' });
-  else if (redirectRaw.includes('/settings/') && !redirectRaw.includes('/api/integrations/xero/callback')) {
+  else if (
+    (redirectRaw.includes('/settings/') || redirectRaw.includes('/dashboard/settings/')) &&
+    !redirectRaw.includes('/api/integrations/xero/callback')
+  ) {
     xeroChecks.push({
       level: 'error',
       message:
