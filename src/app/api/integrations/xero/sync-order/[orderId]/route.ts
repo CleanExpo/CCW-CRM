@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
 import { getConfiguredTokenSource, getXeroMode } from '@/lib/integrations/xero';
 import {
   normalizeOrderRouteParam,
@@ -28,6 +29,17 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ orderId: string }> }
 ) {
+  const scope = await requireAuthScopeOrCronIntegrationJob(request);
+  if (!scope) {
+    return NextResponse.json(
+      {
+        detail:
+          'Not authenticated. For cron, send Authorization: Bearer CRON_SECRET and set CRON_INTEGRATION_USER_ID.',
+      },
+      { status: 401 }
+    );
+  }
+
   const { orderId: rawOrderId } = await context.params;
   const param = normalizeOrderRouteParam(rawOrderId);
   if (!param) {
@@ -39,9 +51,10 @@ export async function POST(
     lineItems: { include: { product: { select: { name: true } } } },
   } as const;
 
+  const ownerWhere = { ownerUserId: scope.userId };
   const row = orderRouteParamIsUuid(param)
-    ? await prisma.order.findUnique({ where: { id: param }, include })
-    : await prisma.order.findFirst({ where: { orderNumber: param }, include });
+    ? await prisma.order.findFirst({ where: { id: param, ...ownerWhere }, include })
+    : await prisma.order.findFirst({ where: { orderNumber: param, ...ownerWhere }, include });
   if (!row) {
     return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
   }
