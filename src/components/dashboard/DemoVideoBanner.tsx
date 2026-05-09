@@ -107,6 +107,9 @@ function resolveTrainingModuleKey(pathname: string): { registryKey: string; modu
     if (air === "reports") return { registryKey: "/reports", moduleLabel: "reports" };
     return null;
   }
+  if (segments[0] === "dashboard" && segments[1] === "settings") {
+    return { registryKey: "/settings", moduleLabel: "settings" };
+  }
   if (segments.length === 0) return null;
   return { registryKey: `/${segments[0]}`, moduleLabel: segments[0] };
 }
