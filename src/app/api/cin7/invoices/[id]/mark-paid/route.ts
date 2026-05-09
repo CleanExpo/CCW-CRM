@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 function rowToApi(inv: {
   id: string;
@@ -38,6 +39,11 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const { id } = await context.params;
     const body = (await request.json()) as {
       amount?: number;
@@ -46,6 +52,13 @@ export async function PATCH(
     };
 
     const paidAt = body.paid_at ? new Date(body.paid_at) : new Date();
+
+    const existing = await prisma.salesInvoice.findFirst({
+      where: { id, ownerUserId: scope.userId },
+    });
+    if (!existing) {
+      return NextResponse.json({ detail: 'Not found' }, { status: 404 });
+    }
 
     const row = await prisma.$transaction(async (tx) => {
       const inv = await tx.salesInvoice.update({
