@@ -51,6 +51,9 @@ interface Product {
   price: number | string;
 }
 
+/** Radix Select does not allow SelectItem value=""; use this for custom / no catalog product. */
+const NONE_LINE_ITEM_PRODUCT = '__invoice_line_no_product__';
+
 // Validation schema
 const formSchema = z.object({
   customer_id: z.string().min(1, 'Customer is required'),
@@ -197,8 +200,13 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
   // Handle product selection for a line item
   const handleProductSelect = (index: number, productId: string) => {
+    if (productId === NONE_LINE_ITEM_PRODUCT) {
+      form.setValue(`items.${index}.product_id`, '');
+      return;
+    }
     const product = products.find((p) => p.id === productId);
     if (product) {
+      form.setValue(`items.${index}.product_id`, product.id);
       form.setValue(`items.${index}.description`, product.name);
       form.setValue(
         `items.${index}.unit_price`,
@@ -309,11 +317,13 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.company_name} ({customer.customer_number})
-                          </SelectItem>
-                        ))}
+                        {customers
+                          .filter((c) => c.id)
+                          .map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.company_name} ({customer.customer_number})
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -373,7 +383,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
 
             {/* Line Items */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-lg font-semibold">Line Items</h3>
                 <Button
                   type="button"
@@ -395,34 +405,50 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                 </Button>
               </div>
 
+              <div className="max-h-[min(50vh,26rem)] space-y-3 overflow-y-auto overflow-x-hidden rounded-lg border border-border/60 bg-muted/15 p-3 sm:p-4">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-12 items-start gap-2 rounded-lg border p-4"
+                  className="grid grid-cols-1 items-start gap-3 rounded-lg border bg-background p-3 sm:grid-cols-12 sm:gap-2 sm:p-4"
                 >
                   {/* Product Select (Optional) */}
-                  <div className="col-span-3">
-                    <label className="text-sm font-medium">Product</label>
-                    <Select
-                      onValueChange={(value) => handleProductSelect(index, value)}
-                      value={form.watch(`items.${index}.product_id`) || ''}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">None (Custom)</SelectItem>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="sm:col-span-4 lg:col-span-3">
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.product_id`}
+                      render={({ field: pidField }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Product</FormLabel>
+                          <Select
+                            onValueChange={(value) => handleProductSelect(index, value)}
+                            value={pidField.value || NONE_LINE_ITEM_PRODUCT}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Catalog or custom line" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent position="popper" sideOffset={4}>
+                              <SelectItem value={NONE_LINE_ITEM_PRODUCT}>
+                                None (custom description)
+                              </SelectItem>
+                              {products
+                                .filter((p) => p.id)
+                                .map((product) => (
+                                  <SelectItem key={product.id} value={product.id}>
+                                    {product.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   {/* Description */}
-                  <div className="col-span-4">
+                  <div className="sm:col-span-8 lg:col-span-4">
                     <FormField
                       control={form.control}
                       name={`items.${index}.description`}
@@ -439,7 +465,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                   </div>
 
                   {/* Quantity */}
-                  <div className="col-span-2">
+                  <div className="sm:col-span-4 lg:col-span-2">
                     <FormField
                       control={form.control}
                       name={`items.${index}.quantity`}
@@ -456,7 +482,7 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                   </div>
 
                   {/* Unit Price */}
-                  <div className="col-span-2">
+                  <div className="sm:col-span-4 lg:col-span-2">
                     <FormField
                       control={form.control}
                       name={`items.${index}.unit_price`}
@@ -473,20 +499,21 @@ export function InvoiceForm({ invoice, open, onOpenChange, onSuccess }: InvoiceF
                   </div>
 
                   {/* Remove Button */}
-                  <div className="col-span-1 flex items-end justify-end">
+                  <div className="flex justify-end sm:col-span-12 lg:col-span-1 lg:justify-end">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => remove(index)}
                       disabled={fields.length === 1}
-                      className="mt-8"
+                      className="mt-0 lg:mt-8"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               ))}
+              </div>
 
               {/* Validation Error for Items */}
               {form.formState.errors.items?.root && (
