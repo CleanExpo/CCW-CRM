@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import type { AppUser } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
 
@@ -32,14 +33,31 @@ export async function insertAppUser(input: {
   full_name: string | null;
   is_admin: boolean;
   role?: 'owner' | 'admin' | 'member' | 'billing';
+  /** Existing workspace (inviter’s org). Omit to create a new solo workspace (id = new user id). */
+  workspace_id?: string;
 }): Promise<AppUserRow> {
+  if (input.workspace_id) {
+    return prisma.appUser.create({
+      data: {
+        email: input.email.toLowerCase(),
+        passwordHash: input.password_hash,
+        fullName: input.full_name,
+        isAdmin: input.is_admin,
+        role: input.role ?? 'member',
+        workspaceId: input.workspace_id,
+      },
+    });
+  }
+  const id = randomUUID();
   return prisma.appUser.create({
     data: {
+      id,
       email: input.email.toLowerCase(),
       passwordHash: input.password_hash,
       fullName: input.full_name,
       isAdmin: input.is_admin,
       role: input.role ?? 'member',
+      workspaceId: id,
     },
   });
 }
