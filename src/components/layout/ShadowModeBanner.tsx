@@ -38,7 +38,7 @@ export function ShadowModeBanner() {
       </div>
       <div className="flex items-center gap-3">
         <a
-          href="/settings/shadow"
+          href="/dashboard/settings/shadow"
           className="text-xs text-amber-700 underline transition-colors hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-200"
         >
           View Dashboard
