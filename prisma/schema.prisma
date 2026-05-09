@@ -21,11 +21,14 @@ model AppUser {
   role                      TeamRole  @default(member)
   isAdmin                   Boolean   @default(false) @map("is_admin")
   isActive                  Boolean   @default(true) @map("is_active")
+  /// All users in one org share the same workspace id (typically the first owner’s user id).
+  workspaceId               String    @map("workspace_id") @db.Uuid
   createdAt                 DateTime  @default(now()) @map("created_at")
   lastLoginAt               DateTime? @map("last_login_at")
   passwordResetTokenHash    String?   @map("password_reset_token_hash")
   passwordResetExpiresAt    DateTime? @map("password_reset_expires_at")
 
+  @@index([workspaceId])
   @@map("app_users")
 }
 
