@@ -32,6 +32,8 @@ interface Command {
   icon: React.ComponentType<{ className?: string }>;
   action: () => void;
   keywords?: string[];
+  /** When true, item is visible but not selectable for navigation. */
+  disabled?: boolean;
 }
 
 export function CommandPalette() {
@@ -160,10 +162,11 @@ export function CommandPalette() {
     {
       id: 'settings-billing',
       label: 'Billing & Subscription',
-      description: 'Manage billing and plans',
+      description: 'Coming soon',
       icon: CreditCard,
-      action: () => navigate('/dashboard/settings/billing'),
+      action: () => {},
       keywords: ['payment', 'subscription', 'plan'],
+      disabled: true,
     },
   ];
 
@@ -235,8 +238,12 @@ export function CommandPalette() {
             return (
               <CommandItem
                 key={command.id}
-                onSelect={() => command.action()}
-                className="cursor-pointer"
+                disabled={command.disabled}
+                onSelect={() => {
+                  if (command.disabled) return;
+                  command.action();
+                }}
+                className={command.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
               >
                 <Icon className="mr-2 h-4 w-4" />
                 <div className="flex flex-col">
