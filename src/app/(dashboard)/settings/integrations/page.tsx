@@ -217,7 +217,7 @@ function IntegrationsContent() {
 
     if (shopifySuccess === '1') {
       toast({ title: 'Shopify connected', description: 'You can verify status and run sync from this page.' });
-      window.history.replaceState({}, '', '/settings/integrations');
+      window.history.replaceState({}, '', '/dashboard/settings/integrations');
     }
 
     if (shopifyError) {
@@ -226,7 +226,7 @@ function IntegrationsContent() {
         title: 'Shopify connection failed',
         description: decodeURIComponent(shopifyError),
       });
-      window.history.replaceState({}, '', '/settings/integrations');
+      window.history.replaceState({}, '', '/dashboard/settings/integrations');
     }
 
     if (xeroSuccess === 'true') {
@@ -240,7 +240,7 @@ function IntegrationsContent() {
       }
 
       // Clean up URL
-      window.history.replaceState({}, '', '/settings/integrations');
+      window.history.replaceState({}, '', '/dashboard/settings/integrations');
     }
 
     if (xeroError) {
@@ -251,7 +251,7 @@ function IntegrationsContent() {
       });
 
       // Clean up URL
-      window.history.replaceState({}, '', '/settings/integrations');
+      window.history.replaceState({}, '', '/dashboard/settings/integrations');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -461,7 +461,7 @@ function IntegrationsContent() {
             description="Sync Chart of Accounts, manage journal entries and configure ERP-to-GL mappings."
             icon={<BookOpen className="h-4 w-4 text-primary" />}
           >
-            <Link href="/settings/integrations/gl">
+            <Link href="/dashboard/settings/integrations/gl">
               <div className="hover:bg-muted/50 hover:border-primary/30 flex cursor-pointer items-center gap-4 rounded-xl border border-border/70 p-4 transition-colors">
                 <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
                   <BookOpen className="text-primary h-5 w-5" />
@@ -484,7 +484,7 @@ function IntegrationsContent() {
             description="Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace."
             icon={<Globe className="h-4 w-4 text-primary" />}
           >
-            <Link href="/settings/integrations/marketplace">
+            <Link href="/dashboard/settings/integrations/marketplace">
               <div className="hover:bg-muted/50 hover:border-primary/30 flex cursor-pointer items-center gap-4 rounded-xl border border-border/70 p-4 transition-colors">
                 <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
                   <Globe className="text-primary h-5 w-5" />
