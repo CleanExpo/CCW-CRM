@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { requireAuthenticatedUserOrCron } from '@/lib/auth/data-scope';
+import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
 
 export async function POST(request: NextRequest) {
-  if (!(await requireAuthenticatedUserOrCron(request))) {
-    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  const scope = await requireAuthScopeOrCronIntegrationJob(request);
+  if (!scope) {
+    return NextResponse.json(
+      {
+        detail:
+          'Not authenticated. For cron, send Authorization: Bearer CRON_SECRET and set CRON_INTEGRATION_USER_ID.',
+      },
+      { status: 401 }
+    );
   }
 
   const maxOrders = Math.max(1, Math.min(100, Number(request.nextUrl.searchParams.get('max_orders') || 10)));
   const rows = await prisma.order.findMany({
-    where: { status: { in: ['confirmed', 'delivered'] } },
+    where: {
+      ownerUserId: scope.userId,
+      status: { in: ['confirmed', 'delivered'] },
+    },
     orderBy: { createdAt: 'desc' },
     take: maxOrders,
     select: { id: true },
