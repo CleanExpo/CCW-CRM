@@ -193,8 +193,8 @@ export function WelcomeOnboarding() {
               <span className="text-lg font-semibold">Recommended next steps</span>
             </div>
             <p className="text-sm leading-relaxed text-zinc-400">
-              Connect accounting and inventory under Integrations, invite teammates from Team
-              settings, or run the guided setup wizard to walk through catalogue, roles, and alerts.
+              Connect systems under Integrations, use the Setup guide checklist for go-live, invite
+              teammates from Team settings, and open the dashboard when you are ready.
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -202,7 +202,7 @@ export function WelcomeOnboarding() {
               <Link href="/settings/integrations">Connect integrations</Link>
             </Button>
             <Button asChild size="lg" variant="secondary" className="rounded-xl bg-white/10 text-white hover:bg-white/15">
-              <Link href="/settings/onboarding/wizard">Guided setup</Link>
+              <Link href="/settings/integrations?tab=setup">Setup guide</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-xl border-white/20 bg-transparent">
               <Link href="/dashboard">Go to dashboard</Link>
