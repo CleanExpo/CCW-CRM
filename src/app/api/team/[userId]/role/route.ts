@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
 import { getAuthClaimsFromRequest } from '@/lib/auth/request-token';
-import { countOwners, updateUserRole } from '@/lib/auth/team-repo';
+import { countOwnersInWorkspace, updateUserRole } from '@/lib/auth/team-repo';
 import { findAppUserById } from '@/lib/auth/app-user-repo';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
 
@@ -16,9 +16,13 @@ export async function PUT(
   if (!claims) return jsonDetail('Not authenticated', 401);
   if (claims.role !== 'owner' && claims.role !== 'admin') return jsonDetail('Forbidden', 403);
 
+  const actor = await findAppUserById(claims.sub);
+  if (!actor?.isActive) return jsonDetail('Not authenticated', 401);
+
   const { userId } = await params;
   const target = await findAppUserById(userId);
   if (!target) return jsonDetail('User not found', 404);
+  if (target.workspaceId !== actor.workspaceId) return jsonDetail('Forbidden', 403);
 
   const parsedBody = await readJsonBody(request);
   if (!parsedBody.ok) return parsedBody.response;
@@ -26,7 +30,7 @@ export async function PUT(
   if (!parsed.success) return jsonValidationError(parsed.error);
 
   if (target.role === 'owner' && parsed.data.role !== 'owner') {
-    const ownerCount = await countOwners();
+    const ownerCount = await countOwnersInWorkspace(actor.workspaceId);
     if (ownerCount <= 1) {
       return jsonDetail('Cannot demote the last owner', 409);
     }
