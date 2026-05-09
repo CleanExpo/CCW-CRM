@@ -1,9 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const orders = await prisma.order.findMany({ select: { status: true } });
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { ownerUserId: scope.userId },
+      select: { status: true },
+    });
 
     const breakdown: Record<string, number> = {};
     let totalActive = 0;
