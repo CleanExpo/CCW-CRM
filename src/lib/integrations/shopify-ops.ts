@@ -129,7 +129,9 @@ export async function importShopifyOrderToErp(
       warnings.push(`Line "${li.name || li.id}" has no SKU — skipped.`);
       continue;
     }
-    const product = await prisma.product.findFirst({ where: { sku, isActive: true } });
+    const product = await prisma.product.findFirst({
+      where: { ownerUserId, sku, isActive: true },
+    });
     if (!product) {
       warnings.push(`No ERP product for SKU "${sku}" — line skipped.`);
       continue;
