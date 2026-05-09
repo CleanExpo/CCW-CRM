@@ -131,5 +131,5 @@ export async function isXeroConnected(): Promise<boolean> {
  */
 export function getXeroCallbackUrl(): string {
   const baseUrl = window.location.origin;
-  return `${baseUrl}/settings/integrations`;
+  return `${baseUrl}/dashboard/settings/integrations`;
 }
