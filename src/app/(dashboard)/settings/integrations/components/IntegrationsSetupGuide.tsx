@@ -180,10 +180,10 @@ export function IntegrationsSetupGuide({
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button size="sm" variant="outline" asChild>
-            <Link href="/settings/team">Team & invites</Link>
+            <Link href="/dashboard/settings/team">Team & invites</Link>
           </Button>
           <Button size="sm" variant="outline" asChild>
-            <Link href="/settings/company">Company profile</Link>
+            <Link href="/dashboard/settings/company">Company profile</Link>
           </Button>
         </div>
       </div>
