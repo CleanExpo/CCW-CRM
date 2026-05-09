@@ -170,7 +170,26 @@ export function LocationAwareProductSelect({
       return;
     }
     const match = [...catalogProducts, ...searchResults].find((p) => p.id === value);
-    if (match) setSelectedProduct(match);
+    if (match) {
+      setSelectedProduct(match);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await apiClient.get<{ items: Product[] }>(
+          `/api/products?page=1&page_size=500`
+        );
+        const hit = (response.items || []).find((p) => p.id === value);
+        if (!cancelled && hit) setSelectedProduct(hit);
+      } catch {
+        if (!cancelled) setSelectedProduct(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [value, catalogProducts, searchResults]);
 
   const getAlternativeLocations = (product: Product): string => {
