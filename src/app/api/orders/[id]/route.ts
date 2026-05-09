@@ -151,7 +151,7 @@ export async function DELETE(
     if (!existing) {
       return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
     }
-    await prisma.order.delete({ where: { id } });
+    await prisma.order.deleteMany({ where: { id, ownerUserId: scope.userId } });
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
