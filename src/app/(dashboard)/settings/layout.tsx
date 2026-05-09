@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Settings',
-  description: 'Team, billing, mobile, shadow mode, onboarding, and integrations.',
+  description: 'Team, billing, mobile, shadow mode, welcome hub, and integrations.',
   robots: { index: false, follow: false },
 };
 
