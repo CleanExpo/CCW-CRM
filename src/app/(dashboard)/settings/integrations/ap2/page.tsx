@@ -483,7 +483,7 @@ export default function AP2PaymentsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/settings?panel=integrations">
+            <Link href="/dashboard/settings?panel=integrations">
               <ArrowLeft className="mr-1 h-4 w-4" />
               Integrations
             </Link>
