@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 function rowToApi(inv: {
   id: string;
@@ -35,12 +36,20 @@ function rowToApi(inv: {
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '20');
     const status = searchParams.get('status');
 
-    const where = status ? { status } : {};
+    const where = {
+      ownerUserId: scope.userId,
+      ...(status ? { status } : {}),
+    };
 
     const [rows, total] = await Promise.all([
       prisma.salesInvoice.findMany({
