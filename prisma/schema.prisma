@@ -44,8 +44,9 @@ model Customer {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  orders Order[]
-  quotes Quote[]
+  orders   Order[]
+  quotes   Quote[]
+  invoices Invoice[]
 
   @@index([ownerUserId])
   @@map("customers")
@@ -69,6 +70,7 @@ model Product {
   quoteLineItems       QuoteLineItem[]
   posTransactionLines  PosTransactionLine[]
   goodsReceiptLines    GoodsReceiptLine[]
+  invoiceLineItems     InvoiceLineItem[]
 
   @@index([ownerUserId])
   @@unique([ownerUserId, sku])
@@ -87,6 +89,7 @@ model Order {
 
   customer  Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems OrderLineItem[]
+  invoices  Invoice[]
 
   @@index([ownerUserId])
   @@map("orders")
@@ -140,6 +143,54 @@ model QuoteLineItem {
 
   @@index([quoteId])
   @@map("quote_line_items")
+}
+
+model Invoice {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerUserId   String   @map("owner_user_id") @db.Uuid
+  invoiceNumber String   @map("invoice_number")
+  customerId    String   @map("customer_id") @db.Uuid
+  orderId       String?  @map("order_id") @db.Uuid
+  invoiceDate   DateTime @map("invoice_date") @db.Date
+  dueDate       DateTime @map("due_date") @db.Date
+  status        String   @default("draft")
+  notes         String?
+  subtotal      Float    @default(0)
+  taxTotal      Float    @default(0) @map("tax_total")
+  total         Float    @default(0)
+  amountPaid    Float    @default(0) @map("amount_paid")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  order    Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  items    InvoiceLineItem[]
+
+  @@index([ownerUserId])
+  @@index([customerId])
+  @@unique([ownerUserId, invoiceNumber])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id           String  @id @default(uuid()) @db.Uuid
+  invoiceId    String  @map("invoice_id") @db.Uuid
+  productId    String? @map("product_id") @db.Uuid
+  description  String
+  quantity     Int
+  unitPrice    Float   @map("unit_price")
+  taxRate      Float   @default(0) @map("tax_rate")
+  taxAmount    Float   @default(0) @map("tax_amount")
+  lineSubtotal Float   @default(0) @map("line_subtotal")
+  lineTotal    Float   @default(0) @map("line_total")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
 }
 
 model Supplier {
