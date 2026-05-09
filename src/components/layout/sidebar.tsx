@@ -1,63 +1,62 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { authApi, logoutAndRedirectToLogin } from '@/lib/api/auth';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import {
-  LayoutDashboard,
-  Package,
-  Users,
-  UserCircle,
-  ShoppingCart,
-  FileText,
-  ClipboardList,
-  ClipboardCheck,
-  Bot,
-  TrendingUp,
-  Mail,
-  Settings,
-  Warehouse,
-  Ship,
-  Truck,
-  AlertCircle,
-  Bell,
-  CheckCircle,
-  Sparkles,
   Activity,
-  CreditCard,
-  Scale,
-  Receipt,
-  GitMerge,
-  PackageSearch,
-  PackageCheck,
-  Timer,
+  AlertCircle,
   BarChart3,
-  Calendar,
-  Megaphone,
-  HelpCircle,
-  HardHat,
-  Wrench,
-  Landmark,
-  Settings2,
-  CalendarDays,
+  Bell,
   BellRing,
-  HeartPulse,
-  GitBranch,
-  Tag,
-  Layers,
+  Bot,
+  Calendar,
+  CalendarDays,
   Camera,
-  Eye,
-  UserCog,
+  CheckCircle,
   ChevronDown,
   ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
   Cpu,
-  MessageCircle,
-  Store,
+  CreditCard,
+  Eye,
+  FileText,
+  GitBranch,
+  GitMerge,
+  HardHat,
+  HeartPulse,
+  HelpCircle,
+  Landmark,
+  Layers,
+  LayoutDashboard,
   LogOut,
+  Mail,
+  Megaphone,
+  MessageCircle,
+  Package,
+  PackageCheck,
+  PackageSearch,
+  Receipt,
+  Scale,
+  Settings,
+  Settings2,
+  Ship,
+  ShoppingCart,
+  Sparkles,
+  Store,
+  Tag,
+  Timer,
+  TrendingUp,
+  Truck,
+  UserCircle,
+  Users,
+  Warehouse,
+  Wrench,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 interface NavItem {
@@ -80,7 +79,11 @@ const navGroups: NavGroup[] = [
       { name: 'Orders', href: '/dashboard/operations/orders', icon: ShoppingCart },
       { name: 'Fulfilment', href: '/dashboard/operations/fulfilment', icon: PackageCheck },
       { name: 'Quotes', href: '/dashboard/operations/quotes', icon: FileText },
-      { name: 'Purchase Orders', href: '/dashboard/operations/purchase-orders', icon: ClipboardList },
+      {
+        name: 'Purchase Orders',
+        href: '/dashboard/operations/purchase-orders',
+        icon: ClipboardList,
+      },
       {
         name: 'Goods Receiving',
         href: '/dashboard/operations/purchase-orders/receiving',
@@ -169,9 +172,7 @@ const navGroups: NavGroup[] = [
       { name: 'Billing', href: '/settings/billing', icon: CreditCard },
       { name: 'Mobile Orders', href: '/settings/mobile', icon: Camera },
       { name: 'Shadow Mode', href: '/settings/shadow', icon: Eye },
-      { name: 'Client Onboarding', href: '/settings/onboarding', icon: UserCog },
-      { name: 'Getting started', href: '/settings/welcome', icon: Sparkles },
-      { name: 'Settings', href: '/settings/integrations', icon: Settings },
+      { name: 'Integrations', href: '/settings/integrations', icon: Settings },
     ],
   },
 ];
@@ -252,7 +253,7 @@ export function Sidebar() {
         if (!mounted) return;
         // Treat users flagged as is_admin as admin access even if role is stale.
         const effectiveRole =
-          user?.is_admin && user.role !== 'owner' ? 'admin' : user?.role ?? null;
+          user?.is_admin && user.role !== 'owner' ? 'admin' : (user?.role ?? null);
         setUserRole(effectiveRole);
       } finally {
         if (mounted) setRoleResolved(true);
@@ -282,7 +283,10 @@ export function Sidebar() {
     [userRole, roleResolved]
   );
 
-  const flatNavItems = useMemo(() => filteredNavGroups.flatMap((g) => g.items), [filteredNavGroups]);
+  const flatNavItems = useMemo(
+    () => filteredNavGroups.flatMap((g) => g.items),
+    [filteredNavGroups]
+  );
 
   const activeNavHref = useMemo(
     () => getActiveNavHref(pathname, flatNavItems),
@@ -350,7 +354,7 @@ export function Sidebar() {
         <NotificationBell />
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden overscroll-y-contain p-3 [scrollbar-gutter:stable]">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-x-hidden overflow-y-auto overscroll-y-contain p-3 [scrollbar-gutter:stable]">
         {/* Dashboard — always visible, no group */}
         <NavLink
           item={{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }}
@@ -358,7 +362,7 @@ export function Sidebar() {
         />
 
         {/* Grouped navigation */}
-          {filteredNavGroups.map((group) => {
+        {filteredNavGroups.map((group) => {
           const isOpen = openGroups.has(group.id);
           const hasActiveItem = group.items.some((item) => activeNavHref === item.href);
           return (
@@ -367,9 +371,7 @@ export function Sidebar() {
                 onClick={() => toggleGroup(group.id)}
                 className={cn(
                   'mt-2 flex w-full items-center justify-between rounded-md px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-colors',
-                  hasActiveItem
-                    ? 'text-indigo-300'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                  hasActiveItem ? 'text-indigo-300' : 'text-zinc-400 hover:text-zinc-200'
                 )}
               >
                 <span>{group.label}</span>
