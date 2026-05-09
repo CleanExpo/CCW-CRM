@@ -281,7 +281,7 @@ export function Cin7ShadowSyncCard() {
 
         {/* Link to full dashboard */}
         <div className="flex justify-end">
-          <Link href="/settings/integrations/shadow">
+          <Link href="/dashboard/settings/integrations/shadow">
             <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs">
               <ExternalLink className="h-3.5 w-3.5" />
               View Full Dashboard
