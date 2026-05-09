@@ -138,7 +138,7 @@ export function CommandPalette() {
       label: 'Account Settings',
       description: 'Manage your account',
       icon: Settings,
-      action: () => navigate('/settings/account'),
+      action: () => navigate('/dashboard/settings/account'),
       keywords: ['profile', 'preferences'],
     },
     {
@@ -146,7 +146,7 @@ export function CommandPalette() {
       label: 'Team Management',
       description: 'Manage team members and roles',
       icon: Users,
-      action: () => navigate('/settings/team'),
+      action: () => navigate('/dashboard/settings/team'),
       keywords: ['users', 'permissions'],
     },
     {
@@ -154,7 +154,7 @@ export function CommandPalette() {
       label: 'Company Settings',
       description: 'Update company information',
       icon: Building2,
-      action: () => navigate('/settings/company'),
+      action: () => navigate('/dashboard/settings/company'),
       keywords: ['organization', 'business'],
     },
     {
@@ -162,7 +162,7 @@ export function CommandPalette() {
       label: 'Billing & Subscription',
       description: 'Manage billing and plans',
       icon: CreditCard,
-      action: () => navigate('/settings/billing'),
+      action: () => navigate('/dashboard/settings/billing'),
       keywords: ['payment', 'subscription', 'plan'],
     },
   ];
