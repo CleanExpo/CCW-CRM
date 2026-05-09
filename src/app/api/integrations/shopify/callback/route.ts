@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const cookieShop = request.cookies.get('shopify_oauth_shop')?.value?.trim();
 
   const base = process.env.NEXT_PUBLIC_FRONTEND_URL?.trim() || 'http://localhost:3000';
-  const settingsUrl = `${base.replace(/\/$/, '')}/settings/integrations`;
+  const settingsUrl = `${base.replace(/\/$/, '')}/dashboard/settings/integrations`;
 
   const fail = (msg: string) =>
     NextResponse.redirect(`${settingsUrl}?shopify_error=${encodeURIComponent(msg)}`);
