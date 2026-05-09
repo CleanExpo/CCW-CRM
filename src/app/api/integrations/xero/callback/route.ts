@@ -6,7 +6,7 @@ import {
   resolveXeroRedirectUri,
 } from '@/lib/integrations/xero';
 
-const SETTINGS_URL = '/settings/integrations';
+const SETTINGS_URL = '/dashboard/settings/integrations';
 
 export async function GET(request: NextRequest) {
   const mode = getXeroMode();
