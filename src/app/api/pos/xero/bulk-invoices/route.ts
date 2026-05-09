@@ -1,11 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 /** Stub Xero bulk export: counts pending POS transactions (no external call). */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const pending = await prisma.posTransaction.count({
-      where: { reconciliationStatus: 'pending' },
+      where: { ownerUserId: scope.userId, reconciliationStatus: 'pending' },
     });
     return NextResponse.json({
       total: pending,
