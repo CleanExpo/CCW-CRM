@@ -95,7 +95,7 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
               </Badge>
             ) : null}
             <Button asChild variant="outline" size="sm" className="border-white/15 text-zinc-200 hover:bg-white/10">
-              <Link href="/settings/integrations">Manage</Link>
+              <Link href="/dashboard/settings/integrations">Manage</Link>
             </Button>
           </div>
         }
