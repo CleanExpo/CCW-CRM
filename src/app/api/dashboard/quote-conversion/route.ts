@@ -1,9 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const quotes = await prisma.quote.findMany({ select: { status: true, total: true } });
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
+    const quotes = await prisma.quote.findMany({
+      where: { ownerUserId: scope.userId },
+      select: { status: true, total: true },
+    });
 
     const total = quotes.length;
     const accepted = quotes.filter((q) => q.status === 'accepted').length;
