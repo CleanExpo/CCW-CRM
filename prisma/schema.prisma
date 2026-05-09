@@ -203,6 +203,7 @@ model PurchaseOrderLine {
 
 model PosTransaction {
   id                     String   @id @default(uuid()) @db.Uuid
+  ownerUserId            String?  @map("owner_user_id") @db.Uuid
   transactionNumber      String   @unique @map("transaction_number")
   terminalId             String   @map("terminal_id")
   locationCode           String   @map("location_code")
@@ -217,6 +218,7 @@ model PosTransaction {
 
   lines PosTransactionLine[]
 
+  @@index([ownerUserId])
   @@index([reconciliationStatus])
   @@map("pos_transactions")
 }
@@ -238,6 +240,7 @@ model PosTransactionLine {
 
 model BankAccount {
   id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String?  @map("owner_user_id") @db.Uuid
   accountName  String   @map("account_name")
   accountNumber String  @map("account_number")
   bsb          String
@@ -251,6 +254,7 @@ model BankAccount {
 
   feedTransactions BankFeedTransaction[]
 
+  @@index([ownerUserId])
   @@map("bank_accounts")
 }
 
@@ -329,6 +333,7 @@ model SubmissionNote {
 
 model SalesFulfilment {
   id                 String    @id @default(uuid()) @db.Uuid
+  ownerUserId        String?   @map("owner_user_id") @db.Uuid
   cin7OrderMappingId String    @map("cin7_order_mapping_id")
   cin7FulfilmentId   String?   @map("cin7_fulfilment_id")
   orderReference     String?   @map("order_reference")
@@ -342,12 +347,14 @@ model SalesFulfilment {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
+  @@index([ownerUserId])
   @@index([cin7OrderMappingId])
   @@map("sales_fulfilments")
 }
 
 model SalesInvoice {
   id                 String    @id @default(uuid()) @db.Uuid
+  ownerUserId        String?   @map("owner_user_id") @db.Uuid
   cin7OrderMappingId String    @map("cin7_order_mapping_id")
   cin7InvoiceId      String?   @map("cin7_invoice_id")
   invoiceNumber      String?   @map("invoice_number")
@@ -363,6 +370,7 @@ model SalesInvoice {
 
   payments SalesPayment[]
 
+  @@index([ownerUserId])
   @@index([cin7OrderMappingId])
   @@map("sales_invoices")
 }
@@ -388,6 +396,7 @@ model SalesPayment {
 
 model GoodsReceipt {
   id                 String    @id @default(uuid()) @db.Uuid
+  ownerUserId        String?   @map("owner_user_id") @db.Uuid
   cin7PoMappingId    String?   @map("cin7_po_mapping_id")
   poReference        String    @map("po_reference")
   supplierName       String?   @map("supplier_name")
@@ -404,6 +413,7 @@ model GoodsReceipt {
 
   lines GoodsReceiptLine[]
 
+  @@index([ownerUserId])
   @@map("goods_receipts")
 }
 
