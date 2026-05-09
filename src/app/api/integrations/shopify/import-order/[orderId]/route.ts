@@ -35,8 +35,8 @@ export async function POST(
 
   try {
     const r = await importShopifyOrderToErp(creds.adminHost, creds.accessToken, id, scope.userId);
-    const row = await prisma.order.findUnique({
-      where: { id: r.order_id },
+    const row = await prisma.order.findFirst({
+      where: { id: r.order_id, ownerUserId: scope.userId },
       select: { customerId: true, total: true, status: true },
     });
     return NextResponse.json({
