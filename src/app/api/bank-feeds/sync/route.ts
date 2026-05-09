@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       account_id?: string | null;
       start_date?: string | null;
@@ -11,14 +17,19 @@ export async function POST(request: NextRequest) {
 
     let accountId = body.account_id;
     if (!accountId) {
-      const first = await prisma.bankAccount.findFirst({ orderBy: { createdAt: 'asc' } });
+      const first = await prisma.bankAccount.findFirst({
+        where: { ownerUserId: scope.userId },
+        orderBy: { createdAt: 'asc' },
+      });
       if (!first) {
         return NextResponse.json({ detail: 'No bank accounts configured' }, { status: 400 });
       }
       accountId = first.id;
     }
 
-    const account = await prisma.bankAccount.findUnique({ where: { id: accountId } });
+    const account = await prisma.bankAccount.findFirst({
+      where: { id: accountId, ownerUserId: scope.userId },
+    });
     if (!account) {
       return NextResponse.json({ detail: 'Account not found' }, { status: 404 });
     }
