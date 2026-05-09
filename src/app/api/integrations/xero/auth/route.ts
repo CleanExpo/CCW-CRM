@@ -6,7 +6,7 @@ import {
   hasLiveClientCredentials,
 } from '@/lib/integrations/xero';
 
-const SETTINGS_URL = '/settings/integrations';
+const SETTINGS_URL = '/dashboard/settings/integrations';
 
 /**
  * Browser-friendly OAuth kick-off (same intent as GET /xero/authorize JSON).
