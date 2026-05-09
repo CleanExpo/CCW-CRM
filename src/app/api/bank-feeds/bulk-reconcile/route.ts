@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       matches?: Array<{ bank_feed_id?: string; pos_transaction_id?: string }>;
     };
@@ -26,6 +32,18 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        const feed = await prisma.bankFeedTransaction.findFirst({
+          where: { id: feedId, bankAccount: { ownerUserId: scope.userId } },
+        });
+        const pos = await prisma.posTransaction.findFirst({
+          where: { id: posId, ownerUserId: scope.userId },
+        });
+        if (!feed || !pos) {
+          failed += 1;
+          errors.push('Feed line or POS transaction not found');
+          continue;
+        }
+
         await prisma.$transaction([
           prisma.bankFeedTransaction.update({
             where: { id: feedId },
