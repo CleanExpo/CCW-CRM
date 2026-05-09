@@ -9,13 +9,16 @@ import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopif
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
 import { AlertTriangle, BookOpen, Bot, CheckCircle2, Globe, Settings, Video, XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import { AP2ConnectionCard } from './components/AP2ConnectionCard';
 import { Cin7ConnectionCard } from './components/Cin7ConnectionCard';
 import { Cin7ShadowSyncCard } from './components/Cin7ShadowSyncCard';
 import { Cin7SyncControls } from './components/Cin7SyncControls';
 import { Cin7WebhookSubscriptionsCard } from './components/Cin7WebhookSubscriptionsCard';
+import { IntegrationsSetupGuide } from './components/IntegrationsSetupGuide';
 import { SendGridConnectionCard } from './components/SendGridConnectionCard';
 import { ShopifyConnectionCard } from './components/ShopifyConnectionCard';
 import { ShopifySyncControls } from './components/ShopifySyncControls';
@@ -23,18 +26,25 @@ import { XeroConnectionCard } from './components/XeroConnectionCard';
 import { XeroSyncControls } from './components/XeroSyncControls';
 
 function SectionShell({
+  sectionId,
   title,
   description,
   children,
   icon,
 }: {
+  sectionId?: string;
   title: string;
   description?: string;
   children: React.ReactNode;
   icon?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur-sm md:p-6">
+    <section
+      id={sectionId}
+      className={cn(
+        'scroll-mt-24 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm backdrop-blur-sm md:p-6'
+      )}
+    >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -51,7 +61,32 @@ function SectionShell({
 
 function IntegrationsContent() {
   const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'setup' ? 'setup' : 'connections';
+
+  const setTab = (next: 'connections' | 'setup') => {
+    const p = new URLSearchParams(searchParams.toString());
+    if (next === 'setup') p.set('tab', 'setup');
+    else p.delete('tab');
+    const qs = p.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
+  const goToConnections = (sectionId?: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.delete('tab');
+    const qs = p.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (sectionId) {
+          document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  };
   const [xeroStatus, setXeroStatus] = useState<XeroConnectionStatus | null>(null);
   const [shopifyStatus, setShopifyStatus] = useState<ShopifyConnectionStatus | null>(null);
   const [sendgridStatus, setSendgridStatus] = useState<SendGridConnectionStatus | null>(null);
@@ -241,9 +276,11 @@ function IntegrationsContent() {
                 <Settings className="text-primary h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Integrations</h1>
+                <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                  Integrations &amp; setup
+                </h1>
                 <p className="text-muted-foreground text-sm">
-                  Connect your ERP with accounting, inventory, commerce, and AI services.
+                  Connect systems, run the setup checklist, and review readiness in one place.
                 </p>
               </div>
             </div>
@@ -270,9 +307,31 @@ function IntegrationsContent() {
           </div>
         </div>
 
-        {/* Integrations Grid */}
-        <div className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setTab(v === 'setup' ? 'setup' : 'connections')}
+          className="w-full"
+        >
+          <TabsList className="grid w-full max-w-md grid-cols-2 sm:w-auto">
+            <TabsTrigger value="connections">Connections</TabsTrigger>
+            <TabsTrigger value="setup">Setup guide</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="setup" className="mt-6">
+            <IntegrationsSetupGuide
+              xeroStatus={xeroStatus}
+              shopifyStatus={shopifyStatus}
+              sendgridStatus={sendgridStatus}
+              cin7Status={cin7Status}
+              loading={loading}
+              onGoToConnections={goToConnections}
+              onRefreshStatuses={loadAllStatuses}
+            />
+          </TabsContent>
+
+          <TabsContent value="connections" className="mt-6 space-y-6">
           <SectionShell
+            sectionId="integration-readiness"
             title="Integration Readiness"
             description="Environment and mode checks for production-grade live connections."
             icon={<AlertTriangle className="h-4 w-4 text-primary" />}
@@ -321,7 +380,11 @@ function IntegrationsContent() {
           </SectionShell>
 
           {/* Xero Integration */}
-          <SectionShell title="Xero Accounting" description="Sync invoices and payments between ERP and Xero.">
+          <SectionShell
+            sectionId="integration-xero"
+            title="Xero Accounting"
+            description="Sync invoices and payments between ERP and Xero."
+          >
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
               <XeroConnectionCard
                 status={xeroStatus}
@@ -333,7 +396,11 @@ function IntegrationsContent() {
           </SectionShell>
 
           {/* Shopify Integration */}
-          <SectionShell title="Shopify E-commerce" description="Manage store connection, order import, and inventory sync.">
+          <SectionShell
+            sectionId="integration-shopify"
+            title="Shopify E-commerce"
+            description="Manage store connection, order import, and inventory sync."
+          >
             <div className="grid gap-6 md:grid-cols-1">
               <ShopifyConnectionCard
                 status={shopifyStatus}
@@ -345,7 +412,11 @@ function IntegrationsContent() {
           </SectionShell>
 
           {/* SendGrid Integration */}
-          <SectionShell title="SendGrid Email Management" description="Configure email delivery and outbound communication settings.">
+          <SectionShell
+            sectionId="integration-sendgrid"
+            title="SendGrid Email Management"
+            description="Configure email delivery and outbound communication settings."
+          >
             <div className="grid gap-6 md:grid-cols-1">
               <SendGridConnectionCard
                 status={sendgridStatus}
@@ -356,7 +427,11 @@ function IntegrationsContent() {
           </SectionShell>
 
           {/* Cin7 Integration */}
-          <SectionShell title="Cin7 Inventory Management" description="Connect inventory source, run sync, and monitor webhooks.">
+          <SectionShell
+            sectionId="integration-cin7"
+            title="Cin7 Inventory Management"
+            description="Connect inventory source, run sync, and monitor webhooks."
+          >
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
               <Cin7ConnectionCard
                 status={cin7Status}
@@ -372,6 +447,7 @@ function IntegrationsContent() {
 
           {/* Cin7 Shadow Sync — gap detection between Cin7 and ERP */}
           <SectionShell
+            sectionId="integration-shadow-sync"
             title="Cin7 Shadow Sync"
             description="Detect and track gaps between Cin7 and the ERP without disrupting live data."
           >
@@ -380,6 +456,7 @@ function IntegrationsContent() {
 
           {/* Cin7 Financial / GL Integration */}
           <SectionShell
+            sectionId="integration-gl"
             title="Cin7 Financial / GL Integration"
             description="Sync Chart of Accounts, manage journal entries and configure ERP-to-GL mappings."
             icon={<BookOpen className="h-4 w-4 text-primary" />}
@@ -402,6 +479,7 @@ function IntegrationsContent() {
 
           {/* Multi-Channel Marketplace */}
           <SectionShell
+            sectionId="integration-marketplace"
             title="Multi-Channel Marketplace"
             description="Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace."
             icon={<Globe className="h-4 w-4 text-primary" />}
@@ -423,7 +501,11 @@ function IntegrationsContent() {
           </SectionShell>
 
           {/* AI Services */}
-          <SectionShell title="AI Services" description="Health and mode for AI-backed assistants and automations.">
+          <SectionShell
+            sectionId="integration-ai"
+            title="AI Services"
+            description="Health and mode for AI-backed assistants and automations."
+          >
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Google Gemini */}
               <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm">
@@ -507,12 +589,17 @@ function IntegrationsContent() {
           </SectionShell>
 
           {/* Google AP2 Integration */}
-          <SectionShell title="Google Agent Payments (AP2)" description="Configure AP2 connectivity for payment agent workflows.">
+          <SectionShell
+            sectionId="integration-ap2"
+            title="Google Agent Payments (AP2)"
+            description="Configure AP2 connectivity for payment agent workflows."
+          >
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
               <AP2ConnectionCard />
             </div>
           </SectionShell>
-        </div>
+          </TabsContent>
+        </Tabs>
 
       </div>
     </ErrorBoundary>
@@ -530,7 +617,7 @@ export default function IntegrationsPage() {
                 <Settings className="text-primary h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Integrations &amp; setup</h1>
                 <p className="text-muted-foreground text-sm">Loading integration status...</p>
               </div>
             </div>
