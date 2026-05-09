@@ -40,7 +40,6 @@ interface OrderLineItemsProps {
 
 export function OrderLineItems({ items, onChange, errors, selectedLocation = "brisbane" }: OrderLineItemsProps) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
   const { updateQuantity, updateUnitPrice } = useLineItemCalculations();
 
   useEffect(() => {
@@ -50,8 +49,6 @@ export function OrderLineItems({ items, onChange, errors, selectedLocation = "br
         setProducts(response.items || []);
       } catch (error: unknown) {
         console.error("Failed to load products:", error);
-      } finally {
-        setLoadingProducts(false);
       }
     }
     loadProducts();
@@ -59,6 +56,10 @@ export function OrderLineItems({ items, onChange, errors, selectedLocation = "br
 
   const handleAddItem = () => {
     const newItem: LineItem = {
+      id:
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `line-${Date.now()}`,
       product_id: "",
       quantity: 1,
       unit_price: 0,
@@ -72,18 +73,18 @@ export function OrderLineItems({ items, onChange, errors, selectedLocation = "br
     onChange(newItems);
   };
 
-  const handleProductChange = (index: number, productId: string) => {
-    // Find product in local products array for price lookup
-    const product = products.find((p) => p.id === productId);
-    if (!product) return;
-
+  const handleProductChange = (
+    index: number,
+    product: { id: string; name: string; price: number }
+  ) => {
     const newItems = [...items];
+    const unit = Number(product.price);
     newItems[index] = {
       ...newItems[index],
-      product_id: productId,
+      product_id: product.id,
       product_name: product.name,
-      unit_price: Number(product.price),
-      line_total: newItems[index].quantity * Number(product.price),
+      unit_price: unit,
+      line_total: newItems[index].quantity * unit,
     };
     onChange(newItems);
   };
@@ -131,81 +132,84 @@ export function OrderLineItems({ items, onChange, errors, selectedLocation = "br
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {items.map((item, index) => {
-            const product = products.find((p) => p.id === item.product_id);
-            const lowStock = product && item.quantity > product.stock;
+        <>
+          <div className="max-h-[min(55vh,26rem)] space-y-3 overflow-y-auto overflow-x-hidden pr-1">
+            {items.map((item, index) => {
+              const product = products.find((p) => p.id === item.product_id);
+              const lowStock = product && item.quantity > product.stock;
+              const rowKey = item.id ?? `idx-${index}`;
 
-            return (
-              <div
-                key={index}
-                className="grid grid-cols-12 gap-3 items-start rounded-md border p-3"
-              >
-                <div className="col-span-5">
-                  <label className="text-xs text-muted-foreground mb-1 block">Product</label>
-                  <LocationAwareProductSelect
-                    selectedLocation={selectedLocation}
-                    value={item.product_id}
-                    onSelect={(product) => handleProductChange(index, product.id)}
-                  />
-                </div>
+              return (
+                <div
+                  key={rowKey}
+                  className="grid grid-cols-1 items-start gap-3 rounded-md border bg-background p-3 sm:grid-cols-12 sm:gap-3"
+                >
+                  <div className="sm:col-span-5">
+                    <label className="text-muted-foreground mb-1 block text-xs">Product</label>
+                    <LocationAwareProductSelect
+                      selectedLocation={selectedLocation}
+                      value={item.product_id}
+                      onSelect={(p) => handleProductChange(index, p)}
+                    />
+                  </div>
 
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground mb-1 block">Quantity</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => handleQuantityChange(index, e.target.value)}
-                    className={lowStock ? "border-destructive" : ""}
-                  />
-                  {lowStock && (
-                    <p className="text-xs text-destructive mt-1">
-                      Low stock! Only {product?.stock} available
-                    </p>
-                  )}
-                </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-muted-foreground mb-1 block text-xs">Quantity</label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => handleQuantityChange(index, e.target.value)}
+                      className={lowStock ? 'border-destructive' : ''}
+                    />
+                    {lowStock && (
+                      <p className="text-destructive mt-1 text-xs">
+                        Low stock! Only {product?.stock} available
+                      </p>
+                    )}
+                  </div>
 
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground mb-1 block">Unit Price</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={item.unit_price}
-                    onChange={(e) => handleUnitPriceChange(index, e.target.value)}
-                  />
-                </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-muted-foreground mb-1 block text-xs">Unit Price</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.unit_price}
+                      onChange={(e) => handleUnitPriceChange(index, e.target.value)}
+                    />
+                  </div>
 
-                <div className="col-span-2">
-                  <label className="text-xs text-muted-foreground mb-1 block">Subtotal</label>
-                  <div className="flex items-center h-9 px-3 rounded-md border bg-muted text-sm font-medium">
-                    {formatCurrency(item.line_total)}
+                  <div className="sm:col-span-2">
+                    <label className="text-muted-foreground mb-1 block text-xs">Subtotal</label>
+                    <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm font-medium">
+                      {formatCurrency(item.line_total)}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end sm:col-span-1 sm:items-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveItem(index)}
+                      className="h-9"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div className="col-span-1 flex items-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveItem(index)}
-                    className="h-9"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end border-t pt-4">
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Order Total</div>
               <div className="text-2xl font-bold">{formatCurrency(total)}</div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
