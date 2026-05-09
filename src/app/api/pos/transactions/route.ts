@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getPosStore } from '@/lib/pos/mock-store';
 
 function txNumber() {
@@ -8,13 +9,21 @@ function txNumber() {
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const limitParam = parseInt(searchParams.get('limit') || '0');
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = limitParam > 0 ? limitParam : parseInt(searchParams.get('page_size') || '50');
     const recon = searchParams.get('reconciliation_status');
 
-    const where: { reconciliationStatus?: string } = {};
+    const where: {
+      ownerUserId: string;
+      reconciliationStatus?: string;
+    } = { ownerUserId: scope.userId };
     if (recon) where.reconciliationStatus = recon;
 
     const [rows, total] = await Promise.all([
@@ -52,6 +61,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       terminal_id?: string;
       sales_staff_id?: string;
@@ -70,6 +84,8 @@ export async function POST(request: NextRequest) {
     const locationCode =
       store.terminals.find((terminal) => terminal.id === terminalId)?.location_code ?? 'brisbane';
 
+    const uid = scope.userId;
+
     if (items.length === 0) {
       const amount = Number(body.amount ?? 0);
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -78,6 +94,7 @@ export async function POST(request: NextRequest) {
 
       const created = await prisma.posTransaction.create({
         data: {
+          ownerUserId: uid,
           transactionNumber: txNumber(),
           terminalId,
           locationCode,
@@ -100,7 +117,9 @@ export async function POST(request: NextRequest) {
     }
 
     const ids = [...new Set(items.map((i) => i.product_id))];
-    const products = await prisma.product.findMany({ where: { id: { in: ids }, isActive: true } });
+    const products = await prisma.product.findMany({
+      where: { id: { in: ids }, isActive: true, ownerUserId: uid },
+    });
     const byId = new Map(products.map((p) => [p.id, p]));
 
     let subtotal = 0;
@@ -136,21 +155,27 @@ export async function POST(request: NextRequest) {
 
     const created = await prisma.$transaction(async (tx) => {
       for (const line of lineData) {
-        const prod = await tx.product.findUnique({ where: { id: line.productId } });
+        const prod = await tx.product.findFirst({
+          where: { id: line.productId, ownerUserId: uid },
+        });
         if (!prod || prod.stock < line.quantity) {
           throw new Error(`Insufficient stock for product ${line.productId}`);
         }
       }
 
       for (const line of lineData) {
-        await tx.product.update({
-          where: { id: line.productId },
+        const dec = await tx.product.updateMany({
+          where: { id: line.productId, ownerUserId: uid },
           data: { stock: { decrement: line.quantity } },
         });
+        if (dec.count !== 1) {
+          throw new Error(`Stock update failed for product ${line.productId}`);
+        }
       }
 
       return tx.posTransaction.create({
         data: {
+          ownerUserId: uid,
           transactionNumber: txNumber(),
           terminalId,
           locationCode,
