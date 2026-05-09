@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 function toCsvCell(value: string | number | null | undefined) {
   const raw = value === null || value === undefined ? '' : String(value);
@@ -8,6 +9,11 @@ function toCsvCell(value: string | number | null | undefined) {
 
 export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get('account_id');
     const status = searchParams.get('status');
@@ -16,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const rows = await prisma.bankFeedTransaction.findMany({
       where: {
+        bankAccount: { ownerUserId: scope.userId },
         ...(accountId ? { bankAccountId: accountId } : {}),
         ...(status === 'matched'
           ? { reconciled: true }
