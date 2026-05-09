@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { grnToApi } from '@/lib/db/grn-serialize';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
+    const uid = scope.userId;
     const { id } = await context.params;
-    const grn = await prisma.goodsReceipt.findUnique({
-      where: { id },
+    const grn = await prisma.goodsReceipt.findFirst({
+      where: { id, ownerUserId: uid },
       include: { lines: true },
     });
     if (!grn) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
@@ -26,10 +33,13 @@ export async function POST(
     await prisma.$transaction(async (tx) => {
       for (const line of grn.lines) {
         if (line.productId) {
-          await tx.product.update({
-            where: { id: line.productId },
+          const inc = await tx.product.updateMany({
+            where: { id: line.productId, ownerUserId: uid },
             data: { stock: { increment: line.receivedQty } },
           });
+          if (inc.count !== 1) {
+            throw new Error(`Could not update stock for product ${line.productId}`);
+          }
         }
       }
       await tx.goodsReceipt.update({
@@ -42,8 +52,8 @@ export async function POST(
       });
     });
 
-    const updated = await prisma.goodsReceipt.findUniqueOrThrow({
-      where: { id },
+    const updated = await prisma.goodsReceipt.findFirstOrThrow({
+      where: { id, ownerUserId: uid },
       include: { lines: true },
     });
     return NextResponse.json(grnToApi(updated));
