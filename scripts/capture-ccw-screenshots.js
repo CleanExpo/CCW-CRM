@@ -22,7 +22,7 @@ const PAGES = [
   { name: 'quotes', url: '/quotes' },
   { name: 'invoices', url: '/invoices' },
   { name: 'ai-assistant', url: '/ai-assistant' },
-  { name: 'integrations', url: '/settings/integrations' },
+  { name: 'integrations', url: '/dashboard/settings/integrations' },
   { name: 'inventory-overview', url: '/inventory-overview' },
   { name: 'purchase-orders', url: '/purchase-orders' },
 ];
