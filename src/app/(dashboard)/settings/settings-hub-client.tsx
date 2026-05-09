@@ -42,7 +42,7 @@ export function SettingsHubClient() {
       p.set('panel', next);
     }
     const qs = p.toString();
-    router.replace(qs ? `/settings?${qs}` : '/settings', { scroll: false });
+    router.replace(qs ? `/dashboard/settings?${qs}` : '/dashboard/settings', { scroll: false });
   };
 
   return (
