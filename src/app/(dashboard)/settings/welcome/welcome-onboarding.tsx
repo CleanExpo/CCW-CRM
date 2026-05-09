@@ -75,7 +75,7 @@ const CAPABILITIES = [
     title: 'Integrations',
     description:
       'Connect Xero, Shopify, Cin7, email, and more so data flows without double entry.',
-    href: '/settings/integrations',
+    href: '/dashboard/settings/integrations',
     icon: Link2,
     accent: 'from-cyan-500/25 via-cyan-500/5 to-transparent',
     ring: 'ring-cyan-500/25',
@@ -199,10 +199,10 @@ export function WelcomeOnboarding() {
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild size="lg" className="rounded-xl shadow-lg shadow-primary/20">
-              <Link href="/settings/integrations">Connect integrations</Link>
+              <Link href="/dashboard/settings/integrations">Connect integrations</Link>
             </Button>
             <Button asChild size="lg" variant="secondary" className="rounded-xl bg-white/10 text-white hover:bg-white/15">
-              <Link href="/settings/integrations?tab=setup">Setup guide</Link>
+              <Link href="/dashboard/settings/integrations?tab=setup">Setup guide</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-xl border-white/20 bg-transparent">
               <Link href="/dashboard">Go to dashboard</Link>
@@ -211,25 +211,25 @@ export function WelcomeOnboarding() {
         </div>
         <div className="relative mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-6 text-sm">
           <Link
-            href="/settings/team"
+            href="/dashboard/settings/team"
             className="text-zinc-400 underline-offset-4 transition-colors hover:text-white hover:underline"
           >
             Team & invites
           </Link>
           <Link
-            href="/settings/company"
+            href="/dashboard/settings/company"
             className="text-zinc-400 underline-offset-4 transition-colors hover:text-white hover:underline"
           >
             Company profile
           </Link>
           <Link
-            href="/settings/account"
+            href="/dashboard/settings/account"
             className="text-zinc-400 underline-offset-4 transition-colors hover:text-white hover:underline"
           >
             Your account
           </Link>
           <Link
-            href="/settings/setup"
+            href="/dashboard/settings/setup"
             className="text-zinc-400 underline-offset-4 transition-colors hover:text-white hover:underline"
           >
             Connection checklist
