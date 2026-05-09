@@ -15,8 +15,17 @@ const nextConfig: NextConfig = {
     'react-hot-toast',
     'react-error-boundary',
   ],
+  async rewrites() {
+    return [
+      { source: '/dashboard/settings', destination: '/settings' },
+      { source: '/dashboard/settings/:path*', destination: '/settings/:path*' },
+    ];
+  },
   async redirects() {
     return [
+      // Canonical settings URLs (filesystem routes remain under app/.../settings)
+      { source: '/settings', destination: '/dashboard/settings', permanent: false },
+      { source: '/settings/:path*', destination: '/dashboard/settings/:path*', permanent: false },
       { source: '/orders/fulfilment', destination: '/dashboard/operations/fulfilment', permanent: false },
       { source: '/orders', destination: '/dashboard/operations/orders', permanent: false },
       { source: '/orders/:path*', destination: '/dashboard/operations/orders/:path*', permanent: false },
