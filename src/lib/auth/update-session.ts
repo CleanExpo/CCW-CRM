@@ -29,8 +29,21 @@ async function userFromAccessToken(token: string): Promise<SessionUser | null> {
 }
 
 export async function updateSession(request: NextRequest) {
-  const billingAllowedPrefixes = ['/settings/billing', '/dashboard/finance', '/dashboard'];
-  const memberBlockedPrefixes = ['/settings/', '/approvals', '/alerts', '/monitoring', '/faq', '/dashboard/finance'];
+  const billingAllowedPrefixes = [
+    '/dashboard/settings/billing',
+    '/settings/billing',
+    '/dashboard/finance',
+    '/dashboard',
+  ];
+  const memberBlockedPrefixes = [
+    '/dashboard/settings/',
+    '/settings/',
+    '/approvals',
+    '/alerts',
+    '/monitoring',
+    '/faq',
+    '/dashboard/finance',
+  ];
 
   const response = NextResponse.next({
     request,
@@ -101,7 +114,7 @@ export async function updateSession(request: NextRequest) {
       );
       if (!canAccess) {
         const url = request.nextUrl.clone();
-        url.pathname = '/settings/billing';
+        url.pathname = '/dashboard/settings/billing';
         return NextResponse.redirect(url);
       }
     }
