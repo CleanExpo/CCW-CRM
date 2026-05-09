@@ -40,7 +40,6 @@ import {
   ShoppingCart,
   Tag,
   Timer,
-  TrendingUp,
   Truck,
   UserCircle,
   Users,
@@ -138,33 +137,13 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    id: 'insights',
-    label: 'Insights',
-    items: [
-      {
-        name: 'AI Assistant',
-        href: '/dashboard/ai-reports/ai-assistant',
-        icon: Bot,
-      },
-      {
-        name: 'Dashboards',
-        href: '/dashboard/ai-reports/insights',
-        icon: TrendingUp,
-      },
-      {
-        name: 'Reports',
-        href: '/dashboard/ai-reports/reports',
-        icon: BarChart3,
-      },
-    ],
-  },
-  {
     id: 'admin',
     label: 'Workspace',
     items: [
       { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge },
       { name: 'Approvals', href: '/approvals', icon: CheckCircle },
       { name: 'Alerts', href: '/alerts', icon: Bell },
+      { name: 'AI Assistant', href: '/dashboard/ai-reports/ai-assistant', icon: Bot },
       { name: 'Team', href: '/settings/team', icon: Users },
       { name: 'Billing', href: '/settings/billing', icon: CreditCard },
       { name: 'Integrations', href: '/settings/integrations', icon: Settings },
