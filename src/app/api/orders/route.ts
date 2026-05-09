@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
 import { generateOrderNumber, resolveLinesFromPayload } from '@/lib/db/order-lines';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import type { Prisma } from '@prisma/client';
 
 const ORDER_LIST_INCLUDE = {
@@ -62,6 +63,8 @@ export async function POST(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+
     const body = (await request.json()) as Record<string, unknown>;
     const customerId = String(body.customer_id ?? body.customerId ?? '').trim();
     if (!customerId) {
@@ -73,14 +76,14 @@ export async function POST(request: NextRequest) {
       String(body.order_number ?? body.orderNumber ?? '').trim() || generateOrderNumber();
 
     const customerRow = await prisma.customer.findFirst({
-      where: { id: customerId, ownerUserId: scope.userId, isActive: true },
+      where: { id: customerId, ownerUserId: { in: workspaceUserIds }, isActive: true },
       select: { id: true },
     });
     if (!customerRow) {
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
     }
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items, scope.userId);
+    const { lines, subtotal } = await resolveLinesFromPayload(body.items, workspaceUserIds);
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }
