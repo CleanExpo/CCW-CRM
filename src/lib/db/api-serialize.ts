@@ -2,7 +2,14 @@
  * Map Prisma models to API JSON shapes (snake_case) previously returned by Supabase.
  */
 
-import type { Customer, Order, Product, Quote } from '@prisma/client';
+import type {
+  Customer,
+  Invoice as InvoiceRow,
+  InvoiceLineItem,
+  Order,
+  Product,
+  Quote,
+} from '@prisma/client';
 
 export type OrderLineApi = {
   id: string;
@@ -34,8 +41,11 @@ export function orderLinesToApi(
 }
 
 export function customerToApi(c: Customer) {
+  const short = c.id.replace(/-/g, '').slice(0, 8).toUpperCase();
   return {
     id: c.id,
+    /** Stable display ref for selects/lists (schema has no separate customer_number column). */
+    customer_number: `C-${short}`,
     company_name: c.companyName,
     contact_name: c.contactName,
     email: c.email,
@@ -108,5 +118,75 @@ export function quoteToApi(q: Quote, customerName?: string) {
     created_at: q.createdAt,
     updated_at: q.updatedAt,
     customer_name: name,
+  };
+}
+
+export function invoiceLineToApi(
+  line: InvoiceLineItem & { product?: Product | null }
+) {
+  return {
+    id: line.id,
+    invoice_id: line.invoiceId,
+    product_id: line.productId ?? '',
+    product_name: line.product?.name,
+    product_sku: line.product?.sku,
+    description: line.description,
+    quantity: line.quantity,
+    unit_price: line.unitPrice,
+    tax_rate: line.taxRate,
+    tax_amount: line.taxAmount,
+    subtotal: line.lineSubtotal,
+    total: line.lineTotal,
+    created_at: line.createdAt.toISOString(),
+    updated_at: line.updatedAt.toISOString(),
+  };
+}
+
+export function invoiceToApi(
+  inv: InvoiceRow & {
+    customer?: Pick<Customer, 'companyName' | 'email'> | null;
+    items?: Array<InvoiceLineItem & { product?: Product | null }>;
+  }
+) {
+  const amountDue = inv.total - inv.amountPaid;
+  return {
+    id: inv.id,
+    invoice_number: inv.invoiceNumber,
+    order_id: inv.orderId ?? undefined,
+    customer_id: inv.customerId,
+    customer_name: inv.customer?.companyName,
+    customer_email: inv.customer?.email ?? undefined,
+    invoice_date: inv.invoiceDate.toISOString().split('T')[0],
+    due_date: inv.dueDate.toISOString().split('T')[0],
+    status: inv.status,
+    notes: inv.notes ?? undefined,
+    subtotal: inv.subtotal,
+    tax_total: inv.taxTotal,
+    total: inv.total,
+    amount_paid: inv.amountPaid,
+    amount_due: amountDue,
+    items: (inv.items ?? []).map((li) => invoiceLineToApi(li)),
+    payments: [],
+    created_at: inv.createdAt.toISOString(),
+    updated_at: inv.updatedAt.toISOString(),
+  };
+}
+
+export function invoiceSummaryToApi(
+  inv: InvoiceRow & {
+    customer: Pick<Customer, 'companyName'>;
+    _count: { items: number };
+  }
+) {
+  return {
+    id: inv.id,
+    invoice_number: inv.invoiceNumber,
+    customer_name: inv.customer.companyName,
+    invoice_date: inv.invoiceDate.toISOString().split('T')[0],
+    due_date: inv.dueDate.toISOString().split('T')[0],
+    status: inv.status,
+    total: inv.total,
+    amount_due: inv.total - inv.amountPaid,
+    item_count: inv._count.items,
   };
 }
