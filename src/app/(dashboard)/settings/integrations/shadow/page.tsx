@@ -736,7 +736,7 @@ export default function ShadowSyncDashboardPage() {
         <div className="space-y-1">
           <div className="text-muted-foreground mb-1 flex items-center gap-2 text-sm">
             <Link
-              href="/settings?panel=integrations"
+              href="/dashboard/settings?panel=integrations"
               className="hover:text-foreground flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
