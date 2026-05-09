@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 
 function buildLastSixMonthBuckets(reference: Date) {
   const months: { start: Date; label: string }[] = [];
@@ -13,8 +14,14 @@ function buildLastSixMonthBuckets(reference: Date) {
   return months;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const scope = await requireAuthScope(request);
+    if (!scope) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
+    const uid = scope.userId;
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -37,11 +44,12 @@ export async function GET() {
       topProductsByPrice,
       deliveredLineItems,
     ] = await Promise.all([
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.customer.count({ where: { isActive: true } }),
-      prisma.quote.count({ where: { status: 'sent' } }),
+      prisma.product.count({ where: { isActive: true, ownerUserId: uid } }),
+      prisma.customer.count({ where: { isActive: true, ownerUserId: uid } }),
+      prisma.quote.count({ where: { status: 'sent', ownerUserId: uid } }),
       prisma.order.aggregate({
         where: {
+          ownerUserId: uid,
           status: 'delivered',
           createdAt: { gte: monthStart, lte: monthEnd },
         },
@@ -49,48 +57,54 @@ export async function GET() {
       }),
       prisma.order.findMany({
         where: {
+          ownerUserId: uid,
           status: 'delivered',
           createdAt: { gte: trendStart, lte: monthEnd },
         },
         select: { total: true, createdAt: true },
       }),
       prisma.order.aggregate({
-        where: { status: 'delivered' },
+        where: { ownerUserId: uid, status: 'delivered' },
         _sum: { total: true },
       }),
-      prisma.order.count({ where: { status: 'delivered' } }),
+      prisma.order.count({ where: { ownerUserId: uid, status: 'delivered' } }),
       prisma.order.count({
-        where: { NOT: { status: { in: ['delivered', 'cancelled'] } } },
+        where: {
+          ownerUserId: uid,
+          NOT: { status: { in: ['delivered', 'cancelled'] } },
+        },
       }),
-      prisma.product.count({ where: { isActive: true, stock: { lte: 10 } } }),
+      prisma.product.count({ where: { isActive: true, ownerUserId: uid, stock: { lte: 10 } } }),
       prisma.product.findMany({
-        where: { isActive: true, stock: { lte: 10 } },
+        where: { isActive: true, ownerUserId: uid, stock: { lte: 10 } },
         orderBy: { stock: 'asc' },
         take: 2,
         select: { name: true, sku: true, stock: true },
       }),
       prisma.order.findMany({
+        where: { ownerUserId: uid },
         select: { orderNumber: true, status: true, total: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 8,
       }),
       prisma.quote.findMany({
+        where: { ownerUserId: uid },
         select: { quoteNumber: true, status: true, total: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 8,
       }),
       prisma.product.findMany({
-        where: { isActive: true },
+        where: { isActive: true, ownerUserId: uid },
         select: { category: true, price: true, stock: true, name: true, sku: true },
       }),
       prisma.product.findMany({
-        where: { isActive: true },
+        where: { isActive: true, ownerUserId: uid },
         select: { name: true, price: true, stock: true },
         orderBy: { price: 'desc' },
         take: 5,
       }),
       prisma.orderLineItem.findMany({
-        where: { order: { status: 'delivered' } },
+        where: { order: { ownerUserId: uid, status: 'delivered' } },
         select: {
           lineTotal: true,
           quantity: true,
