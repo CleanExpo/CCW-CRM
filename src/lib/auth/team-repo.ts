@@ -3,12 +3,14 @@ import { prisma } from '@/lib/db/prisma';
 export type TeamRole = 'owner' | 'admin' | 'member' | 'billing';
 
 export async function listTeamMembers(params: {
+  workspaceId: string;
   page: number;
   pageSize: number;
   search?: string;
   role?: TeamRole;
 }) {
   const where = {
+    workspaceId: params.workspaceId,
     ...(params.search
       ? {
           OR: [
@@ -33,8 +35,10 @@ export async function listTeamMembers(params: {
   return { total, data };
 }
 
-export async function countOwners(): Promise<number> {
-  return prisma.appUser.count({ where: { role: 'owner', isActive: true } });
+export async function countOwnersInWorkspace(workspaceId: string): Promise<number> {
+  return prisma.appUser.count({
+    where: { role: 'owner', isActive: true, workspaceId },
+  });
 }
 
 export async function updateUserRole(userId: string, role: TeamRole, isAdmin: boolean) {
