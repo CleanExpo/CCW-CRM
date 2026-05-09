@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
 import { resolveLinesFromPayload } from '@/lib/db/order-lines';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import type { Prisma } from '@prisma/client';
 
 export const ORDER_DETAIL_INCLUDE = {
@@ -46,6 +47,8 @@ export async function PUT(
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+
     const { id } = await context.params;
     const existing = await prisma.order.findFirst({ where: { id, ownerUserId: scope.userId } });
     if (!existing) {
@@ -61,7 +64,7 @@ export async function PUT(
       if (body.customer_id != null || body.customerId != null) {
         const targetCustomerId = String(body.customer_id ?? body.customerId);
         const targetCustomer = await prisma.customer.findFirst({
-          where: { id: targetCustomerId, ownerUserId: scope.userId, isActive: true },
+          where: { id: targetCustomerId, ownerUserId: { in: workspaceUserIds }, isActive: true },
           select: { id: true },
         });
         if (!targetCustomer) {
@@ -91,14 +94,14 @@ export async function PUT(
     const status = String(body.status ?? existing.status);
 
     const customerRow = await prisma.customer.findFirst({
-      where: { id: customerId, ownerUserId: scope.userId, isActive: true },
+      where: { id: customerId, ownerUserId: { in: workspaceUserIds }, isActive: true },
       select: { id: true },
     });
     if (!customerRow) {
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
     }
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items, scope.userId);
+    const { lines, subtotal } = await resolveLinesFromPayload(body.items, workspaceUserIds);
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }
