@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { customerToApi } from '@/lib/db/api-serialize';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import type { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
@@ -9,12 +10,17 @@ export async function GET(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
 
-    const where: Prisma.CustomerWhereInput = { isActive: true, ownerUserId: scope.userId };
+    const where: Prisma.CustomerWhereInput = {
+      isActive: true,
+      ownerUserId: { in: workspaceUserIds },
+    };
     if (search) {
       where.OR = [
         { companyName: { contains: search, mode: 'insensitive' } },
