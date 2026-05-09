@@ -736,7 +736,7 @@ export default function DashboardPage() {
                   Tradespeople can photograph cleaning equipment on-site. Our AI recognises it and
                   creates a quote for customer approval — no catalogue browsing needed.
                 </p>
-                <Link href="/settings/mobile">
+                <Link href="/dashboard/settings/mobile">
                   <Button size="sm" className="w-full">
                     <Camera className="mr-2 h-4 w-4" />
                     Manage mobile orders
