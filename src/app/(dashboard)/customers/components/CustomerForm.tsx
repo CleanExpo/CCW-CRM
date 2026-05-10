@@ -27,6 +27,8 @@ import { Switch } from '@/components/ui/switch';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { useAutosave } from '@/hooks/use-autosave';
 import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 
@@ -334,16 +336,62 @@ export function CustomerForm({ customer, open, onOpenChange, onSuccess }: Custom
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Active Status</FormLabel>
-                    <FormDescription>
-                      Inactive customers won&apos;t appear in active listings
-                    </FormDescription>
+                <FormItem>
+                  <div
+                    className={cn(
+                      'flex flex-col gap-4 rounded-xl border-2 p-4 shadow-sm transition-colors sm:flex-row sm:items-center sm:justify-between',
+                      field.value
+                        ? 'border-emerald-300/80 bg-emerald-50/90 dark:border-emerald-800 dark:bg-emerald-950/40'
+                        : 'border-amber-300/80 bg-amber-50/90 dark:border-amber-800 dark:bg-amber-950/40',
+                    )}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                      <Badge
+                        variant={field.value ? 'success' : 'secondary'}
+                        className="h-7 shrink-0 px-3 text-xs font-semibold uppercase tracking-wide"
+                      >
+                        {field.value ? 'Active' : 'Inactive'}
+                      </Badge>
+                      <div className="min-w-0 space-y-1">
+                        <FormLabel className="text-base font-semibold">Customer status</FormLabel>
+                        <FormDescription
+                          className={cn(
+                            field.value
+                              ? 'text-emerald-950 dark:text-emerald-100/90'
+                              : 'text-amber-950 dark:text-amber-100/90',
+                          )}
+                        >
+                          {field.value
+                            ? 'This customer appears in directory, orders, and CRM.'
+                            : 'Inactive customers are hidden from active listings until you turn this back on.'}
+                        </FormDescription>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-3 border-t border-black/5 pt-3 dark:border-white/10 sm:border-t-0 sm:pt-0">
+                      <span
+                        className={cn(
+                          'text-sm font-medium',
+                          field.value
+                            ? 'text-emerald-800 dark:text-emerald-200'
+                            : 'text-amber-800 dark:text-amber-200',
+                        )}
+                      >
+                        {field.value ? 'Available for sales' : 'Not available for new activity'}
+                      </span>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          aria-label={
+                            field.value
+                              ? 'Customer is active; switch to deactivate'
+                              : 'Customer is inactive; switch to activate'
+                          }
+                          className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-zinc-400 dark:data-[state=unchecked]:bg-zinc-600"
+                        />
+                      </FormControl>
+                    </div>
                   </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
                 </FormItem>
               )}
             />
