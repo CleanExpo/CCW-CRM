@@ -6,6 +6,7 @@ import type {
   Customer,
   Invoice as InvoiceRow,
   InvoiceLineItem,
+  InvoicePayment as InvoicePaymentRow,
   Order,
   Product,
   Quote,
@@ -118,6 +119,20 @@ export function quoteToApi(q: Quote, customerName?: string) {
     created_at: q.createdAt,
     updated_at: q.updatedAt,
     customer_name: name,
+  };
+}
+
+export function paymentToApi(p: InvoicePaymentRow) {
+  return {
+    id: p.id,
+    invoice_id: p.invoiceId,
+    payment_date: p.paymentDate.toISOString().split('T')[0],
+    amount: p.amount,
+    payment_method: p.paymentMethod,
+    reference_number: p.referenceNumber ?? undefined,
+    notes: p.notes ?? undefined,
+    created_at: p.createdAt.toISOString(),
+    updated_at: p.updatedAt.toISOString(),
   };
 }
 
