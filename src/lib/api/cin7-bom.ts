@@ -2,7 +2,7 @@
  * Cin7 BOM (Bill of Materials) and Production Run API client.
  *
  * Covers BOM masters, BOM components, and production run lifecycle management.
- * Endpoints are served under `/api/cin7/bom`.
+ * Endpoints are served under `/api/cin7/bom` (BOM detail: `/api/cin7/bom/master/:id` so `production-runs` is not captured by a dynamic segment).
  */
 
 import { apiClient } from './client';
@@ -129,7 +129,7 @@ export function syncBoms(): Promise<SyncBomsResponse> {
  * Fetch a single BOM master with all its component lines.
  */
 export function getBom(bomId: string): Promise<Cin7BomMaster> {
-  return apiClient.get<Cin7BomMaster>(`/api/cin7/bom/${bomId}`);
+  return apiClient.get<Cin7BomMaster>(`/api/cin7/bom/master/${bomId}`);
 }
 
 /**

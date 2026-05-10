@@ -97,6 +97,70 @@ model Product {
   @@map("products")
 }
 
+model Cin7BomMaster {
+  id               String    @id @default(uuid()) @db.Uuid
+  ownerUserId      String    @map("owner_user_id") @db.Uuid
+  cin7BomId        String    @map("cin7_bom_id")
+  name             String
+  sku              String
+  version          String    @default("1")
+  status           String    @default("active")
+  finishedGoodSku  String?   @map("finished_good_sku")
+  finishedGoodName String?   @map("finished_good_name")
+  quantityProduced String    @default("1.0000") @map("quantity_produced")
+  uom              String    @default("EA")
+  notes            String?
+  lastSyncedAt     DateTime? @map("last_synced_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  components     Cin7BomComponent[]
+  productionRuns Cin7ProductionRun[]
+
+  @@unique([ownerUserId, cin7BomId])
+  @@index([ownerUserId])
+  @@map("cin7_bom_masters")
+}
+
+model Cin7BomComponent {
+  id              String  @id @default(uuid()) @db.Uuid
+  bomMasterId     String  @map("bom_master_id") @db.Uuid
+  componentSku    String  @map("component_sku")
+  componentName   String  @map("component_name")
+  quantity        String  @default("1.0000")
+  uom             String  @default("EA")
+  wastagePercent  String  @default("0.00") @map("wastage_percent")
+  notes           String?
+
+  bomMaster Cin7BomMaster @relation(fields: [bomMasterId], references: [id], onDelete: Cascade)
+
+  @@index([bomMasterId])
+  @@map("cin7_bom_components")
+}
+
+model Cin7ProductionRun {
+  id                String    @id @default(uuid()) @db.Uuid
+  ownerUserId       String    @map("owner_user_id") @db.Uuid
+  bomMasterId       String    @map("bom_master_id") @db.Uuid
+  cin7ProductionId  String?   @map("cin7_production_id")
+  quantityPlanned   String    @map("quantity_planned")
+  quantityCompleted String    @default("0") @map("quantity_completed")
+  status            String    @default("planned")
+  plannedDate       DateTime? @map("planned_date")
+  completedDate     DateTime? @map("completed_date")
+  locationId        String?   @map("location_id")
+  notes             String?
+  cin7Synced        Boolean   @default(false) @map("cin7_synced")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  bomMaster Cin7BomMaster @relation(fields: [bomMasterId], references: [id], onDelete: Restrict)
+
+  @@index([ownerUserId])
+  @@index([bomMasterId])
+  @@map("cin7_production_runs")
+}
+
 model ProductLocationStock {
   id                  String   @id @default(uuid()) @db.Uuid
   productId           String   @map("product_id") @db.Uuid

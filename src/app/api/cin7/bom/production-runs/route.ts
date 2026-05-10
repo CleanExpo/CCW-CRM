@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { createRunForOwner, listRunsForOwner } from '@/lib/cin7/bom-memory-store';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { createRunForWorkspace, listRunsForWorkspace } from '@/lib/db/cin7-bom-service';
 
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -8,13 +9,32 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
 
+  const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('page_size') || '50', 10)));
   const status = searchParams.get('status')?.trim() || undefined;
 
-  const payload = listRunsForOwner(scope.userId, page, pageSize, status);
-  return NextResponse.json(payload);
+  try {
+    const payload = await listRunsForWorkspace(workspaceUserIds, page, pageSize, status);
+    return NextResponse.json(payload);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/does not exist|no such table|relation.*cin7/i.test(msg)) {
+      return NextResponse.json(
+        {
+          items: [],
+          total: 0,
+          page: 1,
+          page_size: pageSize,
+          total_pages: 1,
+          detail: 'Run prisma migrate deploy.',
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json({ detail: msg }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -22,6 +42,8 @@ export async function POST(request: NextRequest) {
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
+
+  const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
 
   let body: Record<string, unknown>;
   try {
@@ -39,20 +61,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const run = createRunForOwner(scope.userId, {
-    bom_master_id,
-    quantity_planned,
-    planned_date: body.planned_date != null ? String(body.planned_date) : null,
-    location_id: body.location_id != null ? String(body.location_id) : null,
-    notes: body.notes != null ? String(body.notes) : null,
-  });
+  try {
+    const run = await createRunForWorkspace(workspaceUserIds, scope.userId, {
+      bom_master_id,
+      quantity_planned,
+      planned_date: body.planned_date != null ? String(body.planned_date) : null,
+      location_id: body.location_id != null ? String(body.location_id) : null,
+      notes: body.notes != null ? String(body.notes) : null,
+    });
 
-  if (!run) {
-    return NextResponse.json(
-      { detail: 'BOM master not found. Run POST /api/cin7/bom/sync first.' },
-      { status: 404 },
-    );
+    if (!run) {
+      return NextResponse.json(
+        { detail: 'BOM master not found. Sync BOMs from the catalog first.' },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(run, { status: 201 });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/does not exist|no such table|relation.*cin7/i.test(msg)) {
+      return NextResponse.json({ detail: 'Run prisma migrate deploy.' }, { status: 503 });
+    }
+    return NextResponse.json({ detail: msg }, { status: 500 });
   }
-
-  return NextResponse.json(run, { status: 201 });
 }

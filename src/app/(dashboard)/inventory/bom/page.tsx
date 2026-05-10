@@ -46,178 +46,6 @@ import {
 } from '@/components/operations/OperationsPageHeader';
 
 // ---------------------------------------------------------------------------
-// Demo fallback data (used when backend is unavailable)
-// ---------------------------------------------------------------------------
-
-const DEMO_BOMS: Cin7BomMaster[] = [
-  {
-    id: 'demo-bom-1',
-    cin7_bom_id: 'BOM-001',
-    name: 'Industrial Pressure Washer Assembly',
-    sku: 'FG-PWA-3000',
-    version: '2',
-    status: 'active',
-    finished_good_sku: 'FG-PWA-3000',
-    finished_good_name: 'Industrial Pressure Washer 3000 PSI',
-    quantity_produced: '1.0000',
-    uom: 'EA',
-    notes: 'Assembled from pump unit, frame, and hose kit',
-    last_synced_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    components: [
-      {
-        id: 'c1',
-        bom_master_id: 'demo-bom-1',
-        component_sku: 'RM-PUMP-3000',
-        component_name: 'High-Pressure Pump Unit 3000 PSI',
-        quantity: '1.0000',
-        uom: 'EA',
-        wastage_percent: '2.00',
-        notes: null,
-      },
-      {
-        id: 'c2',
-        bom_master_id: 'demo-bom-1',
-        component_sku: 'RM-FRAME-STL',
-        component_name: 'Steel Frame Assembly',
-        quantity: '1.0000',
-        uom: 'EA',
-        wastage_percent: '0.00',
-        notes: null,
-      },
-      {
-        id: 'c3',
-        bom_master_id: 'demo-bom-1',
-        component_sku: 'RM-HOSE-15M',
-        component_name: 'High-Pressure Hose 15m',
-        quantity: '2.0000',
-        uom: 'EA',
-        wastage_percent: '5.00',
-        notes: 'One spare included',
-      },
-    ],
-  },
-  {
-    id: 'demo-bom-2',
-    cin7_bom_id: 'BOM-002',
-    name: 'Safety Equipment Bundle — Site Pack',
-    sku: 'FG-SAFE-SITE',
-    version: '1',
-    status: 'active',
-    finished_good_sku: 'FG-SAFE-SITE',
-    finished_good_name: 'Site Safety Equipment Pack',
-    quantity_produced: '1.0000',
-    uom: 'KIT',
-    notes: 'Standard site safety pack for 1 worker',
-    last_synced_at: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    components: [
-      {
-        id: 'c4',
-        bom_master_id: 'demo-bom-2',
-        component_sku: 'RM-HELMET-WHT',
-        component_name: 'Safety Helmet White',
-        quantity: '1.0000',
-        uom: 'EA',
-        wastage_percent: '0.00',
-        notes: null,
-      },
-      {
-        id: 'c5',
-        bom_master_id: 'demo-bom-2',
-        component_sku: 'RM-VEST-HI',
-        component_name: 'Hi-Vis Safety Vest',
-        quantity: '1.0000',
-        uom: 'EA',
-        wastage_percent: '3.00',
-        notes: null,
-      },
-    ],
-  },
-  {
-    id: 'demo-bom-3',
-    cin7_bom_id: 'BOM-003',
-    name: 'Electrical Maintenance Kit',
-    sku: 'FG-ELEC-MAINT',
-    version: '1',
-    status: 'draft',
-    finished_good_sku: 'FG-ELEC-MAINT',
-    finished_good_name: 'Electrical Maintenance Tool Kit',
-    quantity_produced: '1.0000',
-    uom: 'KIT',
-    notes: 'Draft — pending component cost review',
-    last_synced_at: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    components: [
-      {
-        id: 'c6',
-        bom_master_id: 'demo-bom-3',
-        component_sku: 'RM-MULTIMETER',
-        component_name: 'Digital Multimeter',
-        quantity: '1.0000',
-        uom: 'EA',
-        wastage_percent: '0.00',
-        notes: null,
-      },
-    ],
-  },
-];
-
-const DEMO_RUNS: Cin7ProductionRun[] = [
-  {
-    id: 'demo-run-1',
-    bom_master_id: 'demo-bom-1',
-    bom_name: 'Industrial Pressure Washer Assembly',
-    cin7_production_id: 'PROD-2024-001',
-    quantity_planned: '10.0000',
-    quantity_completed: '10.0000',
-    status: 'completed',
-    planned_date: '2024-02-15',
-    completed_date: '2024-02-17',
-    location_id: 'Brisbane',
-    notes: null,
-    cin7_synced: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-run-2',
-    bom_master_id: 'demo-bom-2',
-    bom_name: 'Safety Equipment Bundle — Site Pack',
-    cin7_production_id: null,
-    quantity_planned: '50.0000',
-    quantity_completed: '20.0000',
-    status: 'in_progress',
-    planned_date: '2024-03-01',
-    completed_date: null,
-    location_id: 'Sydney',
-    notes: 'Delayed due to helmet stock shortage',
-    cin7_synced: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-run-3',
-    bom_master_id: 'demo-bom-1',
-    bom_name: 'Industrial Pressure Washer Assembly',
-    cin7_production_id: null,
-    quantity_planned: '5.0000',
-    quantity_completed: '0.0000',
-    status: 'planned',
-    planned_date: '2024-04-10',
-    completed_date: null,
-    location_id: 'Melbourne',
-    notes: null,
-    cin7_synced: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-// ---------------------------------------------------------------------------
 // Status badge helpers
 // ---------------------------------------------------------------------------
 
@@ -422,13 +250,18 @@ export default function BomPage() {
     try {
       const data = await listBoms(1, 50);
       setBoms(data.items);
-    } catch {
-      // Fallback to demo data when backend is unreachable
-      setBoms(DEMO_BOMS);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to load BOMs';
+      toast({
+        variant: 'destructive',
+        title: 'Could not load BOMs',
+        description: message,
+      });
+      setBoms([]);
     } finally {
       setBomsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   // Load production runs
   const loadRuns = useCallback(async () => {
@@ -436,20 +269,25 @@ export default function BomPage() {
     try {
       const data = await listProductionRuns(1, 50);
       setRuns(data.items);
-    } catch {
-      // Fallback to demo data when backend is unreachable
-      setRuns(DEMO_RUNS);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to load production runs';
+      toast({
+        variant: 'destructive',
+        title: 'Could not load production runs',
+        description: message,
+      });
+      setRuns([]);
     } finally {
       setRunsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     void loadBoms();
     void loadRuns();
   }, [loadBoms, loadRuns]);
 
-  // Sync from Cin7
+  // Sync BOM masters from workspace product catalog (persists to database)
   async function handleSync() {
     setSyncing(true);
     try {
@@ -462,7 +300,8 @@ export default function BomPage() {
     } catch {
       toast({
         title: 'Sync failed',
-        description: 'Could not sync BOMs from Cin7. Check connection settings.',
+        description:
+          'Could not refresh BOMs from your product catalog. Ensure the database migration is applied.',
         variant: 'destructive',
       });
     } finally {
