@@ -29,9 +29,13 @@ export function FinancialReportTab() {
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
+      const range =
+        dateFrom || dateTo
+          ? { ...(dateFrom ? { date_from: dateFrom } : {}), ...(dateTo ? { date_to: dateTo } : {}) }
+          : undefined;
       const [revenueData, taxData] = await Promise.all([
-        invoicesApi.getRevenueSummary(),
-        invoicesApi.getTaxSummary(),
+        invoicesApi.getRevenueSummary(range),
+        invoicesApi.getTaxSummary(range),
       ]);
       setRevenue(revenueData);
       setTax(taxData);
@@ -45,7 +49,7 @@ export function FinancialReportTab() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, dateFrom, dateTo]);
 
   useEffect(() => {
     loadReports();
