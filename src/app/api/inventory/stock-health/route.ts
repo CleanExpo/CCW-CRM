@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { stockHealthBuckets } from '@/lib/db/inventory-product-view';
+import {
+  INVENTORY_LOCATION_STOCK_SELECT,
+  isMissingInventoryTableError,
+  toProductLocationRows,
+} from '@/lib/db/inventory-api-helpers';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,53 +16,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const threshold = parseInt(searchParams.get('threshold') || '20', 10);
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+    const threshold = parseInt(new URL(request.url).searchParams.get('threshold') || '20', 10);
 
     const products = await prisma.product.findMany({
-      where: { isActive: true, ownerUserId: scope.userId },
-      select: { id: true, sku: true, name: true, stock: true, warehouseLocation: true },
-    });
-
-    const buildStockByLocation = (p: { stock: number; warehouseLocation: string | null }) => [
-      {
-        location: p.warehouseLocation || 'brisbane',
-        stock: p.stock,
-        reserved: 0,
-        available: p.stock,
+      where: { isActive: true, ownerUserId: { in: workspaceUserIds } },
+      select: {
+        id: true,
+        sku: true,
+        name: true,
+        stock: true,
+        warehouseLocation: true,
+        locationStocks: { select: INVENTORY_LOCATION_STOCK_SELECT },
       },
-    ];
-
-    const critical = products
-      .filter((p) => p.stock === 0)
-      .map((p) => ({
-        product_id: p.id,
-        product_sku: p.sku,
-        product_name: p.name,
-        total_stock: p.stock,
-        total_reserved: 0,
-        total_available: p.stock,
-        locations: buildStockByLocation(p),
-      }));
-
-    const low = products
-      .filter((p) => p.stock > 0 && p.stock <= threshold)
-      .map((p) => ({
-        product_id: p.id,
-        product_sku: p.sku,
-        product_name: p.name,
-        total_stock: p.stock,
-        total_reserved: 0,
-        total_available: p.stock,
-        locations: buildStockByLocation(p),
-      }));
-
-    return NextResponse.json({
-      critical,
-      low,
-      warning: [],
     });
-  } catch {
+
+    const normalized = products.map((p) => ({
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      stock: p.stock,
+      warehouseLocation: p.warehouseLocation,
+      locationStocks: toProductLocationRows(p.locationStocks),
+    }));
+
+    const { critical, low, warning } = stockHealthBuckets(normalized, threshold);
+
+    return NextResponse.json({ critical, low, warning });
+  } catch (e) {
+    if (isMissingInventoryTableError(e)) {
+      return NextResponse.json({ critical: [], low: [], warning: [] });
+    }
     return NextResponse.json({ critical: [], low: [], warning: [] }, { status: 500 });
   }
 }
