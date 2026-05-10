@@ -219,9 +219,8 @@ export function FinancialReportTab() {
                     >
                       <span className="font-medium">{Number(row.tax_rate).toFixed(0)}% GST</span>
                       <span className="text-right">
-                        {/* taxable_amount not in type — show dash if missing */}
-                        {'taxable_amount' in row
-                          ? formatCurrency((row as { taxable_amount: number }).taxable_amount)
+                        {typeof row.taxable_amount === 'number'
+                          ? formatCurrency(row.taxable_amount)
                           : '—'}
                       </span>
                       <span className="text-right font-semibold">
