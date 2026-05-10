@@ -35,9 +35,6 @@ import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { QuoteLineItems, LineItem } from './QuoteLineItems';
 import { Quote, Customer, QuoteItem } from '../types';
-// PHASE 4: Autosave + Recent Items imports
-import { useAutosave } from '@/hooks/use-autosave';
-import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 import { useRecentItems } from '@/hooks/use-recent-items';
 // PHASE C: AI Quote Assistant imports
 import { AIQuoteGenerator } from '@/components/ai/AIQuoteGenerator';
@@ -103,32 +100,6 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       key: 'recent-customers',
       maxItems: 10,
     });
-
-  // PHASE 4: Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `quote-form-${quote?.id}` : 'quote-form-new';
-  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
-    key: draftKey,
-    formValues: {
-      ...form.watch(),
-      lineItems, // Include line items in autosave
-    },
-    onRestore: (draft) => {
-      // Restore form fields
-      if (draft.customer_id) form.setValue('customer_id', draft.customer_id);
-      if (draft.fulfillment_location)
-        form.setValue('fulfillment_location', draft.fulfillment_location);
-      if (draft.status) form.setValue('status', draft.status);
-      if (draft.quote_date) form.setValue('quote_date', draft.quote_date);
-      if (draft.valid_until) form.setValue('valid_until', draft.valid_until);
-      if (draft.notes) form.setValue('notes', draft.notes);
-      // Restore line items
-      if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
-        setLineItems(draft.lineItems);
-      }
-    },
-    enabled: open && !isEdit, // Only autosave for new quotes (not edits)
-    debounceMs: 2000, // Save every 2 seconds
-  });
 
   // Load customers
   useEffect(() => {
@@ -255,9 +226,6 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
         });
       }
 
-      // PHASE 4: Clear draft on successful submission
-      clearDraft();
-
       // PHASE 4: Add customer to recent items
       const selectedCustomer = customers.find((c) => c.id === values.customer_id);
       if (selectedCustomer) {
@@ -336,16 +304,6 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
                 : 'Fill in the quote details and add line items to create a new quote.'}
             </DialogDescription>
           </DialogHeader>
-
-          {/* PHASE 4: Draft Recovery Alert */}
-          {hasDraft && !isEdit && draftMetadata && (
-            <DraftRecoveryAlert
-              savedAt={draftMetadata.savedAt}
-              onRestore={loadDraft}
-              onDiscard={clearDraft}
-              message="You have unsaved quote data. Would you like to restore it?"
-            />
-          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
