@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import * as z from 'zod';
@@ -93,6 +93,8 @@ interface OrderFormProps {
 export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  /** True after a successful GET /api/customers for this dialog session (used to validate selection vs workspace). */
+  const [customersHydrated, setCustomersHydrated] = useState(false);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('brisbane');
@@ -124,11 +126,20 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   });
 
   // PHASE 4: Recent customers cache - speeds up order entry
-  const { recentItems: recentCustomers, addRecentItem: addRecentCustomer } =
-    useRecentItems<Customer>({
-      key: 'recent-customers',
-      maxItems: 10,
-    });
+  const {
+    recentItems: recentCustomers,
+    addRecentItem: addRecentCustomer,
+    removeRecentItem: removeRecentCustomer,
+  } = useRecentItems<Customer>({
+    key: 'recent-customers',
+    maxItems: 10,
+  });
+
+  /** Recent list is stored in localStorage and can contain IDs from another DB/session — only show IDs that exist in the workspace list. */
+  const recentCustomersValid = useMemo(
+    () => recentCustomers.filter((r) => customers.some((c) => c.id === r.id)),
+    [recentCustomers, customers],
+  );
 
   // PHASE AI: Form auto-fill suggestions based on customer history
   const selectedCustomerId = form.watch('customer_id');
@@ -178,11 +189,13 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const loadCustomers = useCallback(async () => {
     try {
       const response = await apiClient.get<{ items: Customer[] }>(
-        '/api/customers?page=1&page_size=100'
+        '/api/customers?page=1&page_size=200'
       );
       setCustomers(response.items || []);
+      setCustomersHydrated(true);
     } catch (error) {
       console.error('Failed to load customers:', error);
+      setCustomersHydrated(false);
       const message =
         error instanceof ApiClientError
           ? error.message
@@ -202,6 +215,30 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     if (!open) return;
     void loadCustomers();
   }, [open, loadCustomers]);
+
+  useEffect(() => {
+    if (!open) setCustomersHydrated(false);
+  }, [open]);
+
+  // Drop stale "recent" entries that are not in the current workspace customer list
+  useEffect(() => {
+    if (!customersHydrated) return;
+    recentCustomers.forEach((r) => {
+      if (!customers.some((c) => c.id === r.id)) {
+        removeRecentCustomer(r);
+      }
+    });
+  }, [customersHydrated, customers, recentCustomers, removeRecentCustomer]);
+
+  // Draft/autosave or old browser storage may reference a customer_id that does not belong to this workspace
+  useEffect(() => {
+    if (!open || !customersHydrated || isEdit) return;
+    const id = form.getValues('customer_id');
+    if (!id) return;
+    if (!customers.some((c) => c.id === id)) {
+      form.setValue('customer_id', '');
+    }
+  }, [open, customersHydrated, isEdit, customers, form]);
 
   useEffect(() => {
     if (!open) return;
@@ -287,6 +324,20 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
     setLineItemErrors([]);
 
+    if (!isEdit) {
+      const selectedCustomerRow = customers.find((c) => c.id === values.customer_id);
+      if (!selectedCustomerRow) {
+        toast({
+          variant: 'destructive',
+          title: 'Customer not available',
+          description:
+            'Pick a customer from the list for your workspace. If the list is empty, add a customer or generate sample data from onboarding.',
+        });
+        void loadCustomers();
+        return;
+      }
+    }
+
     // PHASE AI: Check for anomalies before creating order
     if (!isEdit && !anomalyDetected) {
       const orderTotal = subtotal + tax;
@@ -359,10 +410,10 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       // PHASE 4: Clear draft on successful submission
       clearDraft();
 
-      // PHASE 4: Add customer to recent items
-      const selectedCustomer = customers.find((c) => c.id === values.customer_id);
-      if (selectedCustomer) {
-        addRecentCustomer(selectedCustomer);
+      // PHASE 4: Add customer to recent items (only when we have a row from the loaded list)
+      const recent = customers.find((c) => c.id === values.customer_id);
+      if (recent) {
+        addRecentCustomer(recent);
       }
 
       onOpenChange(false);
@@ -377,7 +428,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         } else if (error.status === 401 || error.status === 403) {
           title = 'Session or permission issue';
         } else if (error.status === 404) {
-          title = 'Order not found';
+          title =
+            !isEdit && /customer not found/i.test(description)
+              ? 'Customer not found'
+              : 'Order not found';
+          if (!isEdit && /customer not found/i.test(description)) {
+            description =
+              'That customer is not in your workspace or was removed. Refresh and choose a customer from the list.';
+          }
         } else if (error.status === 408) {
           title = 'Request timed out';
         }
@@ -494,9 +552,9 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                       </FormControl>
                       <SelectContent>
                         {/* PHASE 4: Show recent customers first */}
-                        {recentCustomers.length > 0 && (
+                        {recentCustomersValid.length > 0 && (
                           <>
-                            {recentCustomers.map((customer) => (
+                            {recentCustomersValid.map((customer) => (
                               <SelectItem key={`recent-${customer.id}`} value={customer.id}>
                                 🕒 {customer.customer_number} - {customer.company_name}
                               </SelectItem>
@@ -505,7 +563,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
                           </>
                         )}
                         {customers
-                          .filter((c) => !recentCustomers.some((recent) => recent.id === c.id))
+                          .filter((c) => !recentCustomersValid.some((recent) => recent.id === c.id))
                           .map((customer) => (
                             <SelectItem key={customer.id} value={customer.id}>
                               {customer.customer_number} - {customer.company_name}
