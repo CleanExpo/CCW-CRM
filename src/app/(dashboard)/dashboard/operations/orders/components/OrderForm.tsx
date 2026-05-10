@@ -36,9 +36,6 @@ import { OrderLineItems, LineItem } from './OrderLineItems';
 import { QuickCustomerAdd } from './QuickCustomerAdd';
 import { Order, Customer, OrderItem } from '../types';
 import { Plus } from 'lucide-react';
-// PHASE 4: Autosave + Recent Items imports
-import { useAutosave } from '@/hooks/use-autosave';
-import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 import { useRecentItems } from '@/hooks/use-recent-items';
 // PHASE AI: Form Auto-Fill imports
 import { useFormAutoFill } from '@/hooks/use-form-autofill';
@@ -179,30 +176,6 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
       fetchSuggestions();
     }
   }, [selectedCustomerId, isEdit, fetchSuggestions]);
-
-  // PHASE 4: Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `order-form-${order?.id}` : 'order-form-new';
-  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
-    key: draftKey,
-    formValues: {
-      ...form.watch(),
-      lineItems, // Include line items in autosave
-    },
-    onRestore: (draft) => {
-      // Restore form fields
-      if (draft.customer_id) form.setValue('customer_id', draft.customer_id);
-      if (draft.fulfillment_location)
-        form.setValue('fulfillment_location', draft.fulfillment_location);
-      if (draft.status) form.setValue('status', draft.status);
-      if (draft.notes) form.setValue('notes', draft.notes);
-      // Restore line items
-      if (Array.isArray(draft.lineItems) && draft.lineItems.length > 0) {
-        setLineItems(draft.lineItems);
-      }
-    },
-    enabled: open && !isEdit, // Only autosave for new orders (not edits)
-    debounceMs: 2000, // Save every 2 seconds
-  });
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -447,9 +420,6 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         onSuccess({ created: true });
       }
 
-      // PHASE 4: Clear draft on successful submission
-      clearDraft();
-
       // PHASE 4: Add customer to recent items (only when we have a row from the loaded list)
       const recent = customers.find((c) => c.id === values.customer_id);
       if (recent) {
@@ -527,16 +497,6 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
               : 'Fill in the order details and add line items to create a new order.'}
           </DialogDescription>
         </DialogHeader>
-
-        {/* PHASE 4: Draft Recovery Alert */}
-        {hasDraft && !isEdit && draftMetadata && (
-          <DraftRecoveryAlert
-            savedAt={draftMetadata.savedAt}
-            onRestore={loadDraft}
-            onDiscard={clearDraft}
-            message="You have unsaved order data. Would you like to restore it?"
-          />
-        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="space-y-6">
