@@ -145,6 +145,7 @@ export interface TaxSummary {
   tax_by_rate: Array<{
     tax_rate: number;
     total_tax: number;
+    taxable_amount?: number;
     invoice_count: number;
   }>;
 }
