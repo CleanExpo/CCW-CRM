@@ -36,8 +36,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useAutosave } from '@/hooks/use-autosave';
-import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 // PHASE C: AI Product Copy Generator
 import { AIProductCopyGenerator } from '@/components/ai/AIProductCopyGenerator';
 
@@ -121,20 +119,6 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
     },
   });
 
-  // Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = isEdit ? `product-form-${product?.id}` : 'product-form-new';
-  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
-    key: draftKey,
-    formValues: form.watch(),
-    onRestore: (draft) => {
-      Object.keys(draft).forEach((key) => {
-        form.setValue(key as keyof FormData, draft[key as keyof FormData]);
-      });
-    },
-    enabled: !isEdit,
-    debounceMs: 2000,
-  });
-
   // Reset form when product changes or dialog opens/closes
   useEffect(() => {
     if (open) {
@@ -182,7 +166,6 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
           description: 'Product created successfully',
         });
       }
-      clearDraft(); // Clear autosave draft on success
       onSuccess();
       onOpenChange(false);
     } catch (error: unknown) {
@@ -222,15 +205,6 @@ export function ProductForm({ product, open, onOpenChange, onSuccess }: ProductF
                 : 'Add a new product to your catalog.'}
             </DialogDescription>
           </DialogHeader>
-
-          {/* Draft Recovery Alert */}
-          {hasDraft && !isEdit && draftMetadata && (
-            <DraftRecoveryAlert
-              savedAt={draftMetadata.savedAt}
-              onRestore={loadDraft}
-              onDiscard={clearDraft}
-            />
-          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
