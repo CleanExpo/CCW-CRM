@@ -72,6 +72,19 @@ export function LocationAwareProductSelect({
       maxItems: 10,
     });
 
+  /** IDs currently loaded from API (catalog + search). Used to hide stale localStorage recents. */
+  const mergedCatalogIds = useMemo(() => {
+    const m = new Set<string>();
+    for (const p of catalogProducts) m.add(p.id);
+    for (const p of searchResults) m.add(p.id);
+    return m;
+  }, [catalogProducts, searchResults]);
+
+  const recentProductsInCatalog = useMemo(
+    () => recentProducts.filter((r) => mergedCatalogIds.has(r.id)),
+    [recentProducts, mergedCatalogIds],
+  );
+
   const searchQuery = search.trim();
   const searchActive = searchQuery.length >= 2;
 
@@ -85,7 +98,7 @@ export function LocationAwareProductSelect({
     void (async () => {
       try {
         const response = await apiClient.get<{ items: Product[] }>(
-          `/api/products?page=1&page_size=100`
+          `/api/products?page=1&page_size=200`
         );
         const items = response.items || [];
         const sorted = [...items].sort(
@@ -286,7 +299,7 @@ export function LocationAwareProductSelect({
           </p>
           <CommandList className="max-h-[min(60vh,420px)] overflow-y-auto">
             {displayProducts.length === 0 &&
-              !(recentProducts.length > 0 && !searchActive) &&
+              !(recentProductsInCatalog.length > 0 && !searchActive) &&
               (emptyMessage() ? (
                 <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm dark:text-zinc-400">
                   {loading && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -294,12 +307,12 @@ export function LocationAwareProductSelect({
                 </div>
               ) : null)}
 
-            {!loadingCatalog && !searchActive && recentProducts.length > 0 && (
+            {!loadingCatalog && !searchActive && recentProductsInCatalog.length > 0 && (
                 <CommandGroup
                   heading="Recently used"
                   className="text-zinc-900 dark:text-zinc-100 [&_[cmdk-group-heading]]:text-zinc-500 dark:[&_[cmdk-group-heading]]:text-zinc-400"
                 >
-                  {recentProducts.map((product) => {
+                  {recentProductsInCatalog.map((product) => {
                     const stockAtLocation = getStockAtLocation(product, selectedLocation);
                     return (
                       <CommandItem
