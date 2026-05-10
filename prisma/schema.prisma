@@ -87,10 +87,106 @@ model Product {
   posTransactionLines  PosTransactionLine[]
   goodsReceiptLines    GoodsReceiptLine[]
   invoiceLineItems     InvoiceLineItem[]
+  locationStocks          ProductLocationStock[]
+  stockTransfers          StockTransfer[]
+  stockReservations       StockReservation[]
+  inventoryStockTakeLines InventoryStockTakeLine[]
 
   @@index([ownerUserId])
   @@unique([ownerUserId, sku])
   @@map("products")
+}
+
+model ProductLocationStock {
+  id                  String   @id @default(uuid()) @db.Uuid
+  productId           String   @map("product_id") @db.Uuid
+  location            String
+  quantity            Int      @default(0)
+  reserved            Int      @default(0)
+  reorderPoint        Int?     @map("reorder_point")
+  reorderQuantity     Int?     @map("reorder_quantity")
+  leadTimeDays        Int      @default(7) @map("lead_time_days")
+  autoApproveUnderQty Int      @default(0) @map("auto_approve_under_qty")
+  reorderEnabled      Boolean  @default(true) @map("reorder_enabled")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, location])
+  @@index([productId])
+  @@map("product_location_stock")
+}
+
+model StockReservation {
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerUserId String    @map("owner_user_id") @db.Uuid
+  productId   String    @map("product_id") @db.Uuid
+  orderId     String    @map("order_id")
+  location    String
+  quantity    Int
+  status      String    @default("active")
+  reservedAt  DateTime  @default(now()) @map("reserved_at")
+  expiresAt   DateTime? @map("expires_at")
+  fulfilledAt DateTime? @map("fulfilled_at")
+  cancelledAt DateTime? @map("cancelled_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+  @@index([productId])
+  @@index([status])
+  @@map("stock_reservations")
+}
+
+model InventoryStockTake {
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerUserId String    @map("owner_user_id") @db.Uuid
+  location    String
+  status      String    @default("in_progress")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  submittedAt DateTime? @map("submitted_at")
+
+  lines InventoryStockTakeLine[]
+
+  @@index([ownerUserId])
+  @@map("inventory_stock_takes")
+}
+
+model InventoryStockTakeLine {
+  id         String @id @default(uuid()) @db.Uuid
+  takeId     String @map("take_id") @db.Uuid
+  productId  String @map("product_id") @db.Uuid
+  countedQty Int    @map("counted_qty")
+
+  take    InventoryStockTake @relation(fields: [takeId], references: [id], onDelete: Cascade)
+  product Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([takeId, productId])
+  @@index([takeId])
+  @@map("inventory_stock_take_lines")
+}
+
+model StockTransfer {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+  fromLocation String   @map("from_location")
+  toLocation   String   @map("to_location")
+  quantity     Int
+  status       String   @default("completed")
+  reason       String?
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+  @@index([productId])
+  @@map("stock_transfers")
 }
 
 model Order {
