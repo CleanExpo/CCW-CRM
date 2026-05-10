@@ -17,8 +17,14 @@ export async function GET(request: NextRequest) {
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
     const category = searchParams.get('category');
+    const includeInactive =
+      searchParams.get('include_inactive') === 'true' ||
+      searchParams.get('include_inactive') === '1';
 
     const where: Prisma.ProductWhereInput = { ownerUserId: { in: workspaceUserIds } };
+    if (!includeInactive) {
+      where.isActive = true;
+    }
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
