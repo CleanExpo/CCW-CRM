@@ -124,16 +124,24 @@ export const invoicesApi = {
    * Get revenue summary for financial dashboard
    * GET /api/invoices/reports/revenue
    */
-  async getRevenueSummary(): Promise<RevenueSummary> {
-    return apiClient.get<RevenueSummary>('/api/invoices/reports/revenue');
+  async getRevenueSummary(params?: { date_from?: string; date_to?: string }): Promise<RevenueSummary> {
+    const q = new URLSearchParams();
+    if (params?.date_from) q.append('date_from', params.date_from);
+    if (params?.date_to) q.append('date_to', params.date_to);
+    const qs = q.toString();
+    return apiClient.get<RevenueSummary>(`/api/invoices/reports/revenue${qs ? `?${qs}` : ''}`);
   },
 
   /**
    * Get tax summary report
    * GET /api/invoices/reports/tax
    */
-  async getTaxSummary(): Promise<TaxSummary> {
-    return apiClient.get<TaxSummary>('/api/invoices/reports/tax');
+  async getTaxSummary(params?: { date_from?: string; date_to?: string }): Promise<TaxSummary> {
+    const q = new URLSearchParams();
+    if (params?.date_from) q.append('date_from', params.date_from);
+    if (params?.date_to) q.append('date_to', params.date_to);
+    const qs = q.toString();
+    return apiClient.get<TaxSummary>(`/api/invoices/reports/tax${qs ? `?${qs}` : ''}`);
   },
 
   /**
