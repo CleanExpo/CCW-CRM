@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import {
   getSendGridApiKey,
   getSendGridFromEmail,
@@ -68,9 +70,56 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+  const existingThread = await prisma.emailThread.findFirst({
+    where: {
+      ownerUserId: { in: workspaceUserIds },
+      customerEmail: to_email,
+    },
+    orderBy: { lastMessageAt: 'desc' },
+  });
+
+  const thread =
+    existingThread ??
+    (await prisma.emailThread.create({
+      data: {
+        ownerUserId: scope.userId,
+        subject,
+        customerEmail: to_email,
+        customerName: null,
+        status: 'responded',
+        lastMessageAt: new Date(),
+      },
+    }));
+
+  await prisma.$transaction(async (tx) => {
+    await tx.emailMessage.create({
+      data: {
+        threadId: thread.id,
+        direction: 'outbound',
+        fromEmail: fromEmail,
+        toEmail: to_email,
+        subject,
+        bodyText: body_text,
+        bodyHtml: body_html ?? null,
+        sendgridMessageId: result.message_id || null,
+        wasAiGenerated: false,
+      },
+    });
+    await tx.emailThread.update({
+      where: { id: thread.id },
+      data: {
+        lastMessageAt: new Date(),
+        subject,
+        status: 'responded',
+      },
+    });
+  });
+
   return NextResponse.json({
     success: true,
     message_id: result.message_id,
     mode: result.mode,
+    conversation_id: thread.id,
   });
 }
