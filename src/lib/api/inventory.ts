@@ -143,7 +143,26 @@ export const inventoryApi = {
    * GET /api/inventory/transfer-suggestions
    */
   async getTransferSuggestions(): Promise<TransferSuggestion[]> {
-    return apiClient.get<TransferSuggestion[]>('/api/inventory/transfer-suggestions');
+    const res = await apiClient.get<{
+      suggestions: Array<{
+        product_id: string;
+        product_sku: string;
+        product_name: string;
+        from_location: string;
+        to_location: string;
+        suggested_quantity: number;
+        reason: string;
+      }>;
+    }>('/api/inventory/transfer-suggestions');
+    return res.suggestions.map((s) => ({
+      product_id: s.product_id,
+      sku: s.product_sku,
+      name: s.product_name,
+      from_location: s.from_location,
+      to_location: s.to_location,
+      suggested_quantity: s.suggested_quantity,
+      reason: s.reason,
+    }));
   },
 
   /**
