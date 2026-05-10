@@ -47,9 +47,25 @@ model Customer {
   orders   Order[]
   quotes   Quote[]
   invoices Invoice[]
+  persona  CustomerPersona?
 
   @@index([ownerUserId])
   @@map("customers")
+}
+
+model CustomerPersona {
+  id           String   @id @default(uuid()) @db.Uuid
+  customerId   String   @unique @map("customer_id") @db.Uuid
+  persona      String
+  confidence   String
+  reason       String
+  classifiedAt DateTime @default(now()) @map("classified_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([persona])
+  @@map("customer_personas")
 }
 
 model Product {
@@ -165,6 +181,7 @@ model Invoice {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
   order    Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
   items    InvoiceLineItem[]
+  payments InvoicePayment[]
 
   @@index([ownerUserId])
   @@index([customerId])
@@ -191,6 +208,61 @@ model InvoiceLineItem {
 
   @@index([invoiceId])
   @@map("invoice_line_items")
+}
+
+model InvoicePayment {
+  id              String   @id @default(uuid()) @db.Uuid
+  invoiceId       String   @map("invoice_id") @db.Uuid
+  amount          Float
+  paymentDate     DateTime @map("payment_date") @db.Date
+  paymentMethod   String   @map("payment_method")
+  referenceNumber String?  @map("reference_number")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_payments")
+}
+
+model EmailThread {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerUserId   String   @map("owner_user_id") @db.Uuid
+  subject       String
+  customerEmail String   @map("customer_email")
+  customerName  String?  @map("customer_name")
+  status        String   @default("open")
+  intent        String?
+  lastMessageAt DateTime @default(now()) @map("last_message_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  messages EmailMessage[]
+
+  @@index([ownerUserId])
+  @@index([customerEmail])
+  @@map("email_threads")
+}
+
+model EmailMessage {
+  id                 String   @id @default(uuid()) @db.Uuid
+  threadId           String   @map("thread_id") @db.Uuid
+  direction          String
+  fromEmail          String   @map("from_email")
+  toEmail            String   @map("to_email")
+  subject            String
+  bodyText           String   @map("body_text")
+  bodyHtml           String?  @map("body_html")
+  sendgridMessageId  String?  @map("sendgrid_message_id")
+  sentAt             DateTime @default(now()) @map("sent_at")
+  wasAiGenerated     Boolean  @default(false) @map("was_ai_generated")
+
+  thread EmailThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@map("email_messages")
 }
 
 model Supplier {
