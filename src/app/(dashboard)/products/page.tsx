@@ -141,7 +141,7 @@ export default function ProductsPage() {
       // Before: 50 products = 51 API calls (1 list + 50 stock lookups)
       // After: 50 products = 1 API call (98% reduction)
       const data = await apiClient.get<PaginatedResponse>(
-        `/api/products?page=${page}&page_size=${pageSize}&include_stock=true${
+        `/api/products?page=${page}&page_size=${pageSize}&include_inactive=true&include_stock=true${
           debouncedSearch ? `&search=${debouncedSearch}` : ''
         }`
       );
