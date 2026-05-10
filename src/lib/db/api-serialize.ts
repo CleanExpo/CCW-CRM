@@ -161,7 +161,9 @@ export function invoiceToApi(
   inv: InvoiceRow & {
     customer?: Pick<Customer, 'companyName' | 'email'> | null;
     items?: Array<InvoiceLineItem & { product?: Product | null }>;
-  }
+    payments?: InvoicePaymentRow[];
+  },
+  options?: { statusOverride?: string }
 ) {
   const amountDue = inv.total - inv.amountPaid;
   return {
@@ -173,7 +175,7 @@ export function invoiceToApi(
     customer_email: inv.customer?.email ?? undefined,
     invoice_date: inv.invoiceDate.toISOString().split('T')[0],
     due_date: inv.dueDate.toISOString().split('T')[0],
-    status: inv.status,
+    status: options?.statusOverride ?? inv.status,
     notes: inv.notes ?? undefined,
     subtotal: inv.subtotal,
     tax_total: inv.taxTotal,
@@ -181,7 +183,7 @@ export function invoiceToApi(
     amount_paid: inv.amountPaid,
     amount_due: amountDue,
     items: (inv.items ?? []).map((li) => invoiceLineToApi(li)),
-    payments: [],
+    payments: (inv.payments ?? []).map(paymentToApi),
     created_at: inv.createdAt.toISOString(),
     updated_at: inv.updatedAt.toISOString(),
   };
