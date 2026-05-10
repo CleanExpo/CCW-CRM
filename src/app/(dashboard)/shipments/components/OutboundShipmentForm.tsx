@@ -31,8 +31,6 @@ import {
 } from '@/lib/api/shipments-outbound';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Calendar } from 'lucide-react';
-import { useAutosave } from '@/hooks/use-autosave';
-import { DraftRecoveryAlert } from '@/components/ui/draft-recovery-alert';
 
 // Validation schema (for create)
 const createFormSchema = z.object({
@@ -144,23 +142,6 @@ export function OutboundShipmentForm({
           },
   });
 
-  // Autosave hook - prevents data loss on dialog close/navigation
-  const draftKey = mode === 'edit' ? `shipment-form-${initialData?.id}` : 'shipment-form-new';
-  const { hasDraft, draftMetadata, loadDraft, clearDraft } = useAutosave({
-    key: draftKey,
-    formValues: form.watch(),
-    onRestore: (draft) => {
-      Object.keys(draft).forEach((key) => {
-        form.setValue(
-          key as keyof (CreateFormData | UpdateFormData),
-          draft[key as keyof typeof draft]
-        );
-      });
-    },
-    enabled: mode === 'create',
-    debounceMs: 2000,
-  });
-
   async function onSubmit(values: CreateFormData | UpdateFormData) {
     setIsLoading(true);
 
@@ -179,7 +160,6 @@ export function OutboundShipmentForm({
         });
       }
 
-      clearDraft(); // Clear autosave draft on success
       onSuccess?.();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Operation failed';
@@ -196,15 +176,6 @@ export function OutboundShipmentForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Draft Recovery Alert */}
-        {hasDraft && mode === 'create' && draftMetadata && (
-          <DraftRecoveryAlert
-            savedAt={draftMetadata.savedAt}
-            onRestore={loadDraft}
-            onDiscard={clearDraft}
-          />
-        )}
-
         {/* Create-only fields */}
         {mode === 'create' && (
           <div className="space-y-4">
