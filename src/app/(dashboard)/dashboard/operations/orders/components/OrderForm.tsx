@@ -65,6 +65,24 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+/** IDs for active workspace products (matches order POST validation). */
+async function fetchWorkspaceActiveProductIdSet(): Promise<Set<string>> {
+  const ids = new Set<string>();
+  let page = 1;
+  const pageSize = 500;
+  let totalPages = 1;
+  do {
+    const res = await apiClient.get<{
+      items: { id: string }[];
+      total_pages: number;
+    }>(`/api/products?page=${page}&page_size=${pageSize}`);
+    for (const p of res.items ?? []) ids.add(p.id);
+    totalPages = Math.max(1, res.total_pages ?? 1);
+    page += 1;
+  } while (page <= totalPages && page <= 40);
+  return ids;
+}
+
 function flattenFormErrorMessages(errors: FieldErrors<FormData>): string[] {
   const messages: string[] = [];
   const visit = (node: unknown): void => {
@@ -324,6 +342,28 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
     setLineItemErrors([]);
 
+    const distinctProductIds = [...new Set(lineItems.map((li) => li.product_id).filter(Boolean))];
+    try {
+      const allowedIds = await fetchWorkspaceActiveProductIdSet();
+      const invalidProducts = distinctProductIds.filter((id) => !allowedIds.has(id));
+      if (invalidProducts.length > 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Product not available',
+          description:
+            'A line item references an inactive or unknown product. Pick products again from the catalog.',
+        });
+        return;
+      }
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Could not verify products',
+        description: 'Refresh the page and try again.',
+      });
+      return;
+    }
+
     if (!isEdit) {
       const selectedCustomerRow = customers.find((c) => c.id === values.customer_id);
       if (!selectedCustomerRow) {
@@ -425,6 +465,11 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         description = error.message;
         if (error.status === 400) {
           title = isEdit ? 'Order update rejected' : 'Order could not be created';
+          if (/unknown or inactive product/i.test(description)) {
+            title = 'Invalid product on order';
+            description =
+              'Replace line items with products from your active catalog (inactive items cannot be ordered).';
+          }
         } else if (error.status === 401 || error.status === 403) {
           title = 'Session or permission issue';
         } else if (error.status === 404) {
