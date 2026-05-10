@@ -161,8 +161,10 @@ export default function EmailsPage() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
-                Incoming emails will appear here. Try simulating a demo email to get started.
+              <p className="text-sm text-muted-foreground text-center mb-4 max-w-md">
+                Outbound mail sent from Compose is delivered via SendGrid and saved here. For demo inbound
+                threads, set <code className="text-xs">SENDGRID_MODE=demo</code> and use Simulate, or
+                configure Inbound Parse webhooks for production.
               </p>
               <Button onClick={handleSimulateEmail} disabled={simulatingEmail}>
                 <Bot className="mr-2 h-4 w-4" />
