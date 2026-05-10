@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { invoiceSummaryToApi, invoiceToApi } from '@/lib/db/api-serialize';
+import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
 import { nextInvoiceNumber, resolveInvoiceLinesFromPayload } from '@/lib/db/invoice-mutations';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
@@ -52,7 +53,12 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
     return NextResponse.json({
-      data: rows.map(invoiceSummaryToApi),
+      data: rows.map((r) =>
+        invoiceSummaryToApi({
+          ...r,
+          status: deriveInvoiceStatus(r),
+        })
+      ),
       total,
       page,
       page_size: pageSize,
@@ -151,10 +157,14 @@ export async function POST(request: NextRequest) {
       include: {
         customer: { select: { companyName: true, email: true } },
         items: { include: { product: true } },
+        payments: true,
       },
     });
 
-    return NextResponse.json(invoiceToApi(created), { status: 201 });
+    return NextResponse.json(
+      invoiceToApi(created, { statusOverride: deriveInvoiceStatus(created) }),
+      { status: 201 }
+    );
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
