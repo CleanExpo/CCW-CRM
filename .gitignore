@@ -2,7 +2,11 @@
 tmpclaude-*
 
 # Agent / planning trees removed from version control (recreate locally if needed)
-.claude/
+# Note: trailing slash removed and DESIGN.md re-included — the brand contract
+# every AI agent reads (Claude Code / Claude Design / Cursor / v0) must be
+# tracked. The rest of .claude/ remains local-only.
+.claude/*
+!.claude/DESIGN.md
 .docs/
 .journeys/
 .planning/
