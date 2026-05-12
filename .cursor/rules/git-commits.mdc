@@ -1,0 +1,15 @@
+---
+description: When the user asks to commit, use one commit per file and plain-English messages.
+alwaysApply: true
+---
+
+# Git commits (on request)
+
+When the user asks to commit, create **git history** like this:
+
+1. **One commit per file** — stage and commit each path separately (`git add path/to/file && git commit -m "..."`). Do not squash unrelated files into one commit.
+2. **Humanized messages** — short, natural sentences a teammate would write: what changed and why it matters. Avoid robotic prefixes like `chore:` / `fix(ui):` unless the repo already standardizes on them. No ticket IDs unless the user supplies them.
+3. **Count** — If five files changed, that is five commits. If one file changed, one commit. Never invent extra commits or empty commits to hit a number.
+4. **Order** — Commit foundational changes first when it helps (e.g. theme/tokens before components that depend on them), otherwise alphabetical or by dependency is fine.
+
+If nothing is staged and there are no changes, say so instead of committing.
