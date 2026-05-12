@@ -9,6 +9,34 @@ import { workshopApi, type DashboardData } from '@/lib/api/workshop';
 import { CalendarDays, AlertTriangle, Bell, Wrench, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { SectionHubModules, type HubModuleItem } from '@/components/dashboard/SectionHubModules';
+
+const WORKSHOP_MODULES: HubModuleItem[] = [
+  {
+    title: 'Schedule',
+    description: 'Bookings, capacity, and the field service calendar.',
+    href: '/dashboard/workshop/schedule',
+    icon: 'CalendarDays',
+  },
+  {
+    title: 'Equipment',
+    description: 'Customer asset register, hours, and service history.',
+    href: '/dashboard/workshop/equipment',
+    icon: 'Factory',
+  },
+  {
+    title: 'Job templates',
+    description: 'Repeatable job patterns and parts lists.',
+    href: '/dashboard/workshop/templates',
+    icon: 'ClipboardList',
+  },
+  {
+    title: 'Reminders',
+    description: 'Planned service comms and follow-up queue.',
+    href: '/dashboard/workshop/reminders',
+    icon: 'Bell',
+  },
+];
 
 const LOCATIONS = ['all', 'brisbane', 'sydney', 'melbourne'];
 
@@ -80,6 +108,8 @@ export default function WorkshopDashboardPage() {
             </button>
           ))}
         </div>
+
+        <SectionHubModules modules={WORKSHOP_MODULES} heading="Workshop modules" />
 
         {loading ? (
           <div className="space-y-4">
