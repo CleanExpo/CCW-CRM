@@ -174,7 +174,7 @@ export default function EquipmentPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <Link href={`/workshop/equipment/${eq.id}`}>
+                        <Link href={`/dashboard/workshop/equipment/${eq.id}`}>
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
                           </Button>
