@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,13 +13,12 @@ import {
   PackageOpen,
   DollarSign,
   BookOpen,
-  ScanBarcode,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { inventoryApi } from '@/lib/api/inventory';
 import type { InventoryDashboardSummary } from '@/types/inventory';
-import { useBarcodeScanner } from '@/hooks/use-barcode-scanner';
 import { useToast } from '@/hooks/use-toast';
+import { ScanComingSoon } from '@/components/dashboard/ScanComingSoon';
 import { StockTransferDialog } from './components/StockTransferDialog';
 import { StockAdjustmentDialog } from './components/StockAdjustmentDialog';
 import { ReorderPointDialog } from './components/ReorderPointDialog';
@@ -92,11 +91,6 @@ export default function InventoryPage() {
     sku: string;
   } | null>(null);
   const [reorderDialogItem, setReorderDialogItem] = useState<ReorderDialogState | null>(null);
-
-  // Barcode scanner state
-  const [scanInput, setScanInput] = useState('');
-  const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
-  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
 
   // Reorder alert state
   const [reorderAlerts, setReorderAlerts] = useState<
@@ -233,42 +227,6 @@ export default function InventoryPage() {
     loadStockHealth();
     loadSummary();
   }
-
-  async function handleBarcodeScan(code: string) {
-    setScanInput(code);
-    try {
-      const result = await inventoryApi.lookupByBarcode(code);
-      toast({
-        title: `Found: ${result.product_name}`,
-        description: `SKU: ${result.sku}`,
-      });
-      setHighlightedProductId(result.product_id);
-      // Scroll highlighted row into view
-      const row = rowRefs.current[result.product_id];
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      // Clear highlight after 3 seconds
-      setTimeout(() => setHighlightedProductId(null), 3000);
-    } catch {
-      toast({
-        title: 'Barcode not found',
-        description: `No product matched barcode: ${code}`,
-        variant: 'destructive',
-      });
-    }
-    setScanInput('');
-  }
-
-  async function handleManualScanSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (scanInput.trim().length >= 1) {
-      await handleBarcodeScan(scanInput.trim());
-    }
-  }
-
-  // Attach global hardware scanner listener
-  useBarcodeScanner({ onScan: handleBarcodeScan });
 
   function formatCurrency(value: number): string {
     return new Intl.NumberFormat('en-AU', {
@@ -496,17 +454,9 @@ export default function InventoryPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Barcode scan input */}
-            <form onSubmit={handleManualScanSubmit} className="mb-4 flex items-center gap-2">
-              <ScanBarcode className="text-muted-foreground h-4 w-4 shrink-0" />
-              <Input
-                value={scanInput}
-                onChange={(e) => setScanInput(e.target.value)}
-                placeholder="Scan equipment barcode or enter SKU..."
-                className="max-w-sm"
-                aria-label="Barcode scan input"
-              />
-            </form>
+            <div className="mb-4">
+              <ScanComingSoon context="Inventory" />
+            </div>
             {allProducts.length === 0 ? (
               <div className="text-muted-foreground py-8 text-center">
                 <Package className="mx-auto mb-4 h-12 w-12 opacity-50" />
@@ -537,14 +487,7 @@ export default function InventoryPage() {
                       return (
                         <tr
                           key={product.product_id}
-                          ref={(el) => {
-                            rowRefs.current[product.product_id] = el;
-                          }}
-                          className={`hover:bg-muted/50 border-b transition-colors ${
-                            highlightedProductId === product.product_id
-                              ? 'bg-amber-50 dark:bg-amber-950/30'
-                              : ''
-                          }`}
+                          className="hover:bg-muted/50 border-b transition-colors"
                         >
                           <td className="px-4 py-3">
                             <div className="font-medium">{product.product_name}</div>
