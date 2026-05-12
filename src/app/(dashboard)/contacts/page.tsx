@@ -238,7 +238,7 @@ export default function ContactsPage() {
         const companyName = customerMap.get(contact.customer_id) || 'Unknown';
         return (
           <Link
-            href={`/customers/${contact.customer_id}`}
+            href={`/dashboard/crm/customers/${contact.customer_id}`}
             className="text-primary flex items-center gap-1 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
