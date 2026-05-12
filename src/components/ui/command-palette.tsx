@@ -85,11 +85,11 @@ export function CommandPalette() {
     },
     {
       id: 'orders',
-      label: 'Orders',
-      description: 'View and manage orders',
+      label: 'Sales orders',
+      description: 'Customer orders and fulfilment status',
       icon: ShoppingCart,
       action: () => navigate('/dashboard/operations/orders'),
-      keywords: ['sales', 'purchases'],
+      keywords: ['sales', 'orders', 'so', 'purchases'],
     },
     {
       id: 'quotes',
