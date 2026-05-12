@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CrmModuleNav } from '@/components/crm/CrmModuleNav';
 
 export const metadata: Metadata = {
   title: 'CRM',
@@ -18,7 +19,10 @@ export default function DashboardCrmLayout({ children }: { children: React.React
         className="pointer-events-none absolute -right-px bottom-0 left-[-1px] h-px bg-gradient-to-r from-transparent via-white/12 to-transparent"
         aria-hidden
       />
-      <div className="relative z-[1]">{children}</div>
+      <div className="relative z-[1] space-y-2">
+        <CrmModuleNav />
+        {children}
+      </div>
     </div>
   );
 }
