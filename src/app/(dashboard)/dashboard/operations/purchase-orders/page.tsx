@@ -49,7 +49,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { exportPurchaseOrdersToCSV } from '@/lib/utils/csv-export';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api/client';
@@ -73,6 +72,7 @@ import {
   OperationsPageLayout,
 } from '@/components/operations/OperationsPageHeader';
 import { formatAud, opCardClass, opHeroSurfaceClass, opTableWrapClass } from '@/lib/operations/ui';
+import { ScanComingSoon } from '@/components/dashboard/ScanComingSoon';
 
 export default function PurchaseOrdersPage() {
   const { toast } = useToast();
@@ -107,29 +107,8 @@ export default function PurchaseOrdersPage() {
   const [receivingPO, setReceivingPO] = useState<PurchaseOrder | null>(null);
   const [cancellingPO, setCancellingPO] = useState<PurchaseOrder | null>(null);
 
-  // PO document scan
+  // PO document scan (UI placeholder — see ScanComingSoon in dialog)
   const [scanOpen, setScanOpen] = useState(false);
-  const [scanUrl, setScanUrl] = useState('');
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<Record<string, unknown> | null>(null);
-  const [creating, setCreating] = useState(false);
-
-  const handleScanExtract = async () => {
-    setScanning(false);
-    setScanResult(null);
-    toast({
-      title: 'Coming Soon',
-      description: 'Scan PO Image is not available yet.',
-    });
-  };
-
-  const handleScanCreate = async () => {
-    setCreating(false);
-    toast({
-      title: 'Coming Soon',
-      description: 'Scan PO Image is not available yet.',
-    });
-  };
 
   useEffect(() => {
     loadPurchaseOrders();
@@ -228,13 +207,9 @@ export default function PurchaseOrdersPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setScanOpen(true)}
-                className="cursor-not-allowed"
-              >
+              <Button variant="outline" onClick={() => setScanOpen(true)}>
                 <ScanLine className="mr-2 h-4 w-4" />
-                Scan PO Image (Coming soon)
+                Scan PO image (coming soon)
               </Button>
               <Button onClick={() => setIsCreateOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -486,80 +461,18 @@ export default function PurchaseOrdersPage() {
         </AlertDialog>
 
       {/* PO Document Scan Dialog */}
-      <Dialog
-        open={scanOpen}
-        onOpenChange={(open) => {
-          setScanOpen(open);
-          if (!open) {
-            setScanUrl('');
-            setScanResult(null);
-          }
-        }}
-      >
+      <Dialog open={scanOpen} onOpenChange={setScanOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ScanLine className="h-4 w-4" />
-              Scan Purchase Order Image
+              Scan purchase order image
             </DialogTitle>
             <DialogDescription>
-              This feature is currently under development and will be available soon.
+              Purchase order capture from camera or image upload is not enabled in this build.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="po-scan-url">Image URL</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="po-scan-url"
-                  type="url"
-                  placeholder="https://... (image of PO)"
-                  value={scanUrl}
-                  onChange={(e) => setScanUrl(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleScanExtract()}
-                />
-                <Button onClick={handleScanExtract} disabled={scanning || !scanUrl.trim()}>
-                  <ScanLine className={`mr-2 h-4 w-4 ${scanning ? 'animate-pulse' : ''}`} />
-                  {scanning ? 'Extracting…' : 'Extract'}
-                </Button>
-              </div>
-            </div>
-
-            {scanResult && (
-              <div className="space-y-2 rounded-lg border p-3">
-                <p className="text-sm font-medium">Extracted PO Data</p>
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                  {(scanResult.supplier_name as string) && (
-                    <>
-                      <dt className="text-muted-foreground">Supplier</dt>
-                      <dd>{scanResult.supplier_name as string}</dd>
-                    </>
-                  )}
-                  {(scanResult.po_number as string) && (
-                    <>
-                      <dt className="text-muted-foreground">PO Number</dt>
-                      <dd>{scanResult.po_number as string}</dd>
-                    </>
-                  )}
-                  {(scanResult.total_amount as number) != null && (
-                    <>
-                      <dt className="text-muted-foreground">Total</dt>
-                      <dd>${Number(scanResult.total_amount).toFixed(2)}</dd>
-                    </>
-                  )}
-                  {(scanResult.line_items as unknown[])?.length > 0 && (
-                    <>
-                      <dt className="text-muted-foreground">Line Items</dt>
-                      <dd>{(scanResult.line_items as unknown[]).length} item(s)</dd>
-                    </>
-                  )}
-                </dl>
-                <Button className="mt-2 w-full" onClick={handleScanCreate} disabled={creating}>
-                  {creating ? 'Creating…' : 'Create Draft Purchase Order'}
-                </Button>
-              </div>
-            )}
-          </div>
+          <ScanComingSoon context="Purchase orders" />
         </DialogContent>
       </Dialog>
       </OperationsPageLayout>
