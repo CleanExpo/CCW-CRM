@@ -65,6 +65,8 @@ export async function updateSession(request: NextRequest) {
     '/',
     '/login',
     '/register',
+    // PWA / install metadata must load without a session (browser requests it independently).
+    '/manifest.json',
     '/forgot-password',
     '/reset-password',
     '/guest',
