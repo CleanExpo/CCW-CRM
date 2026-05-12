@@ -5,7 +5,7 @@ import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { crmContactToApi } from '@/lib/db/crm-serialize';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
