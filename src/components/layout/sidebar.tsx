@@ -91,6 +91,7 @@ const navGroups: NavGroup[] = [
     id: 'crm',
     label: 'CRM',
     items: [
+      { name: 'Overview', href: '/dashboard/crm', icon: LayoutDashboard },
       { name: 'Customers', href: '/dashboard/crm/customers', icon: Users },
       { name: 'Client Health', href: '/dashboard/crm/client-health', icon: HeartPulse },
       { name: 'Onboarding', href: '/dashboard/crm/onboarding', icon: GitBranch },
