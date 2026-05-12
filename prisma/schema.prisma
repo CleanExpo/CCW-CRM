@@ -14,42 +14,44 @@ enum TeamRole {
 }
 
 model AppUser {
-  id                        String    @id @default(uuid()) @db.Uuid
-  email                     String    @unique
-  passwordHash              String    @map("password_hash")
-  fullName                  String?   @map("full_name")
-  role                      TeamRole  @default(member)
-  isAdmin                   Boolean   @default(false) @map("is_admin")
-  isActive                  Boolean   @default(true) @map("is_active")
+  id                     String    @id @default(uuid()) @db.Uuid
+  email                  String    @unique
+  passwordHash           String    @map("password_hash")
+  fullName               String?   @map("full_name")
+  role                   TeamRole  @default(member)
+  isAdmin                Boolean   @default(false) @map("is_admin")
+  isActive               Boolean   @default(true) @map("is_active")
   /// All users in one org share the same workspace id (typically the first owner’s user id).
-  workspaceId               String    @map("workspace_id") @db.Uuid
-  createdAt                 DateTime  @default(now()) @map("created_at")
-  lastLoginAt               DateTime? @map("last_login_at")
-  passwordResetTokenHash    String?   @map("password_reset_token_hash")
-  passwordResetExpiresAt    DateTime? @map("password_reset_expires_at")
+  workspaceId            String    @map("workspace_id") @db.Uuid
+  createdAt              DateTime  @default(now()) @map("created_at")
+  lastLoginAt            DateTime? @map("last_login_at")
+  passwordResetTokenHash String?   @map("password_reset_token_hash")
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
 
   @@index([workspaceId])
   @@map("app_users")
 }
 
 model Customer {
-  id           String   @id @default(uuid()) @db.Uuid
-  ownerUserId  String   @map("owner_user_id") @db.Uuid
-  companyName  String   @map("company_name")
-  contactName  String?  @map("contact_name")
-  email        String?
-  phone        String?
-  city         String?
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  companyName String   @map("company_name")
+  contactName String?  @map("contact_name")
+  email       String?
+  phone       String?
+  city        String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  orders   Order[]
-  quotes   Quote[]
-  invoices Invoice[]
-  persona  CustomerPersona?
-  contacts CrmContact[]
-  activities CrmActivity[]
+  orders                   Order[]
+  quotes                   Quote[]
+  invoices                 Invoice[]
+  persona                  CustomerPersona?
+  contacts                 CrmContact[]
+  activities               CrmActivity[]
+  workshopEquipment        WorkshopEquipment[]
+  workshopServiceReminders WorkshopServiceReminder[]
 
   @@index([ownerUserId])
   @@map("customers")
@@ -57,23 +59,23 @@ model Customer {
 
 /// People at customer accounts (modern CRM contact records, workspace-scoped).
 model CrmContact {
-  id           String   @id @default(uuid()) @db.Uuid
-  ownerUserId  String   @map("owner_user_id") @db.Uuid
-  customerId   String?  @map("customer_id") @db.Uuid
-  firstName    String   @map("first_name")
-  lastName     String   @map("last_name")
-  email        String?
-  phone        String?
-  mobile       String?
-  jobTitle     String?  @map("job_title")
-  department   String?
-  isPrimary    Boolean  @default(false) @map("is_primary")
-  isActive     Boolean  @default(true) @map("is_active")
-  notes        String?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  customerId  String?  @map("customer_id") @db.Uuid
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  email       String?
+  phone       String?
+  mobile      String?
+  jobTitle    String?  @map("job_title")
+  department  String?
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  isActive    Boolean  @default(true) @map("is_active")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  customer   Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customer   Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   activities CrmActivity[]
 
   @@index([ownerUserId])
@@ -94,7 +96,7 @@ model CrmActivity {
   orderId      String?   @map("order_id") @db.Uuid
   quoteId      String?   @map("quote_id") @db.Uuid
   dueDate      DateTime? @map("due_date")
-  completedAt DateTime? @map("completed_at")
+  completedAt  DateTime? @map("completed_at")
   createdBy    String?   @map("created_by") @db.Uuid
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
@@ -128,31 +130,33 @@ model CustomerPersona {
 }
 
 model Product {
-  id                 String   @id @default(uuid()) @db.Uuid
-  ownerUserId        String   @map("owner_user_id") @db.Uuid
-  name               String
-  sku                String
-  category           String?
-  price              Float    @default(0)
-  stock              Int      @default(0)
-  isActive           Boolean  @default(true) @map("is_active")
-  warehouseLocation  String?  @map("warehouse_location")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  id                String   @id @default(uuid()) @db.Uuid
+  ownerUserId       String   @map("owner_user_id") @db.Uuid
+  name              String
+  sku               String
+  category          String?
+  price             Float    @default(0)
+  stock             Int      @default(0)
+  isActive          Boolean  @default(true) @map("is_active")
+  warehouseLocation String?  @map("warehouse_location")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
-  orderLineItems       OrderLineItem[]
-  purchaseOrderLines   PurchaseOrderLine[]
-  quoteLineItems       QuoteLineItem[]
-  posTransactionLines  PosTransactionLine[]
-  goodsReceiptLines    GoodsReceiptLine[]
-  invoiceLineItems     InvoiceLineItem[]
-  locationStocks          ProductLocationStock[]
-  stockTransfers          StockTransfer[]
-  stockReservations       StockReservation[]
-  inventoryStockTakeLines InventoryStockTakeLine[]
+  orderLineItems               OrderLineItem[]
+  purchaseOrderLines           PurchaseOrderLine[]
+  quoteLineItems               QuoteLineItem[]
+  posTransactionLines          PosTransactionLine[]
+  goodsReceiptLines            GoodsReceiptLine[]
+  invoiceLineItems             InvoiceLineItem[]
+  locationStocks               ProductLocationStock[]
+  stockTransfers               StockTransfer[]
+  stockReservations            StockReservation[]
+  inventoryStockTakeLines      InventoryStockTakeLine[]
+  workshopEquipment            WorkshopEquipment[]
+  workshopServiceTemplateItems WorkshopServiceTemplateItem[]
 
-  @@index([ownerUserId])
   @@unique([ownerUserId, sku])
+  @@index([ownerUserId])
   @@map("products")
 }
 
@@ -182,14 +186,14 @@ model Cin7BomMaster {
 }
 
 model Cin7BomComponent {
-  id              String  @id @default(uuid()) @db.Uuid
-  bomMasterId     String  @map("bom_master_id") @db.Uuid
-  componentSku    String  @map("component_sku")
-  componentName   String  @map("component_name")
-  quantity        String  @default("1.0000")
-  uom             String  @default("EA")
-  wastagePercent  String  @default("0.00") @map("wastage_percent")
-  notes           String?
+  id             String  @id @default(uuid()) @db.Uuid
+  bomMasterId    String  @map("bom_master_id") @db.Uuid
+  componentSku   String  @map("component_sku")
+  componentName  String  @map("component_name")
+  quantity       String  @default("1.0000")
+  uom            String  @default("EA")
+  wastagePercent String  @default("0.00") @map("wastage_percent")
+  notes          String?
 
   bomMaster Cin7BomMaster @relation(fields: [bomMasterId], references: [id], onDelete: Cascade)
 
@@ -313,18 +317,18 @@ model StockTransfer {
 }
 
 model Order {
-  id           String   @id @default(uuid()) @db.Uuid
-  ownerUserId  String   @map("owner_user_id") @db.Uuid
-  customerId   String   @map("customer_id") @db.Uuid
-  orderNumber  String   @map("order_number")
-  status       String
-  total        Float    @default(0)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  customerId  String   @map("customer_id") @db.Uuid
+  orderNumber String   @map("order_number")
+  status      String
+  total       Float    @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  customer  Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  lineItems OrderLineItem[]
-  invoices  Invoice[]
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lineItems     OrderLineItem[]
+  invoices      Invoice[]
   crmActivities CrmActivity[]
 
   @@index([ownerUserId])
@@ -348,19 +352,19 @@ model OrderLineItem {
 }
 
 model Quote {
-  id           String   @id @default(uuid()) @db.Uuid
-  ownerUserId  String   @map("owner_user_id") @db.Uuid
-  customerId   String   @map("customer_id") @db.Uuid
-  quoteNumber  String   @map("quote_number")
-  status       String
-  total        Float?
-  validUntil   DateTime? @map("valid_until")
-  notes        String?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerUserId String    @map("owner_user_id") @db.Uuid
+  customerId  String    @map("customer_id") @db.Uuid
+  quoteNumber String    @map("quote_number")
+  status      String
+  total       Float?
+  validUntil  DateTime? @map("valid_until")
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  customer Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  lineItems QuoteLineItem[]
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lineItems     QuoteLineItem[]
   crmActivities CrmActivity[]
 
   @@index([ownerUserId])
@@ -399,28 +403,28 @@ model Invoice {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  order    Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customer Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  order    Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
   items    InvoiceLineItem[]
   payments InvoicePayment[]
 
+  @@unique([ownerUserId, invoiceNumber])
   @@index([ownerUserId])
   @@index([customerId])
-  @@unique([ownerUserId, invoiceNumber])
   @@map("invoices")
 }
 
 model InvoiceLineItem {
-  id           String  @id @default(uuid()) @db.Uuid
-  invoiceId    String  @map("invoice_id") @db.Uuid
-  productId    String? @map("product_id") @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
+  invoiceId    String   @map("invoice_id") @db.Uuid
+  productId    String?  @map("product_id") @db.Uuid
   description  String
   quantity     Int
-  unitPrice    Float   @map("unit_price")
-  taxRate      Float   @default(0) @map("tax_rate")
-  taxAmount    Float   @default(0) @map("tax_amount")
-  lineSubtotal Float   @default(0) @map("line_subtotal")
-  lineTotal    Float   @default(0) @map("line_total")
+  unitPrice    Float    @map("unit_price")
+  taxRate      Float    @default(0) @map("tax_rate")
+  taxAmount    Float    @default(0) @map("tax_amount")
+  lineSubtotal Float    @default(0) @map("line_subtotal")
+  lineTotal    Float    @default(0) @map("line_total")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -468,17 +472,17 @@ model EmailThread {
 }
 
 model EmailMessage {
-  id                 String   @id @default(uuid()) @db.Uuid
-  threadId           String   @map("thread_id") @db.Uuid
-  direction          String
-  fromEmail          String   @map("from_email")
-  toEmail            String   @map("to_email")
-  subject            String
-  bodyText           String   @map("body_text")
-  bodyHtml           String?  @map("body_html")
-  sendgridMessageId  String?  @map("sendgrid_message_id")
-  sentAt             DateTime @default(now()) @map("sent_at")
-  wasAiGenerated     Boolean  @default(false) @map("was_ai_generated")
+  id                String   @id @default(uuid()) @db.Uuid
+  threadId          String   @map("thread_id") @db.Uuid
+  direction         String
+  fromEmail         String   @map("from_email")
+  toEmail           String   @map("to_email")
+  subject           String
+  bodyText          String   @map("body_text")
+  bodyHtml          String?  @map("body_html")
+  sendgridMessageId String?  @map("sendgrid_message_id")
+  sentAt            DateTime @default(now()) @map("sent_at")
+  wasAiGenerated    Boolean  @default(false) @map("was_ai_generated")
 
   thread EmailThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
@@ -500,8 +504,8 @@ model Supplier {
 
   purchaseOrders PurchaseOrder[]
 
-  @@index([ownerUserId])
   @@unique([ownerUserId, supplierCode])
+  @@index([ownerUserId])
   @@map("suppliers")
 }
 
@@ -523,11 +527,11 @@ model PurchaseOrder {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  supplier Supplier              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplier Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   lines    PurchaseOrderLine[]
 
-  @@index([ownerUserId])
   @@unique([ownerUserId, poNumber])
+  @@index([ownerUserId])
   @@index([supplierId])
   @@map("purchase_orders")
 }
@@ -549,19 +553,19 @@ model PurchaseOrderLine {
 }
 
 model PosTransaction {
-  id                     String   @id @default(uuid()) @db.Uuid
-  ownerUserId            String?  @map("owner_user_id") @db.Uuid
-  transactionNumber      String   @unique @map("transaction_number")
-  terminalId             String   @map("terminal_id")
-  locationCode           String   @map("location_code")
-  salesStaffId           String?  @map("sales_staff_id")
-  paymentMethod          String   @map("payment_method")
-  paymentStatus          String   @map("payment_status")
-  subtotal               Float
-  tax                    Float
-  amount                 Float
-  reconciliationStatus   String   @default("pending") @map("reconciliation_status")
-  createdAt              DateTime @default(now()) @map("created_at")
+  id                   String   @id @default(uuid()) @db.Uuid
+  ownerUserId          String?  @map("owner_user_id") @db.Uuid
+  transactionNumber    String   @unique @map("transaction_number")
+  terminalId           String   @map("terminal_id")
+  locationCode         String   @map("location_code")
+  salesStaffId         String?  @map("sales_staff_id")
+  paymentMethod        String   @map("payment_method")
+  paymentStatus        String   @map("payment_status")
+  subtotal             Float
+  tax                  Float
+  amount               Float
+  reconciliationStatus String   @default("pending") @map("reconciliation_status")
+  createdAt            DateTime @default(now()) @map("created_at")
 
   lines PosTransactionLine[]
 
@@ -586,18 +590,18 @@ model PosTransactionLine {
 }
 
 model BankAccount {
-  id           String   @id @default(uuid()) @db.Uuid
-  ownerUserId  String?  @map("owner_user_id") @db.Uuid
-  accountName  String   @map("account_name")
-  accountNumber String  @map("account_number")
-  bsb          String
-  bankName     String   @map("bank_name")
-  accountType  String   @map("account_type")
-  feedProvider String   @map("feed_provider")
-  isActive     Boolean  @default(true) @map("is_active")
-  locationCode String?  @map("location_code")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerUserId   String?  @map("owner_user_id") @db.Uuid
+  accountName   String   @map("account_name")
+  accountNumber String   @map("account_number")
+  bsb           String
+  bankName      String   @map("bank_name")
+  accountType   String   @map("account_type")
+  feedProvider  String   @map("feed_provider")
+  isActive      Boolean  @default(true) @map("is_active")
+  locationCode  String?  @map("location_code")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   feedTransactions BankFeedTransaction[]
 
@@ -606,17 +610,17 @@ model BankAccount {
 }
 
 model BankFeedTransaction {
-  id              String    @id @default(uuid()) @db.Uuid
-  bankAccountId   String    @map("bank_account_id") @db.Uuid
-  transactionDate DateTime  @map("transaction_date")
+  id              String   @id @default(uuid()) @db.Uuid
+  bankAccountId   String   @map("bank_account_id") @db.Uuid
+  transactionDate DateTime @map("transaction_date")
   description     String
-  reference       String    @default("")
+  reference       String   @default("")
   credit          Float?
   debit           Float?
   balance         Float?
-  reconciled      Boolean   @default(false)
-  matchedPosTxId  String?   @map("matched_pos_tx_id") @db.Uuid
-  createdAt       DateTime  @default(now()) @map("created_at")
+  reconciled      Boolean  @default(false)
+  matchedPosTxId  String?  @map("matched_pos_tx_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
 
   bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 
@@ -644,16 +648,16 @@ model ContactSubmission {
 }
 
 model DemoRequest {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String    @id @default(uuid()) @db.Uuid
   name          String
   email         String
   company       String?
   phone         String?
   message       String?
   preferredDate DateTime? @map("preferred_date")
-  status        String   @default("pending")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  status        String    @default("pending")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   notes SubmissionNote[]
 
@@ -671,7 +675,7 @@ model SubmissionNote {
   createdAt           DateTime @default(now()) @map("created_at")
 
   contactSubmission ContactSubmission? @relation(fields: [contactSubmissionId], references: [id], onDelete: Cascade)
-  demoRequest       DemoRequest? @relation(fields: [demoRequestId], references: [id], onDelete: Cascade)
+  demoRequest       DemoRequest?       @relation(fields: [demoRequestId], references: [id], onDelete: Cascade)
 
   @@index([contactSubmissionId])
   @@index([demoRequestId])
@@ -785,13 +789,144 @@ model GoodsReceiptLine {
   @@map("goods_receipt_lines")
 }
 
+/// Customer-owned equipment (field service / workshop registry).
+model WorkshopEquipment {
+  id               String    @id @default(uuid()) @db.Uuid
+  ownerUserId      String    @map("owner_user_id") @db.Uuid
+  customerId       String    @map("customer_id") @db.Uuid
+  productId        String?   @map("product_id") @db.Uuid
+  serialNumber     String    @map("serial_number")
+  make             String
+  model            String
+  year             Int?
+  location         String
+  purchaseDate     DateTime? @map("purchase_date") @db.Date
+  warrantyExpiry   DateTime? @map("warranty_expiry") @db.Date
+  status           String    @default("active")
+  intervalMonths   Int?      @map("interval_months")
+  intervalHours    Int?      @map("interval_hours")
+  currentHours     Int       @default(0) @map("current_hours")
+  lastServiceDate  DateTime? @map("last_service_date") @db.Date
+  lastServiceHours Int?      @map("last_service_hours")
+  nextServiceDate  DateTime? @map("next_service_date") @db.Date
+  nextServiceHours Int?      @map("next_service_hours")
+  reminderLeadDays Int       @default(14) @map("reminder_lead_days")
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  customer  Customer                  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  product   Product?                  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  bookings  WorkshopBooking[]
+  reminders WorkshopServiceReminder[]
+
+  @@index([ownerUserId])
+  @@index([customerId])
+  @@index([location])
+  @@index([status])
+  @@map("workshop_equipment")
+}
+
+model WorkshopServiceTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  ownerUserId    String   @map("owner_user_id") @db.Uuid
+  name           String
+  serviceType    String   @map("service_type")
+  appliesToMake  String?  @map("applies_to_make")
+  appliesToModel String?  @map("applies_to_model")
+  description    String   @default("") @db.Text
+  estimatedHours Float    @default(1) @map("estimated_hours")
+  location       String?
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  items    WorkshopServiceTemplateItem[]
+  bookings WorkshopBooking[]
+
+  @@index([ownerUserId])
+  @@map("workshop_service_templates")
+}
+
+model WorkshopServiceTemplateItem {
+  id           String  @id @default(uuid()) @db.Uuid
+  templateId   String  @map("template_id") @db.Uuid
+  productId    String  @map("product_id") @db.Uuid
+  quantity     Int     @default(1)
+  leadTimeDays Int     @default(0) @map("lead_time_days")
+  notes        String? @db.Text
+
+  template WorkshopServiceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  product  Product                 @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([templateId])
+  @@map("workshop_service_template_items")
+}
+
+model WorkshopBooking {
+  id                   String    @id @default(uuid()) @db.Uuid
+  ownerUserId          String    @map("owner_user_id") @db.Uuid
+  bookingNumber        String    @map("booking_number")
+  equipmentId          String    @map("equipment_id") @db.Uuid
+  serviceRequestId     String?   @map("service_request_id") @db.Uuid
+  serviceTemplateId    String?   @map("service_template_id") @db.Uuid
+  contractorId         String?   @map("contractor_id") @db.Uuid
+  location             String
+  scheduledDate        DateTime  @map("scheduled_date")
+  estimatedEndDatetime DateTime? @map("estimated_end_datetime")
+  status               String    @default("scheduled")
+  purchaseOrderId      String?   @map("purchase_order_id") @db.Uuid
+  partsOrderedAt       DateTime? @map("parts_ordered_at")
+  actualHours          Float?    @map("actual_hours")
+  hoursOnCompletion    Int?      @map("hours_on_completion")
+  technicianNotes      String?   @map("technician_notes") @db.Text
+  customerNotes        String?   @map("customer_notes") @db.Text
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  equipment WorkshopEquipment         @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+  template  WorkshopServiceTemplate?  @relation(fields: [serviceTemplateId], references: [id], onDelete: SetNull)
+  reminders WorkshopServiceReminder[]
+
+  @@unique([ownerUserId, bookingNumber])
+  @@index([ownerUserId])
+  @@index([equipmentId])
+  @@index([scheduledDate])
+  @@map("workshop_bookings")
+}
+
+model WorkshopServiceReminder {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerUserId     String    @map("owner_user_id") @db.Uuid
+  equipmentId     String    @map("equipment_id") @db.Uuid
+  customerId      String    @map("customer_id") @db.Uuid
+  reminderType    String    @map("reminder_type")
+  scheduledSendAt DateTime  @map("scheduled_send_at")
+  status          String    @default("pending")
+  sentAt          DateTime? @map("sent_at")
+  bookingId       String?   @map("booking_id") @db.Uuid
+  emailSubject    String?   @map("email_subject")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  equipment WorkshopEquipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  customer  Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  booking   WorkshopBooking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([equipmentId])
+  @@index([status])
+  @@index([scheduledSendAt])
+  @@map("workshop_service_reminders")
+}
+
 model AgentRun {
-  id            String    @id @default(uuid()) @db.Uuid
-  agentType     String?   @map("agent_type")
-  status        String
-  errorMessage  String?   @map("error_message")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  completedAt   DateTime? @map("completed_at")
+  id           String    @id @default(uuid()) @db.Uuid
+  agentType    String?   @map("agent_type")
+  status       String
+  errorMessage String?   @map("error_message")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  completedAt  DateTime? @map("completed_at")
 
   @@map("agent_runs")
 }
