@@ -70,6 +70,7 @@ const navGroups: NavGroup[] = [
     id: 'operations',
     label: 'Operations',
     items: [
+      { name: 'Overview', href: '/dashboard/operations', icon: LayoutDashboard },
       { name: 'Quotes', href: '/dashboard/operations/quotes', icon: FileText },
       { name: 'Sales orders', href: '/dashboard/operations/orders', icon: ShoppingCart },
       { name: 'Fulfilment', href: '/dashboard/operations/fulfilment', icon: PackageCheck },
@@ -126,8 +127,8 @@ const navGroups: NavGroup[] = [
     id: 'inventory',
     label: 'Inventory',
     items: [
+      { name: 'Overview', href: '/dashboard/inventory', icon: Warehouse },
       { name: 'Products', href: '/dashboard/inventory/products', icon: Package },
-      { name: 'Inventory Overview', href: '/dashboard/inventory', icon: Warehouse },
       { name: 'Bill of Materials', href: '/dashboard/inventory/bom', icon: Layers },
       { name: 'Stock List', href: '/dashboard/inventory/stock', icon: PackageSearch },
       { name: 'Stock Transfers', href: '/dashboard/inventory/transfers', icon: PackageCheck },
@@ -142,6 +143,7 @@ const navGroups: NavGroup[] = [
     id: 'finance',
     label: 'Finance',
     items: [
+      { name: 'Overview', href: '/dashboard/finance', icon: LayoutDashboard },
       { name: 'Invoices', href: '/dashboard/finance/invoices', icon: Receipt },
       { name: 'BAS Report', href: '/dashboard/finance/invoices/bas', icon: FileText },
       {
@@ -157,6 +159,7 @@ const navGroups: NavGroup[] = [
     id: 'admin',
     label: 'Workspace',
     items: [
+      { name: 'Overview', href: '/dashboard/workspace', icon: LayoutDashboard },
       { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge, comingSoon: true },
       { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle, comingSoon: true },
       { name: 'Alerts', href: '/dashboard/alerts', icon: Bell, comingSoon: true },
