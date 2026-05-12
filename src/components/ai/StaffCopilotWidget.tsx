@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Sparkles, X, Send, ChevronDown } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Sparkles, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,9 +42,14 @@ export function StaffCopilotWidget({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<CopilotMessage[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -67,7 +73,7 @@ export function StaffCopilotWidget({
           id: 'welcome',
           role: 'assistant',
           content:
-            "Hi! I'm your Staff Copilot. Ask me about orders, customers, inventory, or anything operational.",
+            "Hi! I'm Copilot. Ask me about orders, customers, inventory, or anything operational.",
           suggested_actions: [
             'What needs attention today?',
             'Show overdue orders',
@@ -145,30 +151,28 @@ export function StaffCopilotWidget({
     }
   };
 
-  return (
-    <>
-      {/* Floating trigger button */}
-      <div className="fixed right-6 bottom-6 z-[60]">
-        {!isOpen && (
-          <Button
-            onClick={() => setIsOpen(true)}
-            size="sm"
-            className="flex h-10 items-center gap-2 rounded-full px-4 py-2 shadow-lg"
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="text-sm font-medium">Copilot</span>
-          </Button>
-        )}
-      </div>
-
-      {/* Chat panel */}
-      {isOpen && (
-        <div className="bg-background fixed right-6 bottom-6 z-[60] flex max-h-[580px] w-[380px] flex-col overflow-hidden rounded-xl border shadow-2xl">
+  /** Single fixed anchor (one FAB or panel) — portaled to body to avoid duplicate stacking from nested layouts/transforms. */
+  const widget = (
+    <div
+      id="ccw-staff-copilot-root"
+      className="fixed right-6 bottom-6 z-[60] flex flex-col items-end justify-end"
+    >
+      {!isOpen ? (
+        <Button
+          onClick={() => setIsOpen(true)}
+          size="sm"
+          className="flex h-10 items-center gap-2 rounded-full px-4 py-2 shadow-lg"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="text-sm font-medium">Copilot</span>
+        </Button>
+      ) : (
+        <div className="bg-background flex max-h-[min(580px,calc(100dvh-3rem))] w-[min(380px,calc(100vw-3rem))] flex-col overflow-hidden rounded-xl border shadow-2xl">
           {/* Header */}
           <div className="bg-primary text-primary-foreground flex items-center justify-between rounded-t-xl border-b px-4 py-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              <span className="text-sm font-semibold">Staff Copilot</span>
+              <span className="text-sm font-semibold">Copilot</span>
               {moduleContext !== 'general' && (
                 <Badge
                   variant="secondary"
@@ -287,6 +291,10 @@ export function StaffCopilotWidget({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
+
+  if (!mounted || typeof document === 'undefined') return null;
+
+  return createPortal(widget, document.body);
 }
