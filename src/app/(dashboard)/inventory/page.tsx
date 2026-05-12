@@ -19,6 +19,7 @@ import { inventoryApi } from '@/lib/api/inventory';
 import type { InventoryDashboardSummary } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
 import { ScanComingSoon } from '@/components/dashboard/ScanComingSoon';
+import { SectionHubModules, type HubModuleItem } from '@/components/dashboard/SectionHubModules';
 import { StockTransferDialog } from './components/StockTransferDialog';
 import { StockAdjustmentDialog } from './components/StockAdjustmentDialog';
 import { ReorderPointDialog } from './components/ReorderPointDialog';
@@ -66,6 +67,69 @@ interface ReorderDialogState {
   currentReorderPoint?: number;
   currentReorderQty?: number;
 }
+
+const INVENTORY_MODULES: HubModuleItem[] = [
+  {
+    title: 'Products',
+    description: 'SKU catalogue, pricing, and listing controls.',
+    href: '/dashboard/inventory/products',
+    icon: 'Package',
+  },
+  {
+    title: 'Inventory overview',
+    description: 'This page — health, reorder alerts, and stock by location.',
+    href: '/dashboard/inventory',
+    icon: 'LayoutDashboard',
+  },
+  {
+    title: 'Bill of materials',
+    description: 'Finished goods and component structures.',
+    href: '/dashboard/inventory/bom',
+    icon: 'Layers',
+  },
+  {
+    title: 'Stock list',
+    description: 'Filterable stock positions across warehouses.',
+    href: '/dashboard/inventory/stock',
+    icon: 'PackageSearch',
+  },
+  {
+    title: 'Stock transfers',
+    description: 'Move inventory between locations with audit trail.',
+    href: '/dashboard/inventory/transfers',
+    icon: 'PackageCheck',
+  },
+  {
+    title: 'Reservations',
+    description: 'Soft holds tied to sales orders and fulfilment.',
+    href: '/dashboard/inventory/reservations',
+    icon: 'Timer',
+  },
+  {
+    title: 'Stock forecast',
+    description: 'Demand and replenishment signals.',
+    href: '/dashboard/inventory/forecast',
+    icon: 'BarChart3',
+  },
+  {
+    title: 'Warehouse ops',
+    description: 'Floor tasks, picks, and operational throughput.',
+    href: '/dashboard/inventory/warehouse',
+    icon: 'Truck',
+  },
+  {
+    title: 'Containers',
+    description: 'Inbound logistics units and contents.',
+    href: '/dashboard/inventory/containers',
+    icon: 'Ship',
+  },
+  {
+    title: 'Backorders',
+    description: 'Unfilled demand waiting on supply.',
+    href: '/dashboard/inventory/backorders',
+    icon: 'AlertCircle',
+  },
+];
 
 export default function InventoryPage() {
   const { toast } = useToast();
@@ -257,6 +321,8 @@ export default function InventoryPage() {
           description="Multi-location stock tracking across Brisbane, Sydney, and Melbourne with reorder monitoring."
           icon={Package}
         />
+
+        <SectionHubModules modules={INVENTORY_MODULES} heading="Inventory modules" />
 
         {/* KPI Summary Cards */}
         <div className="grid gap-4 md:grid-cols-4">
