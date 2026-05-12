@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useLayoutEffect } from "react";
 import { ChevronsUpDown, Loader2 } from "lucide-react";
 import {
   Command,
@@ -41,6 +41,9 @@ interface LocationAwareProductSelectProps {
   selectedLocation?: string;
   onSelect: (product: Product) => void;
   value?: string;
+  /** When true, dropdown width matches the trigger (default). Set false for a wider panel in spacious layouts. */
+  matchTriggerWidth?: boolean;
+  className?: string;
 }
 
 function getStockAtLocation(product: Product, location: string): number {
@@ -57,6 +60,8 @@ export function LocationAwareProductSelect({
   selectedLocation = "brisbane",
   onSelect,
   value,
+  matchTriggerWidth = true,
+  className,
 }: LocationAwareProductSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -65,6 +70,8 @@ export function LocationAwareProductSelect({
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const triggerWrapRef = useRef<HTMLDivElement>(null);
+  const [panelWidth, setPanelWidth] = useState<number | undefined>(undefined);
 
   const { recentItems: recentProducts, addRecentItem: addRecentProduct } =
     useRecentItems<Product>({
@@ -247,8 +254,21 @@ export function LocationAwareProductSelect({
     return "";
   };
 
+  useLayoutEffect(() => {
+    if (!open || !matchTriggerWidth) {
+      setPanelWidth(undefined);
+      return;
+    }
+    const el = triggerWrapRef.current;
+    if (!el) return;
+    const w = el.offsetWidth;
+    if (w > 0) setPanelWidth(w);
+  }, [open, matchTriggerWidth]);
+
   return (
+    <div ref={triggerWrapRef} className={cn("w-full", className)}>
     <Popover
+      modal={false}
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
@@ -279,25 +299,40 @@ export function LocationAwareProductSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={cn(
-          "w-[min(100vw-2rem,560px)] max-w-[560px] border-zinc-200 bg-white p-0 text-zinc-950 shadow-lg",
-          "dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50"
-        )}
         align="start"
+        side="bottom"
+        sideOffset={6}
+        collisionPadding={12}
+        style={
+          matchTriggerWidth && panelWidth
+            ? { width: panelWidth, maxWidth: "min(100%, calc(100vw - 2rem))" }
+            : undefined
+        }
+        className={cn(
+          "z-[100] overflow-hidden rounded-md border bg-popover p-0 text-popover-foreground shadow-lg",
+          matchTriggerWidth
+            ? "min-w-0 max-w-[calc(100vw-2rem)]"
+            : "w-[min(100vw-2rem,560px)] max-w-[560px]",
+          "border-zinc-200 dark:border-zinc-600"
+        )}
       >
-        <Command shouldFilter={false} className="bg-transparent dark:bg-transparent">
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Filter by SKU or product name…"
             value={search}
             onValueChange={setSearch}
-            className="h-10 border-zinc-200 bg-zinc-50/80 text-zinc-950 placeholder:text-zinc-500 dark:border-zinc-600 dark:bg-zinc-950/80 dark:text-zinc-50 dark:placeholder:text-zinc-400"
+            className={cn(
+              "h-9 border-0 bg-transparent py-2 text-sm shadow-none",
+              "text-foreground placeholder:text-muted-foreground",
+              "ring-0 ring-offset-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            )}
           />
-          <p className="text-muted-foreground border-b border-zinc-200 px-3 py-2 text-xs dark:border-zinc-600 dark:text-zinc-400">
+          <p className="bg-popover text-muted-foreground border-border border-b px-3 py-2 text-xs">
             {searchActive
               ? "Search results include per-location stock where available."
               : "Browse the catalog below, or type 2+ characters to search all products."}
           </p>
-          <CommandList className="max-h-[min(60vh,420px)] overflow-y-auto">
+          <CommandList className="max-h-[min(60vh,420px)] overflow-y-auto overflow-x-hidden bg-popover">
             {displayProducts.length === 0 &&
               !(recentProductsInCatalog.length > 0 && !searchActive) &&
               (emptyMessage() ? (
@@ -432,5 +467,6 @@ export function LocationAwareProductSelect({
         </Command>
       </PopoverContent>
     </Popover>
+    </div>
   );
 }
