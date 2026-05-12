@@ -342,51 +342,15 @@ jobs:
             echo "- :x: Smoke Tests: ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Send Slack notification
-        if: secrets.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v3.0.1
-        with:
-          payload: |
-            {
-              "attachments": [
-                {
-                  "color": "${{ steps.status.outputs.color }}",
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": "${{ steps.status.outputs.emoji }} *Production Deployment ${{ steps.status.outputs.status }}*"
-                      }
-                    },
-                    {
-                      "type": "section",
-                      "fields": [
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Version:*\n${{ needs.validate.outputs.short_sha }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Environment:*\nProduction"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*URL:*\n<https://ccw-erp.com|ccw-erp.com>"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Deployed by:*\n${{ github.actor }}"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      # Slack notification step removed. Two reasons:
+      #   1. The workflow was DEAD — `if: secrets.X != ''` is invalid at the
+      #      step `if:` level. GitHub disallows reading the `secrets` namespace
+      #      from `if` conditions for security reasons, so every auto-trigger
+      #      of this workflow was rejected with HTTP 422 "Unrecognized
+      #      named-value: 'secrets'" and failed in 0s.
+      #   2. Phill's portfolio standard is no-Slack across the org. The deploy
+      #      summary already lands in the GITHUB_STEP_SUMMARY block above, and
+      #      a GitHub Release is created on success in the next step.
 
       - name: Create GitHub Release (on success)
         if: needs.deploy.result == 'success' && needs.validate.outputs.release_tag != ''
