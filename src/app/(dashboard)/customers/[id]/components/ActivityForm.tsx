@@ -66,6 +66,8 @@ interface ActivityFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  /** When logging from a contact profile, pre-selects that person in the form. */
+  defaultContactId?: string;
 }
 
 export function ActivityForm({
@@ -75,6 +77,7 @@ export function ActivityForm({
   open,
   onOpenChange,
   onSuccess,
+  defaultContactId,
 }: ActivityFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -107,24 +110,27 @@ export function ActivityForm({
           activity_type: "note",
           subject: "",
           description: "",
-          contact_id: null,
+          contact_id: defaultContactId || null,
           due_date: "",
         });
       }
     }
-  }, [open, activity, form]);
+  }, [open, activity, form, defaultContactId]);
 
   async function onSubmit(values: FormData) {
     setIsLoading(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         activity_type: values.activity_type,
         subject: values.subject,
         description: values.description || undefined,
-        customer_id: customerId,
         contact_id: values.contact_id || undefined,
         due_date: values.due_date || undefined,
       };
+      const cid = customerId?.trim();
+      if (cid) {
+        payload.customer_id = cid;
+      }
 
       if (isEdit) {
         await apiClient.put(`/api/activities/${activity.id}`, payload);
