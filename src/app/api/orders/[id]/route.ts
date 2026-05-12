@@ -23,8 +23,9 @@ export async function GET(
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
     const { id } = await context.params;
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
     const row = await prisma.order.findFirst({
-      where: { id, ownerUserId: scope.userId },
+      where: { id, ownerUserId: { in: workspaceUserIds } },
       include: ORDER_DETAIL_INCLUDE,
     });
     if (!row) {
