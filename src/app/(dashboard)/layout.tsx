@@ -1,5 +1,4 @@
 import { StaffCopilotWidget } from '@/components/ai/StaffCopilotWidget';
-import { ChatWidget } from '@/components/chat/ChatWidget';
 import { DemoVideoBanner } from '@/components/dashboard/DemoVideoBanner';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { NotificationBell } from '@/components/layout/NotificationBell';
@@ -35,7 +34,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </main>
           </div>
 
-          <ChatWidget />
           <CommandPalette />
           <StaffCopilotWidget moduleContext="general" />
         </div>
