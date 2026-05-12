@@ -34,10 +34,11 @@ import { useToast } from "@/hooks/use-toast";
 import { inventoryApi } from "@/lib/api/inventory";
 import type { StoreLocation } from "@/types/inventory";
 import { LocationAwareProductSelect } from "@/components/inventory/LocationAwareProductSelect";
+import { OrderCombobox } from "@/components/inventory/OrderCombobox";
 
 const reservationSchema = z.object({
   product_id: z.string().min(1, "Product is required"),
-  order_id: z.string().min(1, "Order ID is required"),
+  order_id: z.string().min(1, "Order is required"),
   location: z.enum(["brisbane", "sydney", "melbourne"], {
     required_error: "Location is required",
   }),
@@ -207,12 +208,20 @@ export function StockReservationDialog({
               name="order_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Order ID *</FormLabel>
+                  <FormLabel>Order *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter order ID" {...field} disabled={isLoading} />
+                    <div
+                      className={isLoading ? "pointer-events-none opacity-60" : undefined}
+                    >
+                      <OrderCombobox
+                        value={field.value}
+                        onSelect={(o) => field.onChange(o.id)}
+                        disabled={isLoading}
+                      />
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    The order this reservation is for
+                    Choose the sales order; the reservation stores the order UUID.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
