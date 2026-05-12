@@ -301,43 +301,7 @@ jobs:
             echo "- :x: Smoke Tests: ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Send Slack notification
-        if: secrets.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v3.0.1
-        with:
-          payload: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ steps.status.outputs.emoji }} *Staging Deployment ${{ steps.status.outputs.status }}*"
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Version:*\n${{ needs.validate.outputs.short_sha }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Environment:*\nStaging"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*URL:*\n<https://staging.ccw-erp.com|staging.ccw-erp.com>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Triggered by:*\n${{ github.actor }}"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      # Slack notification removed — same fix as deploy-production.yml:
+      # `if: secrets.X != ''` is invalid (GitHub disallows `secrets.*` in
+      # if-conditions) and no-Slack is portfolio standard. Status surfaces
+      # in the GITHUB_STEP_SUMMARY block above.
