@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { paginated, parsePagination } from '@/lib/workshop/pagination';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { parsePagination } from '@/lib/workshop/pagination';
+import * as workshop from '@/lib/db/workshop-service';
 
 export async function GET(request: NextRequest) {
-  const scope = await requireAuthScope(request);
-  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
-  const { searchParams } = new URL(request.url);
-  const { page, pageSize } = parsePagination(searchParams);
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+    const { searchParams } = new URL(request.url);
+    const { page, pageSize } = parsePagination(searchParams);
+    const status = searchParams.get('status')?.trim() || undefined;
 
-  return NextResponse.json(paginated([], 0, page, pageSize));
+    const data = await workshop.listWorkshopReminders(workspaceUserIds, { page, pageSize, status });
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ detail: String(e) }, { status: 500 });
+  }
 }
