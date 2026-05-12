@@ -334,7 +334,7 @@ export default function ContactDetailPage() {
             {contact.customer_id && companyName ? (
               <div className="space-y-2">
                 <Link
-                  href={`/customers/${contact.customer_id}`}
+                  href={`/dashboard/crm/customers/${contact.customer_id}`}
                   className="text-primary inline-flex items-center gap-2 text-lg font-medium hover:underline"
                 >
                   <Building2 className="h-5 w-5" />
@@ -521,7 +521,14 @@ export default function ContactDetailPage() {
         <ActivityForm
           activity={selectedActivity}
           customerId={contact.customer_id ?? ''}
-          contacts={[]}
+          contacts={[
+            {
+              id: contact.id,
+              first_name: contact.first_name,
+              last_name: contact.last_name,
+            },
+          ]}
+          defaultContactId={contact.id}
           open={activityFormOpen}
           onOpenChange={setActivityFormOpen}
           onSuccess={handleActivitySuccess}
