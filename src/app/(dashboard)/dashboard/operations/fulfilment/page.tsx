@@ -494,7 +494,7 @@ export default function OrderFulfilmentPage() {
         description="Pick, pack, ship, invoice, and record payments. Use an order UUID as the Cin7 mapping ID when linking to CCW orders."
         icon={PackageCheck}
         breadcrumbs={[
-          { label: 'Orders', href: '/dashboard/operations/orders' },
+          { label: 'Sales orders', href: '/dashboard/operations/orders' },
           { label: 'Fulfilment' },
         ]}
       />
