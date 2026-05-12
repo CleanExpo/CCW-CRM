@@ -48,9 +48,68 @@ model Customer {
   quotes   Quote[]
   invoices Invoice[]
   persona  CustomerPersona?
+  contacts CrmContact[]
+  activities CrmActivity[]
 
   @@index([ownerUserId])
   @@map("customers")
+}
+
+/// People at customer accounts (modern CRM contact records, workspace-scoped).
+model CrmContact {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  customerId   String?  @map("customer_id") @db.Uuid
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  email        String?
+  phone        String?
+  mobile       String?
+  jobTitle     String?  @map("job_title")
+  department   String?
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  isActive     Boolean  @default(true) @map("is_active")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  customer   Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  activities CrmActivity[]
+
+  @@index([ownerUserId])
+  @@index([customerId])
+  @@index([email])
+  @@map("crm_contacts")
+}
+
+/// Customer interaction log (calls, tasks, etc.) — links customer and/or contact.
+model CrmActivity {
+  id           String    @id @default(uuid()) @db.Uuid
+  ownerUserId  String    @map("owner_user_id") @db.Uuid
+  activityType String    @map("activity_type")
+  subject      String
+  description  String?   @db.Text
+  customerId   String?   @map("customer_id") @db.Uuid
+  contactId    String?   @map("contact_id") @db.Uuid
+  orderId      String?   @map("order_id") @db.Uuid
+  quoteId      String?   @map("quote_id") @db.Uuid
+  dueDate      DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  createdBy    String?   @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  customer Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  contact  CrmContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  order    Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  quote    Quote?      @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([customerId])
+  @@index([contactId])
+  @@index([activityType])
+  @@index([dueDate])
+  @@map("crm_activities")
 }
 
 model CustomerPersona {
@@ -266,6 +325,7 @@ model Order {
   customer  Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems OrderLineItem[]
   invoices  Invoice[]
+  crmActivities CrmActivity[]
 
   @@index([ownerUserId])
   @@map("orders")
@@ -301,6 +361,7 @@ model Quote {
 
   customer Customer         @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lineItems QuoteLineItem[]
+  crmActivities CrmActivity[]
 
   @@index([ownerUserId])
   @@map("quotes")
