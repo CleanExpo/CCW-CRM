@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { inventoryApi } from "@/lib/api/inventory";
 import type { StoreLocation } from "@/types/inventory";
+import { LocationAwareProductSelect } from "@/components/inventory/LocationAwareProductSelect";
 
 const reservationSchema = z.object({
   product_id: z.string().min(1, "Product is required"),
@@ -123,7 +124,7 @@ export function StockReservationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="overflow-visible sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Reserve Stock</DialogTitle>
           <DialogDescription>
@@ -142,42 +143,7 @@ export function StockReservationDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Product ID (hidden if pre-selected) */}
-            {!productId && (
-              <FormField
-                control={form.control}
-                name="product_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter product ID" {...field} disabled={isLoading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Order ID */}
-            <FormField
-              control={form.control}
-              name="order_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Order ID *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter order ID" {...field} disabled={isLoading} />
-                  </FormControl>
-                  <FormDescription>
-                    The order this reservation is for
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Location */}
+            {/* Location first so product picker stock badges match the warehouse */}
             <FormField
               control={form.control}
               name="location"
@@ -186,7 +152,7 @@ export function StockReservationDialog({
                   <FormLabel>Location *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={isLoading}
                   >
                     <FormControl>
@@ -208,7 +174,51 @@ export function StockReservationDialog({
               )}
             />
 
-            {/* Quantity */}
+            {/* Product picker (hidden if pre-selected from parent) */}
+            {!productId && (
+              <FormField
+                control={form.control}
+                name="product_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product *</FormLabel>
+                    <FormControl>
+                      <div
+                        className={isLoading ? "pointer-events-none opacity-60" : undefined}
+                      >
+                        <LocationAwareProductSelect
+                          selectedLocation={form.watch("location")}
+                          value={field.value}
+                          onSelect={(p) => field.onChange(p.id)}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Pick from your catalog; the reservation uses the product UUID.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="order_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Order ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter order ID" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormDescription>
+                    The order this reservation is for
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="quantity"
@@ -232,7 +242,6 @@ export function StockReservationDialog({
               )}
             />
 
-            {/* Expires in hours */}
             <FormField
               control={form.control}
               name="expires_in_hours"
