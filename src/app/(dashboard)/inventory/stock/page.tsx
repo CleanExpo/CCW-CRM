@@ -18,11 +18,10 @@ import {
   TrendingDown,
   AlertTriangle,
   DollarSign,
-  ScanBarcode,
   Search,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useBarcodeScanner } from '@/hooks/use-barcode-scanner';
+import { ScanComingSoon } from '@/components/dashboard/ScanComingSoon';
 import type { InventoryItem, StockByLocation, StoreLocation } from '@/types/inventory';
 import { inventoryApi } from '@/lib/api/inventory';
 import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
@@ -159,29 +158,6 @@ export default function InventoryStockPage() {
     );
   };
 
-  // Barcode scanner — on scan, set search to SKU
-  const handleBarcodeScan = useCallback(
-    async (code: string) => {
-      try {
-        const product = await inventoryApi.lookupByBarcode(code);
-        setSearchQuery(product.sku);
-        toast({
-          title: 'Barcode scanned',
-          description: `${product.product_name} (${product.sku})`,
-        });
-      } catch {
-        toast({
-          variant: 'destructive',
-          title: 'Barcode not found',
-          description: `No product matched barcode: ${code}`,
-        });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [toast]
-  );
-  useBarcodeScanner({ onScan: handleBarcodeScan });
-
   // Action handlers
   const handleTransfer = (item: InventoryItem) => {
     setSelectedProduct(item);
@@ -261,13 +237,7 @@ export default function InventoryStockPage() {
         icon={Package}
       />
 
-      <div className="flex items-center justify-between">
-        <div />
-        <div className="text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
-          <ScanBarcode className="h-4 w-4" />
-          <span>Scanner ready</span>
-        </div>
-      </div>
+      <ScanComingSoon context="Stock list" />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
