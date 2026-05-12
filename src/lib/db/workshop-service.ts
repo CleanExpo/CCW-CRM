@@ -1,5 +1,14 @@
 import type { Prisma } from '@prisma/client';
-import { addMonths, endOfDay, endOfWeek, startOfDay, startOfWeek, subDays } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  differenceInCalendarDays,
+  endOfDay,
+  endOfWeek,
+  startOfDay,
+  startOfWeek,
+  subDays,
+} from 'date-fns';
 import { prisma } from '@/lib/db/prisma';
 import type {
   DashboardData,
@@ -948,4 +957,39 @@ export async function getWorkshopDashboard(
     pending_reminders_count: pendingReminderCount,
     upcoming_30_days,
   };
+}
+
+/** Warranty rows needing attention: expiring within 90 days or expired in the last 30 days. */
+export async function getEquipmentWarrantyStats(workspaceUserIds: string[]) {
+  const today = startOfDay(new Date());
+  const soonEnd = endOfDay(addDays(today, 90));
+  const recentExpiredStart = startOfDay(subDays(today, 30));
+
+  const where: Prisma.WorkshopEquipmentWhereInput = {
+    ownerUserId: { in: workspaceUserIds },
+    warrantyExpiry: { not: null },
+    OR: [
+      { warrantyExpiry: { gte: today, lte: soonEnd } },
+      { warrantyExpiry: { gte: recentExpiredStart, lt: today } },
+    ],
+  };
+
+  const [rows, total] = await Promise.all([
+    prisma.workshopEquipment.findMany({
+      where,
+      include: { customer: true, product: true },
+      orderBy: { warrantyExpiry: 'asc' },
+      take: 100,
+    }),
+    prisma.workshopEquipment.count({ where }),
+  ]);
+
+  const warranty_alerts = rows.map((r) => ({
+    serial_number: r.serialNumber,
+    product_name: r.product?.name ?? null,
+    company_name: r.customer.companyName,
+    days_until_expiry: differenceInCalendarDays(startOfDay(r.warrantyExpiry!), today),
+  }));
+
+  return { expiring_soon: total, warranty_alerts };
 }
