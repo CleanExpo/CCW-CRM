@@ -1,0 +1,11 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { orderFeed } from '@/lib/integrations/marketplace-dev-store';
+
+export async function GET(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+  return NextResponse.json(orderFeed(scope.userId));
+}
