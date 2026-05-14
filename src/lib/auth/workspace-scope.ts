@@ -26,3 +26,16 @@ export async function getWorkspaceMemberUserIds(userId: string): Promise<string[
     return [userId];
   }
 }
+
+/** Workspace id for the given user, or null if the user row is missing. */
+export async function getWorkspaceIdForUser(userId: string): Promise<string | null> {
+  try {
+    const user = await prisma.appUser.findUnique({
+      where: { id: userId },
+      select: { workspaceId: true },
+    });
+    return user?.workspaceId ?? null;
+  } catch {
+    return null;
+  }
+}
