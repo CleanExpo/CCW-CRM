@@ -6,8 +6,7 @@ import { getCin7Status, type Cin7ConnectionStatus } from '@/lib/api/cin7';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
-import { BookOpen, CheckCircle2, ChevronDown, Globe, Settings, XCircle } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle2, ChevronDown, Settings, XCircle } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +20,7 @@ import { SendGridConnectionCard } from './components/SendGridConnectionCard';
 import { ShopifyConnectionCard } from './components/ShopifyConnectionCard';
 import { ShopifySyncControls } from './components/ShopifySyncControls';
 import { XeroConnectionCard } from './components/XeroConnectionCard';
+import { UpcomingIntegrationSecretsForm } from './components/UpcomingIntegrationSecretsForm';
 import { XeroSyncControls } from './components/XeroSyncControls';
 
 function SectionShell({
@@ -322,31 +322,6 @@ function IntegrationsContent() {
             />
           </SectionShell>
 
-          <details className="border-border/60 bg-card/50 group rounded-xl border">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
-              <span className="text-muted-foreground inline-flex items-center gap-2">
-                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-                Other links
-              </span>
-            </summary>
-            <div className="border-border/60 space-y-2 border-t px-4 py-3">
-              <Link
-                href="/dashboard/settings/integrations/gl"
-                className="text-primary flex items-center gap-2 text-sm underline-offset-4 hover:underline"
-              >
-                <BookOpen className="h-4 w-4" />
-                Cin7 financial / GL
-              </Link>
-              <Link
-                href="/dashboard/settings/integrations/marketplace"
-                className="text-primary flex items-center gap-2 text-sm underline-offset-4 hover:underline"
-              >
-                <Globe className="h-4 w-4" />
-                Multi-channel marketplace
-              </Link>
-            </div>
-          </details>
-
           <details className="border-muted-foreground/30 bg-muted/10 group rounded-xl border border-dashed">
             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
               <span className="inline-flex items-center gap-2">
@@ -354,55 +329,12 @@ function IntegrationsContent() {
                 Upcoming (not wired for production yet)
               </span>
             </summary>
-            <div className="text-muted-foreground space-y-5 border-t border-border/40 px-4 py-4 text-sm leading-relaxed">
-              <div>
-                <p className="text-foreground font-medium">AI Services</p>
-                <p className="mt-1 text-xs">
-                  Health and mode for AI-backed assistants and automations — planned for a later release.
-                </p>
-                <ul className="mt-3 list-none space-y-4 text-xs">
-                  <li className="rounded-lg border border-border/50 bg-background/60 p-3">
-                    <p className="text-foreground font-medium">
-                      <span className="mr-1.5">✨</span> Google Gemini — <span className="text-muted-foreground">Not configured</span>
-                    </p>
-                    <p className="mt-1">Vision analysis, product attribute extraction, text generation.</p>
-                    <p className="text-muted-foreground mt-1 font-mono">gemini-2.0-flash</p>
-                    <p className="mt-2">
-                      Set <code className="bg-muted rounded px-1 py-0.5">GOOGLE_AI_API_KEY</code> in environment
-                      variables.
-                    </p>
-                  </li>
-                  <li className="rounded-lg border border-border/50 bg-background/60 p-3">
-                    <p className="text-foreground font-medium">
-                      <span className="mr-1.5">🤖</span> Anthropic Claude — <span className="text-muted-foreground">Demo mode</span>
-                    </p>
-                    <p className="mt-1">Autonomous ops, document extraction, NL queries, staff copilot.</p>
-                    <p className="text-muted-foreground mt-1 font-mono">claude-sonnet-4-6</p>
-                    <p className="mt-2">
-                      Set <code className="bg-muted rounded px-1 py-0.5">ANTHROPIC_API_KEY</code> for live AI decisions.
-                    </p>
-                  </li>
-                </ul>
-              </div>
-              <div className="rounded-lg border border-border/50 bg-background/60 p-3 text-xs">
-                <p className="text-foreground font-medium">HeyGen video</p>
-                <p className="mt-1 text-amber-700 dark:text-amber-300">Stub routes</p>
-                <p className="mt-1">
-                  Avatar video generation endpoints exist under{' '}
-                  <code className="bg-muted rounded px-1 py-0.5">/api/integrations/heygen/*</code> and return HTTP 501
-                  until HeyGen is fully wired.
-                </p>
-                <p className="mt-2 text-amber-800 dark:text-amber-200">
-                  Set <code className="bg-muted rounded px-1 py-0.5">HEYGEN_API_KEY</code> when implementing the handlers.
-                </p>
-              </div>
-              <div className="rounded-lg border border-border/50 bg-background/60 p-3 text-xs">
-                <p className="text-foreground font-medium">Google Agent Payments (AP2)</p>
-                <p className="mt-1">
-                  Payment agent workflows are on the roadmap; configuration UI and live AP2 handlers will ship in a
-                  future iteration.
-                </p>
-              </div>
+            <div className="space-y-4 border-t border-border/40 px-4 py-4 text-sm leading-relaxed">
+              <p className="text-muted-foreground text-xs">
+                Save API keys below; they are stored in the database for this workspace. Product features for Gemini,
+                Claude, HeyGen, and AP2 are still upcoming — keys are kept here until those flows go live.
+              </p>
+              <UpcomingIntegrationSecretsForm />
             </div>
           </details>
           </TabsContent>
