@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         detail:
-          'Provide Cin7 Core (account ID + application key) and/or Cin7 Omni (username + API key). At least one complete pair is required.',
+          'Provide Cin7 Core (account ID + application key) and/or Cin7 Omni (API username + connection key). At least one complete pair is required.',
       },
       { status: 400 }
     );
