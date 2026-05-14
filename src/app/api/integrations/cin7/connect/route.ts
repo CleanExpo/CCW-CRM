@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
       );
     }
     if (omniCreds) {
-      detailParts.push('Cin7 Omni did not accept these credentials (check username and API key).');
+      detailParts.push(
+        'Cin7 Omni did not accept these credentials (check API username and connection key).'
+      );
     }
     return NextResponse.json(
       {
