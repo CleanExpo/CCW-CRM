@@ -930,3 +930,17 @@ model AgentRun {
 
   @@map("agent_runs")
 }
+
+/// API keys for upcoming integrations (Gemini, Claude, HeyGen, AP2) — one row per workspace; set from Settings UI.
+model WorkspaceUpcomingIntegrationSecret {
+  id                 String   @id @default(uuid()) @db.Uuid
+  workspaceId        String   @unique @map("workspace_id") @db.Uuid
+  googleAiApiKey     String?  @map("google_ai_api_key") @db.Text
+  anthropicApiKey    String?  @map("anthropic_api_key") @db.Text
+  heygenApiKey       String?  @map("heygen_api_key") @db.Text
+  ap2ClientSecret    String?  @map("ap2_client_secret") @db.Text
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("workspace_upcoming_integration_secrets")
+}
