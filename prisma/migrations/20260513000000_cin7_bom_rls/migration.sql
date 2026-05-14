@@ -1,5 +1,18 @@
 -- RA-3029 — RLS for Cin7 BOM tables.
 --
+-- Plain PostgreSQL (local dev) has no Supabase "auth" schema / auth.uid().
+-- Policies below reference auth.uid(); create a minimal stub so migrations apply.
+-- Reads JWT sub when request.jwt.claim.sub is set; otherwise NULL (Prisma uses BYPASSRLS).
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE OR REPLACE FUNCTION auth.uid()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT (NULLIF(current_setting('request.jwt.claim.sub', true), ''))::uuid;
+$$;
+
 -- Migration 20260512183000_cin7_bom_tables added three new tables
 -- (cin7_bom_masters, cin7_bom_components, cin7_production_runs) without
 -- the RLS coverage that UNI-1750 established as a CCW-ERP boardroom
