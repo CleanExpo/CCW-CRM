@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
       core_connected: false,
       omni_connected: false,
       connector_allowlist: getCin7RegisteredConnectors(),
-      message: 'Missing Cin7 credentials. Add Cin7 Core and/or Cin7 Omni (username + API key).',
+      message:
+        'Missing Cin7 credentials. Set Cin7 Omni (CIN7_OMNI_USERNAME + CIN7_OMNI_API_KEY or CIN7_OMNI_CONNECTION_KEY) or Core keys in your environment, or save them from Settings.',
     });
   }
 
@@ -28,11 +29,13 @@ export async function GET(request: NextRequest) {
     const parts: string[] = [];
     if (coreCreds && !corePingOk) {
       parts.push(
-        'Cin7 Core API rejected these credentials or is unreachable (check account ID, application key, and connector IP allowlisting).'
+        'Cin7 Core rejected these credentials or is unreachable (account ID, application key, and connector IP allowlisting in Cin7).'
       );
     }
     if (omniCreds && !omniPingOk) {
-      parts.push('Cin7 Omni API rejected these credentials or is unreachable (check username and API key).');
+      parts.push(
+        'Cin7 Omni rejected these credentials or is unreachable (check API username and connection key / API key).'
+      );
     }
     if (parts.length === 0) {
       parts.push('Could not verify Cin7 connectivity.');
@@ -43,7 +46,7 @@ export async function GET(request: NextRequest) {
       mode,
       core_connected: corePingOk,
       omni_connected: omniPingOk,
-      connector_allowlist: getCin7RegisteredConnectors(),
+      connector_allowlist: coreCreds ? getCin7RegisteredConnectors() : [],
       message: parts.join(' '),
     });
   }
@@ -53,18 +56,20 @@ export async function GET(request: NextRequest) {
   let message: string;
   if (connected) {
     if (corePingOk && omniPingOk) {
-      message = 'Cin7 Core and Omni APIs reachable; integration is active.';
+      message = 'Cin7 Core and Omni are reachable; integration is active.';
     } else if (corePingOk) {
-      message = 'Cin7 Core API reachable and integration is active.';
+      message = 'Cin7 Core is reachable; integration is active.';
     } else {
-      message = 'Cin7 Omni API reachable and integration is active.';
+      message =
+        'Cin7 Omni is reachable (read-only). Product, customer, and order counts sync into this app when you run sync.';
     }
   } else if (corePingOk && omniPingOk) {
-    message = 'Cin7 Core and Omni verified. Click Connect to activate.';
+    message = 'Cin7 Core and Omni verified. Click Connect to start syncing.';
   } else if (corePingOk) {
-    message = 'Cin7 Core API verified. Click Connect to activate.';
+    message = 'Cin7 Core verified. Click Connect to start syncing.';
   } else {
-    message = 'Cin7 Omni API verified. Click Connect to activate.';
+    message =
+      'Cin7 Omni verified (read-only API). Click Connect to activate inbound sync from your live Cin7 account.';
   }
 
   return NextResponse.json({
@@ -72,7 +77,7 @@ export async function GET(request: NextRequest) {
     mode,
     core_connected: corePingOk,
     omni_connected: omniPingOk,
-    connector_allowlist: getCin7RegisteredConnectors(),
+    connector_allowlist: coreCreds ? getCin7RegisteredConnectors() : [],
     message,
   });
 }
