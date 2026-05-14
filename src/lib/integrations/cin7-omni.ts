@@ -15,6 +15,7 @@ export function getCin7OmniCredentials(request?: NextRequest): Cin7OmniCredentia
   const apiKey =
     request?.cookies.get('cin7_omni_api_key')?.value?.trim() ||
     process.env.CIN7_OMNI_API_KEY?.trim() ||
+    process.env.CIN7_OMNI_CONNECTION_KEY?.trim() ||
     '';
   if (!username || !apiKey) return null;
   return { username, apiKey };
