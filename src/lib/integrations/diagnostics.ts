@@ -82,12 +82,13 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
   const cin7CoreReady =
     has(process.env.CIN7_CORE_ACCOUNT_ID) && has(process.env.CIN7_CORE_APPLICATION_KEY);
   const cin7OmniReady =
-    has(process.env.CIN7_OMNI_USERNAME) && has(process.env.CIN7_OMNI_API_KEY);
+    has(process.env.CIN7_OMNI_USERNAME) &&
+    (has(process.env.CIN7_OMNI_API_KEY) || has(process.env.CIN7_OMNI_CONNECTION_KEY));
   if (!cin7CoreReady && !cin7OmniReady) {
     cin7Checks.push({
       level: 'error',
       message:
-        'Missing Cin7 credentials: set Core (CIN7_CORE_ACCOUNT_ID + CIN7_CORE_APPLICATION_KEY) and/or Omni (CIN7_OMNI_USERNAME + CIN7_OMNI_API_KEY).',
+        'Missing Cin7 credentials: use Cin7 Omni (CIN7_OMNI_USERNAME + CIN7_OMNI_API_KEY or CIN7_OMNI_CONNECTION_KEY), or Core (CIN7_CORE_ACCOUNT_ID + CIN7_CORE_APPLICATION_KEY).',
     });
   }
   if (cin7Mode === 'demo') cin7Checks.push({ level: 'warning', message: 'CIN7_MODE is demo; switch to live for production sync.' });
