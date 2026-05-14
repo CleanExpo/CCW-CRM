@@ -63,7 +63,7 @@ const configureSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          'Provide Cin7 Core (Account ID + Application Key) and/or Cin7 Omni (Username + API Key).',
+          'Provide Cin7 Omni (API username + connection key) and/or Cin7 Core (Account ID + application key).',
       });
     }
     if (coreId && !coreKey) {
@@ -84,14 +84,14 @@ const configureSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['omni_api_key'],
-        message: 'Omni API Key is required when Username is set.',
+        message: 'Connection key is required when API username is set.',
       });
     }
     if (!omniUser && omniKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['omni_username'],
-        message: 'Omni Username is required when API Key is set.',
+        message: 'API username is required when connection key is set.',
       });
     }
   });
@@ -109,12 +109,19 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
   const [saving, setSaving] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [showOmni, setShowOmni] = useState(false);
+  const [showOmni, setShowOmni] = useState(true);
+  const [showCore, setShowCore] = useState(false);
   const [editingCredentials, setEditingCredentials] = useState(false);
 
   const isConnected = status?.connected ?? false;
   const isNotConfigured = !status || status.mode === 'not_configured';
   const showForm = isNotConfigured || editingCredentials;
+  const needsConnect =
+    !isConnected &&
+    !showForm &&
+    status &&
+    status.mode !== 'not_configured' &&
+    (Boolean(status.omni_connected) || Boolean(status.core_connected));
 
   const form = useForm<ConfigureFormValues>({
     resolver: zodResolver(configureSchema),
@@ -143,10 +150,22 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
         payload.omni_api_key = ok;
       }
       await configureCin7(payload);
-      toast({
-        title: 'Credentials Saved',
-        description: 'Cin7 integration is now active',
-      });
+      try {
+        await connectCin7();
+        toast({
+          title: 'Cin7 connected',
+          description: 'Credentials saved and Cin7 responded successfully. You can run sync from the controls below.',
+        });
+      } catch (connectErr: unknown) {
+        toast({
+          variant: 'destructive',
+          title: 'Saved but not connected',
+          description:
+            connectErr instanceof Error
+              ? connectErr.message
+              : 'Credentials were saved; use Connect when Cin7 is reachable.',
+        });
+      }
       setEditingCredentials(false);
       onStatusChange();
     } catch (error: unknown) {
@@ -240,7 +259,7 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
             </div>
             <div>
               <CardTitle>Cin7 Inventory</CardTitle>
-              <CardDescription>Sync products, orders &amp; stock</CardDescription>
+              <CardDescription>Pull products, customers, and orders from Cin7 Omni (read-only API).</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -270,12 +289,14 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {status?.connector_allowlist && status.connector_allowlist.length > 0 && (
+        {status?.core_connected &&
+          status?.connector_allowlist &&
+          status.connector_allowlist.length > 0 && (
           <div className="rounded-lg border border-border/80 bg-muted/40 p-3">
-            <p className="text-sm font-medium">Cin7 API connector IPs</p>
+            <p className="text-sm font-medium">Cin7 Core API connector IPs</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              Cin7 limits Core API access to registered connector IPs. Ensure these addresses are
-              configured in Cin7 for the integrations that call Core from your network.
+              Only applies to Cin7 Core. Omni uses username + connection key and does not require IP
+              allowlisting.
             </p>
             <ul className="mt-2 space-y-1 font-mono text-xs">
               {status.connector_allowlist.map((c) => (
@@ -284,6 +305,18 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {needsConnect && (
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-900 dark:bg-indigo-950">
+            <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">Ready to sync</p>
+            <p className="text-muted-foreground mt-1 text-xs dark:text-indigo-200/90">
+              {status?.message ?? 'Cin7 responded successfully. Click Connect to pull read-only data from Omni.'}
+            </p>
+            <Button className="mt-3" size="sm" onClick={handleConnect}>
+              Connect
+            </Button>
           </div>
         )}
 
@@ -298,7 +331,7 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                     Cin7 Integration Active
                   </p>
                   <p className="text-xs text-indigo-700 dark:text-indigo-300">
-                    Connected to Cin7 inventory management
+                    Inbound sync from Cin7 is enabled (Omni uses read-only GET calls to your live tenant).
                   </p>
                 </div>
               </div>
@@ -361,11 +394,14 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
               <div className="border-muted-foreground/20 bg-muted/50 flex items-start gap-2 rounded-lg border p-3">
                 <AlertCircle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
                 <div className="text-muted-foreground text-sm">
-                  <p className="font-medium">Enter your Cin7 API credentials</p>
+                  <p className="font-medium">Cin7 Omni (recommended)</p>
                   <p className="mt-1 text-xs">
-                    Use <strong className="font-medium">Cin7 Core</strong> (Settings → API) and/or{' '}
-                    <strong className="font-medium">Cin7 Omni</strong> (API username + connection key).
-                    At least one complete pair is required.
+                    Use your <strong className="font-medium">API username</strong> and{' '}
+                    <strong className="font-medium">connection key</strong> from Cin7. Read-only Omni access
+                    is enough: we only call Cin7 GET endpoints and copy data into this app. No IP
+                    allowlisting is required for Omni. You can also set{' '}
+                    <code className="text-xs">CIN7_OMNI_USERNAME</code> and{' '}
+                    <code className="text-xs">CIN7_OMNI_API_KEY</code> in <code className="text-xs">.env.local</code>.
                   </p>
                 </div>
               </div>
@@ -373,56 +409,14 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
-                {/* Cin7 Core credentials */}
-                <div className="space-y-3">
-                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Cin7 Core (optional if using Omni)
-                  </p>
-                  <FormField
-                    control={form.control}
-                    name="core_account_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account ID</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. 12345678-abcd-..."
-                            autoComplete="off"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="core_application_key"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Application Key</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Paste your application key"
-                            autoComplete="new-password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Cin7 Omni credentials (collapsible) */}
+                {/* Cin7 Omni — primary */}
                 <div className="space-y-3">
                   <button
                     type="button"
                     onClick={() => setShowOmni((v) => !v)}
                     className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-xs font-semibold tracking-wide uppercase"
                   >
-                    <span>Cin7 Omni (optional if using Core)</span>
+                    <span>Cin7 Omni</span>
                     {showOmni ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -437,13 +431,9 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                         name="omni_username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Omni Username</FormLabel>
+                            <FormLabel>API username</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="Cin7 Omni username"
-                                autoComplete="off"
-                                {...field}
-                              />
+                              <Input placeholder="Cin7 Omni API username" autoComplete="off" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -454,11 +444,67 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                         name="omni_api_key"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Omni API Key</FormLabel>
+                            <FormLabel>Connection key</FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
-                                placeholder="Paste your Omni API key"
+                                placeholder="Paste your Cin7 connection key"
+                                autoComplete="new-password"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+
+                {/* Cin7 Core — optional */}
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCore((v) => !v)}
+                    className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between text-xs font-semibold tracking-wide uppercase"
+                  >
+                    <span>Cin7 Core (optional)</span>
+                    {showCore ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {showCore && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="core_account_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Account ID</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Core / External API account ID"
+                                autoComplete="off"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="core_application_key"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Application key</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="Core application key"
                                 autoComplete="new-password"
                                 {...field}
                               />
@@ -476,7 +522,7 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                 <div className="flex gap-2">
                   <Button type="submit" disabled={saving} className="flex-1">
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    {saving ? 'Saving...' : 'Save & Connect'}
+                    {saving ? 'Connecting...' : 'Save & Connect'}
                   </Button>
                   {editingCredentials && (
                     <Button
@@ -491,14 +537,6 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
               </form>
             </Form>
 
-            {isNotConfigured && (
-              <>
-                <Separator />
-                <Button variant="ghost" size="sm" className="text-muted-foreground w-full" onClick={handleConnect}>
-                  Connect
-                </Button>
-              </>
-            )}
           </>
         )}
       </CardContent>
