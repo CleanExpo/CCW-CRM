@@ -3,17 +3,15 @@
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { useToast } from '@/hooks/use-toast';
 import { getCin7Status, type Cin7ConnectionStatus } from '@/lib/api/cin7';
-import { apiClient } from '@/lib/api/client';
 import { getSendGridStatus, type SendGridConnectionStatus } from '@/lib/api/sendgrid';
 import { getShopifyStatus, type ShopifyConnectionStatus } from '@/lib/api/shopify';
 import { getXeroStatus, type XeroConnectionStatus } from '@/lib/api/xero';
-import { AlertTriangle, BookOpen, Bot, CheckCircle2, Globe, Settings, Video, XCircle } from 'lucide-react';
+import { BookOpen, CheckCircle2, ChevronDown, Globe, Settings, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { AP2ConnectionCard } from './components/AP2ConnectionCard';
 import { Cin7ConnectionCard } from './components/Cin7ConnectionCard';
 import { Cin7ShadowSyncCard } from './components/Cin7ShadowSyncCard';
 import { Cin7SyncControls } from './components/Cin7SyncControls';
@@ -92,22 +90,6 @@ function IntegrationsContent() {
   const [sendgridStatus, setSendgridStatus] = useState<SendGridConnectionStatus | null>(null);
   const [cin7Status, setCin7Status] = useState<Cin7ConnectionStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [geminiStatus, setGeminiStatus] = useState<{
-    configured: boolean;
-    status: string;
-    default_model?: string;
-  } | null>(null);
-  const [claudeStatus, setClaudeStatus] = useState<{ mode: string; status: string } | null>(null);
-  const [diagnostics, setDiagnostics] = useState<
-    Array<{
-      key: 'xero' | 'shopify' | 'cin7' | 'sendgrid' | 'ap2' | 'heygen';
-      label: string;
-      level: 'ok' | 'warning' | 'error';
-      liveReady: boolean;
-      mode: 'demo' | 'live';
-      checks: Array<{ level: 'ok' | 'warning' | 'error'; message: string }>;
-    }>
-  >([]);
 
   const loadXeroStatus = async () => {
     try {
@@ -149,40 +131,6 @@ function IntegrationsContent() {
     }
   };
 
-  const loadAiStatuses = async () => {
-    try {
-      const [g, c] = await Promise.allSettled([
-        apiClient.get<{ configured: boolean; status: string; default_model?: string }>(
-          '/api/google-ai/health'
-        ),
-        apiClient.get<{ mode: string; status: string }>('/api/ai/autonomous/health'),
-      ]);
-      if (g.status === 'fulfilled') setGeminiStatus(g.value);
-      if (c.status === 'fulfilled') setClaudeStatus(c.value);
-    } catch {
-      // AI services are optional — don't error
-    }
-  };
-
-  const loadDiagnostics = async () => {
-    try {
-      const response = await apiClient.get<{
-        items: Array<{
-          key: 'xero' | 'shopify' | 'cin7' | 'sendgrid' | 'ap2' | 'heygen';
-          label: string;
-          level: 'ok' | 'warning' | 'error';
-          liveReady: boolean;
-          mode: 'demo' | 'live';
-          checks: Array<{ level: 'ok' | 'warning' | 'error'; message: string }>;
-        }>;
-      }>('/api/integrations/diagnostics');
-      setDiagnostics(response.items);
-    } catch (error) {
-      console.error('Failed to load diagnostics:', error);
-      setDiagnostics([]);
-    }
-  };
-
   const loadAllStatuses = async () => {
     setLoading(true);
     try {
@@ -191,8 +139,6 @@ function IntegrationsContent() {
         loadShopifyStatus(),
         loadSendGridStatus(),
         loadCin7Status(),
-        loadAiStatuses(),
-        loadDiagnostics(),
       ]);
     } catch (error: unknown) {
       toast({
@@ -258,38 +204,27 @@ function IntegrationsContent() {
 
   return (
     <ErrorBoundary>
-      <div className="relative flex flex-1 flex-col gap-6 p-4 md:p-6">
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 opacity-60"
-          aria-hidden="true"
-        >
-          <div className="from-primary/8 via-background to-background absolute -top-28 left-0 h-72 w-full bg-linear-to-b" />
-        </div>
-
-        {/* Page Header */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-linear-to-br from-card via-card to-muted/40 p-5 shadow-sm md:p-6">
-          <div className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
-          <div className="absolute -bottom-12 left-16 h-36 w-36 rounded-full bg-blue-500/10 blur-2xl" />
-          <div className="relative flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+        {/* Page header */}
+        <div className="rounded-xl border border-border/60 bg-card p-4 md:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="bg-primary/12 flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-primary/20">
+              <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
                 <Settings className="text-primary h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-                  Integrations &amp; setup
-                </h1>
+                <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Integrations</h1>
                 <p className="text-muted-foreground text-sm">
-                  Connect systems, run the setup checklist, and review readiness in one place.
+                  Connect Xero, Cin7, Shopify, and SendGrid. Other services are listed under Upcoming.
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {[
                 { name: 'Xero', ok: xeroStatus?.connected },
+                { name: 'Cin7', ok: cin7Status?.connected },
                 { name: 'Shopify', ok: shopifyStatus?.connected },
                 { name: 'SendGrid', ok: sendgridStatus?.connected },
-                { name: 'Cin7', ok: cin7Status?.connected },
               ].map((item) => (
                 <span
                   key={item.name}
@@ -331,61 +266,11 @@ function IntegrationsContent() {
 
           <TabsContent value="connections" className="mt-6 space-y-6">
           <SectionShell
-            sectionId="integration-readiness"
-            title="Integration Readiness"
-            description="Environment and mode checks for production-grade live connections."
-            icon={<AlertTriangle className="h-4 w-4 text-primary" />}
-          >
-            <div className="grid gap-3 md:grid-cols-2">
-              {diagnostics.map((diag) => (
-                <div key={diag.key} className="rounded-lg border border-border/70 bg-card/60 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="font-medium">{diag.label}</p>
-                    <span
-                      className={`text-xs ${
-                        diag.level === 'error'
-                          ? 'text-red-600'
-                          : diag.level === 'warning'
-                            ? 'text-amber-600'
-                            : 'text-emerald-600'
-                      }`}
-                    >
-                      {diag.liveReady ? 'Live ready' : `Mode: ${diag.mode}`}
-                    </span>
-                  </div>
-                  <ul className="space-y-1">
-                    {diag.checks.map((check, index) => (
-                      <li
-                        key={`${diag.key}-${index}`}
-                        className={`text-xs ${
-                          check.level === 'error'
-                            ? 'text-red-700 dark:text-red-300'
-                            : check.level === 'warning'
-                              ? 'text-amber-700 dark:text-amber-300'
-                              : 'text-emerald-700 dark:text-emerald-300'
-                        }`}
-                      >
-                        - {check.message}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              {diagnostics.length === 0 && (
-                <p className="text-muted-foreground text-sm">
-                  Diagnostics unavailable. Refresh the page to retry.
-                </p>
-              )}
-            </div>
-          </SectionShell>
-
-          {/* Xero Integration */}
-          <SectionShell
             sectionId="integration-xero"
-            title="Xero Accounting"
-            description="Sync invoices and payments between ERP and Xero."
+            title="Xero"
+            description="Accounting and invoices."
           >
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2">
               <XeroConnectionCard
                 status={xeroStatus}
                 loading={loading}
@@ -395,13 +280,31 @@ function IntegrationsContent() {
             </div>
           </SectionShell>
 
-          {/* Shopify Integration */}
-          <SectionShell
-            sectionId="integration-shopify"
-            title="Shopify E-commerce"
-            description="Manage store connection, order import, and inventory sync."
-          >
-            <div className="grid gap-6 md:grid-cols-1">
+          <SectionShell sectionId="integration-cin7" title="Cin7" description="Inventory from Cin7 Omni (read-only pulls).">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Cin7ConnectionCard
+                status={cin7Status}
+                loading={loading}
+                onStatusChange={loadCin7Status}
+              />
+              <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
+            </div>
+            <details className="border-border/60 bg-muted/20 group mt-4 rounded-lg border">
+              <summary className="text-muted-foreground cursor-pointer list-none px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-2">
+                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+                  More Cin7 (webhooks, shadow sync)
+                </span>
+              </summary>
+              <div className="space-y-4 border-t border-border/60 px-4 pb-4 pt-2">
+                <Cin7WebhookSubscriptionsCard />
+                <Cin7ShadowSyncCard />
+              </div>
+            </details>
+          </SectionShell>
+
+          <SectionShell sectionId="integration-shopify" title="Shopify" description="Store, orders, and inventory.">
+            <div className="grid gap-6">
               <ShopifyConnectionCard
                 status={shopifyStatus}
                 loading={loading}
@@ -411,193 +314,97 @@ function IntegrationsContent() {
             </div>
           </SectionShell>
 
-          {/* SendGrid Integration */}
-          <SectionShell
-            sectionId="integration-sendgrid"
-            title="SendGrid Email Management"
-            description="Configure email delivery and outbound communication settings."
-          >
-            <div className="grid gap-6 md:grid-cols-1">
-              <SendGridConnectionCard
-                status={sendgridStatus}
-                loading={loading}
-                onStatusChange={loadSendGridStatus}
-              />
+          <SectionShell sectionId="integration-sendgrid" title="SendGrid" description="Transactional and marketing email.">
+            <SendGridConnectionCard
+              status={sendgridStatus}
+              loading={loading}
+              onStatusChange={loadSendGridStatus}
+            />
+          </SectionShell>
+
+          <details className="border-border/60 bg-card/50 group rounded-xl border">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+              <span className="text-muted-foreground inline-flex items-center gap-2">
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                Other links
+              </span>
+            </summary>
+            <div className="border-border/60 space-y-2 border-t px-4 py-3">
+              <Link
+                href="/dashboard/settings/integrations/gl"
+                className="text-primary flex items-center gap-2 text-sm underline-offset-4 hover:underline"
+              >
+                <BookOpen className="h-4 w-4" />
+                Cin7 financial / GL
+              </Link>
+              <Link
+                href="/dashboard/settings/integrations/marketplace"
+                className="text-primary flex items-center gap-2 text-sm underline-offset-4 hover:underline"
+              >
+                <Globe className="h-4 w-4" />
+                Multi-channel marketplace
+              </Link>
             </div>
-          </SectionShell>
+          </details>
 
-          {/* Cin7 Integration */}
-          <SectionShell
-            sectionId="integration-cin7"
-            title="Cin7 Inventory Management"
-            description="Connect inventory source, run sync, and monitor webhooks."
-          >
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-              <Cin7ConnectionCard
-                status={cin7Status}
-                loading={loading}
-                onStatusChange={loadCin7Status}
-              />
-              <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
-            </div>
-            <div className="mt-6">
-              <Cin7WebhookSubscriptionsCard />
-            </div>
-          </SectionShell>
-
-          {/* Cin7 Shadow Sync — gap detection between Cin7 and ERP */}
-          <SectionShell
-            sectionId="integration-shadow-sync"
-            title="Cin7 Shadow Sync"
-            description="Detect and track gaps between Cin7 and the ERP without disrupting live data."
-          >
-            <Cin7ShadowSyncCard />
-          </SectionShell>
-
-          {/* Cin7 Financial / GL Integration */}
-          <SectionShell
-            sectionId="integration-gl"
-            title="Cin7 Financial / GL Integration"
-            description="Sync Chart of Accounts, manage journal entries and configure ERP-to-GL mappings."
-            icon={<BookOpen className="h-4 w-4 text-primary" />}
-          >
-            <Link href="/dashboard/settings/integrations/gl">
-              <div className="hover:bg-muted/50 hover:border-primary/30 flex cursor-pointer items-center gap-4 rounded-xl border border-border/70 p-4 transition-colors">
-                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                  <BookOpen className="text-primary h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Financial / GL Settings</p>
-                  <p className="text-muted-foreground text-xs">
-                    Chart of Accounts, journal entries and account mappings
-                  </p>
-                </div>
-                <span className="text-muted-foreground text-sm">View GL Settings →</span>
-              </div>
-            </Link>
-          </SectionShell>
-
-          {/* Multi-Channel Marketplace */}
-          <SectionShell
-            sectionId="integration-marketplace"
-            title="Multi-Channel Marketplace"
-            description="Sync products, inventory, and orders across Shopify, eBay, and Facebook Marketplace."
-            icon={<Globe className="h-4 w-4 text-primary" />}
-          >
-            <Link href="/dashboard/settings/integrations/marketplace">
-              <div className="hover:bg-muted/50 hover:border-primary/30 flex cursor-pointer items-center gap-4 rounded-xl border border-border/70 p-4 transition-colors">
-                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-                  <Globe className="text-primary h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Marketplace Dashboard</p>
-                  <p className="text-muted-foreground text-xs">
-                    Connect channels, sync products, and view unified orders
-                  </p>
-                </div>
-                <span className="text-muted-foreground text-sm">Open Dashboard →</span>
-              </div>
-            </Link>
-          </SectionShell>
-
-          {/* AI Services */}
-          <SectionShell
-            sectionId="integration-ai"
-            title="AI Services"
-            description="Health and mode for AI-backed assistants and automations."
-          >
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {/* Google Gemini */}
-              <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-medium">
-                    <span className="text-xl">✨</span> Google Gemini
-                  </div>
-                  {geminiStatus?.configured ? (
-                    <span className="flex items-center gap-1 text-xs text-green-600">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Ready
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-xs text-orange-600">
-                      <XCircle className="h-3.5 w-3.5" /> Not configured
-                    </span>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Vision analysis, product attribute extraction, text generation.
+          <details className="border-muted-foreground/30 bg-muted/10 group rounded-xl border border-dashed">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+              <span className="inline-flex items-center gap-2">
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                Upcoming (not wired for production yet)
+              </span>
+            </summary>
+            <div className="text-muted-foreground space-y-5 border-t border-border/40 px-4 py-4 text-sm leading-relaxed">
+              <div>
+                <p className="text-foreground font-medium">AI Services</p>
+                <p className="mt-1 text-xs">
+                  Health and mode for AI-backed assistants and automations — planned for a later release.
                 </p>
-                {geminiStatus?.default_model && (
-                  <p className="mt-1 font-mono text-xs text-blue-600">
-                    {geminiStatus.default_model}
-                  </p>
-                )}
-                {!geminiStatus?.configured && (
-                  <p className="mt-2 text-xs text-orange-700">
-                    Set <code className="bg-muted rounded px-1">GOOGLE_AI_API_KEY</code> in
-                    environment variables.
-                  </p>
-                )}
+                <ul className="mt-3 list-none space-y-4 text-xs">
+                  <li className="rounded-lg border border-border/50 bg-background/60 p-3">
+                    <p className="text-foreground font-medium">
+                      <span className="mr-1.5">✨</span> Google Gemini — <span className="text-muted-foreground">Not configured</span>
+                    </p>
+                    <p className="mt-1">Vision analysis, product attribute extraction, text generation.</p>
+                    <p className="text-muted-foreground mt-1 font-mono">gemini-2.0-flash</p>
+                    <p className="mt-2">
+                      Set <code className="bg-muted rounded px-1 py-0.5">GOOGLE_AI_API_KEY</code> in environment
+                      variables.
+                    </p>
+                  </li>
+                  <li className="rounded-lg border border-border/50 bg-background/60 p-3">
+                    <p className="text-foreground font-medium">
+                      <span className="mr-1.5">🤖</span> Anthropic Claude — <span className="text-muted-foreground">Demo mode</span>
+                    </p>
+                    <p className="mt-1">Autonomous ops, document extraction, NL queries, staff copilot.</p>
+                    <p className="text-muted-foreground mt-1 font-mono">claude-sonnet-4-6</p>
+                    <p className="mt-2">
+                      Set <code className="bg-muted rounded px-1 py-0.5">ANTHROPIC_API_KEY</code> for live AI decisions.
+                    </p>
+                  </li>
+                </ul>
               </div>
-              {/* Anthropic Claude */}
-              <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-medium">
-                    <span className="text-xl">🤖</span> Anthropic Claude
-                  </div>
-                  {claudeStatus?.mode === 'production' ? (
-                    <span className="flex items-center gap-1 text-xs text-green-600">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Production
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-xs text-blue-600">
-                      <Bot className="h-3.5 w-3.5" /> Demo mode
-                    </span>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Autonomous ops, document extraction, NL queries, staff copilot.
-                </p>
-                <p className="mt-1 font-mono text-xs text-purple-600">claude-sonnet-4-6</p>
-                {claudeStatus?.mode !== 'production' && (
-                  <p className="mt-2 text-xs text-blue-700">
-                    Set <code className="bg-muted rounded px-1">ANTHROPIC_API_KEY</code> for live AI
-                    decisions.
-                  </p>
-                )}
-              </div>
-              {/* HeyGen video (API stubs until wired) */}
-              <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm lg:col-span-1">
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-medium">
-                    <Video className="text-primary h-5 w-5" /> HeyGen video
-                  </div>
-                  <span className="flex items-center gap-1 text-xs text-amber-600">
-                    <AlertTriangle className="h-3.5 w-3.5" /> Stub routes
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-xs">
+              <div className="rounded-lg border border-border/50 bg-background/60 p-3 text-xs">
+                <p className="text-foreground font-medium">HeyGen video</p>
+                <p className="mt-1 text-amber-700 dark:text-amber-300">Stub routes</p>
+                <p className="mt-1">
                   Avatar video generation endpoints exist under{' '}
-                  <code className="bg-muted rounded px-1">/api/integrations/heygen/*</code> and return
-                  HTTP 501 until HeyGen is fully wired.
+                  <code className="bg-muted rounded px-1 py-0.5">/api/integrations/heygen/*</code> and return HTTP 501
+                  until HeyGen is fully wired.
                 </p>
-                <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">
-                  Set <code className="bg-muted rounded px-1">HEYGEN_API_KEY</code> when implementing the
-                  handlers.
+                <p className="mt-2 text-amber-800 dark:text-amber-200">
+                  Set <code className="bg-muted rounded px-1 py-0.5">HEYGEN_API_KEY</code> when implementing the handlers.
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/50 bg-background/60 p-3 text-xs">
+                <p className="text-foreground font-medium">Google Agent Payments (AP2)</p>
+                <p className="mt-1">
+                  Payment agent workflows are on the roadmap; configuration UI and live AP2 handlers will ship in a
+                  future iteration.
                 </p>
               </div>
             </div>
-          </SectionShell>
-
-          {/* Google AP2 Integration */}
-          <SectionShell
-            sectionId="integration-ap2"
-            title="Google Agent Payments (AP2)"
-            description="Configure AP2 connectivity for payment agent workflows."
-          >
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-              <AP2ConnectionCard />
-            </div>
-          </SectionShell>
+          </details>
           </TabsContent>
         </Tabs>
 
@@ -617,8 +424,8 @@ export default function IntegrationsPage() {
                 <Settings className="text-primary h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Integrations &amp; setup</h1>
-                <p className="text-muted-foreground text-sm">Loading integration status...</p>
+                <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+                <p className="text-muted-foreground text-sm">Loading…</p>
               </div>
             </div>
           </div>
