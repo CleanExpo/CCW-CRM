@@ -66,20 +66,20 @@ export function IntegrationsSetupGuide({
 
   const rows: CheckRow[] = [
     {
-      id: 'cin7',
-      title: 'Connect inventory (Cin7)',
-      description: 'Pull products, stock, and customers from Cin7 Core or Omni.',
-      done: !!cin7Status?.connected,
-      actionLabel: cin7Status?.connected ? 'Review connection' : 'Configure Cin7',
-      onAction: () => onGoToConnections('integration-cin7'),
-    },
-    {
       id: 'xero',
       title: 'Connect accounting (Xero)',
       description: 'OAuth to Xero for invoices, payments, and GL alignment.',
       done: !!xeroStatus?.connected,
       actionLabel: xeroStatus?.connected ? 'Review connection' : 'Configure Xero',
       onAction: () => onGoToConnections('integration-xero'),
+    },
+    {
+      id: 'cin7',
+      title: 'Connect inventory (Cin7)',
+      description: 'Pull products, stock, and customers from Cin7 Omni (or Core if configured).',
+      done: !!cin7Status?.connected,
+      actionLabel: cin7Status?.connected ? 'Review connection' : 'Configure Cin7',
+      onAction: () => onGoToConnections('integration-cin7'),
     },
     {
       id: 'shopify',
@@ -97,14 +97,6 @@ export function IntegrationsSetupGuide({
       actionLabel: sendgridStatus?.connected ? 'Review connection' : 'Configure SendGrid',
       onAction: () => onGoToConnections('integration-sendgrid'),
     },
-    {
-      id: 'diagnostics',
-      title: 'Review integration readiness',
-      description: 'Confirm environment variables and live vs demo modes before go-live.',
-      done: false,
-      actionLabel: 'Open diagnostics',
-      onAction: () => onGoToConnections('integration-readiness'),
-    },
   ];
 
   const completedCore = [cin7Status?.connected, xeroStatus?.connected].filter(Boolean).length;
@@ -114,9 +106,8 @@ export function IntegrationsSetupGuide({
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Setup guide</h2>
         <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-          One place to go live: complete the checklist below, then use{' '}
-          <strong>Connections</strong> for advanced sync controls and webhooks. Progress saves in
-          your environment — refresh status anytime.
+          Work through the four integrations below, then open <strong>Connections</strong> for sync
+          controls and optional Cin7 tools.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-xs">
