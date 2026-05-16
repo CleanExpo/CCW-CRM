@@ -204,11 +204,29 @@ export function ConversationDetailDialog({
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(message.sent_at), "PPp")}
                           </p>
-                          {message.was_ai_generated && (
-                            <Badge variant="secondary" className="mt-1 text-xs">
-                              AI Generated
-                            </Badge>
-                          )}
+                          <div className="mt-1 flex flex-wrap justify-end gap-1">
+                            {message.was_ai_generated && (
+                              <Badge variant="secondary" className="text-xs">
+                                AI Generated
+                              </Badge>
+                            )}
+                            {message.direction === "outbound" && message.delivery_status && (
+                              <Badge
+                                variant={
+                                  message.delivery_status === "delivered"
+                                    ? "default"
+                                    : ["bounce", "dropped", "blocked", "failed"].includes(
+                                          message.delivery_status
+                                        )
+                                      ? "destructive"
+                                      : "outline"
+                                }
+                                className="text-xs"
+                              >
+                                {message.delivery_status}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
 
