@@ -4,6 +4,15 @@ import { invoiceToApi } from '@/lib/db/api-serialize';
 import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { buildInvoiceEmailPayload } from '@/lib/integrations/invoice-email';
+import {
+  getSendGridApiKey,
+  getSendGridFromName,
+  getSendGridSendReadiness,
+  isValidEmailAddress,
+  resolveSendGridFromEmail,
+  sendMailViaSendGrid,
+} from '@/lib/integrations/sendgrid-mail';
 
 export async function POST(
   request: NextRequest,
@@ -37,7 +46,36 @@ export async function POST(
     });
 
     const status = deriveInvoiceStatus(updated);
-    return NextResponse.json(invoiceToApi(updated, { statusOverride: status }));
+    const apiBody = invoiceToApi(updated, { statusOverride: status });
+
+    const customerEmail = updated.customer?.email?.trim();
+    let email_delivery: { sent: boolean; detail?: string } | undefined;
+
+    if (customerEmail && isValidEmailAddress(customerEmail)) {
+      const readiness = await getSendGridSendReadiness(request);
+      if (readiness.ok) {
+        const apiKey = getSendGridApiKey(request);
+        const fromEmail = resolveSendGridFromEmail(request);
+        if (apiKey && fromEmail) {
+          const { subject, body_text } = buildInvoiceEmailPayload(updated);
+          const mail = await sendMailViaSendGrid(apiKey, fromEmail, getSendGridFromName(request), {
+            to_email: customerEmail,
+            subject,
+            body_text,
+          });
+          email_delivery = mail.ok
+            ? { sent: true }
+            : { sent: false, detail: mail.detail };
+        }
+      } else {
+        email_delivery = { sent: false, detail: readiness.detail };
+      }
+    }
+
+    return NextResponse.json({
+      ...apiBody,
+      ...(email_delivery ? { email_delivery } : {}),
+    });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
