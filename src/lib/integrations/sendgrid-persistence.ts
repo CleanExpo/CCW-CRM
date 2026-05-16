@@ -10,25 +10,20 @@ export type RecordOutboundEmailInput = {
   bodyHtml?: string | null;
   sendgridMessageId?: string | null;
   wasAiGenerated?: boolean;
-  /** When set, append to this thread (must belong to workspace). */
   threadId?: string;
 };
 
-export async function recordOutboundEmail(input: RecordOutboundEmailInput): Promise<string> {
-  const {
-    ownerUserId,
-    workspaceUserIds,
-    toEmail,
-    fromEmail,
-    subject,
-    bodyText,
-    bodyHtml,
-    sendgridMessageId,
-    wasAiGenerated = false,
-    threadId,
-  } = input;
+export type OutboundEmailRecord = {
+  threadId: string;
+  messageId: string;
+};
 
-  let existingThread = threadId
+async function resolveThread(
+  input: Pick<RecordOutboundEmailInput, 'ownerUserId' | 'workspaceUserIds' | 'toEmail' | 'subject' | 'threadId'>
+) {
+  const { ownerUserId, workspaceUserIds, toEmail, subject, threadId } = input;
+
+  const existingThread = threadId
     ? await prisma.emailThread.findFirst({
         where: { id: threadId, ownerUserId: { in: workspaceUserIds } },
       })
@@ -40,7 +35,7 @@ export async function recordOutboundEmail(input: RecordOutboundEmailInput): Prom
         orderBy: { lastMessageAt: 'desc' },
       });
 
-  const thread =
+  return (
     existingThread ??
     (await prisma.emailThread.create({
       data: {
@@ -51,33 +46,71 @@ export async function recordOutboundEmail(input: RecordOutboundEmailInput): Prom
         status: 'responded',
         lastMessageAt: new Date(),
       },
-    }));
+    }))
+  );
+}
 
-  await prisma.$transaction(async (tx) => {
-    await tx.emailMessage.create({
+/** Creates thread + outbound message before SendGrid send (for custom_args tracking). */
+export async function createOutboundEmailDraft(
+  input: RecordOutboundEmailInput
+): Promise<OutboundEmailRecord> {
+  const thread = await resolveThread(input);
+
+  const message = await prisma.$transaction(async (tx) => {
+    const created = await tx.emailMessage.create({
       data: {
         threadId: thread.id,
         direction: 'outbound',
-        fromEmail,
-        toEmail,
-        subject,
-        bodyText,
-        bodyHtml: bodyHtml ?? null,
-        sendgridMessageId: sendgridMessageId ?? null,
-        wasAiGenerated,
+        fromEmail: input.fromEmail,
+        toEmail: input.toEmail,
+        subject: input.subject,
+        bodyText: input.bodyText,
+        bodyHtml: input.bodyHtml ?? null,
+        deliveryStatus: 'pending',
+        wasAiGenerated: input.wasAiGenerated ?? false,
       },
     });
     await tx.emailThread.update({
       where: { id: thread.id },
       data: {
         lastMessageAt: new Date(),
-        subject,
+        subject: input.subject,
         status: 'responded',
       },
     });
+    return created;
   });
 
-  return thread.id;
+  return { threadId: thread.id, messageId: message.id };
+}
+
+export async function finalizeOutboundEmail(
+  messageId: string,
+  sendgridMessageId: string | null
+): Promise<void> {
+  await prisma.emailMessage.update({
+    where: { id: messageId },
+    data: { sendgridMessageId },
+  });
+}
+
+export async function markOutboundEmailFailed(messageId: string, detail: string): Promise<void> {
+  await prisma.emailMessage.update({
+    where: { id: messageId },
+    data: {
+      deliveryStatus: 'failed',
+      deliveryDetail: detail.slice(0, 500),
+      lastEventAt: new Date(),
+    },
+  });
+}
+
+export async function recordOutboundEmail(input: RecordOutboundEmailInput): Promise<string> {
+  const draft = await createOutboundEmailDraft(input);
+  if (input.sendgridMessageId) {
+    await finalizeOutboundEmail(draft.messageId, input.sendgridMessageId);
+  }
+  return draft.threadId;
 }
 
 export type RecordInboundEmailInput = {
