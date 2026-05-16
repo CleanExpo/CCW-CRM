@@ -224,7 +224,7 @@ function IntegrationsContent() {
                 { name: 'Xero', ok: xeroStatus?.connected },
                 { name: 'Cin7', ok: cin7Status?.connected },
                 { name: 'Shopify', ok: shopifyStatus?.connected },
-                { name: 'SendGrid', ok: sendgridStatus?.connected },
+                { name: 'SendGrid', ok: sendgridStatus?.can_send ?? sendgridStatus?.connected },
               ].map((item) => (
                 <span
                   key={item.name}
