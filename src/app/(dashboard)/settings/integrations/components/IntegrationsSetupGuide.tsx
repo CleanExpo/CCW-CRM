@@ -93,8 +93,11 @@ export function IntegrationsSetupGuide({
       id: 'sendgrid',
       title: 'Configure email (SendGrid)',
       description: 'Outbound email for notifications and customer comms.',
-      done: !!sendgridStatus?.connected,
-      actionLabel: sendgridStatus?.connected ? 'Review connection' : 'Configure SendGrid',
+      done: !!(sendgridStatus?.can_send ?? sendgridStatus?.connected),
+      actionLabel:
+        sendgridStatus?.can_send ?? sendgridStatus?.connected
+          ? 'Review connection'
+          : 'Configure SendGrid',
       onAction: () => onGoToConnections('integration-sendgrid'),
     },
   ];
