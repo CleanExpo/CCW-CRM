@@ -50,6 +50,8 @@ export async function GET(
       body_text: m.bodyText,
       sent_at: m.sentAt.toISOString(),
       was_ai_generated: m.wasAiGenerated,
+      delivery_status: m.deliveryStatus ?? undefined,
+      delivery_detail: m.deliveryDetail ?? undefined,
     }));
 
     return NextResponse.json({
