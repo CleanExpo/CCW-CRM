@@ -113,8 +113,22 @@ export async function sendMailViaSendGrid(
   return { ok: false, status: res.status, detail };
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmailAddress(email: string): boolean {
+  const t = email.trim();
+  return t.length > 0 && t.length <= 320 && EMAIL_RE.test(t);
+}
+
+/** From address used for API calls (demo falls back when unset). */
+export function resolveSendGridFromEmail(request?: NextRequest): string {
+  return getSendGridFromEmail(request) || (getSendGridMode() === 'demo' ? 'noreply@demo.local' : '');
+}
+
 export type SendGridStatusPayload = {
   connected: boolean;
+  /** True when outbound send is allowed (key + verified/demo + from address). */
+  can_send: boolean;
   mode: 'demo' | 'live' | 'not_configured';
   from_email: string | null;
   from_name: string | null;
@@ -169,6 +183,7 @@ export async function buildSendGridStatusPayload(
   if (!apiKey) {
     return {
       connected: false,
+      can_send: false,
       mode: 'not_configured',
       from_email: fromEmail,
       from_name: fromName,
@@ -186,6 +201,7 @@ export async function buildSendGridStatusPayload(
   let apiVerified: boolean | null = null;
   let message: string;
   if (mode === 'demo') {
+    apiVerified = true;
     message = 'Demo mode active (no real email is sent).';
   } else {
     apiVerified = await pingSendGridApi(apiKey);
@@ -200,14 +216,22 @@ export async function buildSendGridStatusPayload(
     }
   }
 
-  if (!fromEmail && mode !== 'demo' && apiVerified === true) {
+  const effectiveFrom = fromEmail || (mode === 'demo' ? 'noreply@demo.local' : null);
+  if (!fromEmail && mode === 'live' && apiVerified === true) {
     message = `${message} Set SENDGRID_FROM_EMAIL or a verified From email below to send mail.`;
   }
 
+  const can_send =
+    Boolean(apiKey) &&
+    apiVerified === true &&
+    Boolean(effectiveFrom) &&
+    (mode === 'demo' || Boolean(fromEmail));
+
   return {
-    connected: true,
+    connected: can_send,
+    can_send,
     mode,
-    from_email: fromEmail,
+    from_email: fromEmail ?? (mode === 'demo' ? effectiveFrom : null),
     from_name: fromName,
     environment_key_configured: envKey,
     api_key_source: keySource,
@@ -216,5 +240,27 @@ export async function buildSendGridStatusPayload(
     ai_auto_response_enabled: process.env.AI_EMAIL_AUTO_RESPONSE === 'true',
     ai_confidence_threshold: Number(process.env.AI_EMAIL_CONFIDENCE_THRESHOLD || 0.8),
     message,
+  };
+}
+
+export type SendGridSendReadiness =
+  | { ok: true; payload: SendGridStatusPayload }
+  | { ok: false; status: number; detail: string; payload: SendGridStatusPayload };
+
+/** Gate outbound send routes on verified key + from address (or demo mode). */
+export async function getSendGridSendReadiness(
+  request: NextRequest
+): Promise<SendGridSendReadiness> {
+  const payload = await buildSendGridStatusPayload(request);
+  if (payload.can_send) {
+    return { ok: true, payload };
+  }
+  const status =
+    payload.mode === 'not_configured' ? 503 : payload.api_verified === false ? 401 : 400;
+  return {
+    ok: false,
+    status,
+    detail: payload.message,
+    payload,
   };
 }
