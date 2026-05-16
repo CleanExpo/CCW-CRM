@@ -1,6 +1,16 @@
 import type { NextRequest } from 'next/server';
+import {
+  allowSendGridBrowserCookieOverrides,
+  resolveSendGridCredentials,
+  type ResolvedSendGridCredentials,
+} from '@/lib/integrations/sendgrid-config';
+import {
+  isValidEmailAddress,
+  sanitizeSendMailPayload,
+} from '@/lib/integrations/sendgrid-utils';
 
 const SENDGRID_API = 'https://api.sendgrid.com/v3';
+export { isValidEmailAddress, sanitizeSendMailPayload, SENDGRID_MAX_BODY_LENGTH, SENDGRID_MAX_SUBJECT_LENGTH } from '@/lib/integrations/sendgrid-utils';
 
 export function getSendGridMode(): 'demo' | 'live' {
   return process.env.SENDGRID_MODE === 'demo' ? 'demo' : 'live';
@@ -10,29 +20,36 @@ export function isSendGridDemoMode(): boolean {
   return getSendGridMode() === 'demo';
 }
 
-/** Cookie overrides environment (per-browser testing / overrides). */
+/** @deprecated Prefer resolveSendGridCredentials for workspace-aware resolution. */
 export function getSendGridApiKey(request?: NextRequest): string | null {
-  const fromCookie = request?.cookies.get('sendgrid_api_key')?.value?.trim();
+  const fromCookie = allowSendGridBrowserCookieOverrides()
+    ? request?.cookies.get('sendgrid_api_key')?.value?.trim()
+    : null;
   const fromEnv = process.env.SENDGRID_API_KEY?.trim();
   return fromCookie || fromEnv || null;
 }
 
-export function getSendGridApiKeySource(request?: NextRequest): 'cookie' | 'environment' {
-  const fromCookie = request?.cookies.get('sendgrid_api_key')?.value?.trim();
-  return fromCookie ? 'cookie' : 'environment';
+export function getSendGridApiKeySource(request?: NextRequest): 'cookie' | 'environment' | 'workspace' {
+  if (allowSendGridBrowserCookieOverrides() && request?.cookies.get('sendgrid_api_key')?.value?.trim()) {
+    return 'cookie';
+  }
+  if (process.env.SENDGRID_API_KEY?.trim()) return 'environment';
+  return 'workspace';
 }
 
 export function getSendGridFromEmail(request?: NextRequest): string | null {
   const v =
-    request?.cookies.get('sendgrid_from_email')?.value?.trim() ||
-    process.env.SENDGRID_FROM_EMAIL?.trim();
+    (allowSendGridBrowserCookieOverrides()
+      ? request?.cookies.get('sendgrid_from_email')?.value?.trim()
+      : null) || process.env.SENDGRID_FROM_EMAIL?.trim();
   return v || null;
 }
 
 export function getSendGridFromName(request?: NextRequest): string | null {
   const v =
-    request?.cookies.get('sendgrid_from_name')?.value?.trim() ||
-    process.env.SENDGRID_FROM_NAME?.trim();
+    (allowSendGridBrowserCookieOverrides()
+      ? request?.cookies.get('sendgrid_from_name')?.value?.trim()
+      : null) || process.env.SENDGRID_FROM_NAME?.trim();
   return v || null;
 }
 
@@ -45,6 +62,9 @@ export type SendMailPayload = {
   subject: string;
   body_text: string;
   body_html?: string;
+  template_id?: string;
+  dynamic_template_data?: Record<string, unknown>;
+  custom_args?: Record<string, string>;
 };
 
 export type SendMailResult =
@@ -66,26 +86,45 @@ export async function sendMailViaSendGrid(
   fromName: string | null,
   payload: SendMailPayload
 ): Promise<SendMailResult> {
+  const sanitized = sanitizeSendMailPayload(payload);
+  if ('error' in sanitized) {
+    return { ok: false, status: 400, detail: sanitized.error };
+  }
+
   if (getSendGridMode() === 'demo') {
     return { ok: true, message_id: `demo-${Date.now()}`, mode: 'demo' };
   }
 
-  const content: Array<{ type: string; value: string }> = [
-    { type: 'text/plain', value: payload.body_text },
-  ];
-  if (payload.body_html?.trim()) {
-    content.push({ type: 'text/html', value: payload.body_html });
+  const templateId = payload.template_id?.trim();
+  const personalizations: Record<string, unknown> = {
+    to: [{ email: sanitized.to_email }],
+    ...(payload.custom_args ? { custom_args: payload.custom_args } : {}),
+  };
+
+  if (templateId && payload.dynamic_template_data) {
+    personalizations.dynamic_template_data = payload.dynamic_template_data;
   }
 
-  const body = {
-    personalizations: [{ to: [{ email: payload.to_email }] }],
+  const body: Record<string, unknown> = {
+    personalizations: [personalizations],
     from: {
       email: fromEmail,
       ...(fromName?.trim() ? { name: fromName.trim() } : {}),
     },
-    subject: payload.subject,
-    content,
   };
+
+  if (templateId) {
+    body.template_id = templateId;
+  } else {
+    const content: Array<{ type: string; value: string }> = [
+      { type: 'text/plain', value: sanitized.body_text },
+    ];
+    if (payload.body_html?.trim()) {
+      content.push({ type: 'text/html', value: payload.body_html.trim() });
+    }
+    body.subject = sanitized.subject;
+    body.content = content;
+  }
 
   const res = await fetch(`${SENDGRID_API}/mail/send`, {
     method: 'POST',
@@ -113,32 +152,34 @@ export async function sendMailViaSendGrid(
   return { ok: false, status: res.status, detail };
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export function isValidEmailAddress(email: string): boolean {
-  const t = email.trim();
-  return t.length > 0 && t.length <= 320 && EMAIL_RE.test(t);
-}
-
-/** From address used for API calls (demo falls back when unset). */
-export function resolveSendGridFromEmail(request?: NextRequest): string {
-  return getSendGridFromEmail(request) || (getSendGridMode() === 'demo' ? 'noreply@demo.local' : '');
+export function resolveSendGridFromEmail(
+  request?: NextRequest,
+  creds?: ResolvedSendGridCredentials
+): string {
+  return (
+    creds?.fromEmail ||
+    getSendGridFromEmail(request) ||
+    (getSendGridMode() === 'demo' ? 'noreply@demo.local' : '')
+  );
 }
 
 export type SendGridStatusPayload = {
   connected: boolean;
-  /** True when outbound send is allowed (key + verified/demo + from address). */
   can_send: boolean;
   mode: 'demo' | 'live' | 'not_configured';
   from_email: string | null;
   from_name: string | null;
   environment_key_configured: boolean;
-  api_key_source: 'cookie' | 'environment' | null;
+  workspace_configured: boolean;
+  api_key_source: 'cookie' | 'environment' | 'workspace' | null;
   api_verified: boolean | null;
-  /** True if any SendGrid value is stored in httpOnly cookies for this browser (can clear without changing server env). */
   browser_overrides_active: boolean;
+  browser_overrides_allowed: boolean;
+  webhooks_configured: boolean;
   ai_auto_response_enabled: boolean;
   ai_confidence_threshold: number;
+  template_id_invoice: string | null;
+  template_id_general: string | null;
   message: string;
 };
 
@@ -148,37 +189,44 @@ function hasSendGridBrowserCookies(request: NextRequest): boolean {
   );
 }
 
+function isWebhooksConfigured(): boolean {
+  return Boolean(
+    process.env.SENDGRID_WEBHOOK_SECRET?.trim() ||
+      process.env.SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY?.trim() ||
+      process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY?.trim()
+  );
+}
+
 export type SendGridStatusOverrides = {
-  /** Effective API key after a configure save (request cookies are not updated yet). */
   apiKey?: string | null;
   fromEmail?: string | null;
   fromName?: string | null;
-  /** Effective key source after configure (cookie wins if a new key was posted). */
-  apiKeySource?: 'cookie' | 'environment' | null;
+  apiKeySource?: 'cookie' | 'environment' | 'workspace' | null;
+  creds?: ResolvedSendGridCredentials;
 };
 
-/** Shared shape for GET /status and POST /configure responses. */
 export async function buildSendGridStatusPayload(
   request: NextRequest,
-  overrides?: SendGridStatusOverrides
+  overrides?: SendGridStatusOverrides,
+  userId?: string
 ): Promise<SendGridStatusPayload> {
   const mode = getSendGridMode();
+  const creds =
+    overrides?.creds ?? (await resolveSendGridCredentials(request, userId));
   const apiKey =
-    overrides?.apiKey !== undefined ? overrides.apiKey?.trim() || null : getSendGridApiKey(request);
+    overrides?.apiKey !== undefined ? overrides.apiKey?.trim() || null : creds.apiKey;
   const fromEmail =
-    overrides?.fromEmail !== undefined
-      ? overrides.fromEmail
-      : getSendGridFromEmail(request);
-  const fromName =
-    overrides?.fromName !== undefined ? overrides.fromName : getSendGridFromName(request);
+    overrides?.fromEmail !== undefined ? overrides.fromEmail : creds.fromEmail;
+  const fromName = overrides?.fromName !== undefined ? overrides.fromName : creds.fromName;
   const envKey = hasEnvironmentSendGridApiKey();
   const keySource =
     overrides?.apiKeySource !== undefined
       ? overrides.apiKeySource
       : apiKey
-        ? getSendGridApiKeySource(request)
+        ? creds.source
         : null;
   const browserOverrides = hasSendGridBrowserCookies(request);
+  const browserAllowed = allowSendGridBrowserCookieOverrides();
 
   if (!apiKey) {
     return {
@@ -188,13 +236,18 @@ export async function buildSendGridStatusPayload(
       from_email: fromEmail,
       from_name: fromName,
       environment_key_configured: envKey,
+      workspace_configured: creds.workspaceConfigured,
       api_key_source: null,
       api_verified: null,
       browser_overrides_active: browserOverrides,
+      browser_overrides_allowed: browserAllowed,
+      webhooks_configured: isWebhooksConfigured(),
       ai_auto_response_enabled: process.env.AI_EMAIL_AUTO_RESPONSE === 'true',
       ai_confidence_threshold: Number(process.env.AI_EMAIL_CONFIDENCE_THRESHOLD || 0.8),
+      template_id_invoice: creds.templateIdInvoice,
+      template_id_general: creds.templateIdGeneral,
       message:
-        'Missing SendGrid API key. Set SENDGRID_API_KEY on the server (for shared testing) or paste a key in Settings → Integrations.',
+        'Missing SendGrid API key. Set SENDGRID_API_KEY on the server, save workspace credentials in Settings, or paste a key (development only).',
     };
   }
 
@@ -209,7 +262,9 @@ export async function buildSendGridStatusPayload(
       message =
         keySource === 'environment'
           ? 'SendGrid API key from server environment verified.'
-          : 'SendGrid API key verified (saved in this browser).';
+          : keySource === 'workspace'
+            ? 'SendGrid workspace credentials verified.'
+            : 'SendGrid API key verified (saved in this browser).';
     } else {
       message =
         'SendGrid rejected this API key or the profile request failed. Check the key and network access.';
@@ -234,26 +289,32 @@ export async function buildSendGridStatusPayload(
     from_email: fromEmail ?? (mode === 'demo' ? effectiveFrom : null),
     from_name: fromName,
     environment_key_configured: envKey,
+    workspace_configured: creds.workspaceConfigured,
     api_key_source: keySource,
     api_verified: apiVerified,
     browser_overrides_active: browserOverrides,
+    browser_overrides_allowed: browserAllowed,
+    webhooks_configured: isWebhooksConfigured(),
     ai_auto_response_enabled: process.env.AI_EMAIL_AUTO_RESPONSE === 'true',
     ai_confidence_threshold: Number(process.env.AI_EMAIL_CONFIDENCE_THRESHOLD || 0.8),
+    template_id_invoice: creds.templateIdInvoice,
+    template_id_general: creds.templateIdGeneral,
     message,
   };
 }
 
 export type SendGridSendReadiness =
-  | { ok: true; payload: SendGridStatusPayload }
-  | { ok: false; status: number; detail: string; payload: SendGridStatusPayload };
+  | { ok: true; payload: SendGridStatusPayload; creds: ResolvedSendGridCredentials }
+  | { ok: false; status: number; detail: string; payload: SendGridStatusPayload; creds: ResolvedSendGridCredentials };
 
-/** Gate outbound send routes on verified key + from address (or demo mode). */
 export async function getSendGridSendReadiness(
-  request: NextRequest
+  request: NextRequest,
+  userId?: string
 ): Promise<SendGridSendReadiness> {
-  const payload = await buildSendGridStatusPayload(request);
+  const creds = await resolveSendGridCredentials(request, userId);
+  const payload = await buildSendGridStatusPayload(request, { creds }, userId);
   if (payload.can_send) {
-    return { ok: true, payload };
+    return { ok: true, payload, creds };
   }
   const status =
     payload.mode === 'not_configured' ? 503 : payload.api_verified === false ? 401 : 400;
@@ -262,5 +323,6 @@ export async function getSendGridSendReadiness(
     status,
     detail: payload.message,
     payload,
+    creds,
   };
 }
