@@ -3,14 +3,16 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import {
-  getSendGridApiKey,
-  getSendGridFromName,
   getSendGridSendReadiness,
   isValidEmailAddress,
   resolveSendGridFromEmail,
   sendMailViaSendGrid,
 } from '@/lib/integrations/sendgrid-mail';
-import { recordOutboundEmail } from '@/lib/integrations/sendgrid-persistence';
+import {
+  createOutboundEmailDraft,
+  finalizeOutboundEmail,
+  markOutboundEmailFailed,
+} from '@/lib/integrations/sendgrid-persistence';
 
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -43,13 +45,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: 'to_email is not a valid email address.' }, { status: 400 });
   }
 
-  const readiness = await getSendGridSendReadiness(request);
+  const readiness = await getSendGridSendReadiness(request, scope.userId);
   if (!readiness.ok) {
     return NextResponse.json({ detail: readiness.detail }, { status: readiness.status });
   }
 
-  const apiKey = getSendGridApiKey(request);
-  const fromEmail = resolveSendGridFromEmail(request);
+  const { creds } = readiness;
+  const apiKey = creds.apiKey;
+  const fromEmail = resolveSendGridFromEmail(request, creds);
   if (!apiKey || !fromEmail) {
     return NextResponse.json({ detail: readiness.payload.message }, { status: 503 });
   }
@@ -71,24 +74,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const fromName = getSendGridFromName(request);
-  const result = await sendMailViaSendGrid(apiKey, fromEmail, fromName, {
-    to_email,
-    subject,
-    body_text,
-    body_html,
-  });
-
-  if (!result.ok) {
-    const code =
-      result.status >= 400 && result.status < 600 ? result.status : 502;
-    return NextResponse.json(
-      { success: false, detail: result.detail, mode: 'live' as const },
-      { status: code }
-    );
-  }
-
-  const conversationId = await recordOutboundEmail({
+  const draft = await createOutboundEmailDraft({
     ownerUserId: scope.userId,
     workspaceUserIds,
     toEmail: to_email,
@@ -96,14 +82,36 @@ export async function POST(request: NextRequest) {
     subject,
     bodyText: body_text,
     bodyHtml: body_html,
-    sendgridMessageId: result.message_id || null,
     threadId: conversationIdInput || undefined,
   });
+
+  const result = await sendMailViaSendGrid(apiKey, fromEmail, creds.fromName, {
+    to_email,
+    subject,
+    body_text,
+    body_html,
+    template_id: creds.templateIdGeneral ?? undefined,
+    custom_args: {
+      thread_id: draft.threadId,
+      message_id: draft.messageId,
+    },
+  });
+
+  if (!result.ok) {
+    await markOutboundEmailFailed(draft.messageId, result.detail);
+    const code = result.status >= 400 && result.status < 600 ? result.status : 502;
+    return NextResponse.json(
+      { success: false, detail: result.detail, mode: 'live' as const },
+      { status: code }
+    );
+  }
+
+  await finalizeOutboundEmail(draft.messageId, result.message_id || null);
 
   return NextResponse.json({
     success: true,
     message_id: result.message_id,
     mode: result.mode,
-    conversation_id: conversationId,
+    conversation_id: draft.threadId,
   });
 }
