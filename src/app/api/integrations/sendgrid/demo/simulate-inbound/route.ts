@@ -5,7 +5,7 @@ import { getSendGridFromEmail, isSendGridDemoMode } from '@/lib/integrations/sen
 
 /**
  * Demo-only: creates a real persisted thread + inbound message so the Emails UI shows data.
- * Live inbound email requires SendGrid Inbound Parse + webhook (not implemented here).
+ * Live inbound uses SendGrid Inbound Parse → POST /api/integrations/sendgrid/webhooks/inbound.
  */
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
