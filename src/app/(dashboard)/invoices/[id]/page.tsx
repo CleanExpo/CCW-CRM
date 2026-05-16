@@ -81,10 +81,20 @@ export default function InvoiceDetailPage() {
 
   const handleSendInvoice = async () => {
     try {
-      await invoicesApi.send(invoiceId);
+      const result = await invoicesApi.send(invoiceId);
+      const delivery = (result as { email_delivery?: { sent: boolean; detail?: string } })
+        .email_delivery;
       toast({
-        title: 'Invoice Sent',
-        description: 'Invoice has been sent to the customer',
+        title: 'Invoice marked sent',
+        description: delivery
+          ? delivery.sent
+            ? 'Invoice email was delivered to the customer.'
+            : delivery.detail
+              ? `Status updated, but email failed: ${delivery.detail}`
+              : 'Status updated. Configure SendGrid to email customers automatically.'
+          : result.customer_email
+            ? 'Status updated. Configure SendGrid to email customers automatically.'
+            : 'Add a customer email to send invoice notifications.',
       });
       loadInvoice(); // Reload to get updated status
     } catch (error) {
