@@ -102,15 +102,35 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
   });
 
   const sendgridChecks: IntegrationDiagnostic['checks'] = [];
-  if (!has(process.env.SENDGRID_API_KEY)) sendgridChecks.push({ level: 'error', message: 'Missing SENDGRID_API_KEY' });
-  if (!has(process.env.SENDGRID_FROM_EMAIL)) sendgridChecks.push({ level: 'warning', message: 'Missing SENDGRID_FROM_EMAIL; outbound mail may fail.' });
+  if (!has(process.env.SENDGRID_API_KEY)) {
+    sendgridChecks.push({ level: 'error', message: 'Missing SENDGRID_API_KEY' });
+  }
+  if (!has(process.env.SENDGRID_FROM_EMAIL)) {
+    sendgridChecks.push({ level: 'warning', message: 'Missing SENDGRID_FROM_EMAIL; outbound mail may fail.' });
+  }
+  if (
+    !has(process.env.SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY) &&
+    !has(process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY) &&
+    !has(process.env.SENDGRID_WEBHOOK_SECRET)
+  ) {
+    sendgridChecks.push({
+      level: 'warning',
+      message: 'No webhook verification configured (SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY or SENDGRID_WEBHOOK_SECRET).',
+    });
+  }
+  if (!has(process.env.SENDGRID_INBOUND_OWNER_USER_ID) && !has(process.env.CRON_INTEGRATION_USER_ID)) {
+    sendgridChecks.push({
+      level: 'warning',
+      message: 'No SENDGRID_INBOUND_OWNER_USER_ID; inbound parse needs workspace mailbox or env fallback.',
+    });
+  }
   diagnostics.push({
     key: 'sendgrid',
     label: 'SendGrid',
     level: sendgridChecks.some((c) => c.level === 'error') ? 'error' : sendgridChecks.some((c) => c.level === 'warning') ? 'warning' : 'ok',
     liveReady: sendgridChecks.every((c) => c.level !== 'error'),
     mode: 'live',
-    checks: sendgridChecks.length > 0 ? sendgridChecks : [{ level: 'ok', message: 'SendGrid environment looks ready.' }],
+    checks: sendgridChecks.length > 0 ? sendgridChecks : [{ level: 'ok', message: 'SendGrid environment looks production-ready.' }],
   });
 
   const ap2Checks: IntegrationDiagnostic['checks'] = [
