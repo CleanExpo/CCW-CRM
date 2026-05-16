@@ -17,11 +17,16 @@ export interface SendGridConnectionStatus {
   from_email?: string | null;
   from_name?: string | null;
   environment_key_configured?: boolean;
-  api_key_source?: 'cookie' | 'environment' | null;
+  workspace_configured?: boolean;
+  api_key_source?: 'cookie' | 'environment' | 'workspace' | null;
   api_verified?: boolean | null;
   browser_overrides_active?: boolean;
+  browser_overrides_allowed?: boolean;
+  webhooks_configured?: boolean;
   ai_auto_response_enabled?: boolean;
   ai_confidence_threshold?: number;
+  template_id_invoice?: string | null;
+  template_id_general?: string | null;
   message?: string;
 }
 
@@ -30,6 +35,9 @@ export interface SendGridConfigureRequest {
   api_key?: string;
   from_email?: string;
   from_name?: string;
+  template_id_invoice?: string;
+  template_id_general?: string;
+  inbound_mailbox_email?: string;
 }
 
 export interface EmailConversation {
@@ -54,6 +62,8 @@ export interface EmailMessage {
   body_text: string;
   sent_at: string;
   was_ai_generated: boolean;
+  delivery_status?: string;
+  delivery_detail?: string;
 }
 
 export interface ConversationDetail {
