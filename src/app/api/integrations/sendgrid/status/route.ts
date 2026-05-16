@@ -7,6 +7,6 @@ export async function GET(request: NextRequest) {
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
-  const payload = await buildSendGridStatusPayload(request);
+  const payload = await buildSendGridStatusPayload(request, undefined, scope.userId);
   return NextResponse.json(payload);
 }
