@@ -6,8 +6,6 @@ import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { buildInvoiceEmailPayload } from '@/lib/integrations/invoice-email';
 import {
-  getSendGridApiKey,
-  getSendGridFromName,
   getSendGridSendReadiness,
   isValidEmailAddress,
   resolveSendGridFromEmail,
@@ -52,16 +50,21 @@ export async function POST(
     let email_delivery: { sent: boolean; detail?: string } | undefined;
 
     if (customerEmail && isValidEmailAddress(customerEmail)) {
-      const readiness = await getSendGridSendReadiness(request);
+      const readiness = await getSendGridSendReadiness(request, scope.userId);
       if (readiness.ok) {
-        const apiKey = getSendGridApiKey(request);
-        const fromEmail = resolveSendGridFromEmail(request);
+        const { creds } = readiness;
+        const apiKey = creds.apiKey;
+        const fromEmail = resolveSendGridFromEmail(request, creds);
         if (apiKey && fromEmail) {
-          const { subject, body_text } = buildInvoiceEmailPayload(updated);
-          const mail = await sendMailViaSendGrid(apiKey, fromEmail, getSendGridFromName(request), {
+          const { subject, body_text, body_html, dynamic_template_data } =
+            buildInvoiceEmailPayload(updated);
+          const mail = await sendMailViaSendGrid(apiKey, fromEmail, creds.fromName, {
             to_email: customerEmail,
             subject,
             body_text,
+            body_html,
+            template_id: creds.templateIdInvoice ?? undefined,
+            dynamic_template_data,
           });
           email_delivery = mail.ok
             ? { sent: true }
