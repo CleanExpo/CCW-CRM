@@ -86,7 +86,8 @@ export function SendGridConnectionCard({
 
   type ConfigureFormValues = z.infer<typeof configureSchema>;
 
-  const isConnected = status?.connected ?? false;
+  const canSend = status?.can_send ?? status?.connected ?? false;
+  const isConfigured = Boolean(status?.connected) || status?.mode === 'demo';
   const isNotConfigured = !status || status.mode === 'not_configured';
   const showForm = isNotConfigured || editingCredentials;
   const apiVerified = status?.api_verified;
@@ -184,13 +185,13 @@ export function SendGridConnectionCard({
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {isConnected && apiVerified === false && status?.mode === 'live' && (
+            {isConfigured && apiVerified === false && status?.mode === 'live' && (
               <Badge variant="destructive" className="gap-1">
                 <AlertTriangle className="h-3 w-3" />
                 Key not verified
               </Badge>
             )}
-            {isConnected ? (
+            {canSend ? (
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
                 Connected
@@ -210,7 +211,7 @@ export function SendGridConnectionCard({
           <p className="text-muted-foreground text-sm">{status.message}</p>
         )}
 
-        {isConnected && environmentKeyConfigured && status?.api_key_source === 'environment' && (
+        {isConfigured && environmentKeyConfigured && status?.api_key_source === 'environment' && (
           <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-100/90">
             Using <strong className="font-medium">server</strong> SendGrid credentials (
             <code className="text-xs">SENDGRID_API_KEY</code>). You can still override From details
@@ -218,7 +219,7 @@ export function SendGridConnectionCard({
           </div>
         )}
 
-        {isConnected && !status?.from_email && status?.mode !== 'demo' && (
+        {isConfigured && !status?.from_email && status?.mode !== 'demo' && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
@@ -229,7 +230,7 @@ export function SendGridConnectionCard({
           </div>
         )}
 
-        {isConnected && !editingCredentials && (
+        {isConfigured && !editingCredentials && (
           <>
             <div className="bg-muted space-y-2 rounded-lg p-3">
               {status?.from_email ? (
