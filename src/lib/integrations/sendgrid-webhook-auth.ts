@@ -1,4 +1,9 @@
 import type { NextRequest } from 'next/server';
+import {
+  getSendGridEventWebhookHeaders,
+  getSendGridEventWebhookPublicKey,
+  verifySendGridEventWebhookSignature,
+} from '@/lib/integrations/sendgrid-webhook-verify';
 
 /**
  * Validates SendGrid webhook calls using a shared secret (query `token` or Authorization bearer).
@@ -15,6 +20,25 @@ export function verifySendGridWebhookSecret(request: NextRequest): boolean {
   if (auth === `Bearer ${secret}`) return true;
 
   return false;
+}
+
+/**
+ * Event webhooks: prefer ECDSA signature (production), fall back to shared secret.
+ */
+export function verifySendGridEventWebhook(request: NextRequest, rawBody: string): boolean {
+  const publicKey = getSendGridEventWebhookPublicKey();
+  if (publicKey) {
+    const { signature, timestamp } = getSendGridEventWebhookHeaders(request);
+    if (verifySendGridEventWebhookSignature(publicKey, rawBody, signature, timestamp)) {
+      return true;
+    }
+  }
+  return verifySendGridWebhookSecret(request);
+}
+
+/** Inbound parse: shared secret only (SendGrid Inbound Parse does not sign with ECDSA). */
+export function verifySendGridInboundWebhook(request: NextRequest): boolean {
+  return verifySendGridWebhookSecret(request);
 }
 
 export function getSendGridInboundOwnerUserId(): string | null {
