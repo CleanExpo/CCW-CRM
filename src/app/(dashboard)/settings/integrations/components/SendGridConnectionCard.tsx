@@ -214,8 +214,28 @@ export function SendGridConnectionCard({
         {isConfigured && environmentKeyConfigured && status?.api_key_source === 'environment' && (
           <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-100/90">
             Using <strong className="font-medium">server</strong> SendGrid credentials (
-            <code className="text-xs">SENDGRID_API_KEY</code>). You can still override From details
-            below or paste a different key for this browser only.
+            <code className="text-xs">SENDGRID_API_KEY</code>). Workspace and From details can still
+            be saved below for your team.
+          </div>
+        )}
+
+        {isConfigured && status?.workspace_configured && (
+          <div className="rounded-lg border border-blue-500/25 bg-blue-500/5 px-3 py-2 text-sm text-blue-950 dark:text-blue-100/90">
+            Workspace SendGrid settings are stored in the database (production-safe). API keys are
+            not saved in browser cookies when <code className="text-xs">NODE_ENV=production</code>.
+          </div>
+        )}
+
+        {isConfigured && status?.webhooks_configured === false && status?.mode === 'live' && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              Webhook verification is not configured. Set{' '}
+              <code className="rounded bg-black/5 px-1 text-xs dark:bg-white/10">
+                SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY
+              </code>{' '}
+              for signed delivery events.
+            </span>
           </div>
         )}
 
