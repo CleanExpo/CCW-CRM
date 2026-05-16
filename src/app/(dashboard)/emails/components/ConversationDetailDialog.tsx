@@ -10,20 +10,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   getConversation,
+  sendEmail,
   getStatusColor,
   getIntentColor,
   formatIntent,
   type EmailMessage,
   type EmailConversation,
 } from "@/lib/api/sendgrid";
-import { Mail, Bot, User, ArrowDown, ArrowUp } from "lucide-react";
+import { Mail, Bot, User, ArrowDown, ArrowUp, Send, Loader2 } from "lucide-react";
 
 interface ConversationDetailDialogProps {
   conversationId: string;
@@ -42,6 +45,8 @@ export function ConversationDetailDialog({
   const [conversation, setConversation] = useState<EmailConversation | null>(null);
   const [messages, setMessages] = useState<EmailMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
 
   const loadConversation = useCallback(async () => {
     setLoading(true);
@@ -66,6 +71,33 @@ export function ConversationDetailDialog({
       loadConversation();
     }
   }, [conversationId, open, loadConversation]);
+
+  async function handleReply() {
+    if (!conversation || !replyText.trim()) return;
+    setSending(true);
+    try {
+      await sendEmail({
+        to_email: conversation.customer_email,
+        subject: conversation.subject.startsWith("Re:")
+          ? conversation.subject
+          : `Re: ${conversation.subject}`,
+        body_text: replyText.trim(),
+        conversation_id: conversation.id,
+      });
+      toast({ title: "Reply sent" });
+      setReplyText("");
+      await loadConversation();
+      onSuccess?.();
+    } catch (error: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Send failed",
+        description: error instanceof Error ? error.message : "Could not send reply",
+      });
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,9 +151,9 @@ export function ConversationDetailDialog({
 
             <Separator />
 
-            <ScrollArea className="h-[500px] pr-4">
+            <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-4">
-                {messages.map((message, index) => (
+                {messages.map((message) => (
                   <Card
                     key={message.id}
                     className={
@@ -186,6 +218,24 @@ export function ConversationDetailDialog({
                 ))}
               </div>
             </ScrollArea>
+
+            <Separator />
+
+            <div className="space-y-2 pt-2">
+              <Textarea
+                placeholder="Write a reply..."
+                className="min-h-[100px]"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                disabled={sending}
+              />
+              <div className="flex justify-end">
+                <Button type="button" onClick={() => void handleReply()} disabled={sending || !replyText.trim()}>
+                  {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                  Send reply
+                </Button>
+              </div>
+            </div>
           </>
         ) : null}
       </DialogContent>
