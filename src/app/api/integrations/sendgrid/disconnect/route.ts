@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { buildSendGridStatusPayload } from '@/lib/integrations/sendgrid-mail';
 
 /** Clears SendGrid httpOnly cookies so the app falls back to server environment variables. */
 export async function POST(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
   const envKey = process.env.SENDGRID_API_KEY?.trim() || null;
   const fromEmail = process.env.SENDGRID_FROM_EMAIL?.trim() || null;
   const fromName = process.env.SENDGRID_FROM_NAME?.trim() || null;
