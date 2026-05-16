@@ -472,21 +472,25 @@ model EmailThread {
 }
 
 model EmailMessage {
-  id                String   @id @default(uuid()) @db.Uuid
-  threadId          String   @map("thread_id") @db.Uuid
+  id                String    @id @default(uuid()) @db.Uuid
+  threadId          String    @map("thread_id") @db.Uuid
   direction         String
-  fromEmail         String   @map("from_email")
-  toEmail           String   @map("to_email")
+  fromEmail         String    @map("from_email")
+  toEmail           String    @map("to_email")
   subject           String
-  bodyText          String   @map("body_text")
-  bodyHtml          String?  @map("body_html")
-  sendgridMessageId String?  @map("sendgrid_message_id")
-  sentAt            DateTime @default(now()) @map("sent_at")
-  wasAiGenerated    Boolean  @default(false) @map("was_ai_generated")
+  bodyText          String    @map("body_text")
+  bodyHtml          String?   @map("body_html")
+  sendgridMessageId String?   @map("sendgrid_message_id")
+  deliveryStatus    String?   @default("pending") @map("delivery_status")
+  deliveryDetail    String?   @map("delivery_detail")
+  lastEventAt       DateTime? @map("last_event_at")
+  sentAt            DateTime  @default(now()) @map("sent_at")
+  wasAiGenerated    Boolean   @default(false) @map("was_ai_generated")
 
   thread EmailThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
+  @@index([sendgridMessageId])
   @@map("email_messages")
 }
 
@@ -929,6 +933,22 @@ model AgentRun {
   completedAt  DateTime? @map("completed_at")
 
   @@map("agent_runs")
+}
+
+/// Per-workspace SendGrid credentials and template ids (Settings → Integrations).
+model WorkspaceSendGridConfig {
+  id                  String   @id @default(uuid()) @db.Uuid
+  workspaceId         String   @unique @map("workspace_id") @db.Uuid
+  apiKey              String?  @map("api_key") @db.Text
+  fromEmail           String?  @map("from_email")
+  fromName            String?  @map("from_name")
+  templateIdInvoice   String?  @map("template_id_invoice")
+  templateIdGeneral   String?  @map("template_id_general")
+  inboundMailboxEmail String?  @map("inbound_mailbox_email")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("workspace_sendgrid_configs")
 }
 
 /// API keys for upcoming integrations (Gemini, Claude, HeyGen, AP2) — one row per workspace; set from Settings UI.
