@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildSendGridStatusPayload } from '@/lib/integrations/sendgrid-mail';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { buildSendGridStatusPayload, isValidEmailAddress } from '@/lib/integrations/sendgrid-mail';
 
 export async function POST(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
   const body = (await request.json().catch(() => ({}))) as {
     api_key?: string;
     from_email?: string;
@@ -13,6 +18,10 @@ export async function POST(request: NextRequest) {
   const fromNameBody = String(body.from_name ?? '').trim();
   const envKey = process.env.SENDGRID_API_KEY?.trim();
   const existingCookieKey = request.cookies.get('sendgrid_api_key')?.value?.trim();
+
+  if (fromEmailBody && !isValidEmailAddress(fromEmailBody)) {
+    return NextResponse.json({ detail: 'from_email is not a valid email address.' }, { status: 400 });
+  }
 
   const mergedApiKey = apiKeyFromBody || existingCookieKey || envKey || null;
   if (!mergedApiKey) {
