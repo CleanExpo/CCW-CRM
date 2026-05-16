@@ -4,10 +4,13 @@ import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import {
   getSendGridApiKey,
-  getSendGridFromEmail,
   getSendGridFromName,
+  getSendGridSendReadiness,
+  isValidEmailAddress,
+  resolveSendGridFromEmail,
   sendMailViaSendGrid,
 } from '@/lib/integrations/sendgrid-mail';
+import { recordOutboundEmail } from '@/lib/integrations/sendgrid-persistence';
 
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -20,12 +23,14 @@ export async function POST(request: NextRequest) {
     subject?: string;
     body_text?: string;
     body_html?: string | null;
+    conversation_id?: string;
   };
 
   const to_email = String(body.to_email ?? '').trim();
   const subject = String(body.subject ?? '').trim();
   const body_text = String(body.body_text ?? '').trim();
   const body_html = body.body_html != null ? String(body.body_html) : undefined;
+  const conversationIdInput = body.conversation_id?.trim();
 
   if (!to_email || !subject || !body_text) {
     return NextResponse.json(
@@ -34,23 +39,36 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiKey = getSendGridApiKey(request);
-  if (!apiKey) {
-    return NextResponse.json(
-      { detail: 'SendGrid is not configured. Set SENDGRID_API_KEY or save a key in Settings → Integrations.' },
-      { status: 503 }
-    );
+  if (!isValidEmailAddress(to_email)) {
+    return NextResponse.json({ detail: 'to_email is not a valid email address.' }, { status: 400 });
   }
 
-  const fromEmail = getSendGridFromEmail(request);
-  if (!fromEmail) {
-    return NextResponse.json(
-      {
-        detail:
-          'Missing verified sender address. Set SENDGRID_FROM_EMAIL or configure it in Settings → Integrations.',
-      },
-      { status: 400 }
-    );
+  const readiness = await getSendGridSendReadiness(request);
+  if (!readiness.ok) {
+    return NextResponse.json({ detail: readiness.detail }, { status: readiness.status });
+  }
+
+  const apiKey = getSendGridApiKey(request);
+  const fromEmail = resolveSendGridFromEmail(request);
+  if (!apiKey || !fromEmail) {
+    return NextResponse.json({ detail: readiness.payload.message }, { status: 503 });
+  }
+
+  const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+
+  if (conversationIdInput) {
+    const thread = await prisma.emailThread.findFirst({
+      where: { id: conversationIdInput, ownerUserId: { in: workspaceUserIds } },
+    });
+    if (!thread) {
+      return NextResponse.json({ detail: 'Conversation not found' }, { status: 404 });
+    }
+    if (thread.customerEmail.toLowerCase() !== to_email.toLowerCase()) {
+      return NextResponse.json(
+        { detail: 'to_email does not match this conversation customer.' },
+        { status: 400 }
+      );
+    }
   }
 
   const fromName = getSendGridFromName(request);
@@ -70,56 +88,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
-  const existingThread = await prisma.emailThread.findFirst({
-    where: {
-      ownerUserId: { in: workspaceUserIds },
-      customerEmail: to_email,
-    },
-    orderBy: { lastMessageAt: 'desc' },
-  });
-
-  const thread =
-    existingThread ??
-    (await prisma.emailThread.create({
-      data: {
-        ownerUserId: scope.userId,
-        subject,
-        customerEmail: to_email,
-        customerName: null,
-        status: 'responded',
-        lastMessageAt: new Date(),
-      },
-    }));
-
-  await prisma.$transaction(async (tx) => {
-    await tx.emailMessage.create({
-      data: {
-        threadId: thread.id,
-        direction: 'outbound',
-        fromEmail: fromEmail,
-        toEmail: to_email,
-        subject,
-        bodyText: body_text,
-        bodyHtml: body_html ?? null,
-        sendgridMessageId: result.message_id || null,
-        wasAiGenerated: false,
-      },
-    });
-    await tx.emailThread.update({
-      where: { id: thread.id },
-      data: {
-        lastMessageAt: new Date(),
-        subject,
-        status: 'responded',
-      },
-    });
+  const conversationId = await recordOutboundEmail({
+    ownerUserId: scope.userId,
+    workspaceUserIds,
+    toEmail: to_email,
+    fromEmail,
+    subject,
+    bodyText: body_text,
+    bodyHtml: body_html,
+    sendgridMessageId: result.message_id || null,
+    threadId: conversationIdInput || undefined,
   });
 
   return NextResponse.json({
     success: true,
     message_id: result.message_id,
     mode: result.mode,
-    conversation_id: thread.id,
+    conversation_id: conversationId,
   });
 }
