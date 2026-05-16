@@ -1,26 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordInboundEmail } from '@/lib/integrations/sendgrid-persistence';
-import {
-  getSendGridInboundOwnerUserId,
-  verifySendGridWebhookSecret,
-} from '@/lib/integrations/sendgrid-webhook-auth';
+import { maybeSendInboundAutoReply } from '@/lib/integrations/sendgrid-auto-reply';
+import { resolveInboundOwnerUserId } from '@/lib/integrations/sendgrid-inbound-routing';
+import { verifySendGridInboundWebhook } from '@/lib/integrations/sendgrid-webhook-auth';
 import { isValidEmailAddress } from '@/lib/integrations/sendgrid-mail';
 
 /** SendGrid Inbound Parse — configure URL with ?token=SENDGRID_WEBHOOK_SECRET */
 export async function POST(request: NextRequest) {
-  if (!verifySendGridWebhookSecret(request)) {
+  if (!verifySendGridInboundWebhook(request)) {
     return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
-  }
-
-  const ownerUserId = getSendGridInboundOwnerUserId();
-  if (!ownerUserId) {
-    return NextResponse.json(
-      {
-        detail:
-          'Set SENDGRID_INBOUND_OWNER_USER_ID or CRON_INTEGRATION_USER_ID so inbound mail can be assigned to a workspace user.',
-      },
-      { status: 503 }
-    );
   }
 
   const form = await request.formData().catch(() => null);
@@ -41,6 +29,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: 'Could not parse sender email from inbound payload' }, { status: 400 });
   }
 
+  const ownerUserId = await resolveInboundOwnerUserId(toEmail || toRaw);
+  if (!ownerUserId) {
+    return NextResponse.json(
+      {
+        detail:
+          'Could not resolve inbound owner. Set SENDGRID_INBOUND_OWNER_USER_ID or configure workspace inbound mailbox.',
+      },
+      { status: 503 }
+    );
+  }
+
   const conversationId = await recordInboundEmail({
     ownerUserId,
     fromEmail,
@@ -51,7 +50,19 @@ export async function POST(request: NextRequest) {
     customerName: parseDisplayName(fromRaw),
   });
 
-  return NextResponse.json({ success: true, conversation_id: conversationId });
+  const autoReply = await maybeSendInboundAutoReply({
+    threadId: conversationId,
+    ownerUserId,
+    customerEmail: fromEmail,
+    customerName: parseDisplayName(fromRaw),
+    subject,
+  });
+
+  return NextResponse.json({
+    success: true,
+    conversation_id: conversationId,
+    auto_reply: autoReply,
+  });
 }
 
 function extractEmailAddress(raw: string): string {
