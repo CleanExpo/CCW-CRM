@@ -12,6 +12,7 @@ import { apiClient } from './client';
 
 export interface SendGridConnectionStatus {
   connected: boolean;
+  can_send?: boolean;
   mode: 'demo' | 'live' | 'not_configured';
   from_email?: string | null;
   from_name?: string | null;
@@ -65,6 +66,7 @@ export interface SendEmailRequest {
   subject: string;
   body_text: string;
   body_html?: string | null;
+  conversation_id?: string;
 }
 
 export interface SendEmailResult {
@@ -189,7 +191,7 @@ export async function simulateInboundEmail(emailNumber: number = 1): Promise<Sim
 export async function isSendGridConnected(): Promise<boolean> {
   try {
     const status = await getSendGridStatus();
-    return status.connected;
+    return status.can_send ?? status.connected;
   } catch {
     return false;
   }
