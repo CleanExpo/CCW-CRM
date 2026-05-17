@@ -46,10 +46,21 @@ function getPrismaClient(): PrismaClient {
     return existing;
   }
   const client = createPrismaClient();
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
   return client;
 }
 
-export const prisma = getPrismaClient();
+/**
+ * Lazy Prisma client — does not connect at import time.
+ * Next.js runs API route modules during `next build`; DATABASE_URL is often
+ * only available at runtime on DigitalOcean, not during the build phase.
+ */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getPrismaClient();
+    const value = client[prop as keyof PrismaClient];
+    return typeof value === "function"
+      ? (value as (...args: unknown[]) => unknown).bind(client)
+      : value;
+  },
+});
