@@ -6,29 +6,13 @@
   "author": "CCW",
   "license": "MIT",
   "scripts": {
-    "setup": "bash scripts/setup.sh",
-    "setup:windows": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1",
-    "dev": "prisma generate && next dev --webpack",
-    "build": "prisma generate && next build",
+    "dev": "next dev --webpack",
+    "build": "next build",
     "start": "prisma migrate deploy && next start",
+    "postinstall": "prisma generate",
     "lint": "eslint src",
-    "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:lighthouse": "lhci autorun",
-    "check": "npm run type-check && npm run lint",
-    "check:all": "npm run type-check && npm run lint && npm run test",
-    "clean": "rm -rf node_modules .next",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "verify": "bash scripts/verify.sh",
-    "deps:check": "npm install --package-lock-only --ignore-scripts --no-audit --no-fund",
-    "deps:clean": "npm run clean && npm install",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "postinstall": "prisma generate"
+    "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -137,7 +121,7 @@
     }
   },
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": "22.x",
+    "npm": "11.x"
   }
 }
