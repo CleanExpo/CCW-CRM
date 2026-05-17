@@ -1,54 +1,44 @@
-import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
-import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
+import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { refreshAllWorkspaceXeroTokens } from '@/lib/integrations/xero-refresh-all';
 
-// Refresh Xero Tokens Cron Job
-// Schedule: Every 15 minutes
-// Forwards to `API_UPSTREAM_URL` when configured.
-
-export async function GET(request: Request) {
+/**
+ * Refresh expiring Xero tokens for all workspace connections.
+ * Schedule: every 15 minutes — Authorization: Bearer CRON_SECRET
+ */
+export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
+    const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const base = requireUpstreamBase('Refresh Xero tokens');
-    if (base instanceof NextResponse) return base;
+    const data = await refreshAllWorkspaceXeroTokens();
 
-    const response = await fetch(
-      `${base}/api/cron/refresh-xero-tokens`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.CRON_SECRET}`,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    logger.info("Refresh Xero tokens cron", {
+    logger.info('Refresh Xero tokens cron', {
       refreshed: data.refreshed,
       skipped: data.skipped,
-      errors: data.errors?.length ?? 0,
+      errors: data.errors.length,
       timestamp: new Date().toISOString(),
     });
 
     return NextResponse.json({
-      success: response.ok,
+      success: true,
       ...data,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error("Refresh Xero tokens cron error", error);
+    logger.error('Refresh Xero tokens cron error', error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
+}
+
+export async function POST(request: NextRequest) {
+  return GET(request);
 }
