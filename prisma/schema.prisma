@@ -935,6 +935,22 @@ model AgentRun {
   @@map("agent_runs")
 }
 
+/// OAuth tokens for Xero accounting (one row per workspace).
+model WorkspaceXeroConnection {
+  id                String    @id @default(uuid()) @db.Uuid
+  workspaceId       String    @unique @map("workspace_id") @db.Uuid
+  tenantId          String    @map("tenant_id")
+  tenantName        String?   @map("tenant_name")
+  accessToken       String    @map("access_token") @db.Text
+  refreshToken      String?   @map("refresh_token") @db.Text
+  tokenExpiresAt    DateTime? @map("token_expires_at")
+  connectedByUserId String?   @map("connected_by_user_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("workspace_xero_connections")
+}
+
 /// Per-workspace SendGrid credentials and template ids (Settings → Integrations).
 model WorkspaceSendGridConfig {
   id                  String   @id @default(uuid()) @db.Uuid
