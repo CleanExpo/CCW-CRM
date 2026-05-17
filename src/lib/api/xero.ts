@@ -10,11 +10,24 @@ import { apiClient } from './client';
 // Types
 // ============================================
 
+export interface XeroSetupStep {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
 export interface XeroConnectionStatus {
   connected: boolean;
   mode: 'demo' | 'live' | 'not_configured';
   tenant_name?: string;
   tenant_id?: string;
+  /** Exact URI sent to Xero — must be registered under Redirect URIs in the Xero Developer Portal. */
+  oauth_redirect_uri?: string;
+  registered_redirect_uris?: string[];
+  setup_steps?: XeroSetupStep[];
+  token_source?: 'environment' | 'workspace' | 'cookie';
+  token_expires_at?: string | null;
+  token_expires_soon?: boolean;
   message?: string;
 }
 
@@ -22,6 +35,7 @@ export interface XeroAuthResponse {
   mode: 'demo' | 'live';
   message?: string;
   authorization_url: string;
+  redirect_uri?: string;
   state: string;
   instructions?: string;
 }
@@ -78,6 +92,29 @@ export async function getXeroStatus(): Promise<XeroConnectionStatus> {
  */
 export async function disconnectXero(): Promise<{ success: boolean; message: string }> {
   return apiClient.post<{ success: boolean; message: string }>('/api/integrations/xero/disconnect');
+}
+
+export async function refreshXeroConnection(): Promise<{
+  success: boolean;
+  token_source?: string;
+  token_expires_at?: string | null;
+}> {
+  return apiClient.post('/api/integrations/xero/refresh', {});
+}
+
+export interface XeroSetupDiagnostics {
+  mode: string;
+  credentials_configured: boolean;
+  client_id_prefix: string | null;
+  request_origin: string;
+  oauth_redirect_uri_for_request: string | null;
+  registered_redirect_uris: string[];
+  developer_portal_url: string;
+  notes: string[];
+}
+
+export async function getXeroSetupDiagnostics(): Promise<XeroSetupDiagnostics> {
+  return apiClient.get<XeroSetupDiagnostics>('/api/integrations/xero/setup');
 }
 
 // ============================================
