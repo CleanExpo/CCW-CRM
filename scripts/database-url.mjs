@@ -14,6 +14,32 @@ export function stripWrappingQuotes(value) {
   return s;
 }
 
+const MANAGED_POSTGRES_SSL_QUERY = 'uselibpqcompat=true&sslmode=require';
+
+function isLocalHost(hostname) {
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+export function applyPostgresSslParams(connectionString) {
+  let url;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return connectionString;
+  }
+
+  const ssl = stripWrappingQuotes(process.env.DB_SSL)?.toLowerCase();
+  if (isLocalHost(url.hostname) || ssl === 'false' || ssl === '0' || ssl === 'disable') {
+    url.searchParams.set('sslmode', 'disable');
+    url.searchParams.delete('uselibpqcompat');
+    return url.toString();
+  }
+
+  url.searchParams.set('uselibpqcompat', 'true');
+  url.searchParams.set('sslmode', 'require');
+  return url.toString();
+}
+
 export function buildDatabaseUrlFromParts() {
   const user = stripWrappingQuotes(process.env.DB_USER);
   const password = stripWrappingQuotes(process.env.DB_PASSWORD);
@@ -28,15 +54,8 @@ export function buildDatabaseUrlFromParts() {
     return null;
   }
 
-  let sslmode = 'require';
-  const ssl = stripWrappingQuotes(process.env.DB_SSL)?.toLowerCase();
-  if (ssl === 'false' || ssl === '0' || ssl === 'disable') {
-    sslmode = 'disable';
-  } else if (ssl === 'prefer') {
-    sslmode = 'prefer';
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}?sslmode=${sslmode}`;
+  const base = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+  return applyPostgresSslParams(`${base}?${MANAGED_POSTGRES_SSL_QUERY}`);
 }
 
 function encodePostgresCredentials(url) {
@@ -78,10 +97,12 @@ function parseDatabaseUrl(raw) {
   if (!url) return null;
 
   try {
+    url = applyPostgresSslParams(url);
     return { url, parsed: new URL(url) };
   } catch {
     url = encodePostgresCredentials(url);
     try {
+      url = applyPostgresSslParams(url);
       return { url, parsed: new URL(url) };
     } catch {
       return null;
