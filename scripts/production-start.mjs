@@ -18,8 +18,11 @@ if (!result) {
 }
 
 process.env.DATABASE_URL = result.url;
+const sslmode = result.parsed.searchParams.get('sslmode');
+const libpq = result.parsed.searchParams.get('uselibpqcompat');
 console.log(
-  `DATABASE_URL ok${result.source === 'DB_*' ? ' (from DB_* variables)' : ''} (host=${result.parsed.host})`
+  `DATABASE_URL ok${result.source === 'DB_*' ? ' (from DB_* variables)' : ''} ` +
+    `(host=${result.parsed.host}, sslmode=${sslmode}, uselibpqcompat=${libpq})`
 );
 
 // DigitalOcean routes traffic to PORT (default 8080). Bind on all interfaces.

@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+
 /** Resolve PostgreSQL URL from DATABASE_URL or DigitalOcean DB_* variables. */
 
 function isLocalHost(hostname: string): boolean {
@@ -12,14 +14,37 @@ function sslDisabledFromEnv(): boolean {
   return ssl === "false" || ssl === "0" || ssl === "disable";
 }
 
-/** Normalize SSL query params on any postgres URL (remote → uselibpqcompat + require). */
-export function applyPostgresSslParams(connectionString: string): string {
-  let url: URL;
+function encodePostgresCredentials(url: string): string {
+  const match = url.match(/^(postgres(?:ql)?):\/\/([^/]*?)@(.+)$/i);
+  if (!match) return url;
+
+  const creds = match[2];
+  const hostPart = match[3];
+  const colon = creds.indexOf(":");
+  if (colon < 0) return url;
+
+  const user = creds.slice(0, colon);
+  const pass = creds.slice(colon + 1);
+
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${hostPart}`;
+}
+
+function parseConnectionUrl(connectionString: string): URL | null {
   try {
-    url = new URL(connectionString);
+    return new URL(connectionString);
   } catch {
-    return connectionString;
+    try {
+      return new URL(encodePostgresCredentials(connectionString));
+    } catch {
+      return null;
+    }
   }
+}
+
+/** Normalize SSL query params (remote → uselibpqcompat=true & sslmode=require). */
+export function applyPostgresSslParams(connectionString: string): string {
+  const url = parseConnectionUrl(connectionString);
+  if (!url) return connectionString;
 
   if (isLocalHost(url.hostname) || sslDisabledFromEnv()) {
     url.searchParams.set("sslmode", "disable");
@@ -62,22 +87,34 @@ export function hasDatabaseConfig(): boolean {
   );
 }
 
-/** SSL for node-pg Pool (used with uselibpqcompat URL params). */
-export function getPgSslConfig(): boolean | { rejectUnauthorized: boolean } {
+/** SSL options for node-pg Pool (DigitalOcean managed Postgres). */
+export function getPgSslConfig(): boolean | { rejectUnauthorized: boolean; ca?: string } {
   const connectionString = getDatabaseConnectionString();
   if (!connectionString) return false;
 
-  let url: URL;
-  try {
-    url = new URL(connectionString);
-  } catch {
-    return false;
+  const url = parseConnectionUrl(connectionString);
+  if (!url) {
+    // URL could not be parsed — still use TLS for remote-looking strings
+    return { rejectUnauthorized: false };
   }
 
   const sslmode = url.searchParams.get("sslmode")?.toLowerCase();
-  if (sslmode === "disable") return false;
-  if (isLocalHost(url.hostname)) return false;
+  if (sslmode === "disable" || isLocalHost(url.hostname)) {
+    return false;
+  }
 
-  const strict = process.env.DB_SSL_REJECT_UNAUTHORIZED === "true";
-  return { rejectUnauthorized: strict };
+  const caPath = process.env.DB_CA_CERT?.trim();
+  if (caPath && process.env.DB_SSL_REJECT_UNAUTHORIZED === "true") {
+    try {
+      return {
+        rejectUnauthorized: true,
+        ca: readFileSync(caPath, "utf8"),
+      };
+    } catch {
+      console.warn(`[db] Could not read DB_CA_CERT at ${caPath}, using relaxed TLS`);
+    }
+  }
+
+  // Required for DigitalOcean: "self-signed certificate in certificate chain" (P1011)
+  return { rejectUnauthorized: false };
 }
