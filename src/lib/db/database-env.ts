@@ -25,3 +25,37 @@ export function getDatabaseConnectionString(): string {
 export function hasDatabaseConfig(): boolean {
   return Boolean(getDatabaseConnectionString());
 }
+
+/** SSL for node-pg — DigitalOcean managed Postgres uses a CA that needs this in Node. */
+export function getPgSslConfig(): boolean | { rejectUnauthorized: boolean } {
+  const connectionString = getDatabaseConnectionString();
+  if (!connectionString) return false;
+
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return false;
+  }
+
+  const sslmode = url.searchParams.get("sslmode")?.toLowerCase();
+  if (sslmode === "disable") return false;
+
+  const host = url.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    return false;
+  }
+
+  const needsTls =
+    sslmode === "require" ||
+    sslmode === "prefer" ||
+    sslmode === "verify-ca" ||
+    sslmode === "verify-full" ||
+    process.env.DB_SSL?.toLowerCase() === "true";
+
+  if (!needsTls) return false;
+
+  // DO / cloud managed DB: avoid "self-signed certificate in certificate chain" (P1011)
+  const strict = process.env.DB_SSL_REJECT_UNAUTHORIZED === "true";
+  return { rejectUnauthorized: strict };
+}

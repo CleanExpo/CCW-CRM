@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
-import { getDatabaseConnectionString } from "@/lib/db/database-env";
+import { getDatabaseConnectionString, getPgSslConfig } from "@/lib/db/database-env";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -18,10 +18,13 @@ function createPrismaClient(): PrismaClient {
     process.env.DATABASE_URL = connectionString;
   }
 
+  const ssl = getPgSslConfig();
+
   const pool =
     globalForPrisma.pgPool ??
     new Pool({
       connectionString,
+      ssl,
       max: 5,
       idleTimeoutMillis: 20_000,
       connectionTimeoutMillis: 10_000,
