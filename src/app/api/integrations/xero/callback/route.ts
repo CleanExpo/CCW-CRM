@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
+import { getXeroMode, resolveXeroRedirectUri } from '@/lib/integrations/xero';
 import {
-  getXeroClientId,
-  getXeroClientSecret,
-  getXeroMode,
-  resolveXeroRedirectUri,
-} from '@/lib/integrations/xero';
+  applyXeroSessionCookies,
+  clearXeroOAuthStateCookie,
+  exchangeXeroAuthorizationCode,
+  fetchXeroTenantConnections,
+  parseXeroOAuthError,
+  verifyXeroOAuthState,
+} from '@/lib/integrations/xero-oauth';
+import { saveWorkspaceXeroConnection } from '@/lib/integrations/xero-storage';
 
 const SETTINGS_URL = '/dashboard/settings/integrations';
 
@@ -14,88 +20,96 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`${SETTINGS_URL}?xero_success=true&mode=demo`, request.url));
   }
 
-  const code = request.nextUrl.searchParams.get('code');
-  if (!code) {
-    const err = request.nextUrl.searchParams.get('error_description') || 'Missing OAuth code';
+  const oauthError = request.nextUrl.searchParams.get('error');
+  if (oauthError) {
+    const description = parseXeroOAuthError(
+      oauthError,
+      request.nextUrl.searchParams.get('error_description')
+    );
     return NextResponse.redirect(
-      new URL(`${SETTINGS_URL}?xero_error=${encodeURIComponent(err)}`, request.url)
+      new URL(`${SETTINGS_URL}?xero_error=${encodeURIComponent(description)}`, request.url)
+    );
+  }
+
+  const code = request.nextUrl.searchParams.get('code');
+  const state = request.nextUrl.searchParams.get('state');
+  if (!code) {
+    return NextResponse.redirect(
+      new URL(
+        `${SETTINGS_URL}?xero_error=${encodeURIComponent('Missing OAuth authorization code from Xero.')}`,
+        request.url
+      )
+    );
+  }
+
+  if (!verifyXeroOAuthState(request, state)) {
+    return NextResponse.redirect(
+      new URL(
+        `${SETTINGS_URL}?xero_error=${encodeURIComponent('OAuth state mismatch — try Connect again (session may have expired).')}`,
+        request.url
+      )
+    );
+  }
+
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.redirect(
+      new URL(
+        `${SETTINGS_URL}?xero_error=${encodeURIComponent('You must be logged in to complete Xero connection.')}`,
+        request.url
+      )
+    );
+  }
+
+  const redirectUri = resolveXeroRedirectUri(request);
+  if (!redirectUri) {
+    return NextResponse.redirect(
+      new URL(
+        `${SETTINGS_URL}?xero_error=${encodeURIComponent('Xero redirect URI is not configured on the server.')}`,
+        request.url
+      )
     );
   }
 
   try {
-    const tokenRes = await fetch('https://identity.xero.com/connect/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: resolveXeroRedirectUri(request),
-        client_id: getXeroClientId(),
-        client_secret: getXeroClientSecret(),
-      }),
-    });
-
-    if (!tokenRes.ok) {
-      const detail = await tokenRes.text().catch(() => '');
-      throw new Error(`Token exchange failed (${tokenRes.status}): ${detail.slice(0, 200)}`);
+    const tokens = await exchangeXeroAuthorizationCode(code, redirectUri);
+    const connections = await fetchXeroTenantConnections(tokens.accessToken);
+    if (connections.length === 0) {
+      throw new Error('No Xero organisation is linked to this app. Authorise at least one organisation in Xero.');
     }
 
-    const tokenJson = (await tokenRes.json()) as {
-      access_token: string;
-      refresh_token?: string;
-    };
+    const preferredTenantId = request.nextUrl.searchParams.get('tenant_id')?.trim();
+    const tenant =
+      (preferredTenantId
+        ? connections.find((c) => c.tenantId === preferredTenantId)
+        : null) ?? connections[0];
 
-    const connRes = await fetch('https://api.xero.com/connections', {
-      headers: {
-        Authorization: `Bearer ${tokenJson.access_token}`,
-      },
-    });
-    if (!connRes.ok) {
-      throw new Error(`Failed to read tenant connections (${connRes.status})`);
-    }
-    const connections = (await connRes.json()) as Array<{ tenantId: string; tenantName: string }>;
-    const tenant = connections[0];
-    if (!tenant?.tenantId) {
-      throw new Error('No tenant found in Xero connections');
+    const workspaceId = await getWorkspaceIdForUser(scope.userId);
+    if (workspaceId) {
+      await saveWorkspaceXeroConnection({
+        workspaceId,
+        tenantId: tenant.tenantId,
+        tenantName: tenant.tenantName,
+        tokens,
+        connectedByUserId: scope.userId,
+      });
     }
 
     const redirect = NextResponse.redirect(
       new URL(
-        `${SETTINGS_URL}?xero_success=true&tenant=${encodeURIComponent(tenant.tenantName || tenant.tenantId)}&mode=live`,
+        `${SETTINGS_URL}?xero_success=true&tenant=${encodeURIComponent(tenant.tenantName)}&mode=live`,
         request.url
       )
     );
-    redirect.cookies.set('xero_access_token', tokenJson.access_token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60,
-    });
-    if (tokenJson.refresh_token) {
-      redirect.cookies.set('xero_refresh_token', tokenJson.refresh_token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 30,
-      });
-    }
-    redirect.cookies.set('xero_tenant_id', tenant.tenantId, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    applyXeroSessionCookies(redirect, tokens, tenant.tenantId);
+    clearXeroOAuthStateCookie(redirect);
     return redirect;
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Xero callback failed';
-    return NextResponse.redirect(
+    const res = NextResponse.redirect(
       new URL(`${SETTINGS_URL}?xero_error=${encodeURIComponent(message)}`, request.url)
     );
+    clearXeroOAuthStateCookie(res);
+    return res;
   }
 }
-
