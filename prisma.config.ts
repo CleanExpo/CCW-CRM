@@ -4,6 +4,7 @@
  */
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import { resolveDatabaseUrl } from "./src/lib/db/database-url";
 
 /**
  * Use `process.env` (not `env()` from prisma/config) so `prisma generate` works
@@ -16,6 +17,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? "",
+    url: resolveDatabaseUrl({ required: false }),
   },
 });
