@@ -4,7 +4,7 @@ Fetch current priorities from Linear project.
 
 Usage:
     # Set LINEAR_API_KEY environment variable first
-    export LINEAR_API_KEY="your_linear_api_key_here"
+    export LINEAR_API_KEY="<your_linear_api_key>"
     python scripts/get_linear_priorities.py
 
     # Or pass it inline
@@ -110,7 +110,7 @@ def main():
         print("[ERROR] LINEAR_API_KEY environment variable not set")
         print()
         print("Set it with:")
-        print('  export LINEAR_API_KEY="your_linear_api_key_here"')
+        print('  export LINEAR_API_KEY="<your_linear_api_key>"')
         print()
         print("Or run with:")
         print('  LINEAR_API_KEY="your_key" python scripts/get_linear_priorities.py')

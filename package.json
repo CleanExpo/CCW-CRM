@@ -11,7 +11,9 @@
     "start": "node scripts/production-start.mjs",
     "postinstall": "prisma generate",
     "lint": "eslint src",
+    "type-check": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
