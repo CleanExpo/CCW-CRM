@@ -46,14 +46,26 @@ export function getXeroRedirectUriLocal(): string {
   return normalizeXeroRedirectUri(process.env.XERO_REDIRECT_URI_LOCAL?.trim() || '');
 }
 
+/** Canonical OAuth callback path (Next.js Route Handler). */
+export const XERO_OAUTH_CALLBACK_PATH = '/api/integrations/xero/callback';
+
+/** Build redirect URI for the host the user is actually using (scheme + host must match Xero app config). */
+export function buildXeroRedirectUriForOrigin(origin: string): string {
+  const base = origin.trim().replace(/\/$/, '');
+  if (!base) return '';
+  return normalizeXeroRedirectUri(`${base}${XERO_OAUTH_CALLBACK_PATH}`);
+}
+
 /**
- * Pick the redirect URI that matches how the user reached this app (authorize vs callback).
- * Token exchange must use the same redirect_uri as the authorize request.
+ * Pick the redirect URI for authorize + token exchange.
+ * Uses env URIs when their origin matches the current request; otherwise uses the request origin
+ * so localhost / preview hosts work once registered in the Xero Developer Portal.
  */
 export function resolveXeroRedirectUri(request: NextRequest): string {
+  const origin = request.nextUrl.origin;
+  const fromRequest = buildXeroRedirectUriForOrigin(origin);
   const primary = getXeroRedirectUri();
   const local = getXeroRedirectUriLocal();
-  const origin = request.nextUrl.origin;
 
   const matchesOrigin = (uri: string) => {
     if (!uri) return false;
@@ -66,9 +78,17 @@ export function resolveXeroRedirectUri(request: NextRequest): string {
 
   if (local && matchesOrigin(local)) return local;
   if (primary && matchesOrigin(primary)) return primary;
-  if (primary) return primary;
-  if (local) return local;
-  return '';
+
+  // Dev / staging / www vs apex: use the URI for this browser origin (must be whitelisted in Xero).
+  if (fromRequest) return fromRequest;
+
+  return primary || local || '';
+}
+
+/** All redirect URIs configured in env (register each in the Xero Developer Portal). */
+export function listXeroRegisteredRedirectUris(): string[] {
+  const uris = [getXeroRedirectUri(), getXeroRedirectUriLocal()].filter(Boolean);
+  return [...new Set(uris)];
 }
 
 export function getConfiguredTokenSource(request?: NextRequest): {
@@ -121,7 +141,16 @@ export async function fetchXeroOrganisationName(
 export function buildXeroAuthorizeUrl(state: string, request?: NextRequest): string {
   const redirectUri = request
     ? resolveXeroRedirectUri(request)
-    : getXeroRedirectUri() || getXeroRedirectUriLocal();
+    : getXeroRedirectUri() ||
+      getXeroRedirectUriLocal() ||
+      buildXeroRedirectUriForOrigin(process.env.NEXT_PUBLIC_FRONTEND_URL?.trim() || 'http://localhost:3000');
+
+  if (!redirectUri) {
+    throw new Error(
+      'Xero redirect URI is not configured. Set XERO_REDIRECT_URI or open the app from your registered domain.'
+    );
+  }
+
   const q = new URLSearchParams({
     response_type: 'code',
     client_id: getXeroClientId(),
