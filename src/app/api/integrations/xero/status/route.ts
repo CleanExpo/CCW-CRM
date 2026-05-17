@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import {
   fetchXeroOrganisationName,
-  getConfiguredTokenSource,
   getXeroMode,
   hasLiveClientCredentials,
+  listXeroRegisteredRedirectUris,
+  resolveXeroRedirectUri,
 } from '@/lib/integrations/xero';
+import { getValidXeroTokens } from '@/lib/integrations/xero-tokens';
+import { isXeroTokenExpired } from '@/lib/integrations/xero-storage';
 
 export async function GET(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
   const mode = getXeroMode();
+  const oauth_redirect_uri = resolveXeroRedirectUri(request);
+  const registered_redirect_uris = listXeroRegisteredRedirectUris();
 
   if (mode === 'demo') {
     return NextResponse.json({
@@ -15,6 +26,8 @@ export async function GET(request: NextRequest) {
       mode: 'demo',
       tenant_name: 'Demo Organization',
       tenant_id: 'demo-tenant',
+      oauth_redirect_uri,
+      registered_redirect_uris,
       message: 'Demo mode active. No real Xero API calls are made.',
     });
   }
@@ -23,25 +36,64 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       connected: false,
       mode: 'not_configured',
-      message: 'Missing Xero OAuth credentials.',
+      oauth_redirect_uri,
+      registered_redirect_uris,
+      setup_steps: buildSetupSteps(false, oauth_redirect_uri),
+      message: 'Missing Xero OAuth credentials in environment.',
     });
   }
 
-  const tokens = getConfiguredTokenSource(request);
+  const tokens = await getValidXeroTokens(request, scope.userId);
   if (!tokens) {
     return NextResponse.json({
       connected: false,
       mode: 'live',
-      message: 'Not connected. Click Connect to authorize with Xero.',
+      oauth_redirect_uri,
+      registered_redirect_uris,
+      setup_steps: buildSetupSteps(true, oauth_redirect_uri),
+      message: 'Not connected. Click Connect to Xero to link your organisation.',
     });
   }
 
-  const displayName = await fetchXeroOrganisationName(tokens.accessToken, tokens.tenantId);
+  const displayName =
+    (await fetchXeroOrganisationName(tokens.accessToken, tokens.tenantId)) ??
+    tokens.tenantName ??
+    tokens.tenantId;
+
+  const token_expires_soon =
+    tokens.expiresAt != null && isXeroTokenExpired(tokens.expiresAt, 60 * 15);
 
   return NextResponse.json({
     connected: true,
     mode: 'live',
     tenant_id: tokens.tenantId,
-    tenant_name: displayName ?? tokens.tenantId,
+    tenant_name: displayName,
+    token_source: tokens.source,
+    token_expires_at: tokens.expiresAt?.toISOString() ?? null,
+    token_expires_soon,
+    oauth_redirect_uri,
+    registered_redirect_uris,
   });
+}
+
+function buildSetupSteps(credentialsOk: boolean, redirectUri: string | null) {
+  return [
+    {
+      id: 'credentials',
+      label: 'Set XERO_CLIENT_ID, XERO_CLIENT_SECRET, and XERO_MODE=live',
+      done: credentialsOk,
+    },
+    {
+      id: 'redirect',
+      label: redirectUri
+        ? `Register Redirect URI in Xero Developer Portal: ${redirectUri}`
+        : 'Configure XERO_REDIRECT_URI (and XERO_REDIRECT_URI_LOCAL for localhost)',
+      done: Boolean(redirectUri),
+    },
+    {
+      id: 'connect',
+      label: 'Click Connect to Xero and approve access',
+      done: false,
+    },
+  ];
 }
