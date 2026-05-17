@@ -3,7 +3,7 @@
  * Ensures all required environment variables are present at startup
  */
 
-const REQUIRED_ENV_VARS = ["DATABASE_URL"] as const;
+import { hasDatabaseConfig } from "@/lib/db/database-env";
 
 const OPTIONAL_ENV_VARS = {
   NEXT_PUBLIC_FRONTEND_URL: "http://localhost:3000",
@@ -13,10 +13,8 @@ const OPTIONAL_ENV_VARS = {
 function validateEnv(): void {
   const missing: string[] = [];
 
-  for (const key of REQUIRED_ENV_VARS) {
-    if (!process.env[key]) {
-      missing.push(key);
-    }
+  if (!hasDatabaseConfig()) {
+    missing.push("DATABASE_URL (or DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)");
   }
 
   if (!process.env.JWT_SECRET && !process.env.JWT_SECRET_KEY) {

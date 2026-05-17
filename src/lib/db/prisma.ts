@@ -1,15 +1,21 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { getDatabaseConnectionString } from "@/lib/db/database-env";
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pgPool: Pool | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = getDatabaseConnectionString();
   if (!connectionString) {
     throw new Error("DATABASE_URL is not configured");
+  }
+
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = connectionString;
   }
 
   const pool =
@@ -18,7 +24,7 @@ function createPrismaClient(): PrismaClient {
       connectionString,
       max: 5,
       idleTimeoutMillis: 20_000,
-      connectionTimeoutMillis: 15_000,
+      connectionTimeoutMillis: 10_000,
     });
 
   if (process.env.NODE_ENV !== "production") {
