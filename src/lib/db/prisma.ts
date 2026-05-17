@@ -34,8 +34,22 @@ function createPrismaClient(): PrismaClient {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+/** Dev hot-reload can keep an old PrismaClient missing models added after the server started. */
+function isPrismaClientStale(client: PrismaClient): boolean {
+  return typeof (client as PrismaClient & { workspaceXeroConnection?: unknown })
+    .workspaceXeroConnection === "undefined";
 }
+
+function getPrismaClient(): PrismaClient {
+  const existing = globalForPrisma.prisma;
+  if (existing && !isPrismaClientStale(existing)) {
+    return existing;
+  }
+  const client = createPrismaClient();
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+  }
+  return client;
+}
+
+export const prisma = getPrismaClient();
