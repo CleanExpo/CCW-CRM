@@ -39,9 +39,10 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
       if (authResponse.mode === 'demo') {
         toast({ title: 'Connected to Xero', description: 'Xero integration is now active.' });
         onStatusChange();
-      } else {
-        // Redirect to Xero authorization URL
+      } else if (authResponse.authorization_url) {
         window.location.href = authResponse.authorization_url;
+      } else {
+        throw new Error('No authorization URL returned from server.');
       }
     } catch (error: unknown) {
       toast({
@@ -139,7 +140,6 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* ── Connected state ── */}
         {isConnected && status?.tenant_name && (
           <div className="bg-muted rounded-lg p-3">
             <p className="text-muted-foreground text-sm">Connected to</p>
@@ -147,23 +147,19 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
           </div>
         )}
 
-        {/* ── Not configured — developer setup required ── */}
         {isNotConfigured && (
           <div className="border-muted-foreground/20 bg-muted/50 flex items-start gap-2 rounded-lg border p-3">
             <AlertCircle className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
             <div className="text-muted-foreground text-sm">
-              <p className="font-medium">OAuth app credentials required</p>
+              <p className="font-medium">Integration not available</p>
               <p className="mt-1 text-xs">
-                Set <code className="bg-muted rounded px-1">XERO_CLIENT_ID</code> and{' '}
-                <code className="bg-muted rounded px-1">XERO_CLIENT_SECRET</code> environment
-                variables, then set <code className="bg-muted rounded px-1">XERO_MODE=live</code> to
-                enable the OAuth connection flow.
+                Xero has not been set up for this workspace yet. Contact your administrator to enable
+                accounting sync.
               </p>
             </div>
           </div>
         )}
 
-        {/* ── Disconnected message (live mode, credentials set) ── */}
         {status?.message && !isConnected && !isNotConfigured && (
           <p className="text-muted-foreground text-sm">{status.message}</p>
         )}
