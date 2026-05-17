@@ -1,9 +1,13 @@
 /**
  * Prisma ORM 7+ — database URL lives here (not in schema.prisma).
- * Used by the Prisma CLI (migrate, generate, db push).
+ * Production sets DATABASE_URL via the platform; local dev uses .env.
  */
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
 import { defineConfig } from 'prisma/config';
+
+if (process.env.NODE_ENV !== 'production') {
+  loadEnv();
+}
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

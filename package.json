@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
-    "start": "npx prisma migrate deploy && next start",
+    "start": "node scripts/production-start.mjs",
     "postinstall": "prisma generate",
     "lint": "eslint src",
     "test": "vitest run",
