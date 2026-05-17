@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { getConfiguredTokenSource, getXeroMode } from '@/lib/integrations/xero';
+import { getXeroMode } from '@/lib/integrations/xero';
+import { getValidXeroTokens } from '@/lib/integrations/xero-tokens';
 import {
   normalizeOrderRouteParam,
   orderRouteParamIsUuid,
@@ -41,7 +42,7 @@ export async function GET(
     });
   }
 
-  const tokens = getConfiguredTokenSource(request);
+  const tokens = await getValidXeroTokens(request, scope.userId);
   if (!tokens) return NextResponse.json({ detail: 'Xero is not connected.' }, { status: 401 });
 
   const query = encodeURIComponent(`Reference=="${order.orderNumber}"`);
