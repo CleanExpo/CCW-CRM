@@ -113,6 +113,16 @@ jobs:
   trivy-scan:
     name: Trivy Container Scan
     runs-on: ubuntu-latest
+    # Required so the SARIF upload below can write to GitHub's
+    # code-scanning API. Without this the Upload Trivy results step
+    # fails with "Resource not accessible by integration" — the
+    # default GITHUB_TOKEN permissions in this repo do not include
+    # security-events: write, so the per-job permissions block is
+    # needed to grant it locally. `contents: read` retains the read
+    # access the checkout step needs.
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
