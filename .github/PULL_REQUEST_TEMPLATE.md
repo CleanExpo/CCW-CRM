@@ -1,55 +1,23 @@
 ## Summary
+<!-- 1-3 sentences: what changed and why -->
 
-## <!-- What changed and why? 2-3 bullet points max -->
+## Registry impact
+- [ ] No registry change required
+- [ ] Updated `.portfolio/PORTFOLIO.yaml` (only Unite-Hub holds the registry)
+- [ ] N/A — this repo is not Unite-Hub (no registry here)
 
--
+## Sandbox testing
+- [ ] Tested on sandbox deployment (URL: ____________)
+- [ ] N/A — not user-facing / config change only
 
-## Linear Issue
+## Verification
+- [ ] Type checks pass (`npm run typecheck` or equivalent)
+- [ ] Tests pass (or none applicable)
+- [ ] Build succeeds (`npm run build`)
+- [ ] Manual smoke test of changed feature
 
-<!-- Required: UNI-XXXX -->
+## Screenshots / recordings
+<!-- For UI changes -->
 
-Closes UNI-
-
-## Type of Change
-
-- [ ] feat — new feature
-- [ ] fix — bug fix
-- [ ] security — security improvement
-- [ ] refactor — code restructure (no behaviour change)
-- [ ] perf — performance improvement
-- [ ] docs — documentation only
-- [ ] chore — build/config/dependency update
-
-## Test Plan
-
-<!-- How was this tested? -->
-
-- [ ] Unit tests added/updated
-- [ ] Manual testing performed (describe steps below)
-
-Steps to verify:
-
-1.
-2.
-
-## Screenshots (UI changes only)
-
-<!-- Add before/after screenshots for any UI changes -->
-
-## Pre-merge Checklist
-
-- [ ] `npx tsc --noEmit` — zero TypeScript errors
-- [ ] `npm run lint` — zero lint errors
-- [ ] `npm run test` — all tests passing
-- [ ] `node scripts/ci/scan-secrets.js` — no hardcoded secrets
-- [ ] PR size < 500 lines (or justified in summary)
-- [ ] Linear issue references included
-- [ ] No modifications to locked files (middleware.ts, demo_auth.py, demo_models.py)
-- [ ] New tables have RLS enabled
-- [ ] Review Orchestrator verdict: SHIP
-
-## For Release PRs (develop → main) only
-
-- [ ] CEO (@phillmcgurk) approval obtained
-- [ ] Release notes generated
-- [ ] Version tagged after merge
+## Rollback plan
+<!-- How to revert if this breaks prod -->
