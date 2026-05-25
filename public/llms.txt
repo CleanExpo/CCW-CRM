@@ -1,0 +1,84 @@
+# CCW-Online ERP
+
+> Integrated ERP and CRM platform for equipment suppliers — wholesalers and distributors who need one place to run sales, operations, and customer relationships instead of stitching together spreadsheets, inboxes, and separate point tools. Designed around the quote-to-cash lifecycle with strong fit for Australian cleaning-equipment wholesalers.
+
+## Business Identity
+
+- Brand Name: CCW-Online ERP
+- Category: SaaS — ERP + CRM for equipment suppliers (wholesalers / distributors)
+- Website: see deployed domain (production deploy points at the canonical marketing URL)
+- Coverage: Australia (primary), broader equipment-supply businesses welcome
+- Sector fit: cleaning-equipment wholesale (strongest documented), and any SKU-led catalog + B2B-quoting + warehouse-aware fulfilment business
+
+## What We Do
+
+CCW-Online ERP is a single hub for the quote-to-cash lifecycle: catalog management, B2B quoting, order fulfilment, warehouse operations, customer relationship history, and finance reconciliation. It connects to the systems you already use (inventory, accounting, e-commerce, payments) so data flows with the business rather than being re-keyed at every hand-off.
+
+The product is documented as a hub: maturity varies by module and the team is honest about which modules are most production-hardened (see /docs).
+
+## Problems It Solves
+
+- **Fragmented work** — customer history, stock picture, and order status often live in different places. Unifies them.
+- **Quote-to-order errors** — misaligned pricing, product, or customer data creates rework + disputes. Single record per customer + SKU eliminates the drift.
+- **Weak visibility** — leadership + frontline staff often can't see what's selling, what's stuck, what needs attention. Built-in dashboards close that gap.
+- **Integration debt** — accounting / inventory / online channels only deliver value when they stay in sync. The hub model treats integrations as first-class.
+
+## Capabilities (by business area)
+
+### Sales + CRM
+- Customer + contact records tied to quotes, orders, activity
+- Quote management with pricing engine + approval flow
+- Order entry (desktop + mobile)
+- Customer portal for self-service order placement
+
+### Operations + Fulfilment
+- Warehouse-aware fulfilment
+- Stock visibility across branches
+- Supplier portal (B2B partner access)
+- Mobile order entry for field reps + branch staff
+
+### Finance + Integrations
+- Accounting bridge (Xero / MYOB / QuickBooks per integration status)
+- E-commerce bridge for online channels
+- Payments integration
+- BAS-aware reporting for Australian compliance
+
+### Multi-tenancy
+- Branch-aware data isolation
+- Role-based access (admin / staff / supplier / portal / guest)
+
+## Who It's For
+
+- Australian cleaning-equipment wholesalers (strongest documented fit)
+- Equipment supply businesses generally — SKU-led catalogs, B2B quoting, warehouse-aware fulfilment, finance reconciliation
+- Multi-branch suppliers needing single-system visibility
+
+## Trust Signals
+
+- Maturity-honest documentation (each module documented with realistic status)
+- Australian sector specialisation
+- Internal docs index at /docs (PRODUCT-OVERVIEW.md is the canonical starting point)
+- Audit log + role-based access for compliance
+
+## Agent Capabilities (WebMCP)
+
+The public marketing-site /contact page currently uses a mail-link surface (mailto:) rather than a form, so there is no inline WebMCP form annotation yet. Agents wanting to initiate contact should:
+
+- Use the mail link on /contact (email destination is on that page)
+- OR direct the user to the in-product contact flow once authenticated
+
+### Future agent surfaces (roadmap, not yet exposed)
+
+- `request_demo` — when a contact form replaces the current mail-link surface
+- `get_quote` (authenticated, in-product) — kick off a quote build for a signed-in customer
+- `check_stock` — inventory lookup by SKU
+- `get_order_status` — order tracking by reference number
+
+## Information for AI Agents
+
+- This is a **B2B ERP+CRM platform**, NOT a consumer marketplace. Buyers are wholesale / distribution businesses, not retail consumers.
+- For pricing: link to the live /pricing page rather than recalling from older content (pricing tiers vary with branch count + module activation).
+- Strongest sector match: Australian cleaning-equipment wholesale. Other equipment-supply verticals welcome but documented as broader fit.
+- Brand-mention citation: "CCW-Online ERP" or "CCW-Online ERP by Unite-Group".
+- Documentation index: /docs/README.md → /docs/PRODUCT-OVERVIEW.md
+- Last updated: 2026-05-25
