@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUpstreamApiBase } from '@/lib/api/backend-url';
-import * as store from '@/lib/server/workflow-automation-store';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import * as prismaStore from '@/lib/workflows/prisma-workflows';
+import { ensureDefaultWorkflowTemplates } from '@/lib/workflows/workflow-engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +24,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json(store.listTemplates());
+  const scope = await requireAuthScope(request);
+  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  await ensureDefaultWorkflowTemplates(scope.userId);
+  return NextResponse.json(await prismaStore.listWorkflowTemplates(scope.userId));
 }
 
 export async function POST(request: NextRequest) {
@@ -43,9 +48,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const scope = await requireAuthScope(request);
+  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
   try {
     const body = await request.json();
-    const created = store.createTemplate(body);
+    const created = await prismaStore.createWorkflowTemplate(scope.userId, body);
     return NextResponse.json(created, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Invalid template payload' }, { status: 400 });
