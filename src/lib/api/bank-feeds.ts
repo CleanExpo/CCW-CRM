@@ -3,12 +3,18 @@ import { apiClient } from '@/lib/api/client';
 export interface BankFeedEntry {
   id: string;
   bank_account_id: string;
+  bank_account_name?: string;
   transaction_date: string;
   description: string;
+  raw_narration?: string | null;
   reference: string | null;
   credit: number | null;
   debit: number | null;
+  amount?: number;
   balance: number | null;
+  status?: string;
+  confidence_score?: number | null;
+  suggested_action?: string | null;
 }
 
 export interface BankAccount {
