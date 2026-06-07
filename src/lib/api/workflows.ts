@@ -85,4 +85,16 @@ export const workflowsApi = {
     const qs = q.toString();
     return apiClient.get<WorkflowInstance[]>(`/api/workflows/instances${qs ? `?${qs}` : ''}`);
   },
+
+  getExecutionStats: (days = 30): Promise<{
+    period_days: number;
+    total_instances: number;
+    by_status: Record<string, number>;
+    average_execution_minutes: number;
+    sla_compliance_rate: number;
+    sla_breaches: number;
+  }> => apiClient.get(`/api/workflows/execution-stats?days=${days}`),
+
+  escalateSla: (payload?: { entity_type?: string; entity_id?: string; sla_instance_id?: string }) =>
+    apiClient.post('/api/workflows/sla/escalate', payload ?? {}),
 };
