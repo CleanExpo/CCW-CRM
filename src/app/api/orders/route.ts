@@ -4,6 +4,8 @@ import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
 import { generateOrderNumber, resolveLinesFromPayload } from '@/lib/db/order-lines';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { logOperationalEvent } from '@/lib/comms/operational-events';
+import { dispatchWorkflowTrigger } from '@/lib/workflows/workflow-engine';
 import type { Prisma } from '@prisma/client';
 
 const ORDER_LIST_INCLUDE = {
@@ -108,11 +110,32 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        customer: { select: { companyName: true } },
+        customer: { select: { companyName: true, email: true } },
         lineItems: {
           include: { product: { select: { name: true } } },
         },
       },
+    });
+
+    await logOperationalEvent({
+      ownerUserId: scope.userId,
+      customerId,
+      eventType: 'order',
+      source: 'system',
+      title: `Order ${orderNumber} created`,
+      description: created.customer?.companyName ?? null,
+      entityType: 'order',
+      entityId: created.id,
+      metadata: { status, total: totalWithTax },
+    });
+
+    void dispatchWorkflowTrigger('order_created', {
+      ownerUserId: scope.userId,
+      triggerEntityType: 'order',
+      triggerEntityId: created.id,
+      customerId,
+      customerEmail: created.customer?.email ?? null,
+      payload: { order_number: orderNumber, total: totalWithTax },
     });
 
     const { customer, lineItems, ...rest } = created;
