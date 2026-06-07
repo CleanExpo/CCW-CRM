@@ -124,4 +124,17 @@ export const approvalsApi = {
   async cancel(id: string): Promise<void> {
     return apiClient.delete(`/api/approvals/${id}`);
   },
+
+  async getPendingMyApproval(): Promise<Approval[]> {
+    return apiClient.get<Approval[]>('/api/approvals/pending-my-approval');
+  },
+
+  async bulkApprove(approvalIds: string[], comments?: string) {
+    return apiClient.post<{
+      total: number;
+      succeeded: number;
+      failed: number;
+      results: Array<{ approval_id: string; success: boolean; error?: string }>;
+    }>('/api/approvals/bulk-approve', { approval_ids: approvalIds, comments });
+  },
 };
