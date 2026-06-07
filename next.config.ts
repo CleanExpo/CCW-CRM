@@ -97,6 +97,7 @@ const nextConfig: NextConfig = {
       },
       { source: '/emails', destination: '/dashboard/finance/emails', permanent: false },
       { source: '/emails/:path*', destination: '/dashboard/finance/emails/:path*', permanent: false },
+      { source: '/comms', destination: '/dashboard/comms', permanent: false },
       { source: '/ai-assistant', destination: '/dashboard/ai-reports/ai-assistant', permanent: false },
       { source: '/ai-ops', destination: '/dashboard/ai-reports/ai-ops', permanent: false },
       { source: '/ai-query', destination: '/dashboard/ai-reports/ai-query', permanent: false },
