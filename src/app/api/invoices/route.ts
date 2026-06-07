@@ -21,11 +21,28 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.trim();
     const status = searchParams.get('status')?.trim();
     const customerId = searchParams.get('customer_id')?.trim();
+    const dateFrom = searchParams.get('date_from')?.trim();
+    const dateTo = searchParams.get('date_to')?.trim();
+    const overdueOnly = searchParams.get('overdue_only') === 'true';
 
     const where: Prisma.InvoiceWhereInput = {
       ownerUserId: { in: workspaceUserIds },
       ...(status ? { status } : {}),
       ...(customerId ? { customerId } : {}),
+      ...(dateFrom || dateTo
+        ? {
+            invoiceDate: {
+              ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+              ...(dateTo ? { lte: new Date(dateTo) } : {}),
+            },
+          }
+        : {}),
+      ...(overdueOnly
+        ? {
+            status: { in: ['sent'] },
+            dueDate: { lt: new Date() },
+          }
+        : {}),
       ...(search
         ? {
             OR: [
@@ -53,12 +70,14 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return NextResponse.json({
-      data: rows.map((r) =>
-        invoiceSummaryToApi({
-          ...r,
-          status: deriveInvoiceStatus(r),
-        })
-      ),
+      data: rows
+        .map((r) =>
+          invoiceSummaryToApi({
+            ...r,
+            status: deriveInvoiceStatus(r),
+          })
+        )
+        .filter((inv) => (overdueOnly ? inv.status === 'overdue' : true)),
       total,
       page,
       page_size: pageSize,
