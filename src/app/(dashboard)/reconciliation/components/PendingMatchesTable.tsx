@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,20 @@ import {
 import { ChevronDown, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { SuggestionCard } from './SuggestionCard';
 
+interface MatchSuggestion {
+  target_type?: string;
+  target_id: string;
+  pos_transaction_id?: string;
+  transaction_number?: string;
+  label?: string;
+  amount: number;
+  date: string;
+  payment_method?: string;
+  confidence: number;
+  match_reasons: string[];
+  suggested_action?: string;
+}
+
 interface PendingFeed {
   feed_id: string;
   transaction_date: string;
@@ -25,16 +39,13 @@ interface PendingFeed {
   reference: string | null;
   amount: number;
   bank_account_name: string;
-  match_suggestions: Array<{
-    pos_transaction_id: string;
-    transaction_number: string;
-    amount: number;
-    date: string;
-    payment_method: string;
-    confidence: number;
-    match_reasons: string[];
-  }>;
+  match_suggestions: MatchSuggestion[];
   created_at: string;
+}
+
+interface SelectedMatch {
+  target_type: string;
+  target_id: string;
 }
 
 interface PendingMatchesTableProps {
@@ -50,7 +61,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
   const [feeds, setFeeds] = useState<PendingFeed[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [selectedMatches, setSelectedMatches] = useState<Map<string, string>>(new Map()); // feed_id -> pos_transaction_id
+  const [selectedMatches, setSelectedMatches] = useState<Map<string, SelectedMatch>>(new Map());
   const [isBulkApproving, setIsBulkApproving] = useState(false);
   const { toast } = useToast();
 
@@ -87,14 +98,17 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
     setExpandedRows(newExpanded);
   };
 
-  const handleSelectMatch = (feedId: string, posTransactionId: string) => {
+  const handleSelectMatch = (feedId: string, suggestion: MatchSuggestion) => {
     const newSelected = new Map(selectedMatches);
-    if (newSelected.get(feedId) === posTransactionId) {
-      // Deselect
+    const key = suggestion.target_id;
+    const current = newSelected.get(feedId);
+    if (current?.target_id === key) {
       newSelected.delete(feedId);
     } else {
-      // Select
-      newSelected.set(feedId, posTransactionId);
+      newSelected.set(feedId, {
+        target_type: suggestion.target_type ?? 'pos_transaction',
+        target_id: suggestion.target_id,
+      });
     }
     setSelectedMatches(newSelected);
   };
@@ -112,18 +126,17 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
     setIsBulkApproving(true);
 
     try {
-      const approvals = Array.from(selectedMatches.entries()).map(
-        ([feed_id, pos_transaction_id]) => ({
-          feed_id,
-          pos_transaction_id,
-        })
-      );
+      const approvals = Array.from(selectedMatches.entries()).map(([feed_id, match]) => ({
+        feed_id,
+        target_type: match.target_type,
+        target_id: match.target_id,
+        pos_transaction_id:
+          match.target_type === 'pos_transaction' ? match.target_id : undefined,
+      }));
 
       const result = await apiClient.post<BulkApprovalResponse>(
         '/api/reconciliation/bulk-approve',
-        {
-          approvals,
-        }
+        { approvals }
       );
 
       toast({
@@ -133,7 +146,6 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
         }`,
       });
 
-      // Clear selections and refresh
       setSelectedMatches(new Map());
       await fetchPendingFeeds();
       onReconciled?.();
@@ -160,7 +172,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
     return (
       <Card className="p-6">
         <div className="text-muted-foreground text-center">
-          No pending feeds with AI suggestions. All caught up! 🎉
+          No pending feeds with match suggestions. Sync bank feeds or import CDR CSV to begin.
         </div>
       </Card>
     );
@@ -170,13 +182,13 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
     <Card>
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-4">
-          <h3 className="font-semibold">Pending Matches with AI Suggestions</h3>
+          <h3 className="font-semibold">Pending matches</h3>
           <Badge variant="secondary">{feeds.length} items</Badge>
         </div>
         {selectedMatches.size > 0 && (
           <Button size="sm" onClick={handleBulkApprove} disabled={isBulkApproving}>
             <CheckCircle2 className="mr-2 h-4 w-4" />
-            {isBulkApproving ? 'Approving...' : `Approve ${selectedMatches.size} Selected`}
+            {isBulkApproving ? 'Approving...' : `Approve ${selectedMatches.size} selected`}
           </Button>
         )}
       </div>
@@ -187,7 +199,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
             <TableRow>
               <TableHead className="w-[50px]"></TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Bank Account</TableHead>
+              <TableHead>Bank account</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Reference</TableHead>
               <TableHead className="text-right">Amount</TableHead>
@@ -196,8 +208,8 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
           </TableHeader>
           <TableBody>
             {feeds.map((feed) => (
-              <>
-                <TableRow key={feed.feed_id} className="hover:bg-muted/50 cursor-pointer">
+              <Fragment key={feed.feed_id}>
+                <TableRow className="hover:bg-muted/50 cursor-pointer">
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -227,24 +239,28 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
                   </TableCell>
                 </TableRow>
 
-                {/* Expanded Row - Suggestions */}
                 {expandedRows.has(feed.feed_id) && (
                   <TableRow>
                     <TableCell colSpan={7} className="bg-muted/30">
                       <div className="space-y-3 p-4">
-                        <h4 className="text-sm font-medium">AI Match Suggestions</h4>
+                        <h4 className="text-sm font-medium">Match suggestions</h4>
                         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                           {feed.match_suggestions.map((suggestion) => (
                             <SuggestionCard
-                              key={suggestion.pos_transaction_id}
-                              suggestion={suggestion}
+                              key={suggestion.target_id}
+                              suggestion={{
+                                ...suggestion,
+                                transaction_number:
+                                  suggestion.transaction_number ??
+                                  suggestion.label ??
+                                  suggestion.target_id.slice(0, 8),
+                              }}
                               feedAmount={feed.amount}
                               isSelected={
-                                selectedMatches.get(feed.feed_id) === suggestion.pos_transaction_id
+                                selectedMatches.get(feed.feed_id)?.target_id ===
+                                suggestion.target_id
                               }
-                              onSelect={() =>
-                                handleSelectMatch(feed.feed_id, suggestion.pos_transaction_id)
-                              }
+                              onSelect={() => handleSelectMatch(feed.feed_id, suggestion)}
                             />
                           ))}
                         </div>
@@ -252,7 +268,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
@@ -263,7 +279,7 @@ export function PendingMatchesTable({ onReconciled }: PendingMatchesTableProps) 
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('en-AU', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
