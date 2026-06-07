@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
+import { logOperationalEvent } from '@/lib/comms/operational-events';
 
 export type RecordOutboundEmailInput = {
   ownerUserId: string;
@@ -181,6 +182,17 @@ export async function recordInboundEmail(input: RecordInboundEmailInput): Promis
         status: 'open',
       },
     });
+  });
+
+  await logOperationalEvent({
+    ownerUserId,
+    customerId: linkedCustomer?.id ?? thread.customerId,
+    eventType: 'email',
+    source: 'sendgrid',
+    title: `Inbound: ${subject}`,
+    description: fromEmail,
+    entityType: 'email_thread',
+    entityId: thread.id,
   });
 
   return thread.id;
