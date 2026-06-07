@@ -32,6 +32,9 @@ import { DeleteInvoiceDialog } from './components/DeleteInvoiceDialog';
 import { FinancialReportTab } from './components/FinancialReportTab';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { ScanComingSoon } from '@/components/dashboard/ScanComingSoon';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function InvoicesPage() {
   const router = useRouter();
@@ -44,11 +47,14 @@ export default function InvoicesPage() {
 
   const { state: searchState, updateField } = useSearchState({
     key: 'invoices-list',
-    defaultState: { page: 1, pageSize: 50 },
+    defaultState: { page: 1, pageSize: 50, overdueOnly: false, dateFrom: '', dateTo: '' },
   });
 
   const page = searchState.page || 1;
   const pageSize = searchState.pageSize || 50;
+  const overdueOnly = Boolean(searchState.overdueOnly);
+  const dateFrom = (searchState.dateFrom as string) || '';
+  const dateTo = (searchState.dateTo as string) || '';
   const setPage = (value: number) => updateField('page', value);
   const setPageSize = (value: number) => updateField('pageSize', value);
 
@@ -64,6 +70,9 @@ export default function InvoicesPage() {
       const response = await invoicesApi.list({
         page,
         page_size: pageSize,
+        overdue_only: overdueOnly || undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
       });
 
       setInvoices(response.data);
@@ -83,7 +92,7 @@ export default function InvoicesPage() {
       setLoading(false);
       setLastUpdated(new Date());
     }
-  }, [page, pageSize, toast]);
+  }, [page, pageSize, overdueOnly, dateFrom, dateTo, toast]);
 
   useEffect(() => {
     loadInvoices();
@@ -348,6 +357,52 @@ export default function InvoicesPage() {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="overdue-only"
+                  checked={overdueOnly}
+                  onCheckedChange={(v) => {
+                    updateField('overdueOnly', Boolean(v));
+                    updateField('page', 1);
+                  }}
+                />
+                <Label htmlFor="overdue-only" className="text-sm">
+                  Overdue only
+                </Label>
+              </div>
+              <div>
+                <Label htmlFor="date-from" className="text-xs">
+                  From
+                </Label>
+                <Input
+                  id="date-from"
+                  type="date"
+                  className="h-9 w-40"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    updateField('dateFrom', e.target.value);
+                    updateField('page', 1);
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="date-to" className="text-xs">
+                  To
+                </Label>
+                <Input
+                  id="date-to"
+                  type="date"
+                  className="h-9 w-40"
+                  value={dateTo}
+                  onChange={(e) => {
+                    updateField('dateTo', e.target.value);
+                    updateField('page', 1);
+                  }}
+                />
+              </div>
             </div>
 
             {/* Invoices Table */}
