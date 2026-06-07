@@ -380,6 +380,51 @@ export default function InvoiceDetailPage() {
             </CardContent>
           </Card>
 
+          {invoice.payments && invoice.payments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Payment history</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {invoice.payments.map((p) => (
+                  <div key={p.id} className="flex items-start justify-between gap-2 border-b pb-2 last:border-0">
+                    <div>
+                      <p className="text-sm font-medium">{formatCurrency(p.amount)}</p>
+                      <p className="text-muted-foreground text-xs capitalize">
+                        {p.payment_method.replace(/_/g, ' ')} ·{' '}
+                        {format(new Date(p.payment_date), 'MMM d, yyyy')}
+                      </p>
+                      {p.reference_number && (
+                        <p className="text-muted-foreground text-xs">Ref: {p.reference_number}</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-7 text-xs"
+                      onClick={async () => {
+                        try {
+                          await invoicesApi.deletePayment(p.id);
+                          toast({ title: 'Payment removed' });
+                          loadInvoice();
+                        } catch (error) {
+                          toast({
+                            variant: 'destructive',
+                            title: 'Error',
+                            description:
+                              error instanceof Error ? error.message : 'Failed to delete payment',
+                          });
+                        }
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Quick Info Card */}
           <Card>
             <CardHeader>
