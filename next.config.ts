@@ -80,6 +80,21 @@ const nextConfig: NextConfig = {
       { source: '/invoices/:path*', destination: '/dashboard/finance/invoices/:path*', permanent: false },
       { source: '/bank-feeds', destination: '/dashboard/finance/bank-feeds', permanent: false },
       { source: '/bank-feeds/:path*', destination: '/dashboard/finance/bank-feeds/:path*', permanent: false },
+      {
+        source: '/reconciliation',
+        destination: '/dashboard/finance/reconciliation',
+        permanent: false,
+      },
+      {
+        source: '/reconciliation/:path*',
+        destination: '/dashboard/finance/reconciliation/:path*',
+        permanent: false,
+      },
+      {
+        source: '/trade-finance',
+        destination: '/dashboard/finance/trade-finance',
+        permanent: false,
+      },
       { source: '/emails', destination: '/dashboard/finance/emails', permanent: false },
       { source: '/emails/:path*', destination: '/dashboard/finance/emails/:path*', permanent: false },
       { source: '/ai-assistant', destination: '/dashboard/ai-reports/ai-assistant', permanent: false },
