@@ -7,7 +7,8 @@ export type TimelineEventType =
   | 'invoice'
   | 'order'
   | 'quote'
-  | 'payment';
+  | 'payment'
+  | 'operational';
 
 export type UnifiedTimelineEvent = {
   id: string;
@@ -31,7 +32,7 @@ export async function buildCustomerTimeline(
   });
   if (!customer) return [];
 
-  const [activities, invoices, orders, quotes, emailThreads] = await Promise.all([
+  const [activities, invoices, orders, quotes, emailThreads, operationalEvents] = await Promise.all([
     prisma.crmActivity.findMany({
       where: { customerId, ...ownerDataFilter(ownerIds) },
       orderBy: { createdAt: 'desc' },
@@ -64,6 +65,11 @@ export async function buildCustomerTimeline(
         ownerUserId: { in: ownerIds },
       },
       orderBy: { lastMessageAt: 'desc' },
+      take: limit,
+    }),
+    prisma.operationalEvent.findMany({
+      where: { customerId, ...ownerDataFilter(ownerIds) },
+      orderBy: { occurredAt: 'desc' },
       take: limit,
     }),
   ]);
@@ -146,6 +152,25 @@ export async function buildCustomerTimeline(
       title: t.subject,
       description: t.customerEmail,
       metadata: { thread_id: t.id, status: t.status, intent: t.intent },
+    });
+  }
+
+  for (const op of operationalEvents) {
+    events.push({
+      id: `operational-${op.id}`,
+      event_type: 'operational',
+      occurred_at: op.occurredAt.toISOString(),
+      title: op.title,
+      description: op.description,
+      metadata: {
+        source: op.source,
+        event_type: op.eventType,
+        entity_type: op.entityType,
+        entity_id: op.entityId,
+        ...(typeof op.metadata === 'object' && op.metadata !== null
+          ? (op.metadata as Record<string, unknown>)
+          : {}),
+      },
     });
   }
 
