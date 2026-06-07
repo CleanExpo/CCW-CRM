@@ -12,7 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
+import { importCdrCsv } from '@/lib/api/bank-reconciliation';
 import {
   RefreshCw,
   Banknote,
@@ -20,6 +22,8 @@ import {
   TrendingDown,
   AlertTriangle,
   CheckCircle2,
+  Upload,
+  Scale,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type {
@@ -38,6 +42,7 @@ export default function BankFeedsPage() {
   const [alerts, setAlerts] = useState<ReconciliationAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
 
   const loadData = useCallback(async () => {
@@ -120,6 +125,30 @@ export default function BankFeedsPage() {
       year: 'numeric',
     });
 
+  const handleImport = async (file: File) => {
+    if (selectedAccountId === 'all') {
+      toast({ variant: 'destructive', title: 'Select a bank account first' });
+      return;
+    }
+    setImporting(true);
+    try {
+      const result = await importCdrCsv(selectedAccountId, file);
+      toast({
+        title: 'CDR import complete',
+        description: `${result.imported} transactions imported`,
+      });
+      loadData();
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Import failed',
+        description: error instanceof Error ? error.message : 'Could not import CSV',
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const getSeverityVariant = (
     severity: string
   ): 'default' | 'secondary' | 'destructive' | 'outline' => {
@@ -139,6 +168,29 @@ export default function BankFeedsPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/finance/reconciliation/workbench">
+                <Scale className="mr-2 h-4 w-4" />
+                Reconciliation workbench
+              </Link>
+            </Button>
+            <label className="inline-flex">
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleImport(f);
+                }}
+              />
+              <Button variant="outline" asChild disabled={importing}>
+                <span>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import CDR CSV
+                </span>
+              </Button>
+            </label>
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="All accounts" />
