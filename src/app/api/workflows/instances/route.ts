@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUpstreamApiBase } from '@/lib/api/backend-url';
-import * as store from '@/lib/server/workflow-automation-store';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import * as prismaStore from '@/lib/workflows/prisma-workflows';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const scope = await requireAuthScope(request);
+  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
   const template_id = request.nextUrl.searchParams.get('template_id') ?? undefined;
   const status = request.nextUrl.searchParams.get('status') ?? undefined;
-  return NextResponse.json(store.listInstances({ template_id, status }));
+  return NextResponse.json(
+    await prismaStore.listWorkflowInstances(scope.userId, { template_id, status })
+  );
 }
