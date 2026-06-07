@@ -1,16 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 
-/**
- * SLA instances — reserved for future persistence.
- * Honors query params for compatibility; always returns 200 + [] so the UI stays clean
- * and the dev server does not log 404s for entity_type=activity|approval|task.
- */
+function serializeInstance(row: {
+  id: string;
+  slaRuleId: string;
+  entityId: string;
+  entityType: string;
+  deadline: Date;
+  breached: boolean;
+  breachNotified: boolean;
+  createdAt: Date;
+}) {
+  return {
+    id: row.id,
+    sla_rule_id: row.slaRuleId,
+    entity_id: row.entityId,
+    entity_type: row.entityType,
+    deadline: row.deadline.toISOString(),
+    breached: row.breached,
+    breach_notified: row.breachNotified,
+    created_at: row.createdAt.toISOString(),
+  };
+}
+
 export async function GET(request: NextRequest) {
-  const scope = await requireAuthScope(request);
-  if (!scope) {
-    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
-  }
+  try {
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
-  return NextResponse.json([]);
+    const { searchParams } = new URL(request.url);
+    const entityType = searchParams.get('entity_type');
+    const breached = searchParams.get('breached');
+
+    const ownerIds = await getWorkspaceMemberUserIds(scope.userId);
+    const rows = await prisma.sLAInstance.findMany({
+      where: {
+        ...(entityType ? { entityType } : {}),
+        ...(breached != null ? { breached: breached === 'true' } : {}),
+        rule: { ownerUserId: { in: ownerIds } },
+      },
+      orderBy: { deadline: 'asc' },
+      take: 200,
+    });
+
+    return NextResponse.json(rows.map(serializeInstance));
+  } catch (e) {
+    return NextResponse.json({ detail: String(e) }, { status: 500 });
+  }
 }
