@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import type { BankAccount as BankAccountRow } from '@prisma/client';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { bankAccountOwnerFilter, workspaceOwnerIds } from '@/lib/bank-reconciliation/scope';
 
 function toApi(a: BankAccountRow) {
   return {
@@ -16,7 +17,9 @@ function toApi(a: BankAccountRow) {
     created_at: a.createdAt.toISOString(),
     updated_at: a.updatedAt.toISOString(),
     location_code: a.locationCode ?? undefined,
-    last_feed_sync_at: null as string | null,
+    last_feed_sync_at: a.lastFeedSyncAt?.toISOString() ?? null,
+    currency: a.currency,
+    cdr_account_id: a.cdrAccountId,
   };
 }
 
@@ -27,8 +30,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
     }
 
+    const ownerIds = await workspaceOwnerIds(scope.userId);
     const rows = await prisma.bankAccount.findMany({
-      where: { isActive: true, ownerUserId: scope.userId },
+      where: { isActive: true, ...bankAccountOwnerFilter(ownerIds) },
       orderBy: { createdAt: 'asc' },
     });
     return NextResponse.json(rows.map(toApi));
