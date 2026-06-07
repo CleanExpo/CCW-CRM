@@ -6,11 +6,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, AlertTriangle, CreditCard } from "lucide-react";
 
 interface Suggestion {
-  pos_transaction_id: string;
+  pos_transaction_id?: string;
   transaction_number: string;
   amount: number;
   date: string;
-  payment_method: string;
+  payment_method?: string;
   confidence: number;
   match_reasons: string[];
 }
@@ -28,10 +28,14 @@ export function SuggestionCard({
   isSelected,
   onSelect,
 }: SuggestionCardProps) {
-  const confidencePercent = (suggestion.confidence * 100).toFixed(0);
+  const confidencePercent =
+    suggestion.confidence > 1
+      ? suggestion.confidence.toFixed(0)
+      : (suggestion.confidence * 100).toFixed(0);
+  const normalizedConfidence =
+    suggestion.confidence > 1 ? suggestion.confidence / 100 : suggestion.confidence;
   const amountDiff = Math.abs(suggestion.amount - feedAmount);
 
-  // Determine confidence color
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.9) return "text-green-600 bg-green-50 border-green-200";
     if (confidence >= 0.8) return "text-blue-600 bg-blue-50 border-blue-200";
@@ -72,7 +76,7 @@ export function SuggestionCard({
               </div>
             </div>
           </div>
-          <Badge variant={getConfidenceBadgeVariant(suggestion.confidence)}>
+          <Badge variant={getConfidenceBadgeVariant(normalizedConfidence)}>
             {confidencePercent}% match
           </Badge>
         </div>
@@ -92,14 +96,14 @@ export function SuggestionCard({
         {/* Payment Method */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CreditCard className="h-4 w-4" />
-          <span className="capitalize">{suggestion.payment_method}</span>
+          <span className="capitalize">{suggestion.payment_method ?? 'bank'}</span>
         </div>
 
         {/* Match Reasons */}
         <div className="space-y-1">
           {suggestion.match_reasons.slice(0, 3).map((reason, index) => (
             <div key={index} className="flex items-start gap-2 text-xs text-muted-foreground">
-              {index === 0 && suggestion.confidence >= 0.9 ? (
+              {index === 0 && normalizedConfidence >= 0.9 ? (
                 <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
               ) : (
                 <span className="h-3 w-3 rounded-full bg-muted mt-0.5 flex-shrink-0" />
@@ -115,7 +119,7 @@ export function SuggestionCard({
         </div>
 
         {/* Warning for low confidence */}
-        {suggestion.confidence < 0.7 && (
+        {normalizedConfidence < 0.7 && (
           <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 p-2 rounded">
             <AlertTriangle className="h-3 w-3 flex-shrink-0" />
             <span>Moderate confidence - review recommended</span>
