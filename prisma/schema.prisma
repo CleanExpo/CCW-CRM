@@ -52,6 +52,7 @@ model Customer {
   activities               CrmActivity[]
   workshopEquipment        WorkshopEquipment[]
   workshopServiceReminders WorkshopServiceReminder[]
+  emailThreads             EmailThread[]
 
   @@index([ownerUserId])
   @@map("customers")
@@ -403,10 +404,11 @@ model Invoice {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  customer Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  order    Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  items    InvoiceLineItem[]
-  payments InvoicePayment[]
+  customer         Customer                @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  order            Order?                  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  items            InvoiceLineItem[]
+  payments         InvoicePayment[]
+  bankFeedMatches  BankFeedTransaction[]
 
   @@unique([ownerUserId, invoiceNumber])
   @@index([ownerUserId])
@@ -455,6 +457,7 @@ model InvoicePayment {
 model EmailThread {
   id            String   @id @default(uuid()) @db.Uuid
   ownerUserId   String   @map("owner_user_id") @db.Uuid
+  customerId    String?  @map("customer_id") @db.Uuid
   subject       String
   customerEmail String   @map("customer_email")
   customerName  String?  @map("customer_name")
@@ -464,9 +467,11 @@ model EmailThread {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
+  customer Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
   messages EmailMessage[]
 
   @@index([ownerUserId])
+  @@index([customerId])
   @@index([customerEmail])
   @@map("email_threads")
 }
@@ -506,7 +511,8 @@ model Supplier {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  purchaseOrders PurchaseOrder[]
+  purchaseOrders       PurchaseOrder[]
+  tradeFinanceAdvances TradeFinanceAdvance[]
 
   @@unique([ownerUserId, supplierCode])
   @@index([ownerUserId])
@@ -531,8 +537,10 @@ model PurchaseOrder {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  supplier Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  lines    PurchaseOrderLine[]
+  supplier             Supplier              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines                PurchaseOrderLine[]
+  bankFeedMatches      BankFeedTransaction[]
+  tradeFinanceAdvances TradeFinanceAdvance[]
 
   @@unique([ownerUserId, poNumber])
   @@index([ownerUserId])
@@ -594,18 +602,21 @@ model PosTransactionLine {
 }
 
 model BankAccount {
-  id            String   @id @default(uuid()) @db.Uuid
-  ownerUserId   String?  @map("owner_user_id") @db.Uuid
-  accountName   String   @map("account_name")
-  accountNumber String   @map("account_number")
-  bsb           String
-  bankName      String   @map("bank_name")
-  accountType   String   @map("account_type")
-  feedProvider  String   @map("feed_provider")
-  isActive      Boolean  @default(true) @map("is_active")
-  locationCode  String?  @map("location_code")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(uuid()) @db.Uuid
+  ownerUserId    String?   @map("owner_user_id") @db.Uuid
+  accountName    String    @map("account_name")
+  accountNumber  String    @map("account_number")
+  bsb            String
+  bankName       String    @map("bank_name")
+  accountType    String    @map("account_type")
+  feedProvider   String    @map("feed_provider")
+  currency       String    @default("AUD")
+  cdrAccountId   String?   @map("cdr_account_id")
+  lastFeedSyncAt DateTime? @map("last_feed_sync_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  locationCode   String?   @map("location_code")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   feedTransactions BankFeedTransaction[]
 
@@ -614,23 +625,143 @@ model BankAccount {
 }
 
 model BankFeedTransaction {
-  id              String   @id @default(uuid()) @db.Uuid
-  bankAccountId   String   @map("bank_account_id") @db.Uuid
-  transactionDate DateTime @map("transaction_date")
-  description     String
-  reference       String   @default("")
-  credit          Float?
-  debit           Float?
-  balance         Float?
-  reconciled      Boolean  @default(false)
-  matchedPosTxId  String?  @map("matched_pos_tx_id") @db.Uuid
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                     String    @id @default(uuid()) @db.Uuid
+  bankAccountId          String    @map("bank_account_id") @db.Uuid
+  transactionDate        DateTime  @map("transaction_date")
+  description            String
+  rawNarration           String?   @map("raw_narration") @db.Text
+  reference              String    @default("")
+  credit                 Float?
+  debit                  Float?
+  balance                Float?
+  reconciled             Boolean   @default(false)
+  status                 String    @default("unmatched")
+  reviewStatus           String?   @map("review_status")
+  suggestedAction        String?   @map("suggested_action")
+  confidenceScore        Float?    @map("confidence_score")
+  confidenceReason       String?   @map("confidence_reason") @db.Text
+  matchedPosTxId         String?   @map("matched_pos_tx_id") @db.Uuid
+  matchedInvoiceId       String?   @map("matched_invoice_id") @db.Uuid
+  matchedPurchaseOrderId String?   @map("matched_purchase_order_id") @db.Uuid
+  gstCategory            String?   @map("gst_category")
+  accountCategory        String?   @map("account_category")
+  reconciledBy           String?   @map("reconciled_by") @db.Uuid
+  reconciledAt           DateTime? @map("reconciled_at")
+  xeroExportStatus       String?   @map("xero_export_status")
+  xeroExportRef          String?   @map("xero_export_ref")
+  externalFeedId         String?   @map("external_feed_id")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  bankAccount          BankAccount                    @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  matchedInvoice       Invoice?                       @relation(fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
+  matchedPurchaseOrder PurchaseOrder?                 @relation(fields: [matchedPurchaseOrderId], references: [id], onDelete: SetNull)
+  allocations          BankReconciliationAllocation[]
+  auditEntries         BankReconciliationAudit[]
 
+  @@unique([bankAccountId, externalFeedId])
   @@index([bankAccountId])
   @@index([reconciled])
+  @@index([status])
+  @@index([matchedInvoiceId])
   @@map("bank_feed_transactions")
+}
+
+model BankReconciliationAllocation {
+  id                String   @id @default(uuid()) @db.Uuid
+  feedTransactionId String   @map("feed_transaction_id") @db.Uuid
+  allocationType    String   @map("allocation_type")
+  targetId          String?  @map("target_id") @db.Uuid
+  amount            Float
+  gstCategory       String?  @map("gst_category")
+  accountCode       String?  @map("account_code")
+  notes             String?
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  feedTransaction BankFeedTransaction @relation(fields: [feedTransactionId], references: [id], onDelete: Cascade)
+
+  @@index([feedTransactionId])
+  @@map("bank_reconciliation_allocations")
+}
+
+model BankReconciliationAudit {
+  id                String   @id @default(uuid()) @db.Uuid
+  feedTransactionId String   @map("feed_transaction_id") @db.Uuid
+  action            String
+  performedBy       String   @map("performed_by") @db.Uuid
+  details           Json     @default("{}")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  feedTransaction BankFeedTransaction @relation(fields: [feedTransactionId], references: [id], onDelete: Cascade)
+
+  @@index([feedTransactionId])
+  @@index([createdAt])
+  @@map("bank_reconciliation_audit")
+}
+
+model BankReconciliationRule {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  name         String
+  matchPattern String   @map("match_pattern")
+  matchField   String   @default("description") @map("match_field")
+  actionType   String   @map("action_type")
+  accountCode  String?  @map("account_code")
+  gstCategory  String?  @map("gst_category")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([isActive])
+  @@map("bank_reconciliation_rules")
+}
+
+model TradeFinanceFacility {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerUserId   String   @map("owner_user_id") @db.Uuid
+  provider      String   @default("CBA")
+  name          String
+  facilityLimit Float    @map("facility_limit")
+  currency      String   @default("AUD")
+  status        String   @default("active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  advances TradeFinanceAdvance[]
+
+  @@index([ownerUserId])
+  @@map("trade_finance_facilities")
+}
+
+model TradeFinanceAdvance {
+  id              String   @id @default(uuid()) @db.Uuid
+  facilityId      String   @map("facility_id") @db.Uuid
+  ownerUserId     String   @map("owner_user_id") @db.Uuid
+  advanceNumber   String   @map("advance_number")
+  supplierId      String?  @map("supplier_id") @db.Uuid
+  purchaseOrderId String?  @map("purchase_order_id") @db.Uuid
+  drawdownDate    DateTime @map("drawdown_date") @db.Date
+  maturityDate    DateTime @map("maturity_date") @db.Date
+  currency        String   @default("AUD")
+  principalAmount Float    @map("principal_amount")
+  fees            Float    @default(0)
+  interest        Float    @default(0)
+  repaidAmount    Float    @default(0) @map("repaid_amount")
+  securityRef     String?  @map("security_ref")
+  status          String   @default("drawn")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  facility      TradeFinanceFacility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  supplier      Supplier?            @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  purchaseOrder PurchaseOrder?       @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+
+  @@unique([ownerUserId, advanceNumber])
+  @@index([facilityId])
+  @@index([status])
+  @@index([maturityDate])
+  @@map("trade_finance_advances")
 }
 
 model ContactSubmission {
