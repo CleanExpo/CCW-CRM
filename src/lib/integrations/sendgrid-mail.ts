@@ -183,7 +183,8 @@ export type SendGridStatusPayload = {
   message: string;
 };
 
-function hasSendGridBrowserCookies(request: NextRequest): boolean {
+function hasSendGridBrowserCookies(request?: NextRequest): boolean {
+  if (!request) return false;
   return ['sendgrid_api_key', 'sendgrid_from_email', 'sendgrid_from_name'].some((name) =>
     Boolean(request.cookies.get(name)?.value?.trim())
   );
@@ -206,7 +207,7 @@ export type SendGridStatusOverrides = {
 };
 
 export async function buildSendGridStatusPayload(
-  request: NextRequest,
+  request?: NextRequest,
   overrides?: SendGridStatusOverrides,
   userId?: string
 ): Promise<SendGridStatusPayload> {
@@ -308,7 +309,7 @@ export type SendGridSendReadiness =
   | { ok: false; status: number; detail: string; payload: SendGridStatusPayload; creds: ResolvedSendGridCredentials };
 
 export async function getSendGridSendReadiness(
-  request: NextRequest,
+  request?: NextRequest,
   userId?: string
 ): Promise<SendGridSendReadiness> {
   const creds = await resolveSendGridCredentials(request, userId);
