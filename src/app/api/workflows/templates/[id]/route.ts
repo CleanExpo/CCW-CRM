@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUpstreamApiBase } from '@/lib/api/backend-url';
-import * as store from '@/lib/server/workflow-automation-store';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import * as prismaStore from '@/lib/workflows/prisma-workflows';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const base = getUpstreamApiBase();
@@ -28,7 +29,10 @@ export async function GET(
     }
   }
 
-  const row = store.getTemplate(id);
+  const scope = await requireAuthScope(request);
+  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
+  const row = await prismaStore.getWorkflowTemplate(scope.userId, id);
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(row);
 }
@@ -56,9 +60,12 @@ export async function PUT(
     }
   }
 
+  const scope = await requireAuthScope(request);
+  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
   try {
     const body = await request.json();
-    const updated = store.updateTemplate(id, body);
+    const updated = await prismaStore.updateWorkflowTemplate(scope.userId, id, body);
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(updated);
   } catch {
@@ -67,7 +74,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const base = getUpstreamApiBase();
@@ -87,7 +94,10 @@ export async function DELETE(
     }
   }
 
-  const ok = store.deleteTemplate(id);
+  const scope = await requireAuthScope(request);
+  if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+
+  const ok = await prismaStore.deleteWorkflowTemplate(scope.userId, id);
   if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return new NextResponse(null, { status: 204 });
 }
