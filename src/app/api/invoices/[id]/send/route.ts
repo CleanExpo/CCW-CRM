@@ -11,6 +11,8 @@ import {
   resolveSendGridFromEmail,
   sendMailViaSendGrid,
 } from '@/lib/integrations/sendgrid-mail';
+import { logOperationalEvent } from '@/lib/comms/operational-events';
+import { dispatchWorkflowTrigger } from '@/lib/workflows/workflow-engine';
 
 export async function POST(
   request: NextRequest,
@@ -74,6 +76,27 @@ export async function POST(
         email_delivery = { sent: false, detail: readiness.detail };
       }
     }
+
+    await logOperationalEvent({
+      ownerUserId: scope.userId,
+      customerId: updated.customerId,
+      eventType: 'invoice',
+      source: 'system',
+      title: `Invoice ${updated.invoiceNumber} sent`,
+      description: customerEmail ?? null,
+      entityType: 'invoice',
+      entityId: updated.id,
+      metadata: { status, total: updated.total, email_sent: email_delivery?.sent ?? false },
+    });
+
+    void dispatchWorkflowTrigger('invoice_sent', {
+      ownerUserId: scope.userId,
+      triggerEntityType: 'invoice',
+      triggerEntityId: updated.id,
+      customerId: updated.customerId,
+      customerEmail: customerEmail ?? null,
+      payload: { invoice_number: updated.invoiceNumber, total: updated.total },
+    });
 
     return NextResponse.json({
       ...apiBody,
