@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { applyBankMatch } from '@/lib/bank-reconciliation/apply-match';
+import { exportReconciledFeedToXero } from '@/lib/integrations/xero-reconciliation-export';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,44 +13,53 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as {
       feed_id?: string;
       pos_transaction_id?: string;
+      target_type?: string;
+      target_id?: string;
+      export_to_xero?: boolean;
     };
 
     const feedId = String(body.feed_id ?? '');
-    const posId = String(body.pos_transaction_id ?? '');
-    if (!feedId || !posId) {
+    const targetId = body.target_id ?? body.pos_transaction_id;
+    const targetType = (body.target_type ?? 'pos_transaction') as
+      | 'invoice'
+      | 'purchase_order'
+      | 'pos_transaction'
+      | 'transfer'
+      | 'fee'
+      | 'rule';
+
+    if (!feedId || !targetId) {
       return NextResponse.json(
-        { detail: 'feed_id and pos_transaction_id are required' },
+        { detail: 'feed_id and target_id (or pos_transaction_id) are required' },
         { status: 400 }
       );
     }
 
-    const feed = await prisma.bankFeedTransaction.findFirst({
-      where: { id: feedId, bankAccount: { ownerUserId: scope.userId } },
+    await applyBankMatch({
+      feedId,
+      userId: scope.userId,
+      targetType,
+      targetId,
     });
-    const pos = await prisma.posTransaction.findFirst({
-      where: { id: posId, ownerUserId: scope.userId },
-    });
-    if (!feed || !pos) {
-      return NextResponse.json({ detail: 'Feed line or POS transaction not found' }, { status: 404 });
-    }
 
-    await prisma.$transaction([
-      prisma.bankFeedTransaction.update({
-        where: { id: feedId },
-        data: { reconciled: true, matchedPosTxId: posId },
-      }),
-      prisma.posTransaction.update({
-        where: { id: posId },
-        data: { reconciliationStatus: 'reconciled' },
-      }),
-    ]);
+    let xero = null;
+    if (body.export_to_xero !== false) {
+      xero = await exportReconciledFeedToXero({
+        feedTransactionId: feedId,
+        performedBy: scope.userId,
+      });
+    }
 
     return NextResponse.json({
       feed_id: feedId,
-      pos_transaction_id: posId,
+      target_id: targetId,
       status: 'reconciled',
+      xero,
     });
   } catch (e) {
-    return NextResponse.json({ detail: String(e) }, { status: 500 });
+    return NextResponse.json(
+      { detail: e instanceof Error ? e.message : String(e) },
+      { status: 400 }
+    );
   }
 }
