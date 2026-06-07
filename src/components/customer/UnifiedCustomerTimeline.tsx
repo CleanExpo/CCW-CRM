@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Receipt,
   ShoppingCart,
+  Zap,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -26,6 +27,7 @@ const ICONS = {
   payment: Banknote,
   order: ShoppingCart,
   quote: FileText,
+  operational: Zap,
 } as const;
 
 function EventIcon({ type }: { type: UnifiedTimelineEvent['event_type'] }) {
