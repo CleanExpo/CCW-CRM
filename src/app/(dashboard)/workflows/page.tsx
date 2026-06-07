@@ -55,6 +55,7 @@ import { cn } from '@/lib/utils';
 
 const TRIGGER_EVENTS = [
   { value: 'order_created', label: 'Order Created' },
+  { value: 'invoice_sent', label: 'Invoice Sent' },
   { value: 'order_status_changed', label: 'Order Status Changed' },
   { value: 'quote_accepted', label: 'Quote Accepted' },
   { value: 'quote_expired', label: 'Quote Expired' },
