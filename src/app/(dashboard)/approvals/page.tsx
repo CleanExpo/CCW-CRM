@@ -714,7 +714,7 @@ export default function ApprovalsPage() {
                   )}
                   <div className="mt-1 flex items-center gap-1.5">
                     <span className="text-muted-foreground text-xs">SLA Deadline:</span>
-                    <ApprovalSlaDeadline instance={slaMap.get(approval.entity_id)} />
+                    <ApprovalSlaDeadline instance={slaMap.get(approval.id)} />
                   </div>
                 </CardHeader>
                 {isExpanded && (
