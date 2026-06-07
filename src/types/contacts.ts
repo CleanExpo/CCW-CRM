@@ -65,7 +65,7 @@ export interface UpdateContactRequest {
  * Paginated response for contacts list endpoint
  */
 export interface PaginatedContacts {
-  data: Contact[];
+  data: ContactWithCustomer[];
   total: number;
   page: number;
   page_size: number;
