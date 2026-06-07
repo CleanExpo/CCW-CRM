@@ -126,6 +126,14 @@ export type RecordInboundEmailInput = {
 export async function recordInboundEmail(input: RecordInboundEmailInput): Promise<string> {
   const { ownerUserId, fromEmail, toEmail, subject, bodyText, bodyHtml, customerName } = input;
 
+  const linkedCustomer = await prisma.customer.findFirst({
+    where: {
+      ownerUserId,
+      email: { equals: fromEmail, mode: 'insensitive' },
+    },
+    select: { id: true },
+  });
+
   const existingThread = await prisma.emailThread.findFirst({
     where: { ownerUserId, customerEmail: fromEmail },
     orderBy: { lastMessageAt: 'desc' },
@@ -136,6 +144,7 @@ export async function recordInboundEmail(input: RecordInboundEmailInput): Promis
     (await prisma.emailThread.create({
       data: {
         ownerUserId,
+        customerId: linkedCustomer?.id ?? null,
         subject,
         customerEmail: fromEmail,
         customerName: customerName ?? null,
@@ -143,6 +152,13 @@ export async function recordInboundEmail(input: RecordInboundEmailInput): Promis
         lastMessageAt: new Date(),
       },
     }));
+
+  if (existingThread && linkedCustomer && !existingThread.customerId) {
+    await prisma.emailThread.update({
+      where: { id: existingThread.id },
+      data: { customerId: linkedCustomer.id },
+    });
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.emailMessage.create({
