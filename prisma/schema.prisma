@@ -53,6 +53,7 @@ model Customer {
   workshopEquipment        WorkshopEquipment[]
   workshopServiceReminders WorkshopServiceReminder[]
   emailThreads             EmailThread[]
+  operationalEvents        OperationalEvent[]
 
   @@index([ownerUserId])
   @@map("customers")
@@ -513,6 +514,7 @@ model Supplier {
 
   purchaseOrders       PurchaseOrder[]
   tradeFinanceAdvances TradeFinanceAdvance[]
+  tradeFinanceLcs      TradeFinanceLetterOfCredit[]
 
   @@unique([ownerUserId, supplierCode])
   @@index([ownerUserId])
@@ -541,6 +543,7 @@ model PurchaseOrder {
   lines                PurchaseOrderLine[]
   bankFeedMatches      BankFeedTransaction[]
   tradeFinanceAdvances TradeFinanceAdvance[]
+  tradeFinanceLcs      TradeFinanceLetterOfCredit[]
 
   @@unique([ownerUserId, poNumber])
   @@index([ownerUserId])
@@ -728,16 +731,81 @@ model TradeFinanceFacility {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  advances TradeFinanceAdvance[]
+  advances         TradeFinanceAdvance[]
+  lettersOfCredit  TradeFinanceLetterOfCredit[]
 
   @@index([ownerUserId])
   @@map("trade_finance_facilities")
+}
+
+model TradeFinanceLetterOfCredit {
+  id                    String   @id @default(uuid()) @db.Uuid
+  ownerUserId           String   @map("owner_user_id") @db.Uuid
+  facilityId            String?  @map("facility_id") @db.Uuid
+  lcNumber              String   @map("lc_number")
+  bankRef               String?  @map("bank_ref")
+  beneficiarySupplierId String?  @map("beneficiary_supplier_id") @db.Uuid
+  purchaseOrderId       String?  @map("purchase_order_id") @db.Uuid
+  amount                Float
+  currency              String   @default("AUD")
+  lcType                String   @default("usance") @map("lc_type")
+  issueDate             DateTime @map("issue_date") @db.Date
+  expiryDate            DateTime @map("expiry_date") @db.Date
+  status                String   @default("issued")
+  notes                 String?  @db.Text
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  facility      TradeFinanceFacility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+  beneficiary   Supplier?             @relation(fields: [beneficiarySupplierId], references: [id], onDelete: SetNull)
+  purchaseOrder PurchaseOrder?        @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  documents     TradeFinanceLcDocument[]
+  amendments    TradeFinanceLcAmendment[]
+  advances      TradeFinanceAdvance[]
+
+  @@unique([ownerUserId, lcNumber])
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([expiryDate])
+  @@map("trade_finance_letters_of_credit")
+}
+
+model TradeFinanceLcDocument {
+  id          String    @id @default(uuid()) @db.Uuid
+  lcId        String    @map("lc_id") @db.Uuid
+  docType     String    @map("doc_type")
+  fileName    String?   @map("file_name")
+  status      String    @default("pending")
+  presentedAt DateTime? @map("presented_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  letterOfCredit TradeFinanceLetterOfCredit @relation(fields: [lcId], references: [id], onDelete: Cascade)
+
+  @@index([lcId])
+  @@map("trade_finance_lc_documents")
+}
+
+model TradeFinanceLcAmendment {
+  id              String   @id @default(uuid()) @db.Uuid
+  lcId            String   @map("lc_id") @db.Uuid
+  amendmentNumber Int      @map("amendment_number")
+  description     String   @db.Text
+  effectiveDate   DateTime @map("effective_date") @db.Date
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  letterOfCredit TradeFinanceLetterOfCredit @relation(fields: [lcId], references: [id], onDelete: Cascade)
+
+  @@index([lcId])
+  @@map("trade_finance_lc_amendments")
 }
 
 model TradeFinanceAdvance {
   id              String   @id @default(uuid()) @db.Uuid
   facilityId      String   @map("facility_id") @db.Uuid
   ownerUserId     String   @map("owner_user_id") @db.Uuid
+  lcId            String?  @map("lc_id") @db.Uuid
   advanceNumber   String   @map("advance_number")
   supplierId      String?  @map("supplier_id") @db.Uuid
   purchaseOrderId String?  @map("purchase_order_id") @db.Uuid
@@ -753,15 +821,47 @@ model TradeFinanceAdvance {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  facility      TradeFinanceFacility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  supplier      Supplier?            @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  purchaseOrder PurchaseOrder?       @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  facility       TradeFinanceFacility        @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  letterOfCredit TradeFinanceLetterOfCredit? @relation(fields: [lcId], references: [id], onDelete: SetNull)
+  supplier       Supplier?                   @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  purchaseOrder  PurchaseOrder?              @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  repayments     TradeFinanceRepayment[]
 
   @@unique([ownerUserId, advanceNumber])
   @@index([facilityId])
+  @@index([lcId])
   @@index([status])
   @@index([maturityDate])
   @@map("trade_finance_advances")
+}
+
+model TradeFinanceRepayment {
+  id          String   @id @default(uuid()) @db.Uuid
+  advanceId   String   @map("advance_id") @db.Uuid
+  amount      Float
+  paymentDate DateTime @map("payment_date") @db.Date
+  reference   String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  advance TradeFinanceAdvance @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+
+  @@index([advanceId])
+  @@map("trade_finance_repayments")
+}
+
+model TaxRate {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  name        String
+  rate        Float
+  isDefault   Boolean  @default(false) @map("is_default")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerUserId])
+  @@map("tax_rates")
 }
 
 model ContactSubmission {
@@ -1110,4 +1210,177 @@ model WorkspaceUpcomingIntegrationSecret {
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   @@map("workspace_upcoming_integration_secrets")
+}
+
+/// Workflow automation (UNI-174) — trigger → conditions → actions.
+model WorkflowTemplate {
+  id                 String   @id @default(uuid()) @db.Uuid
+  ownerUserId        String   @map("owner_user_id") @db.Uuid
+  name               String
+  description        String?
+  triggerEvent       String   @map("trigger_event")
+  triggerConditions  Json?    @map("trigger_conditions")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  actions   WorkflowTemplateAction[]
+  instances WorkflowInstance[]
+
+  @@index([ownerUserId])
+  @@index([triggerEvent])
+  @@index([isActive])
+  @@map("workflow_templates")
+}
+
+model WorkflowTemplateAction {
+  id           String @id @default(uuid()) @db.Uuid
+  templateId   String @map("template_id") @db.Uuid
+  actionType   String @map("action_type")
+  actionConfig Json?  @map("action_config")
+  sortOrder    Int    @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  template WorkflowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("workflow_template_actions")
+}
+
+model WorkflowInstance {
+  id                 String    @id @default(uuid()) @db.Uuid
+  ownerUserId        String    @map("owner_user_id") @db.Uuid
+  templateId         String?   @map("template_id") @db.Uuid
+  triggerEntityType  String    @map("trigger_entity_type")
+  triggerEntityId    String?   @map("trigger_entity_id") @db.Uuid
+  status             String    @default("running")
+  startedAt          DateTime  @default(now()) @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  errorMessage       String?   @map("error_message") @db.Text
+
+  template WorkflowTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([templateId])
+  @@index([status])
+  @@map("workflow_instances")
+}
+
+model SLARule {
+  id               String   @id @default(uuid()) @db.Uuid
+  ownerUserId      String   @map("owner_user_id") @db.Uuid
+  name             String
+  entityType       String   @map("entity_type")
+  slaHours         Int      @map("sla_hours")
+  escalationAction String   @map("escalation_action")
+  escalationConfig Json?    @map("escalation_config")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  instances SLAInstance[]
+
+  @@index([ownerUserId])
+  @@index([entityType])
+  @@map("sla_rules")
+}
+
+model SLAInstance {
+  id              String   @id @default(uuid()) @db.Uuid
+  slaRuleId       String   @map("sla_rule_id") @db.Uuid
+  entityId        String   @map("entity_id") @db.Uuid
+  entityType      String   @map("entity_type")
+  deadline        DateTime
+  breached        Boolean  @default(false)
+  breachNotified  Boolean  @default(false) @map("breach_notified")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  rule SLARule @relation(fields: [slaRuleId], references: [id], onDelete: Cascade)
+
+  @@index([slaRuleId])
+  @@index([entityId])
+  @@index([entityType])
+  @@index([deadline])
+  @@map("sla_instances")
+}
+
+model InAppNotification {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  title            String
+  message          String   @db.Text
+  notificationType String   @map("notification_type")
+  entityType       String?  @map("entity_type")
+  entityId         String?  @map("entity_id") @db.Uuid
+  isRead           Boolean  @default(false) @map("is_read")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("in_app_notifications")
+}
+
+model Approval {
+  id           String    @id @default(uuid()) @db.Uuid
+  ownerUserId  String    @map("owner_user_id") @db.Uuid
+  approvalType String    @map("approval_type")
+  entityId     String    @map("entity_id") @db.Uuid
+  entityType   String    @map("entity_type")
+  status       String    @default("pending")
+  totalSteps   Int       @map("total_steps")
+  currentStep  Int       @default(1) @map("current_step")
+  requestedBy  String    @map("requested_by") @db.Uuid
+  notes        String?   @db.Text
+  completedAt  DateTime? @map("completed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  steps ApprovalStep[]
+
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([entityId])
+  @@map("approvals")
+}
+
+model ApprovalStep {
+  id           String    @id @default(uuid()) @db.Uuid
+  approvalId   String    @map("approval_id") @db.Uuid
+  stepNumber   Int       @map("step_number")
+  approverId   String    @map("approver_id") @db.Uuid
+  approverRole String?   @map("approver_role")
+  status       String    @default("pending")
+  comments     String?   @db.Text
+  reviewedAt   DateTime? @map("reviewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  approval Approval @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+
+  @@index([approvalId])
+  @@map("approval_steps")
+}
+
+/// Unified operational communications timeline events (Optix Comms Phase 1).
+model OperationalEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  customerId  String?  @map("customer_id") @db.Uuid
+  eventType   String   @map("event_type")
+  source      String   @default("system")
+  title       String
+  description String?  @db.Text
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id") @db.Uuid
+  metadata    Json     @default("{}")
+  occurredAt  DateTime @default(now()) @map("occurred_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([customerId])
+  @@index([eventType])
+  @@index([occurredAt])
+  @@map("operational_events")
 }
