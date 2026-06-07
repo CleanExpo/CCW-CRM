@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/api/client';
 
 export type UnifiedTimelineEvent = {
   id: string;
-  event_type: 'activity' | 'email' | 'invoice' | 'order' | 'quote' | 'payment';
+  event_type: 'activity' | 'email' | 'invoice' | 'order' | 'quote' | 'payment' | 'operational';
   occurred_at: string;
   title: string;
   description: string | null;
@@ -28,6 +28,8 @@ export function timelineEventIcon(type: UnifiedTimelineEvent['event_type']): str
       return 'cart';
     case 'quote':
       return 'file';
+    case 'operational':
+      return 'zap';
     default:
       return 'activity';
   }
