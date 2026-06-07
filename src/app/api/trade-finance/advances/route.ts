@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as {
       facility_id?: string;
+      lc_id?: string;
       advance_number?: string;
       supplier_id?: string;
       purchase_order_id?: string;
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
         advanceNumber: body.advance_number.trim(),
         supplierId: body.supplier_id ?? null,
         purchaseOrderId: body.purchase_order_id ?? null,
+        lcId: body.lc_id ?? null,
         drawdownDate: new Date(body.drawdown_date),
         maturityDate: new Date(body.maturity_date),
         principalAmount: Number(body.principal_amount ?? 0),
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
         interest: Number(body.interest ?? 0),
         securityRef: body.security_ref ?? null,
         currency: body.currency?.trim() || 'AUD',
-        status: 'open',
+        status: 'drawn',
       },
     });
 
