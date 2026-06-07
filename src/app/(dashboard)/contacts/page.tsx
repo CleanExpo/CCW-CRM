@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { contactsApi } from '@/lib/api/contacts';
-import { apiClient } from '@/lib/api/client';
-import type { Contact } from '@/types/contacts';
+import type { ContactWithCustomer } from '@/types/contacts';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContactForm } from './components/ContactForm';
@@ -35,14 +34,13 @@ import { formatDistanceToNow } from 'date-fns';
 export default function ContactsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<ContactWithCustomer[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
-  const [customerMap, setCustomerMap] = useState<Map<string, string>>(new Map());
 
   // Search state persistence
   const { state: searchState, updateField } = useSearchState({
@@ -57,7 +55,7 @@ export default function ContactsPage() {
   const setPage = useCallback((value: number) => updateField('page', value), [updateField]);
   const setPageSize = useCallback((value: number) => updateField('pageSize', value), [updateField]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<ContactWithCustomer | null>(null);
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
 
   const loadContacts = useCallback(async () => {
@@ -102,27 +100,12 @@ export default function ContactsPage() {
     loadContacts();
   }, [loadContacts]);
 
-  // Load customer name map once on mount
-  useEffect(() => {
-    async function loadCustomerMap() {
-      try {
-        const response = await apiClient.get<{
-          items: Array<{ id: string; company_name: string }>;
-        }>('/api/customers?page_size=200&page=1');
-        setCustomerMap(new Map(response.items.map((c) => [c.id, c.company_name])));
-      } catch {
-        // Non-critical — company names will fall back to "Unknown"
-      }
-    }
-    loadCustomerMap();
-  }, []);
-
-  const handleEdit = (contact: Contact) => {
+  const handleEdit = (contact: ContactWithCustomer) => {
     setSelectedContact(contact);
     setFormOpen(true);
   };
 
-  const handleDelete = (contact: Contact) => {
+  const handleDelete = (contact: ContactWithCustomer) => {
     setSelectedContact(contact);
     setDeleteDialogOpen(true);
   };
@@ -167,7 +150,7 @@ export default function ContactsPage() {
           aria-label="Select all"
         />
       ),
-      render: (contact: Contact) => (
+      render: (contact: ContactWithCustomer) => (
         <Checkbox
           checked={selectedContactIds.includes(contact.id)}
           onCheckedChange={() => toggleSelectContact(contact.id)}
@@ -179,7 +162,7 @@ export default function ContactsPage() {
     {
       key: 'name',
       label: 'Name',
-      render: (contact: Contact) => (
+      render: (contact: ContactWithCustomer) => (
         <div className="flex items-center gap-2">
           <User className="text-muted-foreground h-4 w-4" />
           <div>
@@ -196,7 +179,7 @@ export default function ContactsPage() {
     {
       key: 'email',
       label: 'Email',
-      render: (contact: Contact) =>
+      render: (contact: ContactWithCustomer) =>
         contact.email ? (
           <a
             href={`mailto:${contact.email}`}
@@ -212,7 +195,7 @@ export default function ContactsPage() {
     {
       key: 'phone',
       label: 'Phone',
-      render: (contact: Contact) =>
+      render: (contact: ContactWithCustomer) =>
         contact.phone || contact.mobile ? (
           <div className="flex items-center gap-1">
             <Phone className="text-muted-foreground h-3 w-3" />
@@ -225,17 +208,17 @@ export default function ContactsPage() {
     {
       key: 'department',
       label: 'Department',
-      render: (contact: Contact) =>
+      render: (contact: ContactWithCustomer) =>
         contact.department || <span className="text-muted-foreground">-</span>,
     },
     {
       key: 'company',
       label: 'Company',
-      render: (contact: Contact) => {
+      render: (contact: ContactWithCustomer) => {
         if (!contact.customer_id) {
           return <span className="text-muted-foreground">-</span>;
         }
-        const companyName = customerMap.get(contact.customer_id) || 'Unknown';
+        const companyName = contact.customer_name || 'Unknown';
         return (
           <Link
             href={`/dashboard/crm/customers/${contact.customer_id}`}
@@ -251,7 +234,7 @@ export default function ContactsPage() {
     {
       key: 'status',
       label: 'Status',
-      render: (contact: Contact) => (
+      render: (contact: ContactWithCustomer) => (
         <div className="flex gap-2">
           {contact.is_primary && <Badge variant="default">Primary</Badge>}
           <Badge variant={contact.is_active ? 'outline' : 'secondary'}>
@@ -263,7 +246,7 @@ export default function ContactsPage() {
     {
       key: 'actions',
       label: 'Actions',
-      render: (contact: Contact) => (
+      render: (contact: ContactWithCustomer) => (
         <div className="flex gap-2">
           <Link
             href={`/dashboard/crm/contacts/${contact.id}` as never}
