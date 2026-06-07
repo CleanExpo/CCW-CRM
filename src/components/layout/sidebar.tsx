@@ -29,6 +29,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  MessageSquare,
   Package,
   PackageCheck,
   PackagePlus,
@@ -158,6 +159,7 @@ const navGroups: NavGroup[] = [
         icon: Ship,
       },
       { name: 'Emails', href: '/dashboard/finance/emails', icon: Mail },
+      { name: 'Comms hub', href: '/dashboard/comms', icon: MessageSquare },
     ],
   },
   {
@@ -165,8 +167,9 @@ const navGroups: NavGroup[] = [
     label: 'Workspace',
     items: [
       { name: 'Overview', href: '/dashboard/workspace', icon: LayoutDashboard },
-      { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge, comingSoon: true },
-      { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle, comingSoon: true },
+      { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge },
+      { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle },
+      { name: 'Comms hub', href: '/dashboard/comms', icon: MessageSquare },
       { name: 'Alerts', href: '/dashboard/alerts', icon: Bell, comingSoon: true },
       {
         name: 'AI Assistant',
