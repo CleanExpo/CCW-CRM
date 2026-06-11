@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
+import { isDemoMode } from '@/lib/demo-mode';
 
 /**
  * GET /api/agents/stats
  *
  * Bridge endpoint that transforms monitoring data into agent stats format.
  * This allows server components to work without modification.
+ *
+ * UNI-2116: On API failure, returns a structured error response instead of
+ * silently returning zeroed mock data. Mock data is only served when
+ * NEXT_PUBLIC_DEMO_MODE=true.
  */
 export async function GET() {
   const base = requireUpstreamBase('Agent monitoring system');
@@ -56,18 +61,28 @@ export async function GET() {
 
     return NextResponse.json(stats);
   } catch (error: unknown) {
-    console.error("Error fetching agent stats:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[UNI-2116] Agent stats API failure:", message);
 
-    // Return fallback data on error
-    return NextResponse.json({
-      total_agents: 0,
-      active_agents: 0,
-      total_tasks: 0,
-      successful_tasks: 0,
-      failed_tasks: 0,
-      success_rate: 0,
-      avg_iterations: 0,
-      avg_duration_seconds: 0,
-    });
+    if (isDemoMode()) {
+      // Demo mode: return explicit zeroed placeholder so the UI renders
+      console.warn("[UNI-2116] DEMO MODE active — returning demo stats");
+      return NextResponse.json({
+        total_agents: 0,
+        active_agents: 0,
+        total_tasks: 0,
+        successful_tasks: 0,
+        failed_tasks: 0,
+        success_rate: 0,
+        avg_iterations: 0,
+        avg_duration_seconds: 0,
+      });
+    }
+
+    // Production/staging: surface the error so callers can show an error state
+    return NextResponse.json(
+      { error: "agent_stats_unavailable", message },
+      { status: 503 }
+    );
   }
 }

@@ -1,21 +1,61 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { agentsApi, type PerformanceTrends as PerformanceTrendsData } from '@/lib/api/agents';
 
 interface PerformanceTrendsProps {
   days?: number;
 }
 
+/**
+ * UNI-2116: On API failure the component shows a visible error state instead
+ * of silently rendering "No trend data available" (indistinguishable from a real
+ * empty result).
+ */
 export function PerformanceTrends({ days = 7 }: PerformanceTrendsProps) {
   const [trends, setTrends] = useState<PerformanceTrendsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     agentsApi
       .getPerformanceTrends(days)
-      .then(setTrends)
-      .catch(() => setTrends(null));
+      .then((data) => {
+        setTrends(data);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to load performance trends';
+        console.error('[UNI-2116] PerformanceTrends fetch failed:', message);
+        setError(message);
+        setTrends(null);
+      })
+      .finally(() => setLoading(false));
   }, [days]);
+
+  if (loading) {
+    return (
+      <div className="bg-card animate-pulse rounded-lg p-6 shadow">
+        <div className="bg-muted h-64 rounded" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+          <div>
+            <p className="font-medium text-destructive">Performance trends unavailable</p>
+            <p className="text-sm text-muted-foreground mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!trends || !trends.data_points) {
     return (

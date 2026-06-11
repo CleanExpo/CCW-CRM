@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, Info, Lightbulb, TrendingUp } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, Lightbulb, TrendingUp } from 'lucide-react';
 import { agentsApi } from '@/lib/api/agents';
 
 interface Insight {
@@ -21,17 +21,25 @@ interface LearningInsightsProps {
   refreshInterval?: number;
 }
 
+/**
+ * UNI-2116: On API failure the component shows a visible error state instead
+ * of silently rendering an empty insights list.
+ */
 export function LearningInsights({ refreshInterval = 30000 }: LearningInsightsProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInsights = async () => {
       try {
         const data = await agentsApi.getInsights();
         setInsights(data.insights || []);
-      } catch (error) {
-        console.error('Failed to fetch insights:', error);
+        setError(null);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch insights';
+        console.error('[UNI-2116] LearningInsights fetch failed:', message);
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -44,6 +52,20 @@ export function LearningInsights({ refreshInterval = 30000 }: LearningInsightsPr
 
   if (loading) {
     return <LearningInsightsSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+          <div>
+            <p className="font-medium text-destructive">Learning insights unavailable</p>
+            <p className="text-sm text-muted-foreground mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (insights.length === 0) {

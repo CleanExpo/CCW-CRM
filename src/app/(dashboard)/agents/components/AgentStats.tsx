@@ -1,28 +1,59 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { agentsApi, type AgentStats as AgentStatsData } from '@/lib/api/agents';
 
-const FALLBACK: AgentStatsData = {
-  total_agents: 0,
-  active_agents: 0,
-  total_tasks: 0,
-  successful_tasks: 0,
-  failed_tasks: 0,
-  success_rate: 0,
-  avg_iterations: 0,
-  avg_duration_seconds: 0,
-};
-
+/**
+ * UNI-2116: On API failure the component now shows a visible error state
+ * instead of silently falling back to zeroed data.
+ */
 export function AgentStats() {
-  const [stats, setStats] = useState<AgentStatsData>(FALLBACK);
+  const [stats, setStats] = useState<AgentStatsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     agentsApi
       .getStats()
-      .then(setStats)
-      .catch(() => setStats(FALLBACK));
+      .then((data) => {
+        setStats(data);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to load agent stats';
+        console.error('[UNI-2116] AgentStats fetch failed:', message);
+        setError(message);
+        setStats(null);
+      });
   }, []);
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+          <div>
+            <p className="font-medium text-destructive">Agent stats unavailable</p>
+            <p className="text-sm text-muted-foreground mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    // Loading skeleton
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="animate-pulse rounded-lg border-l-4 border-l-gray-200 bg-white p-6 shadow-md">
+            <div className="mb-2 h-3 w-24 rounded bg-gray-200" />
+            <div className="h-8 w-16 rounded bg-gray-200" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const cards = [
     {
