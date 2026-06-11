@@ -1,3 +1,9 @@
+> **ARCHIVED -- STALE (UNI-2105, 2026-06-11)**
+> Written 2026-02-02. References a Python/FastAPI backend (G-Pilot team, Kimi 2.5 swarm)
+> that is NOT this Next.js/Prisma codebase. Issues ISS-001 through ISS-036 in this doc
+> correspond to a previous project iteration and are obsolete. Do NOT use as a current
+> roadmap. See docs/PROJECT-STATUS.md for the current ground-truth.
+
 # CCW-Online ERP - Deployment Roadmap Summary
 
 **Date**: February 2, 2026  

@@ -1,3 +1,10 @@
+> **ARCHIVED -- STALE (UNI-2105, 2026-06-11)**
+> Written 2026-02-05. The "154/154 passing" and "0 TypeScript errors" claims referred to
+> an earlier state. As of 2026-06-11 the live typecheck reports 219 TS errors (Prisma
+> client types not generated -- prisma generate requires DATABASE_URL). Unit tests now
+> show 139/139 passing (vitest run with --ignore-scripts). This document's metrics are
+> not current. See docs/PROJECT-STATUS.md for the current ground-truth.
+
 # CCW-Online ERP - Project Completion Report
 
 **Date:** 2026-02-05
