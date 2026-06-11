@@ -14,14 +14,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check deepsec workspace is initialised
+        id: check-config
+        run: |
+          if [ ! -f ".deepsec/deepsec.config.ts" ]; then
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::warning::deepsec workspace not found (.deepsec/deepsec.config.ts missing). Run 'npx deepsec init' to initialise. Skipping scan."
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run Deepsec
+        if: steps.check-config.outputs.configured == 'true'
         run: npx -y deepsec scan
+
       - name: Open issue on findings
-        if: failure()
+        if: failure() && steps.check-config.outputs.configured == 'true'
         run: |
           gh issue create \
             --title "[deepsec] Weekly scan findings $(date +%Y-%m-%d)" \
-            --label "security,deepsec,weekly-scan" \
+            --label "security" \
             --body "Deepsec found new issues. See run logs for details."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
