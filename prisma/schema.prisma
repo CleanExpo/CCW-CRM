@@ -33,16 +33,22 @@ model AppUser {
 }
 
 model Customer {
-  id          String   @id @default(uuid()) @db.Uuid
-  ownerUserId String   @map("owner_user_id") @db.Uuid
-  companyName String   @map("company_name")
-  contactName String?  @map("contact_name")
-  email       String?
-  phone       String?
-  city        String?
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid()) @db.Uuid
+  ownerUserId      String   @map("owner_user_id") @db.Uuid
+  companyName      String   @map("company_name")
+  contactName      String?  @map("contact_name")
+  email            String?
+  phone            String?
+  city             String?
+  isActive         Boolean  @default(true) @map("is_active")
+  /// Maximum outstanding balance allowed before new orders are blocked (AUD, null = no limit)
+  creditLimitAUD   Decimal? @map("credit_limit_aud") @db.Decimal(12, 2)
+  /// Days from due-date anchor until invoice is due
+  creditTermsDays  Int?     @map("credit_terms_days")
+  /// How the due date is anchored: 'NET' = invoiceDate+days; 'EOM' = end-of-invoice-month+days
+  creditTermsType  String?  @map("credit_terms_type")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   orders                   Order[]
   quotes                   Quote[]

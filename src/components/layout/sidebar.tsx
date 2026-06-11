@@ -145,6 +145,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Overview', href: '/dashboard/finance', icon: LayoutDashboard },
       { name: 'Invoices', href: '/dashboard/finance/invoices', icon: Receipt },
+      { name: 'Debtor Ageing', href: '/dashboard/finance/debtors', icon: CreditCard },
       { name: 'BAS Report', href: '/dashboard/finance/invoices/bas', icon: FileText },
       {
         name: 'Bank Feeds',

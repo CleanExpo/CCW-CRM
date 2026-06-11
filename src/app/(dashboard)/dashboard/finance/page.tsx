@@ -13,6 +13,12 @@ const MODULES: HubModuleItem[] = [
     icon: 'Receipt',
   },
   {
+    title: 'Debtor Ageing',
+    description: 'Per-customer outstanding balances bucketed by days past due. Credit limit usage.',
+    href: '/dashboard/finance/debtors',
+    icon: 'CreditCard',
+  },
+  {
     title: 'BAS report',
     description: 'GST summary for Australian BAS preparation.',
     href: '/dashboard/finance/invoices/bas',

@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const customerRow = await prisma.customer.findFirst({
       where: { id: customerId, ownerUserId: { in: workspaceUserIds }, isActive: true },
-      select: { id: true },
+      select: { id: true, creditLimitAUD: true },
     });
     if (!customerRow) {
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
@@ -90,6 +90,43 @@ export async function POST(request: NextRequest) {
     }
 
     const totalWithTax = subtotal * 1.1;
+
+    // ── Credit limit gate ──────────────────────────────────────────────────────
+    // Only enforced when a limit is explicitly set on the customer.
+    const creditLimit = customerRow.creditLimitAUD != null ? Number(customerRow.creditLimitAUD) : null;
+    if (creditLimit !== null) {
+      // Sum outstanding (total − amountPaid) across non-draft, non-cancelled invoices.
+      // We use DB amountPaid field (not re-summing InvoicePayment rows) to avoid the
+      // empty-array seam documented in PROJECT-STATUS.md TASK-2.
+      const outstandingAgg = await prisma.invoice.aggregate({
+        where: {
+          customerId,
+          ownerUserId: { in: workspaceUserIds },
+          status: { notIn: ['draft', 'cancelled', 'paid'] },
+        },
+        _sum: { total: true, amountPaid: true },
+      });
+      const outstanding =
+        (outstandingAgg._sum.total ?? 0) - (outstandingAgg._sum.amountPaid ?? 0);
+
+      if (outstanding + totalWithTax > creditLimit) {
+        // Allow override if request body has managerOverride=true AND caller is ADMIN or MANAGER
+        const managerOverride = body.managerOverride === true || body.manager_override === true;
+        const isManager = scope.isAdmin || scope.role === 'admin' || scope.role === 'owner';
+        if (!(managerOverride && isManager)) {
+          return NextResponse.json(
+            {
+              code: 'CREDIT_LIMIT_EXCEEDED',
+              outstanding: Math.round(outstanding * 100) / 100,
+              limit: creditLimit,
+              detail: `Credit limit of $${creditLimit.toFixed(2)} would be exceeded. Outstanding: $${outstanding.toFixed(2)}, new order: $${totalWithTax.toFixed(2)}.`,
+            },
+            { status: 402 }
+          );
+        }
+      }
+    }
+    // ── End credit gate ───────────────────────────────────────────────────────
 
     const created = await prisma.order.create({
       data: {
