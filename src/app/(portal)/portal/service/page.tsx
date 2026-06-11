@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api/client';
+// UNI-2115: customer identity is always derived from the authenticated session,
+// never from a hardcoded or caller-supplied value.
+import { usePortalCustomer } from '@/hooks/use-portal-customer';
 
 type RequestType = 'warranty_claim' | 'service_booking' | 'general_inquiry';
 
@@ -29,6 +32,10 @@ const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
 
 export default function PortalServicePage() {
   const { toast } = useToast();
+  // UNI-2115: Load customer context from the session. The customer_id is
+  // resolved server-side by /api/portal/customer-context — it is never read
+  // from a prop, URL param, or hardcoded literal.
+  const { customer } = usePortalCustomer();
   const [requestType, setRequestType] = useState<RequestType>('warranty_claim');
   const [orderNumber, setOrderNumber] = useState('');
   const [sku, setSku] = useState('');
@@ -76,6 +83,11 @@ export default function PortalServicePage() {
         <h1 className="text-2xl font-bold text-slate-900">Service Requests</h1>
         <p className="mt-0.5 text-sm text-slate-500">
           Lodge warranty claims, book a service, or ask a general question.
+          {customer && (
+            <span className="ml-1 text-slate-400">
+              — Account: <span className="font-medium text-slate-600">{customer.company_name}</span>
+            </span>
+          )}
         </p>
       </div>
 
