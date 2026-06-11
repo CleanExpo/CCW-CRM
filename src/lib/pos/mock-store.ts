@@ -43,8 +43,8 @@ type PosStore = {
   terminals: PosTerminal[];
 };
 
-/** Per-org store map. Key = userId (ownerUserId / workspace owner). */
-const STORE_KEY = '__ccwPosStoreByUser__';
+/** Per-workspace store map. Key = workspaceId — all members of a workspace share the same store. */
+const STORE_KEY = '__ccwPosStoreByWorkspace__';
 
 function nowIso() {
   return new Date().toISOString();
@@ -160,21 +160,26 @@ function getStoreMap(): StoreMap {
 }
 
 /**
- * Returns the POS store scoped to the authenticated user/org.
+ * Returns the POS store scoped to a workspace.
  *
- * Each userId gets its own isolated data set — no cross-tenant reads possible.
- * All POS route handlers MUST supply the userId resolved from the JWT, never
- * a value from the request body or query string.
+ * All users in the same workspace share one store; users in different workspaces
+ * are fully isolated. Route handlers MUST supply the workspaceId resolved from
+ * the authenticated user's DB record — never a value from the request body/query.
  */
-export function getPosStore(userId: string): PosStore {
+export function getPosStore(workspaceId: string): PosStore {
   const map = getStoreMap();
-  if (!map.has(userId)) {
-    map.set(userId, seedStore());
+  if (!map.has(workspaceId)) {
+    map.set(workspaceId, seedStore());
   }
-  return map.get(userId) as PosStore;
+  return map.get(workspaceId) as PosStore;
 }
 
-/** Reset a specific user's store (test helper — not exported to production routes). */
+/** Reset a specific workspace's store (test helper — not exported to production routes). */
+export function _resetPosStoreForWorkspace(workspaceId: string): void {
+  getStoreMap().delete(workspaceId);
+}
+
+/** @deprecated Use _resetPosStoreForWorkspace. Kept so legacy test imports don't break. */
 export function _resetPosStoreForUser(userId: string): void {
   getStoreMap().delete(userId);
 }

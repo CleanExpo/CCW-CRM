@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import { getPosStore } from '@/lib/pos/mock-store';
 
 function txNumber() {
@@ -80,7 +81,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'terminal_id is required' }, { status: 400 });
     }
 
-    const store = getPosStore(scope.userId);
+    const workspaceId = await getWorkspaceIdForUser(scope.userId);
+    if (!workspaceId) {
+      return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+    }
+
+    const store = getPosStore(workspaceId);
     const locationCode =
       store.terminals.find((terminal) => terminal.id === terminalId)?.location_code ?? 'brisbane';
 
