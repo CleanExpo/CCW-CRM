@@ -150,20 +150,39 @@ export default function TransfersPage() {
 
   // Cancel transfer
   const handleCancelTransfer = async (transfer: StockTransfer) => {
-    if (transfer.status !== "pending") {
+    if (transfer.status === "completed") {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Only pending transfers can be cancelled",
+        title: "Cannot cancel",
+        description: "Completed transfers cannot be cancelled.",
       });
       return;
     }
 
-    // TODO: Implement cancel endpoint
-    toast({
-      title: "Not Implemented",
-      description: "Cancel transfer functionality coming soon",
-    });
+    if (transfer.status === "cancelled") {
+      toast({
+        variant: "destructive",
+        title: "Already cancelled",
+        description: "This transfer has already been cancelled.",
+      });
+      return;
+    }
+
+    try {
+      await inventoryApi.cancelTransfer(transfer.id);
+      toast({
+        title: "Transfer cancelled",
+        description: `Transfer for ${transfer.product_name || "product"} has been cancelled.`,
+      });
+      await loadTransfers();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to cancel transfer";
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
+    }
   };
 
   // Format location for display
