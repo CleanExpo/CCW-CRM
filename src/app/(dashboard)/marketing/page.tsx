@@ -21,12 +21,14 @@ import {
   Loader2,
   Copy,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   marketingApi,
   type CampaignResponse,
   type GenerateCampaignRequest,
 } from '@/lib/api/marketing';
+import { isDemoMode } from '@/lib/demo-mode';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -274,12 +276,8 @@ function CampaignDialog({
 // ---------------------------------------------------------------------------
 
 export default function MarketingPage() {
-  const [stats, setStats] = useState<MarketingStats>({
-    totalAssets: 0,
-    imagesGenerated: 0,
-    copyGenerated: 0,
-    thisMonth: 0,
-  });
+  const [stats, setStats] = useState<MarketingStats | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Dialog state
@@ -295,18 +293,28 @@ export default function MarketingPage() {
 
   const loadStats = async () => {
     setLoading(true);
+    setStatsError(null);
     try {
       const data = await marketingApi.getStats();
       setStats(data);
     } catch (error) {
-      console.error('Failed to load stats:', error);
-      // Mock data on error
-      setStats({
-        totalAssets: 47,
-        imagesGenerated: 28,
-        copyGenerated: 19,
-        thisMonth: 12,
-      });
+      const message = error instanceof Error ? error.message : 'Failed to load marketing stats';
+      console.error('[UNI-2116] Marketing stats fetch failed:', message);
+
+      if (isDemoMode()) {
+        // Demo mode only: use placeholder data so the UI is not completely empty
+        console.warn('[UNI-2116] DEMO MODE active — using demo marketing stats');
+        setStats({
+          totalAssets: 47,
+          imagesGenerated: 28,
+          copyGenerated: 19,
+          thisMonth: 12,
+        });
+      } else {
+        // Production/staging: surface the error
+        setStatsError(message);
+        setStats(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -320,9 +328,10 @@ export default function MarketingPage() {
     setDialogOpen(true);
   };
 
-  const statCards = [
-    {
-      title: 'Total Assets',
+  const statCards = stats
+    ? [
+        {
+          title: 'Total Assets',
       value: stats.totalAssets,
       icon: Sparkles,
       color: 'text-brand-primary',
@@ -346,10 +355,11 @@ export default function MarketingPage() {
       title: 'This Month',
       value: stats.thisMonth,
       icon: TrendingUp,
-      color: 'text-success',
-      bgColor: 'bg-success/10',
-    },
-  ];
+          color: 'text-success',
+          bgColor: 'bg-success/10',
+        },
+      ]
+    : [];
 
   return (
     <ErrorBoundary>
@@ -378,28 +388,42 @@ export default function MarketingPage() {
 
         {/* Bento Grid Layout */}
         <BentoGrid columns={4} gap="lg">
-          {/* Stats Row - 4 cards spanning 1 column each */}
-          {statCards.map((stat) => (
-            <BentoCard key={stat.title} variant="glass" span={1} className="min-h-[120px]">
+          {/* Stats Row — UNI-2116: show error state when stats API fails */}
+          {statsError ? (
+            <BentoCard variant="glass" span={4} className="min-h-[120px]">
               <BentoCardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground text-sm font-medium">{stat.title}</p>
-                    <p className="text-3xl font-bold">
-                      {loading ? (
-                        <span className="bg-muted/20 inline-block h-8 w-16 animate-pulse rounded" />
-                      ) : (
-                        stat.value
-                      )}
-                    </p>
-                  </div>
-                  <div className={`rounded-lg p-3 ${stat.bgColor} border border-white/10`}>
-                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-destructive">Marketing stats unavailable</p>
+                    <p className="text-sm text-muted-foreground mt-1">{statsError}</p>
                   </div>
                 </div>
               </BentoCardContent>
             </BentoCard>
-          ))}
+          ) : (
+            statCards.map((stat) => (
+              <BentoCard key={stat.title} variant="glass" span={1} className="min-h-[120px]">
+                <BentoCardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-muted-foreground text-sm font-medium">{stat.title}</p>
+                      <p className="text-3xl font-bold">
+                        {loading ? (
+                          <span className="bg-muted/20 inline-block h-8 w-16 animate-pulse rounded" />
+                        ) : (
+                          stat.value
+                        )}
+                      </p>
+                    </div>
+                    <div className={`rounded-lg p-3 ${stat.bgColor} border border-white/10`}>
+                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                    </div>
+                  </div>
+                </BentoCardContent>
+              </BentoCard>
+            ))
+          )}
 
           {/* AI Media Generator - Large card spanning 2 columns with BorderBeam */}
           <BorderBeam>

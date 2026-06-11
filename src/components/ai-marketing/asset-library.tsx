@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { ImageIcon, FileText, Video, Search, Filter, MoreVertical, Trash2, Download, Eye, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isDemoMode } from "@/lib/demo-mode";
 import { format } from "date-fns";
 
 /* ============================================
@@ -48,6 +49,7 @@ export interface Asset {
 export function AssetLibrary({ className, variant = "glass", span = 3, ...props }: AssetLibraryProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "image" | "copy" | "video">("all");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -66,39 +68,48 @@ export function AssetLibrary({ className, variant = "glass", span = 3, ...props 
         setAssets(data.assets || []);
       }
     } catch (error) {
-      console.error("Failed to load assets:", error);
-      // Mock data for development
-      setAssets([
-        {
-          id: "1",
-          type: "image",
-          title: "Product Launch Hero",
-          content: "https://placehold.co/600x400/4f46e5/ffffff?text=AI+Generated",
-          thumbnail: "https://placehold.co/300x200/4f46e5/ffffff?text=AI+Generated",
-          prompt: "Modern office workspace with natural lighting",
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          tags: ["product", "hero", "workspace"],
-        },
-        {
-          id: "2",
-          type: "copy",
-          title: "Email Campaign Copy",
-          content: "Discover the future of productivity with our latest innovation. Transform your workflow and achieve more with cutting-edge technology designed for the modern professional.",
-          prompt: "Professional email about new product launch",
-          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          tags: ["email", "campaign", "product"],
-        },
-        {
-          id: "3",
-          type: "image",
-          title: "Social Media Banner",
-          content: "https://placehold.co/1200x630/9333ea/ffffff?text=Social+Banner",
-          thumbnail: "https://placehold.co/600x315/9333ea/ffffff?text=Social+Banner",
-          prompt: "Eye-catching social media banner with gradient background",
-          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
-          tags: ["social", "banner", "gradient"],
-        },
-      ]);
+      const message = error instanceof Error ? error.message : "Failed to load assets";
+      console.error("[UNI-2116] AssetLibrary fetch failed:", message);
+
+      if (isDemoMode()) {
+        // Demo mode only: show placeholder assets so the UI is not empty
+        console.warn("[UNI-2116] DEMO MODE active — using demo assets");
+        setAssets([
+          {
+            id: "1",
+            type: "image",
+            title: "Product Launch Hero",
+            content: "https://placehold.co/600x400/4f46e5/ffffff?text=AI+Generated",
+            thumbnail: "https://placehold.co/300x200/4f46e5/ffffff?text=AI+Generated",
+            prompt: "Modern office workspace with natural lighting",
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            tags: ["product", "hero", "workspace"],
+          },
+          {
+            id: "2",
+            type: "copy",
+            title: "Email Campaign Copy",
+            content: "Discover the future of productivity with our latest innovation. Transform your workflow and achieve more with cutting-edge technology designed for the modern professional.",
+            prompt: "Professional email about new product launch",
+            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            tags: ["email", "campaign", "product"],
+          },
+          {
+            id: "3",
+            type: "image",
+            title: "Social Media Banner",
+            content: "https://placehold.co/1200x630/9333ea/ffffff?text=Social+Banner",
+            thumbnail: "https://placehold.co/600x315/9333ea/ffffff?text=Social+Banner",
+            prompt: "Eye-catching social media banner with gradient background",
+            createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+            tags: ["social", "banner", "gradient"],
+          },
+        ]);
+      } else {
+        // Production/staging: surface the error
+        setLoadError(message);
+        setAssets([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -221,6 +232,16 @@ export function AssetLibrary({ className, variant = "glass", span = 3, ...props 
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
                 </div>
               ))}
+            </div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-destructive">Asset library unavailable</p>
+              <p className="text-xs text-muted-foreground mt-1">{loadError}</p>
             </div>
           ) : filteredAssets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
