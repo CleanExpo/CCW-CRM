@@ -1,50 +1,47 @@
 /**
- * GET /api/portal/orders  (UNI-2114)
+ * GET /api/portal/orders  (UNI-2114, Prisma wiring PR)
  *
  * Security model:
  *   - Requires a valid session JWT (Bearer or cookie).
- *   - Customer ID is extracted from the server-side session — never from the
- *     request body or query string.
+ *   - Customer ID is resolved server-side via resolvePortalCustomer (PR #204):
+ *     JWT email → Customer row.  Never from request body/query.
  *   - Returns only orders that belong to the authenticated customer.
- *   - Cross-customer access is blocked server-side (returns 403).
+ *   - Cross-customer isolation is enforced by the Prisma WHERE clause.
  *   - In demo mode (isDemoMode() === true) mock fixture data is returned
- *     without a real DB; otherwise the customer-scoped store is used.
+ *     via the in-memory store so no DB is required for demos.
+ *
+ * Production path change (this PR):
+ *   - Non-demo requests now query Prisma (Order.customerId = resolvedCustomerId).
+ *   - The PortalOrder shape is preserved; see prisma-store.ts for the mapping.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthScope } from '@/lib/auth/data-scope';
 import { isDemoMode } from '@/lib/demo-mode';
 import { getPortalStore } from '@/lib/portal/mock-store';
+import { resolvePortalCustomer } from '@/lib/portal/customer-context';
+import { getPortalOrdersFromPrisma } from '@/lib/portal/prisma-store';
 
 export async function GET(request: NextRequest) {
-  // 1. Verify session — customer ID comes from the JWT, never from the caller.
-  const scope = await requireAuthScope(request);
-  if (!scope) {
-    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  // 1. Resolve the portal customer from the session JWT.
+  //    resolvePortalCustomer handles auth check + email→Customer lookup.
+  //    Returns null on 401 (no JWT) or 403 (no matching Customer row).
+  const ctx = await resolvePortalCustomer(request);
+  if (!ctx) {
+    // resolvePortalCustomer returns null for both "no JWT" and "no customer".
+    // We return 401 so the client knows to re-authenticate; callers with a
+    // valid JWT but no Customer row will need to contact support.
+    return NextResponse.json({ detail: 'Not authenticated or no customer account found' }, { status: 401 });
   }
 
-  // 2. The authenticated user IS the portal customer.
-  //    UNI-2115 (service-portal customer-context resolution) may enrich this later,
-  //    but we must NOT accept a customerId from the request.
-  const customerId = scope.userId;
+  const { customerId } = ctx;
 
-  // 3. Guard: if the session has no resolvable customer identity, reject.
-  if (!customerId) {
-    return NextResponse.json({ detail: 'No customer context for this session' }, { status: 403 });
-  }
-
-  // 4. Fetch orders scoped to this customer.
-  //    In demo mode the fixture store is used; in production a real DB query would
-  //    replace getPortalStore() while keeping the same customer-scoping contract.
-  if (!isDemoMode()) {
-    // Production path: use the customer-scoped store (same isolation, real data would
-    // come from a DB query filtered by customerId — no other customer's rows can leak).
+  // 2. Demo mode: serve fixtures from the in-memory store (no DB needed).
+  if (isDemoMode()) {
     const store = getPortalStore(customerId);
-    const orders = store.orders;
-    return NextResponse.json({ orders, total: orders.length });
+    return NextResponse.json({ orders: store.orders, total: store.orders.length });
   }
 
-  // Demo path: fixture data, also scoped per customer so cross-customer tests still work.
-  const store = getPortalStore(customerId);
-  return NextResponse.json({ orders: store.orders, total: store.orders.length });
+  // 3. Production path: query Prisma, scoped to this customer only.
+  const orders = await getPortalOrdersFromPrisma(customerId);
+  return NextResponse.json({ orders, total: orders.length });
 }
