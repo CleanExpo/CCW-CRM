@@ -14,24 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check deepsec workspace is initialised
-        id: check-config
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
         run: |
-          if [ ! -f ".deepsec/deepsec.config.ts" ]; then
-            echo "configured=false" >> $GITHUB_OUTPUT
-            echo "::warning::deepsec workspace not found (.deepsec/deepsec.config.ts missing). Run 'npx deepsec init' to initialise. Skipping scan."
-          else
-            echo "configured=true" >> $GITHUB_OUTPUT
-          fi
-
+          cd .deepsec
+          npm install
       - name: Run Deepsec
-        if: steps.check-config.outputs.configured == 'true'
-        run: npx -y deepsec scan
-
-      - name: Open issue on findings
-        if: failure() && steps.check-config.outputs.configured == 'true'
         run: |
+          cd .deepsec
+          npx deepsec scan --project-id CCW-CRM
+      - name: Open issue on findings
+        if: failure()
+        run: |
+          # Ensure labels exist
+          gh label create "security" --color "d73a4a" --description "Security related" 2>/dev/null || true
           gh issue create \
             --title "[deepsec] Weekly scan findings $(date +%Y-%m-%d)" \
             --label "security" \
