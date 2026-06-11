@@ -7,10 +7,35 @@
  *   3. Authenticated user with no workspace → 403.
  *   4. Cross-workspace isolation: workspace B cannot read workspace A's settings.
  *   5. Missing/invalid name in PUT → 400.
+ *
+ * DB isolation: hasDatabaseConfig is mocked to return false so all store
+ * operations use the in-memory fallback — no DATABASE_URL required in tests.
+ * This is the same pattern used by bulk-reconcile-route.test.ts for Prisma routes.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { _resetAllCompanySettings, getCompanySettings } from '../company-store';
+
+// Force in-memory path — no real DB needed in unit tests.
+// Must mock BOTH database-env (so hasDatabaseConfig returns false) AND
+// @/lib/db/prisma (so the PrismaClient import does not fail when
+// prisma generate has not run, e.g. in CI without DATABASE_URL).
+vi.mock('@/lib/db/database-env', () => ({
+  hasDatabaseConfig: vi.fn().mockReturnValue(false),
+  getDatabaseConnectionString: vi.fn().mockReturnValue(''),
+  getPgSslConfig: vi.fn().mockReturnValue(false),
+  applyPostgresSslParams: vi.fn((s: string) => s),
+  MANAGED_POSTGRES_SSL_QUERY: '',
+}));
+
+vi.mock('@/lib/db/prisma', () => ({
+  prisma: {
+    workspaceSettings: {
+      upsert: vi.fn(),
+      findUnique: vi.fn(),
+    },
+  },
+}));
 
 // Mock auth modules before importing route handlers
 vi.mock('@/lib/auth/data-scope', () => ({
@@ -226,7 +251,7 @@ describe('company settings route: cross-workspace isolation', () => {
     await PUT(makePutRequest(attackBody) as never);
 
     // Workspace A still has original value in the store
-    const storeA = getCompanySettings(WORKSPACE_A);
+    const storeA = await getCompanySettings(WORKSPACE_A);
     expect(storeA.name).toBe('Real Org A Name');
   });
 });
