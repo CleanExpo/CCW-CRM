@@ -1,5 +1,11 @@
 # GitHub Secrets Reference
 
+> **NOTE (UNI-2105, 2026-06-11):** The "NodeJS-Starter-V1" reference below is an artefact
+> from the project template origin. This repo is **CCW-CRM** (Next.js/Prisma). The secret
+> requirements for staging/production deployment (STAGING_SSH_* and PRODUCTION_SSH_*)
+> are real and currently missing -- that is the root cause of the "Deploy to Staging"
+> failure since 2026-05-22 (tracked as UNI-2106).
+
 **Important**: NodeJS-Starter-V1 works completely without any GitHub secrets. This document lists optional secrets you can add to enable specific features.
 
 ---
