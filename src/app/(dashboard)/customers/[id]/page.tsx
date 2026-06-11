@@ -33,6 +33,7 @@ import { DeleteContactDialog } from '../../contacts/components/DeleteContactDial
 import { ActivityTimeline, type Activity } from './components/ActivityTimeline';
 import { ActivityForm } from './components/ActivityForm';
 import { DeleteActivityDialog } from './components/DeleteActivityDialog';
+import { PricingTierPanel } from './components/PricingTierPanel';
 import type { ActivityWithRelations } from '@/types/activities';
 
 interface Customer {
@@ -434,6 +435,10 @@ export default function CustomerDetailPage() {
             <Award className="mr-1 h-4 w-4" />
             Certifications ({certifications.length})
           </TabsTrigger>
+          <TabsTrigger value="pricing">
+            <Tag className="mr-1 h-4 w-4" />
+            Pricing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
@@ -770,6 +775,9 @@ export default function CustomerDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="pricing" className="space-y-4">
+          <PricingTierPanel customerId={customerId} />
         </TabsContent>
       </Tabs>
 

@@ -52,6 +52,7 @@ model Customer {
   activities               CrmActivity[]
   workshopEquipment        WorkshopEquipment[]
   workshopServiceReminders WorkshopServiceReminder[]
+  priceTier                CustomerPriceTier?
 
   @@index([ownerUserId])
   @@map("customers")
@@ -942,6 +943,63 @@ model WorkshopServiceReminder {
   @@index([status])
   @@index([scheduledSendAt])
   @@map("workshop_service_reminders")
+}
+
+// ---------------------------------------------------------------------------
+// Contract Pricing Engine (board #1 — feat/contract-pricing-for-rana)
+// ---------------------------------------------------------------------------
+
+/// Named price tiers (Trade-A, Trade-B, Retail, …). Each tier carries per-product
+/// override prices and optional volume-break rules stored as JSON.
+///
+/// priceOverrides JSON shape (array):
+///   [{ "product_id": "<uuid>", "unit_price": 12.50 }]
+///
+/// volumeBreaks JSON shape (array, optional):
+///   [{ "product_id": "<uuid>", "min_qty": 10, "unit_price": 11.00 },
+///    { "product_id": "<uuid>", "min_qty": 50, "unit_price": 9.50 }]
+///
+/// Volume-break rules are evaluated in descending min_qty order; the first rule
+/// whose min_qty <= requested quantity wins over the flat priceOverrides entry.
+model PriceList {
+  id             String   @id @default(uuid()) @db.Uuid
+  ownerUserId    String   @map("owner_user_id") @db.Uuid
+  name           String
+  description    String?
+  /// JSON array of { product_id, unit_price }
+  priceOverrides Json     @default("[]") @map("price_overrides")
+  /// JSON array of { product_id, min_qty, unit_price }
+  volumeBreaks   Json     @default("[]") @map("volume_breaks")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  customerTiers CustomerPriceTier[]
+
+  @@unique([ownerUserId, name])
+  @@index([ownerUserId])
+  @@map("price_lists")
+}
+
+/// Links a Customer to a PriceList with an optional expiry.
+/// When expiresAt is set and is in the past, the resolver falls back to
+/// the Product catalogue price (same as no tier).
+model CustomerPriceTier {
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerUserId String    @map("owner_user_id") @db.Uuid
+  customerId  String    @unique @map("customer_id") @db.Uuid
+  priceListId String    @map("price_list_id") @db.Uuid
+  expiresAt   DateTime? @map("expires_at")
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  customer  Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  priceList PriceList @relation(fields: [priceListId], references: [id], onDelete: Restrict)
+
+  @@index([ownerUserId])
+  @@index([priceListId])
+  @@map("customer_price_tiers")
 }
 
 model AgentRun {

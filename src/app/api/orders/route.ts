@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
     }
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items, workspaceUserIds);
+    const { lines, subtotal } = await resolveLinesFromPayload(body.items, workspaceUserIds, undefined, customerId);
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }

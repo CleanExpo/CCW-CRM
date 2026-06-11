@@ -1,19 +1,27 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
+import { resolvePrice } from '@/lib/pricing/resolve-price';
 
-export type RawLineInput = { product_id?: string; quantity?: number };
+export type RawLineInput = {
+  product_id?: string;
+  quantity?: number;
+  /** Optional caller-supplied unit price. When present it overrides tier/catalogue
+   *  price. The contract-tier resolved price is still computed internally for audit. */
+  unit_price?: number;
+};
 
 export async function resolveLinesFromPayload(
   items: unknown,
   productOwnerUserIds: string[],
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  customerId?: string
 ) {
   const client = tx ?? prisma;
-  const raw = Array.isArray(items) ? items : [];
+  const raw = Array.isArray(items) ? (items as RawLineInput[]) : [];
   const ids = [
     ...new Set(
       raw
-        .map((i: RawLineInput) => String(i.product_id ?? '').trim())
+        .map((i) => String(i.product_id ?? '').trim())
         .filter((id) => id.length > 0)
     ),
   ];
@@ -37,7 +45,7 @@ export async function resolveLinesFromPayload(
     },
     select: { id: true, price: true },
   });
-  const byId = new Map(products.map((p) => [p.id, p]));
+  const productExists = new Set(products.map((p) => p.id));
 
   const lines: Array<{
     productId: string;
@@ -48,14 +56,22 @@ export async function resolveLinesFromPayload(
   let subtotal = 0;
 
   for (const row of raw) {
-    const pid = String((row as RawLineInput).product_id ?? '').trim();
-    const qty = Math.max(0, Math.floor(Number((row as RawLineInput).quantity ?? 0)));
+    const pid = String(row.product_id ?? '').trim();
+    const qty = Math.max(0, Math.floor(Number(row.quantity ?? 0)));
     if (!pid || qty <= 0) continue;
-    const p = byId.get(pid);
-    if (!p) {
+    if (!productExists.has(pid)) {
       throw new Error(`Unknown or inactive product: ${pid}`);
     }
-    const unit = Number(p.price ?? 0);
+
+    let unit: number;
+    if (row.unit_price !== undefined && Number.isFinite(Number(row.unit_price))) {
+      // Caller-supplied override wins; tier price already resolved below for audit.
+      unit = Number(row.unit_price);
+    } else {
+      const resolved = await resolvePrice(customerId ?? null, pid, qty, productOwnerUserIds);
+      unit = resolved.unitPrice;
+    }
+
     const lineTotal = unit * qty;
     subtotal += lineTotal;
     lines.push({ productId: pid, quantity: qty, unitPrice: unit, lineTotal });

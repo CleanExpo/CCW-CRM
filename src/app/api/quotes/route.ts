@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
     }
 
-    const lineData = await buildQuoteLinesFromItems(items, scope.userId);
+    const lineData = await buildQuoteLinesFromItems(items, scope.userId, customerId);
     const total = lineData.reduce((s, l) => s + l.lineTotal, 0);
     const quoteNumber =
       body.quote_number && String(body.quote_number).trim()
