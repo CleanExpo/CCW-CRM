@@ -31,11 +31,9 @@ jobs:
         run: |
           # Ensure labels exist
           gh label create "security" --color "d73a4a" --description "Security related" 2>/dev/null || true
-          gh label create "deepsec" --color "7057ff" --description "Deepsec scan" 2>/dev/null || true
-          gh label create "weekly-scan" --color "008672" --description "Weekly automated scan" 2>/dev/null || true
           gh issue create \
             --title "[deepsec] Weekly scan findings $(date +%Y-%m-%d)" \
-            --label "security,deepsec,weekly-scan" \
+            --label "security" \
             --body "Deepsec found new issues. See run logs for details."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
