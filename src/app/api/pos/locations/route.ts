@@ -1,14 +1,25 @@
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getPosStore } from '@/lib/pos/mock-store';
 
-export async function GET() {
-  const store = getPosStore();
+export async function GET(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
+  const store = getPosStore(scope.userId);
   return NextResponse.json({ data: store.locations });
 }
 
 export async function POST(request: NextRequest) {
-  const store = getPosStore();
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
+  const store = getPosStore(scope.userId);
   const body = (await request.json()) as {
     code?: string;
     name?: string;

@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'terminal_id is required' }, { status: 400 });
     }
 
-    const store = getPosStore();
+    const store = getPosStore(scope.userId);
     const locationCode =
       store.terminals.find((terminal) => terminal.id === terminalId)?.location_code ?? 'brisbane';
 

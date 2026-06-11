@@ -43,7 +43,8 @@ type PosStore = {
   terminals: PosTerminal[];
 };
 
-const STORE_KEY = '__ccwPosStore__';
+/** Per-org store map. Key = userId (ownerUserId / workspace owner). */
+const STORE_KEY = '__ccwPosStoreByUser__';
 
 function nowIso() {
   return new Date().toISOString();
@@ -148,10 +149,37 @@ function seedStore(): PosStore {
   };
 }
 
-export function getPosStore(): PosStore {
-  const globalAny = globalThis as typeof globalThis & { [STORE_KEY]?: PosStore };
-  if (!globalAny[STORE_KEY]) {
-    globalAny[STORE_KEY] = seedStore();
+type StoreMap = Map<string, PosStore>;
+
+function getStoreMap(): StoreMap {
+  const g = globalThis as typeof globalThis & { [STORE_KEY]?: StoreMap };
+  if (!g[STORE_KEY]) {
+    g[STORE_KEY] = new Map<string, PosStore>();
   }
-  return globalAny[STORE_KEY] as PosStore;
+  return g[STORE_KEY] as StoreMap;
+}
+
+/**
+ * Returns the POS store scoped to the authenticated user/org.
+ *
+ * Each userId gets its own isolated data set — no cross-tenant reads possible.
+ * All POS route handlers MUST supply the userId resolved from the JWT, never
+ * a value from the request body or query string.
+ */
+export function getPosStore(userId: string): PosStore {
+  const map = getStoreMap();
+  if (!map.has(userId)) {
+    map.set(userId, seedStore());
+  }
+  return map.get(userId) as PosStore;
+}
+
+/** Reset a specific user's store (test helper — not exported to production routes). */
+export function _resetPosStoreForUser(userId: string): void {
+  getStoreMap().delete(userId);
+}
+
+/** Clear all stores (test helper). */
+export function _resetAllPosStores(): void {
+  getStoreMap().clear();
 }
