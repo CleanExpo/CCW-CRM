@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       prisma.crmActivity.count({ where }),
     ]);
 
-    const data = rows.map((r) => {
+    const data = rows.map((r: typeof rows[number]) => {
       const { customer, contact, order, quote, ...a } = r;
       return crmActivityToApi(a, { customer, contact, order, quote });
     });

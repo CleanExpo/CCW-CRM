@@ -16,7 +16,7 @@ export async function expireDueStockReservations(
   });
 
   for (const r of due) {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]) => {
       const row = await tx.productLocationStock.findUnique({
         where: { productId_location: { productId: r.productId, location: r.location } },
       });

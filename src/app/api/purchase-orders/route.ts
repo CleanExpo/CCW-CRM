@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: { id: { in: ids }, ownerUserId: scope.userId, isActive: true },
     });
-    const byId = new Map(products.map((p) => [p.id, p]));
+    const byId = new Map(products.map((p: typeof products[number]) => [p.id, p]));
 
     let subtotal = 0;
     const lineCreates: Array<{

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     const categoryMap = new Map<string, number>();
     let totalInventoryValue = 0;
-    allProducts.forEach((p) => {
+    allProducts.forEach((p: (typeof allProducts)[number]) => {
       const cat = p.category || 'accessories';
       const val = Number(p.price || 0) * Number(p.stock || 0);
       categoryMap.set(cat, (categoryMap.get(cat) || 0) + val);
@@ -146,8 +146,7 @@ export async function GET(request: NextRequest) {
     const formatCategory = (category: string) =>
       category.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
-    const lineRevenueSum = deliveredLineItems.reduce(
-      (s, row) => s + Number(row.lineTotal || 0),
+    const lineRevenueSum = deliveredLineItems.reduce((s: number, row: (typeof deliveredLineItems)[number]) => s + Number(row.lineTotal || 0),
       0
     );
     const useOrderLineRollups = deliveredLineItems.length > 0 && lineRevenueSum >= 0.01;
@@ -212,7 +211,7 @@ export async function GET(request: NextRequest) {
       topProducts =
         totalInventoryValue > 0 && totalDeliveredAllTime > 0
           ? [...allProducts]
-              .map((p) => {
+              .map((p: (typeof allProducts)[number]) => {
                 const lineValue = Number(p.price || 0) * Number(p.stock || 0);
                 const share = lineValue / totalInventoryValue;
                 const revenue = totalDeliveredAllTime * share;
@@ -225,7 +224,7 @@ export async function GET(request: NextRequest) {
               })
               .sort((a, b) => parseFloat(b.revenue) - parseFloat(a.revenue))
               .slice(0, 5)
-          : topProductsByPrice.map((p) => ({
+          : topProductsByPrice.map((p: (typeof topProductsByPrice)[number]) => ({
               name: p.name,
               revenue: (Number(p.price || 0) * Number(p.stock || 0)).toFixed(2),
               quantity_sold: Number(p.stock || 0),
@@ -233,17 +232,17 @@ export async function GET(request: NextRequest) {
     }
 
     const commercialActivity = [
-      ...recentOrders.map((o) => ({
+      ...recentOrders.map((o: (typeof recentOrders)[number]) => ({
         type: 'order',
         title: `Order ${o.orderNumber}`,
-        description: `Status: ${o.status} — $${Number(o.total || 0).toFixed(2)}`,
+        description: `Status: ${o.status} â€” $${Number(o.total || 0).toFixed(2)}`,
         timestamp: o.createdAt.toISOString(),
         status: o.status,
       })),
-      ...recentQuotes.map((q) => ({
+      ...recentQuotes.map((q: (typeof recentQuotes)[number]) => ({
         type: 'quote',
         title: `Quote ${q.quoteNumber}`,
-        description: `Status: ${q.status} — $${Number(q.total ?? 0).toFixed(2)}`,
+        description: `Status: ${q.status} â€” $${Number(q.total ?? 0).toFixed(2)}`,
         timestamp: q.createdAt.toISOString(),
         status: q.status,
       })),
@@ -251,10 +250,10 @@ export async function GET(request: NextRequest) {
 
     const stockActivity =
       lowStockSamples.length > 0
-        ? lowStockSamples.map((p) => ({
+        ? lowStockSamples.map((p: (typeof lowStockSamples)[number]) => ({
             type: 'stock',
             title: `Low stock: ${p.name}`,
-            description: `SKU ${p.sku} · ${p.stock} on hand — review reorder`,
+            description: `SKU ${p.sku} Â· ${p.stock} on hand â€” review reorder`,
             timestamp: now.toISOString(),
             status: 'low_stock',
           }))

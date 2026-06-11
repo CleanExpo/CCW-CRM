@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       where,
       take: 200,
     });
-    const totalAmount = rows.reduce((s, r) => s + (r.credit ?? 0), 0);
+    const totalAmount = rows.reduce((s: number, r: { credit: number | null }) => s + (r.credit ?? 0), 0);
 
     const alerts: Array<{
       type: string;

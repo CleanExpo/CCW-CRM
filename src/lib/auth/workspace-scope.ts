@@ -20,7 +20,7 @@ export async function getWorkspaceMemberUserIds(userId: string): Promise<string[
       select: { id: true },
     });
 
-    const ids = members.map((m) => m.id).filter(Boolean);
+    const ids = members.map((m: { id: string }) => m.id).filter(Boolean);
     return ids.length > 0 ? ids : [userId];
   } catch {
     return [userId];

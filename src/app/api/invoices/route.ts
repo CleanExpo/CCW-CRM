@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return NextResponse.json({
-      data: rows.map((r) =>
+      data: rows.map((r: typeof rows[number]) =>
         invoiceSummaryToApi({
           ...r,
           status: deriveInvoiceStatus(r),

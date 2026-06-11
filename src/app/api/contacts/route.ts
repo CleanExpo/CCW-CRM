@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       prisma.crmContact.count({ where }),
     ]);
 
-    const data = rows.map((r) => {
+    const data = rows.map((r: typeof rows[number]) => {
       const { customer, ...rest } = r;
       const inWs = customer && workspaceUserIds.includes(customer.ownerUserId);
       return crmContactToApi(rest, inWs ? { companyName: customer.companyName } : null);
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const isPrimary = Boolean(body.is_primary);
     const customerId = customerIdRaw || null;
 
-    const created = await prisma.$transaction(async (tx) => {
+    const created = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       if (isPrimary && customerId) {
         await tx.crmContact.updateMany({
           where: { customerId, ownerUserId: { in: workspaceUserIds } },

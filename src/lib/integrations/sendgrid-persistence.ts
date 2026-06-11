@@ -56,7 +56,7 @@ export async function createOutboundEmailDraft(
 ): Promise<OutboundEmailRecord> {
   const thread = await resolveThread(input);
 
-  const message = await prisma.$transaction(async (tx) => {
+  const message = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     const created = await tx.emailMessage.create({
       data: {
         threadId: thread.id,
@@ -144,7 +144,7 @@ export async function recordInboundEmail(input: RecordInboundEmailInput): Promis
       },
     }));
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     await tx.emailMessage.create({
       data: {
         threadId: thread.id,

@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     const uuidLike = (s: string) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-    const orderIds = [...new Set(rows.map((r) => r.orderId).filter(uuidLike))];
+    const orderIds = [...new Set(rows.map((r: typeof rows[number]) => r.orderId).filter(uuidLike))];
     const orders =
       orderIds.length > 0
         ? await prisma.order.findMany({
@@ -62,10 +62,10 @@ export async function GET(request: NextRequest) {
             select: { id: true, orderNumber: true },
           })
         : [];
-    const orderById = new Map(orders.map((o) => [o.id, o.orderNumber]));
+    const orderById = new Map(orders.map((o: { id: string; orderNumber: string }) => [o.id, o.orderNumber]));
 
     return NextResponse.json({
-      items: rows.map((r) => ({
+      items: rows.map((r: typeof rows[number]) => ({
         id: r.id,
         product_id: r.productId,
         product_name: r.product.name,

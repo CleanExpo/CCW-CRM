@@ -270,7 +270,7 @@ export async function getWorkshopEquipmentById(workspaceUserIds: string[], id: s
     }),
   ]);
 
-  const service_history = completedBookings.map((b) => ({
+  const service_history = completedBookings.map((b: typeof completedBookings[number]) => ({
     booking_id: b.id,
     service_date: b.scheduledDate.toISOString(),
     hours: b.actualHours,
@@ -280,8 +280,8 @@ export async function getWorkshopEquipmentById(workspaceUserIds: string[], id: s
   return {
     equipment: equipmentToApi(row),
     service_history,
-    reminders: reminders.map((r) => reminderToApi(r)),
-    bookings: upcomingBookings.map((b) => bookingToApi(b)),
+    reminders: reminders.map((r: typeof reminders[number]) => reminderToApi(r)),
+    bookings: upcomingBookings.map((b: typeof upcomingBookings[number]) => bookingToApi(b)),
   };
 }
 
@@ -492,7 +492,7 @@ export async function createWorkshopTemplate(
 
   const itemsRaw = (body.items as Array<{ product_id?: string; quantity?: number; lead_time_days?: number; notes?: string }>) ?? [];
 
-  const template = await prisma.$transaction(async (tx) => {
+  const template = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     const t = await tx.workshopServiceTemplate.create({
       data: {
         ownerUserId,
@@ -548,7 +548,7 @@ export async function updateWorkshopTemplate(
     | Array<{ product_id?: string; quantity?: number; lead_time_days?: number; notes?: string }>
     | undefined;
 
-  const template = await prisma.$transaction(async (tx) => {
+  const template = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     await tx.workshopServiceTemplate.update({
       where: { id },
       data: {
@@ -741,7 +741,7 @@ export async function completeWorkshopBooking(
   });
   if (!existing) return null;
 
-  const row = await prisma.$transaction(async (tx) => {
+  const row = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
     const b = await tx.workshopBooking.update({
       where: { id },
       data: {
@@ -984,7 +984,7 @@ export async function getEquipmentWarrantyStats(workspaceUserIds: string[]) {
     prisma.workshopEquipment.count({ where }),
   ]);
 
-  const warranty_alerts = rows.map((r) => ({
+  const warranty_alerts = rows.map((r: typeof rows[number]) => ({
     serial_number: r.serialNumber,
     product_name: r.product?.name ?? null,
     company_name: r.customer.companyName,

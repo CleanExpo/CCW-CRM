@@ -40,7 +40,7 @@ export async function POST(
       return NextResponse.json({ detail: 'Cannot record payment on a cancelled invoice' }, { status: 400 });
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await tx.invoicePayment.create({
         data: {
           invoiceId: id,
@@ -106,7 +106,7 @@ export async function GET(
       return NextResponse.json({ detail: 'Not found' }, { status: 404 });
     }
 
-    return NextResponse.json(invoiceRow.payments.map((p) => paymentToApi(p)));
+    return NextResponse.json(invoiceRow.payments.map(paymentToApi));
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }

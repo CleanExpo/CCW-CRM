@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       prisma.quote.count({ where }),
     ]);
 
-    const items = rows.map((q) => {
+    const items = rows.map((q: typeof rows[number]) => {
       const { customer, _count, ...rest } = q;
       return {
         ...quoteToApi(rest, customer?.companyName),

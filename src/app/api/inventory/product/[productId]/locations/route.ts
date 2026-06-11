@@ -34,7 +34,7 @@ export async function GET(
       return NextResponse.json({ detail: 'Product not found' }, { status: 404 });
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await ensureProductLocationStockRows(tx, product);
     });
 
@@ -42,7 +42,7 @@ export async function GET(
       where: { productId: product.id },
     });
 
-    const byLoc = new Map(rows.map((r) => [r.location, r]));
+    const byLoc = new Map(rows.map((r: (typeof rows)[number]) => [r.location, r] as [string, (typeof rows)[number]]));
 
     const items = WAREHOUSE_LOCATIONS.map((loc) => {
       const r = byLoc.get(loc);

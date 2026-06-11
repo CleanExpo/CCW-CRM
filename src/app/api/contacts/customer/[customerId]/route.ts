@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { crmContactToApi } from '@/lib/db/crm-serialize';
+import type { CrmContact } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +34,7 @@ export async function GET(
       orderBy: [{ isPrimary: 'desc' }, { lastName: 'asc' }],
     });
 
-    return NextResponse.json(rows.map((c) => crmContactToApi(c)));
+    return NextResponse.json(rows.map((c: CrmContact) => crmContactToApi(c)));
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }

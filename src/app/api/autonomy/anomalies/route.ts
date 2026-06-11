@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
 
     const anomalies: string[] = [];
 
-    const failures = runs.filter((r) => r.status === 'failed' || r.status === 'blocked' || r.status === 'rejected');
+    const failures = runs.filter((r: { status: string; errorMessage: string | null; createdAt: Date }) => r.status === 'failed' || r.status === 'blocked' || r.status === 'rejected');
     const failureRate = runs.length > 0 ? failures.length / runs.length : 0;
     if (runs.length >= 5 && failureRate > 0.3) {
       anomalies.push(`High failure ratio: ${(failureRate * 100).toFixed(1)}% in last ${windowHours}h.`);
     }
 
-    const errorText = failures.map((r) => (r.errorMessage || '').toLowerCase());
-    const rateLimitHits = errorText.filter((m) => m.includes('rate limit')).length;
+    const errorText = failures.map((r: { status: string; errorMessage: string | null; createdAt: Date }) => (r.errorMessage || '').toLowerCase());
+    const rateLimitHits = errorText.filter((m: string) => m.includes('rate limit')).length;
     if (rateLimitHits > 0) {
       anomalies.push(`Rate limit detected ${rateLimitHits} time(s).`);
     }

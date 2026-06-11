@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const taxable_sales = invoices.reduce((s, i) => s + i.subtotal, 0);
-    const label_1a_gst_collected = invoices.reduce((s, i) => s + i.taxTotal, 0);
-    const total_sales_incl_gst = invoices.reduce((s, i) => s + i.total, 0);
+    const taxable_sales = invoices.reduce((s: number, i: { subtotal: number }) => s + i.subtotal, 0);
+    const label_1a_gst_collected = invoices.reduce((s: number, i: { taxTotal: number }) => s + i.taxTotal, 0);
+    const total_sales_incl_gst = invoices.reduce((s: number, i: { total: number }) => s + i.total, 0);
     const label_1b_gst_credits = 0;
     const label_net_gst_payable = label_1a_gst_collected - label_1b_gst_credits;
 
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       total_sales_incl_gst: aud(total_sales_incl_gst),
       invoice_count: invoices.length,
       note:
-        'Figures are calculated from invoice lines in CCW (GST on sales). Purchases / GST credits (1B) are not tracked here — enter those from your accounting system.',
+        'Figures are calculated from invoice lines in CCW (GST on sales). Purchases / GST credits (1B) are not tracked here â€” enter those from your accounting system.',
     });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });

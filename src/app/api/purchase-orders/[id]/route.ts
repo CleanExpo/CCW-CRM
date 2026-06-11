@@ -97,7 +97,7 @@ export async function PUT(
     const products = await prisma.product.findMany({
       where: { id: { in: ids }, ownerUserId: scope.userId, isActive: true },
     });
-    const byId = new Map(products.map((p) => [p.id, p]));
+    const byId = new Map(products.map((p: typeof products[number]) => [p.id, p]));
 
     let subtotal = 0;
     const lineCreates: Array<{
@@ -133,7 +133,7 @@ export async function PUT(
     const tax = subtotal * 0.1;
     const total = subtotal + tax + Number(shipping);
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await tx.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: id } });
       return tx.purchaseOrder.update({
         where: { id },

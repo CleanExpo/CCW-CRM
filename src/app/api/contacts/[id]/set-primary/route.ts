@@ -25,7 +25,7 @@ export async function POST(
       );
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await tx.crmContact.updateMany({
         where: {
           customerId: contact.customerId,

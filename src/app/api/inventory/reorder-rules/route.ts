@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         ? true
         : Boolean(body.is_enabled ?? body.isEnabled);
 
-    const row = await prisma.$transaction(async (tx) => {
+    const row = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await ensureProductLocationStockRows(tx, product);
       return tx.productLocationStock.update({
         where: { productId_location: { productId: product.id, location } },

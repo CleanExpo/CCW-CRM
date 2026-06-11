@@ -85,7 +85,7 @@ export async function POST(
     Date: new Date().toISOString().slice(0, 10),
     DueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10),
     Reference: row.orderNumber,
-    LineItems: row.lineItems.map((li) => ({
+    LineItems: row.lineItems.map((li: (typeof row.lineItems)[number]) => ({
       Description: li.product.name,
       Quantity: li.quantity,
       UnitAmount: li.unitPrice,

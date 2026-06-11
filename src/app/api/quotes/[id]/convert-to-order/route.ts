@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { nextOrderNumber } from '@/lib/db/quote-mutations';
 import { requireAuthScope } from '@/lib/auth/data-scope';
@@ -28,9 +28,9 @@ export async function POST(
     }
 
     const orderNumber = await nextOrderNumber(scope.userId);
-    const total = quote.lineItems.reduce((s, li) => s + li.lineTotal, 0);
+    const total = quote.lineItems.reduce((s: number, li: { lineTotal: number }) => s + li.lineTotal, 0);
 
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       const o = await tx.order.create({
         data: {
           ownerUserId: scope.userId,
@@ -39,7 +39,7 @@ export async function POST(
           status: 'processing',
           total,
           lineItems: {
-            create: quote.lineItems.map((li) => ({
+            create: quote.lineItems.map((li: { productId: string; quantity: number; unitPrice: number; lineTotal: number }) => ({
               productId: li.productId,
               quantity: li.quantity,
               unitPrice: li.unitPrice,

@@ -7,7 +7,7 @@ export async function buildQuoteLinesFromItems(items: QuoteItemInput[], ownerUse
   const products = await prisma.product.findMany({
     where: { id: { in: ids }, ownerUserId, isActive: true },
   });
-  const byId = new Map(products.map((p) => [p.id, p]));
+  const byId = new Map(products.map((p: { id: string }) => [p.id, p]));
   const lines: Array<{
     productId: string;
     quantity: number;

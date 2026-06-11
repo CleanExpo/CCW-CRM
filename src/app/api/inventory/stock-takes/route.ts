@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      rows.map((t) => ({
+      rows.map((t: { id: string; location: string; status: string; createdAt: Date; submittedAt: Date | null }) => ({
         id: t.id,
         location: t.location,
         status: t.status,

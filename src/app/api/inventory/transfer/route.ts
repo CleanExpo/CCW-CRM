@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'Product not found' }, { status: 404 });
     }
 
-    const created = await prisma.$transaction(async (tx) => {
+    const created = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await ensureProductLocationStockRows(tx, product);
 
       const fromRow = await tx.productLocationStock.findUnique({

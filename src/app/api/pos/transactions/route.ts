@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       prisma.posTransaction.count({ where }),
     ]);
 
-    const items = rows.map((t) => ({
+    const items = rows.map((t: { id: string; transactionNumber: string; amount: number; paymentMethod: string | null; paymentStatus: string; createdAt: Date; locationCode: string | null }) => ({
       id: t.id,
       transaction_number: t.transactionNumber,
       amount: t.amount,
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: { id: { in: ids }, isActive: true, ownerUserId: uid },
     });
-    const byId = new Map(products.map((p) => [p.id, p]));
+    const byId = new Map(products.map((p: { id: string }) => [p.id, p]));
 
     let subtotal = 0;
     const lineData: Array<{
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
       /* allow small float drift */
     }
 
-    const created = await prisma.$transaction(async (tx) => {
+    const created = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       for (const line of lineData) {
         const prod = await tx.product.findFirst({
           where: { id: line.productId, ownerUserId: uid },

@@ -72,7 +72,7 @@ export async function PUT(
     const isPrimary =
       body.is_primary !== undefined ? Boolean(body.is_primary) : existing.isPrimary;
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       if (isPrimary && customerId) {
         await tx.crmContact.updateMany({
           where: { customerId, ownerUserId: { in: workspaceUserIds }, NOT: { id } },

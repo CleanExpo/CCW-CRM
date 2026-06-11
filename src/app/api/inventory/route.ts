@@ -107,13 +107,13 @@ export async function GET(request: NextRequest) {
     let items = products.map(toInventoryItem);
 
     if (lowStock) {
-      items = items.filter((i) => i.total_available <= DEFAULT_REORDER_THRESHOLD);
+      items = items.filter((i: ReturnType<typeof toInventoryItem>) => i.total_available <= DEFAULT_REORDER_THRESHOLD);
     }
 
     if (locationFilter && isWarehouseLocation(locationFilter)) {
-      items = items.filter((i) =>
+      items = items.filter((i: ReturnType<typeof toInventoryItem>) =>
         i.stock_by_location.some(
-          (s) => s.location === locationFilter && (s.stock > 0 || s.reserved > 0),
+          (s: ReturnType<typeof toInventoryItem>['stock_by_location'][number]) => s.location === locationFilter && (s.stock > 0 || s.reserved > 0),
         ),
       );
     }
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       ? sortBy
       : 'name';
 
-    items.sort((a, b) => {
+    items.sort((a: ReturnType<typeof toInventoryItem>, b: ReturnType<typeof toInventoryItem>) => {
       let av: string | number;
       let bv: string | number;
       switch (sortKey) {

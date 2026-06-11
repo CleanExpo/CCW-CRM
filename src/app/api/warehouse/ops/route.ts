@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (inboundPos.length > 0) {
-      receivingQueue = inboundPos.map((po, i) => poToReceiving(po, i));
+      receivingQueue = inboundPos.map(poToReceiving);
     }
 
     const openOrders = await prisma.order.findMany({
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (openOrders.length > 0) {
-      pickQueue = openOrders.map((o) => ({
+      pickQueue = openOrders.map((o: { orderNumber: string; customer: { companyName: string }; lineItems: { id: string }[]; createdAt: Date; total: number }) => ({
         id: o.orderNumber,
         customer: o.customer.companyName,
         zone: 'WH-OPS',

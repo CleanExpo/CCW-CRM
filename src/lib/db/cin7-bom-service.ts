@@ -64,10 +64,10 @@ export async function syncBomsFromCatalog(workspaceUserIds: string[]): Promise<n
   let count = 0;
   for (const p of products) {
     const cin7BomId = `ERP-${p.sku}`;
-    const peers = products.filter((x) => x.ownerUserId === p.ownerUserId && x.id !== p.id);
+    const peers = products.filter((x: typeof products[number]) => x.ownerUserId === p.ownerUserId && x.id !== p.id);
     const componentSources = peers.slice(0, 4);
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       const master = await tx.cin7BomMaster.upsert({
         where: {
           ownerUserId_cin7BomId: { ownerUserId: p.ownerUserId, cin7BomId },
@@ -99,7 +99,7 @@ export async function syncBomsFromCatalog(workspaceUserIds: string[]): Promise<n
       await tx.cin7BomComponent.deleteMany({ where: { bomMasterId: master.id } });
       if (componentSources.length > 0) {
         await tx.cin7BomComponent.createMany({
-          data: componentSources.map((c) => ({
+          data: componentSources.map((c: typeof products[number]) => ({
             bomMasterId: master.id,
             componentSku: c.sku,
             componentName: c.name,

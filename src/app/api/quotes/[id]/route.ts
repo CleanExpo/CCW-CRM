@@ -76,7 +76,7 @@ export async function PUT(
       }
     }
 
-    const row = await prisma.$transaction(async (tx) => {
+    const row = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await tx.quoteLineItem.deleteMany({ where: { quoteId: id } });
       return tx.quote.update({
         where: { id },

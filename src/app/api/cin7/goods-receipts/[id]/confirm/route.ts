@@ -30,7 +30,7 @@ export async function POST(
     const now = new Date();
     const receiptId = `GRN-${grn.poReference}-${Date.now().toString(36).toUpperCase()}`;
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       for (const line of grn.lines) {
         if (line.productId) {
           const inc = await tx.product.updateMany({

@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const itemsAll = products.map((p) => {
+    const itemsAll = products.map((p: (typeof products)[number]) => {
       const rows = toProductLocationRows(p.locationStocks);
       const locs = expandWarehouseLocations(p.stock, p.warehouseLocation, rows);
       const row = locs.find((l) => l.location === location)!;

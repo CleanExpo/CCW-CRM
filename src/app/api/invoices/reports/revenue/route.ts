@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const total_revenue = invoices.reduce((s, i) => s + i.total, 0);
-    const total_outstanding = invoices.reduce((s, i) => s + Math.max(0, i.total - i.amountPaid), 0);
+    const total_revenue = invoices.reduce((s: number, i: { total: number }) => s + i.total, 0);
+    const total_outstanding = invoices.reduce((s: number, i: { total: number; amountPaid: number }) => s + Math.max(0, i.total - i.amountPaid), 0);
 
     let total_overdue = 0;
     let overdue_invoice_count = 0;

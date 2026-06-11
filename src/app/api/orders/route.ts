@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where }),
     ]);
 
-    const items = rows.map((o) => {
+    const items = rows.map((o: typeof rows[number]) => {
       const { customer, _count, ...rest } = o;
       return orderToApi(rest, customer?.companyName, { itemCount: _count.lineItems });
     });

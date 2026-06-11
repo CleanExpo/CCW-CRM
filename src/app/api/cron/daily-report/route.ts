@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
 
@@ -30,22 +30,22 @@ export async function GET(request: Request) {
     });
 
     const totalRuns = runs.length;
-    const completedRuns = runs.filter((r) => r.status === "completed");
-    const failedRuns = runs.filter((r) => r.status === "failed");
-    const escalatedRuns = runs.filter((r) => r.status === "escalated");
+    const completedRuns = runs.filter((r: (typeof runs)[number]) => r.status === "completed");
+    const failedRuns = runs.filter((r: (typeof runs)[number]) => r.status === "failed");
+    const escalatedRuns = runs.filter((r: (typeof runs)[number]) => r.status === "escalated");
 
     const successRate =
       totalRuns > 0 ? ((completedRuns.length / totalRuns) * 100).toFixed(1) : "0";
 
     const executionTimes = completedRuns
-      .filter((r) => r.completedAt && r.createdAt)
-      .map((r) => new Date(r.completedAt!).getTime() - new Date(r.createdAt).getTime());
+      .filter((r: (typeof completedRuns)[number]) => r.completedAt && r.createdAt)
+      .map((r: (typeof completedRuns)[number]) => new Date(r.completedAt!).getTime() - new Date(r.createdAt).getTime());
     const avgExecutionTime =
       executionTimes.length > 0
-        ? Math.round(executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length)
+        ? Math.round(executionTimes.reduce((a: number, b: number) => a + b, 0) / executionTimes.length)
         : 0;
 
-    const topFailures = failedRuns.slice(0, 5).map((r) => ({
+    const topFailures = failedRuns.slice(0, 5).map((r: (typeof failedRuns)[number]) => ({
       id: r.id,
       agent: r.agentType,
       error: r.errorMessage?.slice(0, 200),

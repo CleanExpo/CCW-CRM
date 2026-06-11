@@ -24,7 +24,7 @@ export async function POST(
       return NextResponse.json({ detail: 'quantity_received required' }, { status: 400 });
     }
 
-    const updatedPo = await prisma.$transaction(async (tx) => {
+    const updatedPo = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       const line = await tx.purchaseOrderLine.findFirst({
         where: {
           id: itemId,
@@ -53,7 +53,7 @@ export async function POST(
       });
 
       const allLines = await tx.purchaseOrderLine.findMany({ where: { purchaseOrderId: poId } });
-      const fullyReceived = allLines.every((l) => {
+      const fullyReceived = allLines.every((l: typeof allLines[number]) => {
         const recv = l.id === line.id ? l.quantityReceived + qtyIn : l.quantityReceived;
         return recv >= l.quantity;
       });

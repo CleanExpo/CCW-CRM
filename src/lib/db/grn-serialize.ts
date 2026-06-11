@@ -40,7 +40,7 @@ export function grnToApi(r: GoodsReceipt & { lines: GoodsReceiptLine[] }) {
 
 export async function refreshGrnTotals(grnId: string) {
   const lines = await prisma.goodsReceiptLine.findMany({ where: { goodsReceiptId: grnId } });
-  const total = lines.reduce((s, l) => s + l.receivedQty, 0);
+  const total = lines.reduce((s: number, l: { receivedQty: number }) => s + l.receivedQty, 0);
   await prisma.goodsReceipt.update({
     where: { id: grnId },
     data: { totalItemsReceived: total },

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'Product not found' }, { status: 404 });
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await ensureProductLocationStockRows(tx, {
         id: product.id,
         stock: product.stock,

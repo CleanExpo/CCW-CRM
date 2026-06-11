@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireAuthScope } from "@/lib/auth/data-scope";
 import { getWorkspaceMemberUserIds } from "@/lib/auth/workspace-scope";
+import type { Customer, CustomerPersona } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
       orderBy: { companyName: "asc" },
     });
 
-    const allRows = customers.map((c) => {
+    const allRows = customers.map((c: Customer & { persona: CustomerPersona | null }) => {
       const p = c.persona;
       return {
         customer_id: c.id,
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     const filtered =
       personaFilter && personaFilter !== "all"
-        ? allRows.filter((r) => r.persona === personaFilter)
+        ? allRows.filter((r: { persona: string; customer_id: string; company_name: string | null; confidence: string; reason: string | null; classified_at: string | null }) => r.persona === personaFilter)
         : allRows;
 
     const total = filtered.length;

@@ -182,7 +182,7 @@ export function invoiceToApi(
     total: inv.total,
     amount_paid: inv.amountPaid,
     amount_due: amountDue,
-    items: (inv.items ?? []).map((li) => invoiceLineToApi(li)),
+    items: (inv.items ?? []).map((li: Parameters<typeof invoiceLineToApi>[0]) => invoiceLineToApi(li)),
     payments: (inv.payments ?? []).map(paymentToApi),
     created_at: inv.createdAt.toISOString(),
     updated_at: inv.updatedAt.toISOString(),

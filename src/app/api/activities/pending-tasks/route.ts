@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      rows.map((r) => {
+      rows.map((r: typeof rows[number]) => {
         const { customer, contact, order, quote, ...a } = r;
         return crmActivityToApi(a, { customer, contact, order, quote });
       })

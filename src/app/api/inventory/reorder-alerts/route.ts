@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       { supplier_id: string | null; supplier_name: string | null }
     >();
 
-    const productIds = products.map((p) => p.id);
+    const productIds = products.map((p: { id: string }) => p.id);
     if (productIds.length > 0) {
       const lines = await prisma.purchaseOrderLine.findMany({
         where: {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         },
       });
       lines.sort(
-        (a, b) =>
+        (a: { purchaseOrder: { createdAt: Date } }, b: { purchaseOrder: { createdAt: Date } }) =>
           b.purchaseOrder.createdAt.getTime() - a.purchaseOrder.createdAt.getTime(),
       );
       for (const line of lines) {

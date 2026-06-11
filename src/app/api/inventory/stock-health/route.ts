@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const normalized = products.map((p) => ({
+    const normalized = products.map((p: { id: string; sku: string; name: string; stock: number; warehouseLocation: string | null; locationStocks: unknown[] }) => ({
       id: p.id,
       sku: p.sku,
       name: p.name,

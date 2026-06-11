@@ -50,7 +50,7 @@ export async function PATCH(
     const reorderPoint = Math.max(0, Math.floor(Number(body.reorder_point ?? body.reorderPoint ?? 0)));
     const reorderQty = Math.max(0, Math.floor(Number(body.reorder_quantity ?? body.reorderQuantity ?? 0)));
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await ensureProductLocationStockRows(tx, product);
       await tx.productLocationStock.update({
         where: { productId_location: { productId: product.id, location } },

@@ -46,7 +46,7 @@ export async function POST(
 
     let processed = 0;
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       for (const it of rawItems) {
         const productId = String(it.product_id ?? '').trim();
         const countedQty = Math.max(0, Math.floor(Number(it.counted_qty ?? 0)));

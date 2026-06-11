@@ -13,7 +13,7 @@ export function buildInvoiceEmailPayload(invoice: InvoiceWithLines): {
 } {
   const customerName = invoice.customer?.companyName ?? 'Customer';
   const lines = invoice.items
-    .map((line) => {
+    .map((line: { product?: { name: string } | null; description?: string | null; quantity: number; unitPrice: number; lineTotal: number }) => {
       const label = line.product?.name ?? line.description ?? 'Item';
       return `  - ${label} x${line.quantity} @ ${formatMoney(line.unitPrice)} = ${formatMoney(line.lineTotal)}`;
     })
@@ -49,7 +49,7 @@ export function buildInvoiceEmailPayload(invoice: InvoiceWithLines): {
     `<p><strong>Invoice date:</strong> ${formatDate(invoice.invoiceDate)}<br/>`,
     `<strong>Due date:</strong> ${formatDate(invoice.dueDate)}</p>`,
     '<ul>',
-    ...invoice.items.map((line) => {
+    ...invoice.items.map((line: { product?: { name: string } | null; description?: string | null; quantity: number; lineTotal: number }) => {
       const label = line.product?.name ?? line.description ?? 'Item';
       return `<li>${escapeHtml(label)} x${line.quantity} — ${formatMoney(line.lineTotal)}</li>`;
     }),
@@ -73,7 +73,7 @@ export function buildInvoiceEmailPayload(invoice: InvoiceWithLines): {
       tax_total: invoice.taxTotal,
       total: invoice.total,
       amount_due: amountDue,
-      line_items: invoice.items.map((line) => ({
+      line_items: invoice.items.map((line: { product?: { name: string } | null; description?: string | null; quantity: number; lineTotal: number }) => ({
         description: line.product?.name ?? line.description,
         quantity: line.quantity,
         line_total: line.lineTotal,

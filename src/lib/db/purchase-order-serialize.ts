@@ -27,7 +27,7 @@ export function purchaseOrderToApi(po: PoWithRelations) {
     shipping_cost: po.shippingCost ?? undefined,
     total: po.total,
     notes: po.notes ?? undefined,
-    items: po.lines.map((l) => ({
+    items: po.lines.map((l: { id: string; productId: string; product: { name: string; sku: string }; quantity: number; quantityReceived: number; unitCost: number; subtotal: number }) => ({
       id: l.id,
       product_id: l.productId,
       product_name: l.product.name,

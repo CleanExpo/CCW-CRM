@@ -37,7 +37,7 @@ export async function resolveLinesFromPayload(
     },
     select: { id: true, price: true },
   });
-  const byId = new Map(products.map((p) => [p.id, p]));
+  const byId = new Map(products.map((p: typeof products[number]) => [p.id, p]));
 
   const lines: Array<{
     productId: string;

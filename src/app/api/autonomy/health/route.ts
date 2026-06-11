@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
     });
 
     const total = runs.length;
-    const completed = runs.filter((r) => r.status === 'completed').length;
-    const failed = runs.filter((r) => r.status === 'failed').length;
-    const blocked = runs.filter((r) => r.status === 'blocked').length;
-    const rejected = runs.filter((r) => r.status === 'rejected').length;
+    const completed = runs.filter((r: { status: string; errorMessage: string | null }) => r.status === 'completed').length;
+    const failed = runs.filter((r: { status: string; errorMessage: string | null }) => r.status === 'failed').length;
+    const blocked = runs.filter((r: { status: string; errorMessage: string | null }) => r.status === 'blocked').length;
+    const rejected = runs.filter((r: { status: string; errorMessage: string | null }) => r.status === 'rejected').length;
 
     const successRate = safeRate(completed, total);
     const errorRate = safeRate(failed + blocked + rejected, total);
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (blocked > 0) {
       issues.push(`${blocked} run(s) blocked by policy checks.`);
     }
-    if (runs.some((r) => (r.errorMessage || '').toLowerCase().includes('rate limit'))) {
+    if (runs.some((r: { status: string; errorMessage: string | null }) => (r.errorMessage || '').toLowerCase().includes('rate limit'))) {
       issues.push('Rate limit events detected in run logs.');
     }
 

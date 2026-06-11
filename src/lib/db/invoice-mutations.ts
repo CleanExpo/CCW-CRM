@@ -39,7 +39,7 @@ export async function resolveInvoiceLinesFromPayload(
           },
         })
       : [];
-  const byId = new Map(products.map((p) => [p.id, p]));
+  const byId = new Map(products.map((p: { id: string }) => [p.id, p]));
 
   const lines: ResolvedInvoiceLine[] = [];
 

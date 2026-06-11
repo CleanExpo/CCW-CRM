@@ -41,7 +41,7 @@ export async function GET(
       last_message_at: thread.lastMessageAt.toISOString(),
     };
 
-    const messages = thread.messages.map((m) => ({
+    const messages = thread.messages.map((m: (typeof thread.messages)[number]) => ({
       id: m.id,
       direction: m.direction as 'inbound' | 'outbound',
       from_email: m.fromEmail,

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const emails = threads.map((t) => ({
+    const emails = threads.map((t: (typeof threads)[number]) => ({
       id: t.id,
       thread_id: t.id,
       subject: t.subject,

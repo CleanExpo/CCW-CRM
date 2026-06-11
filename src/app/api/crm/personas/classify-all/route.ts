@@ -33,11 +33,11 @@ export async function POST(request: NextRequest) {
 
     let classified = 0;
     for (const c of customers) {
-      const orders = c.orders.map((o) => ({
+      const orders = c.orders.map((o: { status: string; createdAt: Date; total: number; lineItems: Array<{ quantity: number; lineTotal: number; product: { name: string; category: string | null } }> }) => ({
         status: o.status,
         createdAt: o.createdAt,
         total: o.total,
-        lineItems: o.lineItems.map((li) => ({
+        lineItems: o.lineItems.map((li: { quantity: number; lineTotal: number; product: { name: string; category: string | null } }) => ({
           quantity: li.quantity,
           lineTotal: li.lineTotal,
           product: {

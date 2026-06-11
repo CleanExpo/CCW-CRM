@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      rows.map((r) => ({
+      rows.map((r: { id: string; bankAccountId: string; transactionDate: Date; description: string | null; reference: string | null; credit: number | null; debit: number | null; balance: number | null }) => ({
         id: r.id,
         bank_account_id: r.bankAccountId,
         transaction_date: r.transactionDate.toISOString(),

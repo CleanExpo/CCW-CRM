@@ -94,7 +94,7 @@ export async function PUT(
     const taxTotal = lines.reduce((s, l) => s + l.taxAmount, 0);
     const total = lines.reduce((s, l) => s + l.lineTotal, 0);
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       await tx.invoiceLineItem.deleteMany({ where: { invoiceId: id } });
 
       return tx.invoice.update({

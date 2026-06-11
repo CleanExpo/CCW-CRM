@@ -6,7 +6,7 @@ type QuoteWithLines = Quote & {
 
 export function quoteDetailToApi(q: QuoteWithLines, customerName?: string) {
   const name = customerName ?? 'Unknown';
-  const items = q.lineItems.map((li) => ({
+  const items = q.lineItems.map((li: { id: string; productId: string; product: { name: string }; quantity: number; unitPrice: number; lineTotal: number }) => ({
     id: li.id,
     product_id: li.productId,
     product_name: li.product.name,

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { logger } from '@/lib/logger';
 
@@ -42,19 +42,20 @@ export async function GET(request: NextRequest) {
     });
 
     const totalActions = runs.length;
-    const merged = runs.filter((r) => r.status === 'completed').length;
-    const rejected = runs.filter((r) => r.status === 'rejected').length;
-    const blocked = runs.filter((r) => r.status === 'blocked').length;
-    const failed = runs.filter((r) => r.status === 'failed').length;
-    const escalated = runs.filter((r) => r.status === 'escalated').length;
+    type RunRow = { id: string; status: string; agentType: string | null; errorMessage: string | null; createdAt: Date; completedAt: Date | null };
+    const merged = runs.filter((r: RunRow) => r.status === 'completed').length;
+    const rejected = runs.filter((r: RunRow) => r.status === 'rejected').length;
+    const blocked = runs.filter((r: RunRow) => r.status === 'blocked').length;
+    const failed = runs.filter((r: RunRow) => r.status === 'failed').length;
+    const escalated = runs.filter((r: RunRow) => r.status === 'escalated').length;
 
     const durations = runs
-      .filter((r) => r.completedAt)
-      .map((r) => new Date(r.completedAt as Date).getTime() - new Date(r.createdAt).getTime())
-      .filter((ms) => Number.isFinite(ms) && ms >= 0);
+      .filter((r: RunRow) => r.completedAt)
+      .map((r: RunRow) => new Date(r.completedAt as Date).getTime() - new Date(r.createdAt).getTime())
+      .filter((ms: number) => Number.isFinite(ms) && ms >= 0);
     const avgDurationMs =
       durations.length > 0
-        ? durations.reduce((sum, ms) => sum + ms, 0) / durations.length
+        ? durations.reduce((sum: number, ms: number) => sum + ms, 0) / durations.length
         : 0;
 
     const riskDistribution = { low: 0, medium: 0, high: 0 };
@@ -72,9 +73,9 @@ export async function GET(request: NextRequest) {
       auto_merge_success_rate: safeRate(merged, totalActions),
       test_pass_rate: safeRate(merged, merged + failed + escalated),
       protected_file_violations: blocked,
-      rate_limit_hits: runs.filter((r) => (r.errorMessage || '').toLowerCase().includes('rate limit')).length,
-      circuit_breaker_trips: runs.filter((r) => (r.errorMessage || '').toLowerCase().includes('circuit')).length,
-      auto_merge_reversions: runs.filter((r) => (r.errorMessage || '').toLowerCase().includes('revert')).length,
+      rate_limit_hits: runs.filter((r: RunRow) => (r.errorMessage || '').toLowerCase().includes('rate limit')).length,
+      circuit_breaker_trips: runs.filter((r: RunRow) => (r.errorMessage || '').toLowerCase().includes('circuit')).length,
+      auto_merge_reversions: runs.filter((r: RunRow) => (r.errorMessage || '').toLowerCase().includes('revert')).length,
       risk_distribution: riskDistribution,
       avg_duration_ms: avgDurationMs,
     });

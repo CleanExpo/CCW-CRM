@@ -60,7 +60,7 @@ export async function PATCH(
       return NextResponse.json({ detail: 'Not found' }, { status: 404 });
     }
 
-    const row = await prisma.$transaction(async (tx) => {
+    const row = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       const inv = await tx.salesInvoice.update({
         where: { id },
         data: {
