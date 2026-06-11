@@ -162,6 +162,59 @@ export function InvoicePrintView({ invoice }: InvoicePrintViewProps) {
           </div>
         )}
 
+        {/* SDS Attachments — hazardous line items (WHS Reg. 341) */}
+        {invoice.sds_attachments && invoice.sds_attachments.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-muted-foreground mb-2 text-sm font-semibold">
+              SAFETY DATA SHEETS — HAZARDOUS CHEMICALS (WHS Reg. 341)
+            </h3>
+            <div className="rounded border border-orange-200 bg-orange-50 p-4">
+              <p className="mb-3 text-xs text-orange-800">
+                The following products supplied on this invoice are classified as hazardous
+                chemicals under the Australian WHS Regulations. Current SDS documents must be
+                retained at the point of use.
+                {/* TODO for Rana: merge actual PDF pages into this print output via pdf-lib or similar */}
+              </p>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-orange-200">
+                    <th className="py-1 text-left font-semibold">Product ID</th>
+                    <th className="py-1 text-left font-semibold">Signal Word</th>
+                    <th className="py-1 text-left font-semibold">Hazard Codes</th>
+                    <th className="py-1 text-left font-semibold">SDS Revision</th>
+                    <th className="py-1 text-left font-semibold">Emergency Contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.sds_attachments.map((sds) => (
+                    <tr key={sds.product_id} className="border-b border-orange-100">
+                      <td className="py-1 font-mono">{sds.product_id}</td>
+                      <td className="py-1">{sds.ghs_signal_word ?? '—'}</td>
+                      <td className="py-1">{sds.hazard_statements.join(', ') || '—'}</td>
+                      <td className="py-1">
+                        {sds.revision_date
+                          ? format(new Date(sds.revision_date), 'dd MMM yyyy')
+                          : '—'}
+                        {sds.sds_pdf_url && (
+                          <a
+                            href={sds.sds_pdf_url}
+                            className="ml-2 text-blue-700 underline"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            PDF
+                          </a>
+                        )}
+                      </td>
+                      <td className="py-1">{sds.supplier_emergency_contact ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Payment Terms & Footer */}
         <div className="mt-8 border-t-2 border-gray-200 pt-6">
           <h3 className="mb-3 text-sm font-semibold">PAYMENT TERMS</h3>
