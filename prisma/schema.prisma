@@ -154,10 +154,31 @@ model Product {
   inventoryStockTakeLines      InventoryStockTakeLine[]
   workshopEquipment            WorkshopEquipment[]
   workshopServiceTemplateItems WorkshopServiceTemplateItem[]
+  sds                          ProductSds?
 
   @@unique([ownerUserId, sku])
   @@index([ownerUserId])
   @@map("products")
+}
+
+model ProductSds {
+  id                       String    @id @default(uuid()) @db.Uuid
+  productId                String    @unique @map("product_id") @db.Uuid
+  sdsPdfUrl                String?   @map("sds_pdf_url") @db.Text
+  ghsSignalWord            String?   @map("ghs_signal_word")
+  /// GHS hazard statement codes, e.g. ["H225","H302"]
+  hazardStatements         Json      @default("[]") @map("hazard_statements")
+  revisionDate             DateTime? @map("revision_date") @db.Date
+  reviewDueDate            DateTime? @map("review_due_date") @db.Date
+  supplierEmergencyContact String?   @map("supplier_emergency_contact") @db.Text
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([reviewDueDate])
+  @@map("product_sds")
 }
 
 model Cin7BomMaster {
