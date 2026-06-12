@@ -11,21 +11,18 @@ const MODULES: HubModuleItem[] = [
     description: 'Automation templates and process orchestration.',
     href: '/dashboard/workflows',
     icon: 'GitMerge',
-    comingSoon: true,
   },
   {
     title: 'Approvals',
     description: 'Requests awaiting decision across modules.',
     href: '/dashboard/approvals',
     icon: 'CheckCircle',
-    comingSoon: true,
   },
   {
     title: 'Alerts',
     description: 'Operational and integration alert inbox.',
     href: '/dashboard/alerts',
     icon: 'Bell',
-    comingSoon: true,
   },
   {
     title: 'AI Assistant',
@@ -45,7 +42,6 @@ const MODULES: HubModuleItem[] = [
     description: 'Subscription and payment method for CCW Online.',
     href: '/dashboard/settings/billing',
     icon: 'CreditCard',
-    comingSoon: true,
   },
   {
     title: 'Integrations',
@@ -87,7 +83,7 @@ export default function WorkspaceHubPage() {
             <Link className="text-foreground underline-offset-4 hover:underline" href="/dashboard/settings/team">
               Team
             </Link>
-            . Workflow and AI surfaces marked “Soon” stay visible for roadmap alignment.
+            Workflows, approvals, alerts, and billing are live. AI Assistant remains on the roadmap.
           </CardDescription>
         </CardHeader>
       </Card>
