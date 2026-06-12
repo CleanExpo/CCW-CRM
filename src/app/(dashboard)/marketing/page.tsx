@@ -303,7 +303,7 @@ export default function MarketingPage() {
 
       if (isDemoMode()) {
         // Demo mode only: use placeholder data so the UI is not completely empty
-        console.warn('[UNI-2116] DEMO MODE active — using demo marketing stats');
+        console.warn('[UNI-2116] DEMO MODE active â€” using demo marketing stats');
         setStats({
           totalAssets: 47,
           imagesGenerated: 28,
@@ -388,7 +388,7 @@ export default function MarketingPage() {
 
         {/* Bento Grid Layout */}
         <BentoGrid columns={4} gap="lg">
-          {/* Stats Row — UNI-2116: show error state when stats API fails */}
+          {/* Stats Row â€” UNI-2116: show error state when stats API fails */}
           {statsError ? (
             <BentoCard variant="glass" span={4} className="min-h-[120px]">
               <BentoCardContent className="p-6">
