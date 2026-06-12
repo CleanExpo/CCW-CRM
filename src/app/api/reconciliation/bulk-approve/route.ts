@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
           | 'invoice'
           | 'purchase_order'
           | 'pos_transaction'
+          | 'trade_finance_advance'
           | 'transfer'
           | 'fee'
           | 'rule';
