@@ -1,0 +1,32 @@
+{
+  "framework": "nextjs",
+  "regions": ["syd1"],
+  "crons": [
+    { "path": "/api/cron/health-check", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/retry-failed-webhooks", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/refresh-xero-tokens", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/check-sla-breaches", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/run-autonomous-ops", "schedule": "0 * * * *" },
+    { "path": "/api/cron/refresh-health-scores", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/cleanup-old-runs", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/daily-report", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/check-expiring-quotes", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/process-onboarding-emails", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/check-invoice-overdue", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/check-trade-finance-maturities", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/sync-bank-feeds", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/shadow-sync-cin7", "schedule": "0 19 * * *" },
+    { "path": "/api/cron/shadow-sync-xero", "schedule": "0 20 * * *" },
+    { "path": "/api/cron/auto-reorder-inventory", "schedule": "0 21 * * *" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}
