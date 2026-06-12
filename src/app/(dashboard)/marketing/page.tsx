@@ -303,7 +303,7 @@ export default function MarketingPage() {
 
       if (isDemoMode()) {
         // Demo mode only: use placeholder data so the UI is not completely empty
-        console.warn('[UNI-2116] DEMO MODE active — using demo marketing stats');
+        console.warn('[UNI-2116] DEMO MODE active - using demo marketing stats');
         setStats({
           totalAssets: 47,
           imagesGenerated: 28,
@@ -379,7 +379,7 @@ export default function MarketingPage() {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl font-semibold tracking-tight">
-            AI Marketing Hub — Cleaning Equipment
+            AI Marketing Hub - Cleaning Equipment
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
             Generate professional cleaning equipment marketing assets with AI-powered tools
@@ -388,7 +388,7 @@ export default function MarketingPage() {
 
         {/* Bento Grid Layout */}
         <BentoGrid columns={4} gap="lg">
-          {/* Stats Row — UNI-2116: show error state when stats API fails */}
+          {/* Stats Row - UNI-2116: show error state when stats API fails */}
           {statsError ? (
             <BentoCard variant="glass" span={4} className="min-h-[120px]">
               <BentoCardContent className="p-6">
