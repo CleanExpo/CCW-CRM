@@ -646,6 +646,7 @@ model BankFeedTransaction {
   matchedPosTxId         String?   @map("matched_pos_tx_id") @db.Uuid
   matchedInvoiceId       String?   @map("matched_invoice_id") @db.Uuid
   matchedPurchaseOrderId String?   @map("matched_purchase_order_id") @db.Uuid
+  matchedAdvanceId       String?   @map("matched_advance_id") @db.Uuid
   gstCategory            String?   @map("gst_category")
   accountCategory        String?   @map("account_category")
   reconciledBy           String?   @map("reconciled_by") @db.Uuid
@@ -659,6 +660,7 @@ model BankFeedTransaction {
   bankAccount          BankAccount                    @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   matchedInvoice       Invoice?                       @relation(fields: [matchedInvoiceId], references: [id], onDelete: SetNull)
   matchedPurchaseOrder PurchaseOrder?                 @relation(fields: [matchedPurchaseOrderId], references: [id], onDelete: SetNull)
+  matchedAdvance       TradeFinanceAdvance?           @relation(fields: [matchedAdvanceId], references: [id], onDelete: SetNull)
   allocations          BankReconciliationAllocation[]
   auditEntries         BankReconciliationAudit[]
 
@@ -667,6 +669,7 @@ model BankFeedTransaction {
   @@index([reconciled])
   @@index([status])
   @@index([matchedInvoiceId])
+  @@index([matchedAdvanceId])
   @@map("bank_feed_transactions")
 }
 
@@ -826,6 +829,7 @@ model TradeFinanceAdvance {
   supplier       Supplier?                   @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   purchaseOrder  PurchaseOrder?              @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
   repayments     TradeFinanceRepayment[]
+  bankFeedMatches BankFeedTransaction[]
 
   @@unique([ownerUserId, advanceNumber])
   @@index([facilityId])
@@ -1383,4 +1387,64 @@ model OperationalEvent {
   @@index([eventType])
   @@index([occurredAt])
   @@map("operational_events")
+}
+
+/// CCW Online subscription (workspace-scoped; Stripe-ready fields for production).
+model WorkspaceSubscription {
+  id                   String    @id @default(uuid()) @db.Uuid
+  workspaceId          String    @unique @map("workspace_id") @db.Uuid
+  tier                 String    @default("professional")
+  status               String    @default("trial")
+  billingInterval      String    @default("monthly") @map("billing_interval")
+  priceCents           Int       @default(0) @map("price_cents")
+  trialEndsAt          DateTime? @map("trial_ends_at")
+  currentPeriodStart   DateTime? @map("current_period_start")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  canceledAt           DateTime? @map("canceled_at")
+  stripeCustomerId     String?   @map("stripe_customer_id")
+  stripeSubscriptionId String?   @map("stripe_subscription_id")
+  lastPaymentFailedAt  DateTime? @map("last_payment_failed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  paymentMethods WorkspacePaymentMethod[]
+  invoices       WorkspaceBillingInvoice[]
+
+  @@map("workspace_subscriptions")
+}
+
+model WorkspacePaymentMethod {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  brand       String   @default("visa")
+  last4       String
+  expMonth    Int      @map("exp_month")
+  expYear     Int      @map("exp_year")
+  isDefault   Boolean  @default(false) @map("is_default")
+  externalId  String?  @map("external_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  subscription WorkspaceSubscription @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("workspace_payment_methods")
+}
+
+model WorkspaceBillingInvoice {
+  id               String    @id @default(uuid()) @db.Uuid
+  workspaceId      String    @map("workspace_id") @db.Uuid
+  amountDue        Int       @map("amount_due")
+  amountPaid       Int       @default(0) @map("amount_paid")
+  currency         String    @default("AUD")
+  status           String    @default("open")
+  hostedInvoiceUrl String?   @map("hosted_invoice_url")
+  invoicePdf       String?   @map("invoice_pdf")
+  periodStart      DateTime? @map("period_start")
+  periodEnd        DateTime? @map("period_end")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  subscription WorkspaceSubscription @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("workspace_billing_invoices")
 }
