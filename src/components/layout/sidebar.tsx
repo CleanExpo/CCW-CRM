@@ -170,7 +170,7 @@ const navGroups: NavGroup[] = [
       { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge },
       { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle },
       { name: 'Comms hub', href: '/dashboard/comms', icon: MessageSquare },
-      { name: 'Alerts', href: '/dashboard/alerts', icon: Bell, comingSoon: true },
+      { name: 'Alerts', href: '/dashboard/alerts', icon: Bell },
       {
         name: 'AI Assistant',
         href: '/dashboard/ai-reports/ai-assistant',
@@ -182,7 +182,6 @@ const navGroups: NavGroup[] = [
         name: 'Billing',
         href: '/dashboard/settings/billing',
         icon: CreditCard,
-        comingSoon: true,
       },
       { name: 'Integrations', href: '/dashboard/settings/integrations', icon: Settings },
       { name: 'Shadow programme', href: '/dashboard/settings/shadow', icon: Eye },
