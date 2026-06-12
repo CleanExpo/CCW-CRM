@@ -20,10 +20,21 @@ const MODULES: HubModuleItem[] = [
   },
   {
     title: 'Bank feeds',
-    description: 'Automated bank transaction import and matching.',
+    description: 'CDR read-only sync, CSV import, and transaction matching.',
     href: '/dashboard/finance/bank-feeds',
     icon: 'Landmark',
-    comingSoon: true,
+  },
+  {
+    title: 'Reconciliation',
+    description: 'Match bank lines to invoices, POs, POS, and trade finance.',
+    href: '/dashboard/finance/reconciliation',
+    icon: 'Scale',
+  },
+  {
+    title: 'Trade finance',
+    description: 'Facilities, advances, letters of credit, and repayments.',
+    href: '/dashboard/finance/trade-finance',
+    icon: 'Ship',
   },
   {
     title: 'Emails',
@@ -54,8 +65,7 @@ export default function FinanceHubPage() {
             <Link className="text-foreground underline-offset-4 hover:underline" href="/dashboard/finance/invoices">
               Invoices
             </Link>
-            . BAS pulls from the same invoice spine; emails and bank feeds extend reconciliation when
-            enabled.
+            . BAS pulls from the same invoice spine; bank feeds, reconciliation, and trade finance extend visibility when enabled.
           </CardDescription>
         </CardHeader>
       </Card>
