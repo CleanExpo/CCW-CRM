@@ -46,7 +46,7 @@ const bankAccountSchema = z.object({
   bsb: z.string().regex(/^\d{3}-\d{3}$/, 'BSB must be in format XXX-XXX (e.g., 123-456)'),
   bank_name: z.string().min(1, 'Bank name is required'),
   account_type: z.enum(['checking', 'savings', 'credit']),
-  feed_provider: z.enum(['xero', 'yodlee', 'basiq', 'manual']),
+  feed_provider: z.enum(['xero', 'yodlee', 'basiq', 'cdr', 'manual']),
   is_active: z.boolean(),
 });
 
@@ -268,8 +268,9 @@ export function BankAccountDialog({
                       <SelectContent>
                         <SelectItem value="xero">Xero</SelectItem>
                         <SelectItem value="yodlee">Yodlee</SelectItem>
-                        <SelectItem value="basiq">Basiq</SelectItem>
-                        <SelectItem value="manual">Manual</SelectItem>
+                        <SelectItem value="basiq">Basiq (CDR)</SelectItem>
+                        <SelectItem value="cdr">CDR / Open Banking</SelectItem>
+                        <SelectItem value="manual">Manual / CSV</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
