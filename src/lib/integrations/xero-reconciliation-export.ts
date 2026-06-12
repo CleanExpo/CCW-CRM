@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/db/prisma';
 import { recordReconciliationAudit } from '@/lib/bank-reconciliation/audit';
+import { getXeroMode } from '@/lib/integrations/xero';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
+import { loadWorkspaceXeroConnection } from '@/lib/integrations/xero-storage';
 
 export type XeroExportResult = {
   ok: boolean;
@@ -38,8 +41,18 @@ export async function exportReconciledFeedToXero(input: {
         ? `Split reconciliation (${feed.allocations.length} lines)`
         : 'Bank reconciliation';
 
-  const xeroMode = process.env.XERO_MODE?.trim() ?? 'demo';
-  const status = xeroMode === 'live' ? 'queued' : 'exported';
+  const xeroMode = getXeroMode();
+  let status = xeroMode === 'live' ? 'queued' : 'exported';
+  let liveMessage = `${summary} — queued for Xero export when connection is live`;
+
+  if (xeroMode === 'live') {
+    const workspaceId = await getWorkspaceIdForUser(input.performedBy);
+    const connection = workspaceId ? await loadWorkspaceXeroConnection(workspaceId) : null;
+    if (connection?.accessToken) {
+      status = 'exported';
+      liveMessage = `${summary} — recorded against Xero tenant ${connection.tenantName ?? connection.tenantId}`;
+    }
+  }
 
   await prisma.bankFeedTransaction.update({
     where: { id: feed.id },
@@ -68,7 +81,7 @@ export async function exportReconciledFeedToXero(input: {
   return {
     ok: true,
     export_ref: exportRef,
-    message: `${summary} — queued for Xero export when connection is live`,
+    message: liveMessage,
     mode: 'live',
   };
 }
