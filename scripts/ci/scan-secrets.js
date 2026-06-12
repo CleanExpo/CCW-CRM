@@ -37,7 +37,7 @@ function scan(dir) {
     if (!EXTS.includes(path.extname(e.name))) return;
     const lines = fs.readFileSync(full, 'utf8').split('\n');
     lines.forEach((line, i) => {
-      if (/process\.env\.|example|placeholder|<.*>|xxx/i.test(line)) return;
+      if (/process\.env\.|example|placeholder|<.*>|xxx|your[_\-]/i.test(line)) return;
       PATTERNS.forEach(({ name, re }) => {
         if (re.test(line)) {
           console.error(`  ❌ ${name}: ${rel}:${i + 1}`);

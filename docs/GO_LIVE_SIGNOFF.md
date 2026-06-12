@@ -1,3 +1,12 @@
+> **ARCHIVED -- STALE (UNI-2105, 2026-06-11)**
+> This document was authored 2026-02-02 and reflects a simulated go-live narrative.
+> The claims of "100% integration tests passing (63/63)", zero critical bugs, and
+> signed-off infrastructure were NOT backed by live gate evidence: CI quality gates
+> remained RED until 2026-06-11 when PRs #197-#204 merged. Staging deployment has
+> been failing since 2026-05-22 (UNI-2106 -- missing staging credentials).
+> All sign-off fields are blank (never signed). Do NOT use this document to assert
+> production readiness. See docs/PROJECT-STATUS.md for the current ground-truth.
+
 # CCW-Online ERP - Go-Live Sign-Off and Handover
 
 **Date**: 2026-02-02

@@ -64,10 +64,19 @@ export interface ReconcileMatch {
   pos_transaction_id: string;
 }
 
+export interface BulkReconcileFailure {
+  bank_feed_id: string;
+  pos_transaction_id: string;
+  reason: string;
+}
+
 export interface BulkReconcileResult {
   success: boolean;
   matched_count: number;
   failed_count: number;
+  /** Itemised per-pair failure details (UNI-2113). */
+  failures: BulkReconcileFailure[];
+  /** Legacy flat error strings kept for backwards compat. */
   errors: string[];
 }
 

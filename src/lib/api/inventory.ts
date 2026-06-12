@@ -200,6 +200,13 @@ export const inventoryApi = {
   },
 
   /**
+   * Cancel a stock transfer (pending or in_transit only).
+   * POST /api/inventory/transfers/:id/cancel
+   */
+  async cancelTransfer(id: string): Promise<StockTransfer> {
+    return apiClient.post<StockTransfer>(`/api/inventory/transfers/${id}/cancel`, {});
+  },
+  /**
    * Reserve stock
    * POST /api/inventory/reserve
    */

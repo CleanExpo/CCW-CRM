@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Package, User, Calendar, Clock, CheckCircle } fr
 import { useToast } from "@/hooks/use-toast";
 import type { StockTransfer } from "@/types/inventory";
 import { apiClient } from "@/lib/api/client";
+import { inventoryApi } from "@/lib/api/inventory";
 import { TransferStatusBadge } from "@/components/inventory/TransferStatusBadge";
 import { format } from "date-fns";
 
@@ -103,16 +104,32 @@ export default function TransferDetailPage() {
   };
 
   const handleCancelTransfer = async () => {
-    if (!transfer || transfer.status !== "pending") return;
+    if (!transfer) return;
+
+    if (transfer.status === "completed") {
+      toast({
+        variant: "destructive",
+        title: "Cannot cancel",
+        description: "Completed transfers cannot be cancelled.",
+      });
+      return;
+    }
+
+    if (transfer.status === "cancelled") {
+      toast({
+        variant: "destructive",
+        title: "Already cancelled",
+        description: "This transfer has already been cancelled.",
+      });
+      return;
+    }
 
     try {
-      await apiClient.post(`/api/inventory/transfers/${transferId}/status`, {
-        status: "cancelled",
-      });
+      await inventoryApi.cancelTransfer(transferId);
 
       toast({
-        title: "Success",
-        description: "Transfer cancelled",
+        title: "Transfer cancelled",
+        description: "The transfer has been cancelled successfully.",
       });
 
       // Reload transfer
@@ -330,7 +347,7 @@ export default function TransferDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            {transfer.status === "pending" && (
+            {(transfer.status === "pending" || transfer.status === "in_transit") && (
               <>
                 <Button onClick={handleMarkInTransit}>
                   Mark as In Transit

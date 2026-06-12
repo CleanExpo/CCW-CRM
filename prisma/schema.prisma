@@ -868,6 +868,27 @@ model TaxRate {
   @@map("tax_rates")
 }
 
+
+/// Immutable audit trail for every POS reconciliation bulk-match operation.
+/// One row per pair matched (or attempted) in a bulk run.
+model ReconciliationMatchAudit {
+  id               String   @id @default(uuid()) @db.Uuid
+  /// The user who triggered the bulk-match
+  matchedByUserId  String   @map("matched_by_user_id") @db.Uuid
+  bankFeedId       String   @map("bank_feed_id") @db.Uuid
+  posTransactionId String   @map("pos_transaction_id") @db.Uuid
+  /// "matched" | "failed"
+  outcome          String
+  /// populated when outcome="failed"
+  failureReason    String?  @map("failure_reason")
+  matchedAt        DateTime @default(now()) @map("matched_at")
+
+  @@index([matchedByUserId])
+  @@index([bankFeedId])
+  @@index([posTransactionId])
+  @@map("reconciliation_match_audit")
+}
+
 model ContactSubmission {
   id        String   @id @default(uuid()) @db.Uuid
   name      String

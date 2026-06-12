@@ -1,17 +1,59 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { agentsApi, type Agent } from '@/lib/api/agents';
 
+/**
+ * UNI-2116: On API failure the component shows a visible error state instead
+ * of silently setting agents to an empty array (which looks like "no agents").
+ */
 export function AgentList() {
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<Agent[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     agentsApi
       .listAgents()
-      .then(setAgents)
-      .catch(() => setAgents([]));
+      .then((data) => {
+        setAgents(data);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to load agents';
+        console.error('[UNI-2116] AgentList fetch failed:', message);
+        setError(message);
+        setAgents(null);
+      });
   }, []);
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+          <div>
+            <p className="font-medium text-destructive">Agent list unavailable</p>
+            <p className="text-sm text-muted-foreground mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (agents === null) {
+    // Loading skeleton
+    return (
+      <div className="space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-card animate-pulse rounded-lg p-4 shadow">
+            <div className="bg-muted mb-2 h-4 w-1/3 rounded" />
+            <div className="bg-muted h-3 w-1/2 rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (agents.length === 0) {
     return (

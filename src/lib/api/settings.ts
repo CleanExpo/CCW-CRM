@@ -26,10 +26,16 @@ export interface CompanySettings {
   name: string;
   slug: string;
   is_active: boolean;
+  trading_name: string | null;
+  abn: string | null;
+  acn: string | null;
 }
 
 export interface UpdateCompanyRequest {
   name: string;
+  trading_name?: string | null;
+  abn?: string | null;
+  acn?: string | null;
 }
 
 export const settingsApi = {
@@ -42,7 +48,7 @@ export const settingsApi = {
   changePassword: (data: ChangePasswordRequest): Promise<{ message: string }> =>
     apiClient.post<{ message: string }>('/api/auth/change-password', data),
 
-  // Company settings
+  // Company settings (UNI-2111: org-authenticated via /api/settings/company)
   getCompany: (): Promise<CompanySettings> =>
     apiClient.get<CompanySettings>('/api/settings/company'),
 

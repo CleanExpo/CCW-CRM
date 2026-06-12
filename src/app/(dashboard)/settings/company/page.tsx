@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -62,6 +61,9 @@ export default function CompanySettingsPage() {
       try {
         const company = await settingsApi.getCompany();
         setCompanyName(company.name);
+        setTradingName(company.trading_name ?? '');
+        setAbn(company.abn ?? '');
+        setAcn(company.acn ?? '');
       } catch {
         // Use defaults if not available
       } finally {
@@ -76,8 +78,18 @@ export default function CompanySettingsPage() {
     setIsLoading(true);
 
     try {
-      const updated = await settingsApi.updateCompany({ name: companyName });
+      const updated = await settingsApi.updateCompany({
+        name: companyName,
+        trading_name: tradingName || null,
+        abn: abn || null,
+        acn: acn || null,
+      });
+
+      // Reload from API response to confirm persisted values
       setCompanyName(updated.name);
+      setTradingName(updated.trading_name ?? '');
+      setAbn(updated.abn ?? '');
+      setAcn(updated.acn ?? '');
 
       toast({
         title: 'Company Updated',

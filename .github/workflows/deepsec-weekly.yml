@@ -14,14 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          cd .deepsec
+          npm install
       - name: Run Deepsec
-        run: npx -y deepsec scan
+        run: |
+          cd .deepsec
+          npx deepsec scan --project-id CCW-CRM
       - name: Open issue on findings
         if: failure()
         run: |
+          # Ensure labels exist
+          gh label create "security" --color "d73a4a" --description "Security related" 2>/dev/null || true
           gh issue create \
             --title "[deepsec] Weekly scan findings $(date +%Y-%m-%d)" \
-            --label "security,deepsec,weekly-scan" \
+            --label "security" \
             --body "Deepsec found new issues. See run logs for details."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

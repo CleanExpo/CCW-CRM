@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import { getPosStore } from '@/lib/pos/mock-store';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const store = getPosStore();
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
+  const workspaceId = await getWorkspaceIdForUser(scope.userId);
+  if (!workspaceId) {
+    return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+  }
+
+  const store = getPosStore(workspaceId);
   const { id } = await params;
   const body = (await request.json()) as {
     location_code?: string;
@@ -32,10 +44,20 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const store = getPosStore();
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
+  const workspaceId = await getWorkspaceIdForUser(scope.userId);
+  if (!workspaceId) {
+    return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+  }
+
+  const store = getPosStore(workspaceId);
   const { id } = await params;
   const index = store.terminals.findIndex((terminal) => terminal.id === id);
   if (index < 0) {
