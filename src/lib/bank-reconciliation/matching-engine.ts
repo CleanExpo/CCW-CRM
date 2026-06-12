@@ -2,6 +2,7 @@ export type MatchTargetType =
   | 'invoice'
   | 'purchase_order'
   | 'pos_transaction'
+  | 'trade_finance_advance'
   | 'transfer'
   | 'fee'
   | 'rule';
@@ -216,6 +217,69 @@ export function buildPosSuggestion(
     confidence: Math.min(score, 100),
     match_reasons: reasons,
     suggested_action: 'match_pos',
+  };
+}
+
+export function buildTradeFinanceAdvanceSuggestion(
+  feed: FeedLineInput,
+  advance: {
+    id: string;
+    advanceNumber: string;
+    principalAmount: number;
+    fees: number;
+    interest: number;
+    repaidAmount: number;
+    maturityDate: Date;
+    drawdownDate: Date;
+    securityRef: string | null;
+    supplier: { companyName: string } | null;
+  }
+): MatchSuggestion | null {
+  const outstanding =
+    advance.principalAmount + advance.fees + advance.interest - advance.repaidAmount;
+  if (outstanding <= 0) return null;
+
+  const amt = feedAmount(feed);
+  if (feed.debit == null && feed.credit != null) return null;
+
+  let score = 0;
+  const reasons: string[] = [];
+
+  const amtPart = amountScore(amt, outstanding);
+  score += amtPart.score;
+  if (amtPart.reason) reasons.push(amtPart.reason);
+
+  const datePart = dateScore(feed.transaction_date, advance.maturityDate);
+  score += datePart.score;
+  if (datePart.reason) reasons.push(datePart.reason);
+
+  const haystack = `${feed.description} ${feed.reference} ${feed.raw_narration ?? ''}`;
+  if (textContains(haystack, advance.advanceNumber)) {
+    score += 25;
+    reasons.push('Advance number in bank reference');
+  }
+  if (advance.securityRef && textContains(haystack, advance.securityRef)) {
+    score += 20;
+    reasons.push('Security reference in narration');
+  }
+  if (advance.supplier && textContains(haystack, advance.supplier.companyName)) {
+    score += 15;
+    reasons.push('Supplier name in narration');
+  }
+
+  if (score < 50) return null;
+
+  return {
+    target_type: 'trade_finance_advance',
+    target_id: advance.id,
+    label: `Trade finance ${advance.advanceNumber}${advance.supplier ? ` — ${advance.supplier.companyName}` : ''}`,
+    amount: outstanding,
+    date: advance.maturityDate.toISOString(),
+    confidence: Math.min(score, 100),
+    match_reasons: reasons,
+    suggested_action: 'match_trade_finance_advance',
+    gst_category: 'GST-free',
+    account_category: 'Trade Finance',
   };
 }
 
