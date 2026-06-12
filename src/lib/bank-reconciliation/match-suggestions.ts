@@ -4,6 +4,7 @@ import {
   buildPosSuggestion,
   buildPurchaseOrderSuggestion,
   buildRuleSuggestion,
+  buildTradeFinanceAdvanceSuggestion,
   pickBestSuggestion,
   serializeSuggestionSummary,
   type FeedLineInput,
@@ -21,7 +22,7 @@ export async function computeSuggestionsForFeed(
     (feed.debit != null && feed.debit > 0 ? feed.debit : null) ??
     0;
 
-  const [invoices, purchaseOrders, posRows, rules] = await Promise.all([
+  const [invoices, purchaseOrders, posRows, rules, advances] = await Promise.all([
     prisma.invoice.findMany({
       where: {
         ...ownerDataFilter(ownerIds),
@@ -49,6 +50,14 @@ export async function computeSuggestionsForFeed(
     prisma.bankReconciliationRule.findMany({
       where: { ownerUserId: { in: ownerIds }, isActive: true },
     }),
+    prisma.tradeFinanceAdvance.findMany({
+      where: {
+        ownerUserId: { in: ownerIds },
+        status: { in: ['drawn', 'partial'] },
+      },
+      include: { supplier: { select: { companyName: true } } },
+      take: 200,
+    }),
   ]);
 
   const suggestions: MatchSuggestion[] = [];
@@ -73,6 +82,10 @@ export async function computeSuggestionsForFeed(
   }
   for (const rule of rules) {
     const s = buildRuleSuggestion(feed, rule);
+    if (s) suggestions.push(s);
+  }
+  for (const advance of advances) {
+    const s = buildTradeFinanceAdvanceSuggestion(feed, advance);
     if (s) suggestions.push(s);
   }
 
