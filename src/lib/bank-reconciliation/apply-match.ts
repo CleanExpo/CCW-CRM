@@ -5,7 +5,7 @@ import { bankAccountOwnerFilter, workspaceOwnerIds } from '@/lib/bank-reconcilia
 export async function applyBankMatch(input: {
   feedId: string;
   userId: string;
-  targetType: 'invoice' | 'purchase_order' | 'pos_transaction' | 'transfer' | 'fee' | 'rule';
+  targetType: 'invoice' | 'purchase_order' | 'pos_transaction' | 'trade_finance_advance' | 'transfer' | 'fee' | 'rule';
   targetId?: string;
   notes?: string;
 }) {
@@ -27,6 +27,7 @@ export async function applyBankMatch(input: {
     matchedInvoiceId?: string | null;
     matchedPurchaseOrderId?: string | null;
     matchedPosTxId?: string | null;
+    matchedAdvanceId?: string | null;
     suggestedAction?: string;
   } = {
     reconciled: true,
@@ -76,6 +77,42 @@ export async function applyBankMatch(input: {
       prisma.posTransaction.update({
         where: { id: input.targetId },
         data: { reconciliationStatus: 'reconciled' },
+      }),
+    ]);
+  } else if (input.targetType === 'trade_finance_advance' && input.targetId) {
+    data.matchedAdvanceId = input.targetId;
+    const advance = await prisma.tradeFinanceAdvance.findFirst({
+      where: { id: input.targetId, ownerUserId: { in: ownerIds } },
+    });
+    if (!advance) throw new Error('Trade finance advance not found');
+
+    const payAmt =
+      (feed.debit != null && feed.debit > 0 ? feed.debit : null) ??
+      (feed.credit != null ? feed.credit : 0);
+    const outstanding =
+      advance.principalAmount + advance.fees + advance.interest - advance.repaidAmount;
+    const repaymentAmount = Math.min(payAmt ?? 0, outstanding);
+    const newRepaid = advance.repaidAmount + repaymentAmount;
+    const fullyRepaid =
+      newRepaid >= advance.principalAmount + advance.fees + advance.interest - 0.01;
+
+    await prisma.$transaction([
+      prisma.bankFeedTransaction.update({ where: { id: feed.id }, data }),
+      prisma.tradeFinanceRepayment.create({
+        data: {
+          advanceId: advance.id,
+          amount: repaymentAmount,
+          paymentDate: feed.transactionDate,
+          reference: feed.reference || feed.id.slice(0, 8),
+          notes: input.notes ?? 'Bank reconciliation — trade finance repayment',
+        },
+      }),
+      prisma.tradeFinanceAdvance.update({
+        where: { id: advance.id },
+        data: {
+          repaidAmount: newRepaid,
+          status: fullyRepaid ? 'repaid' : 'partial',
+        },
       }),
     ]);
   } else {
