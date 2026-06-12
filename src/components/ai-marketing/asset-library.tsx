@@ -73,7 +73,7 @@ export function AssetLibrary({ className, variant = "glass", span = 3, ...props 
 
       if (isDemoMode()) {
         // Demo mode only: show placeholder assets so the UI is not empty
-        console.warn("[UNI-2116] DEMO MODE active — using demo assets");
+        console.warn("[UNI-2116] DEMO MODE active â€” using demo assets");
         setAssets([
           {
             id: "1",
