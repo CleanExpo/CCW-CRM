@@ -16,25 +16,36 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { _resetAllPortalStores } from '../portal/mock-store';
+import { _resetAllPortalStores, getPortalStore } from '../portal/mock-store';
 
-// Mock auth before importing route handlers
-vi.mock('@/lib/auth/data-scope', () => ({
-  requireAuthScope: vi.fn(),
+vi.mock('@/lib/portal/customer-context', () => ({
+  resolvePortalCustomer: vi.fn(),
 }));
 
-import { requireAuthScope } from '@/lib/auth/data-scope';
+vi.mock('@/lib/portal/portal-data', () => ({
+  getPortalOrdersForCustomer: vi.fn(async (customerId: string) => getPortalStore(customerId).orders),
+  getPortalTrackingForCustomer: vi.fn(async (customerId: string, filters?: { orderId?: string | null; trackingNumber?: string | null }) => {
+    let events = getPortalStore(customerId).tracking;
+    if (filters?.orderId) events = events.filter((e) => e.order_id === filters.orderId);
+    if (filters?.trackingNumber) {
+      events = events.filter((e) => e.tracking_number === filters.trackingNumber);
+    }
+    return events;
+  }),
+}));
+
+import { resolvePortalCustomer } from '@/lib/portal/customer-context';
 import { GET as ordersGET } from '@/app/api/portal/orders/route';
 import { GET as trackingGET } from '@/app/api/portal/tracking/route';
 
-type MockAuthScope = {
+type MockPortalContext = {
   userId: string;
-  role: 'owner' | 'admin' | 'member' | 'billing';
-  isAdmin: boolean;
+  email: string;
+  customerId: string;
 } | null;
 
-function setAuth(scope: MockAuthScope) {
-  vi.mocked(requireAuthScope).mockResolvedValue(scope);
+function setPortalCustomer(ctx: MockPortalContext) {
+  vi.mocked(resolvePortalCustomer).mockResolvedValue(ctx);
 }
 
 function makeGetRequest(path = 'http://localhost/api/portal/orders'): Request {
@@ -48,7 +59,7 @@ function makeGetRequest(path = 'http://localhost/api/portal/orders'): Request {
 describe('Portal routes: unauthenticated requests are blocked (401)', () => {
   beforeEach(() => {
     _resetAllPortalStores();
-    setAuth(null);
+    setPortalCustomer(null);
   });
 
   it('GET /api/portal/orders → 401', async () => {
@@ -73,7 +84,7 @@ describe('Portal orders: authenticated customer A gets their orders', () => {
 
   beforeEach(() => {
     _resetAllPortalStores();
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
   });
 
   it('returns 200 with orders array', async () => {
@@ -103,7 +114,7 @@ describe('Portal orders: authenticated customer B gets their orders', () => {
 
   beforeEach(() => {
     _resetAllPortalStores();
-    setAuth({ userId: CUSTOMER_B, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_B, email: 'b@example.com', customerId: CUSTOMER_B });
   });
 
   it('returns 200 with orders array', async () => {
@@ -137,13 +148,13 @@ describe('Portal orders: customer A cannot access customer B data (isolation)', 
 
   it("customer A's response contains none of customer B's order IDs", async () => {
     // First, let customer B load their store (populates their data)
-    setAuth({ userId: CUSTOMER_B, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_B, email: 'b@example.com', customerId: CUSTOMER_B });
     const resB = await ordersGET(makeGetRequest() as never);
     const bodyB = (await resB.json()) as { orders: Array<{ order_id: string }> };
     const bOrderIds = bodyB.orders.map((o) => o.order_id);
 
     // Now customer A authenticates and fetches their orders
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
     const resA = await ordersGET(makeGetRequest() as never);
     const bodyA = (await resA.json()) as { orders: Array<{ order_id: string }> };
     const aOrderIds = bodyA.orders.map((o) => o.order_id);
@@ -155,12 +166,12 @@ describe('Portal orders: customer A cannot access customer B data (isolation)', 
   });
 
   it("customer B's response contains none of customer A's order IDs", async () => {
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
     const resA = await ordersGET(makeGetRequest() as never);
     const bodyA = (await resA.json()) as { orders: Array<{ order_id: string }> };
     const aOrderIds = bodyA.orders.map((o) => o.order_id);
 
-    setAuth({ userId: CUSTOMER_B, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_B, email: 'b@example.com', customerId: CUSTOMER_B });
     const resB = await ordersGET(makeGetRequest() as never);
     const bodyB = (await resB.json()) as { orders: Array<{ order_id: string }> };
     const bOrderIds = bodyB.orders.map((o) => o.order_id);
@@ -171,12 +182,12 @@ describe('Portal orders: customer A cannot access customer B data (isolation)', 
   });
 
   it('customer A order numbers are distinct from customer B order numbers', async () => {
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
     const resA = await ordersGET(makeGetRequest() as never);
     const bodyA = (await resA.json()) as { orders: Array<{ order_number: string }> };
     const aOrderNumbers = bodyA.orders.map((o) => o.order_number);
 
-    setAuth({ userId: CUSTOMER_B, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_B, email: 'b@example.com', customerId: CUSTOMER_B });
     const resB = await ordersGET(makeGetRequest() as never);
     const bodyB = (await resB.json()) as { orders: Array<{ order_number: string }> };
     const bOrderNumbers = bodyB.orders.map((o) => o.order_number);
@@ -201,7 +212,7 @@ describe('Portal tracking: cross-customer isolation', () => {
   });
 
   it('unauthenticated → 401', async () => {
-    setAuth(null);
+    setPortalCustomer(null);
     const res = await trackingGET(
       makeGetRequest('http://localhost/api/portal/tracking') as never
     );
@@ -209,7 +220,7 @@ describe('Portal tracking: cross-customer isolation', () => {
   });
 
   it('customer A gets their tracking events', async () => {
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
     const res = await trackingGET(
       makeGetRequest('http://localhost/api/portal/tracking') as never
     );
@@ -223,7 +234,7 @@ describe('Portal tracking: cross-customer isolation', () => {
 
   it("customer A's tracking events do NOT contain customer B's event IDs", async () => {
     // Populate B's tracking data
-    setAuth({ userId: CUSTOMER_B, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_B, email: 'b@example.com', customerId: CUSTOMER_B });
     const resB = await trackingGET(
       makeGetRequest('http://localhost/api/portal/tracking') as never
     );
@@ -231,7 +242,7 @@ describe('Portal tracking: cross-customer isolation', () => {
     const bEventIds = bodyB.tracking.map((e) => e.event_id);
 
     // A fetches tracking
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
     const resA = await trackingGET(
       makeGetRequest('http://localhost/api/portal/tracking') as never
     );
@@ -264,7 +275,7 @@ describe('Portal orders: demo mode returns fixture data', () => {
   it('returns fixture orders in demo mode', async () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true';
     _resetAllPortalStores();
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
 
     const res = await ordersGET(makeGetRequest() as never);
     expect(res.status).toBe(200);
@@ -277,7 +288,7 @@ describe('Portal orders: demo mode returns fixture data', () => {
   it('demo mode still scopes orders to the authenticated customer', async () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true';
     _resetAllPortalStores();
-    setAuth({ userId: CUSTOMER_A, role: 'member', isAdmin: false });
+    setPortalCustomer({ userId: CUSTOMER_A, email: 'a@example.com', customerId: CUSTOMER_A });
 
     const res = await ordersGET(makeGetRequest() as never);
     const body = (await res.json()) as { orders: Array<{ order_id: string }> };
