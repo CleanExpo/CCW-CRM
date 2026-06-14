@@ -1,10 +1,5 @@
 /**
  * UNI-2111: Company settings endpoint — org-authenticated GET + PUT.
- *
- * Auth pattern mirrors POS routes merged in UNI-2107:
- *   1. requireAuthScope  → 401 if no valid JWT
- *   2. getWorkspaceIdForUser → 403 if user has no workspace row
- *   3. workspaceId from DB used as the store key (never from request)
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
@@ -22,7 +17,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
   }
 
-  const settings = getCompanySettings(workspaceId);
+  const settings = await getCompanySettings(workspaceId);
   return NextResponse.json(settings);
 }
 
@@ -49,7 +44,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ detail: 'name is required' }, { status: 400 });
   }
 
-  const updated = saveCompanySettings(workspaceId, {
+  const updated = await saveCompanySettings(workspaceId, {
     name,
     trading_name: typeof body.trading_name === 'string' ? body.trading_name.trim() || null : null,
     abn: typeof body.abn === 'string' ? body.abn.trim() || null : null,
