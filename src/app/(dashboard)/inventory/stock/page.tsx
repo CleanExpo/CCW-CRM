@@ -28,6 +28,7 @@ import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { StockTransferDialog } from '../components/StockTransferDialog';
 import { StockAdjustmentDialog } from '../components/StockAdjustmentDialog';
+import { SdsPanel } from '../components/SdsPanel';
 import { format } from 'date-fns';
 import {
   OperationsPageHeader,
@@ -45,6 +46,7 @@ export default function InventoryStockPage() {
   // Dialogs
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+  const [sdsPanelOpen, setSdsPanelOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
 
   // Search state persistence
@@ -169,6 +171,11 @@ export default function InventoryStockPage() {
     setAdjustDialogOpen(true);
   };
 
+  const handleSds = (item: InventoryItem) => {
+    setSelectedProduct(item);
+    setSdsPanelOpen(true);
+  };
+
   const handleActionSuccess = () => {
     loadInventory();
   };
@@ -221,6 +228,9 @@ export default function InventoryStockPage() {
           </Button>
           <Button size="sm" variant="outline" onClick={() => handleAdjust(item)}>
             Adjust
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleSds(item)}>
+            SDS
           </Button>
         </div>
       ),
@@ -406,6 +416,13 @@ export default function InventoryStockPage() {
             productName={selectedProduct.name}
             productSku={selectedProduct.sku}
             onSuccess={handleActionSuccess}
+          />
+          <SdsPanel
+            open={sdsPanelOpen}
+            onOpenChange={setSdsPanelOpen}
+            productId={selectedProduct.id}
+            productName={selectedProduct.name}
+            productSku={selectedProduct.sku}
           />
         </>
       )}
