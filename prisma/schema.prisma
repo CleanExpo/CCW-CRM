@@ -1191,6 +1191,22 @@ model AgentRun {
   @@map("agent_runs")
 }
 
+/// Per-workspace company profile (Settings → Company, UNI-2111).
+model WorkspaceSettings {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @unique @map("workspace_id") @db.Uuid
+  name        String   @default("My Company")
+  slug        String   @default("my-company")
+  tradingName String?  @map("trading_name")
+  abn         String?
+  acn         String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("workspace_settings")
+}
+
 /// OAuth tokens for Xero accounting (one row per workspace).
 model WorkspaceXeroConnection {
   id                String    @id @default(uuid()) @db.Uuid
