@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
+import { getWorkspaceIdForUser, getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { getPosStore } from '@/lib/pos/mock-store';
+import { resolvePrice } from '@/lib/pricing/resolve-price';
 
 function txNumber() {
   return `POS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -21,10 +22,11 @@ export async function GET(request: NextRequest) {
     const pageSize = limitParam > 0 ? limitParam : parseInt(searchParams.get('page_size') || '50');
     const recon = searchParams.get('reconciliation_status');
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
     const where: {
-      ownerUserId: string;
+      ownerUserId: { in: string[] };
       reconciliationStatus?: string;
-    } = { ownerUserId: scope.userId };
+    } = { ownerUserId: { in: workspaceUserIds } };
     if (recon) where.reconciliationStatus = recon;
 
     const [rows, total] = await Promise.all([
@@ -72,7 +74,15 @@ export async function POST(request: NextRequest) {
       sales_staff_id?: string;
       payment_method?: string;
       amount?: number;
-      items?: Array<{ product_id: string; quantity: number; unit_price: number }>;
+      /** customer_id is optional; when provided the tier resolver runs. */
+      customer_id?: string;
+      items?: Array<{
+        product_id: string;
+        quantity: number;
+        /** Caller-supplied unit_price is treated as an explicit override (audit trail).
+         *  When absent, the tier/catalogue resolver determines the price. */
+        unit_price?: number;
+      }>;
     };
 
     const terminalId = String(body.terminal_id ?? '');
@@ -90,6 +100,7 @@ export async function POST(request: NextRequest) {
     const locationCode =
       store.terminals.find((terminal) => terminal.id === terminalId)?.location_code ?? 'brisbane';
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
     const uid = scope.userId;
 
     if (items.length === 0) {
@@ -124,9 +135,10 @@ export async function POST(request: NextRequest) {
 
     const ids = [...new Set(items.map((i) => i.product_id))];
     const products = await prisma.product.findMany({
-      where: { id: { in: ids }, isActive: true, ownerUserId: uid },
+      where: { id: { in: ids }, isActive: true, ownerUserId: { in: workspaceUserIds } },
     });
-    const byId = new Map(products.map((p) => [p.id, p]));
+    const productExists = new Set(products.map((p) => p.id));
+    const customerId = body.customer_id ?? null;
 
     let subtotal = 0;
     const lineData: Array<{
@@ -137,13 +149,21 @@ export async function POST(request: NextRequest) {
     }> = [];
 
     for (const row of items) {
-      const p = byId.get(row.product_id);
-      if (!p) {
+      if (!productExists.has(row.product_id)) {
         return NextResponse.json({ detail: `Unknown product ${row.product_id}` }, { status: 400 });
       }
       const qty = Math.max(0, Math.floor(Number(row.quantity)));
       if (qty <= 0) continue;
-      const unit = Number(row.unit_price ?? p.price);
+
+      let unit: number;
+      if (row.unit_price !== undefined && Number.isFinite(Number(row.unit_price))) {
+        // Explicit caller override — honour as-is (e.g. manual staff discount at POS).
+        unit = Number(row.unit_price);
+      } else {
+        const resolved = await resolvePrice(customerId, row.product_id, qty, workspaceUserIds);
+        unit = resolved.unitPrice;
+      }
+
       const lt = unit * qty;
       subtotal += lt;
       lineData.push({ productId: row.product_id, quantity: qty, unitPrice: unit, lineTotal: lt });
