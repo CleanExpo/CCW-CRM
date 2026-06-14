@@ -33,7 +33,7 @@ import { DeleteContactDialog } from '../../contacts/components/DeleteContactDial
 import { ActivityTimeline, type Activity } from './components/ActivityTimeline';
 import { ActivityForm } from './components/ActivityForm';
 import { DeleteActivityDialog } from './components/DeleteActivityDialog';
-import { UnifiedCustomerTimeline } from '@/components/customer/UnifiedCustomerTimeline';
+import { PricingTierPanel } from './components/PricingTierPanel';
 import type { ActivityWithRelations } from '@/types/activities';
 
 interface Customer {
@@ -425,9 +425,8 @@ export default function CustomerDetailPage() {
       </Card>
 
       {/* Orders and Quotes Tabs */}
-      <Tabs defaultValue="timeline" className="space-y-4">
+      <Tabs defaultValue="orders" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
           <TabsTrigger value="quotes">Quotes ({quotes.length})</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({contacts.length})</TabsTrigger>
@@ -436,21 +435,11 @@ export default function CustomerDetailPage() {
             <Award className="mr-1 h-4 w-4" />
             Certifications ({certifications.length})
           </TabsTrigger>
+          <TabsTrigger value="pricing">
+            <Tag className="mr-1 h-4 w-4" />
+            Pricing
+          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="timeline" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Unified customer timeline</CardTitle>
-              <CardDescription>
-                Emails, invoices, orders, quotes, payments, and activities in one operational history.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UnifiedCustomerTimeline customerId={customerId} />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="orders" className="space-y-4">
           <Card>
@@ -786,6 +775,9 @@ export default function CustomerDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="pricing" className="space-y-4">
+          <PricingTierPanel customerId={customerId} />
         </TabsContent>
       </Tabs>
 
