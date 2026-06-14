@@ -41,6 +41,12 @@ model Customer {
   phone       String?
   city        String?
   isActive    Boolean  @default(true) @map("is_active")
+  /// Maximum outstanding balance allowed before new orders are blocked (AUD, null = no limit)
+  creditLimitAUD  Decimal? @map("credit_limit_aud") @db.Decimal(12, 2)
+  /// Days from due-date anchor until invoice is due
+  creditTermsDays Int?     @map("credit_terms_days")
+  /// How the due date is anchored: NET = invoiceDate+days; EOM = end-of-invoice-month+days
+  creditTermsType String?  @map("credit_terms_type")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -54,6 +60,7 @@ model Customer {
   workshopServiceReminders WorkshopServiceReminder[]
   emailThreads             EmailThread[]
   operationalEvents        OperationalEvent[]
+  priceTier                CustomerPriceTier?
 
   @@index([ownerUserId])
   @@map("customers")
@@ -156,10 +163,31 @@ model Product {
   inventoryStockTakeLines      InventoryStockTakeLine[]
   workshopEquipment            WorkshopEquipment[]
   workshopServiceTemplateItems WorkshopServiceTemplateItem[]
+  sds                          ProductSds?
 
   @@unique([ownerUserId, sku])
   @@index([ownerUserId])
   @@map("products")
+}
+
+model ProductSds {
+  id                       String    @id @default(uuid()) @db.Uuid
+  productId                String    @unique @map("product_id") @db.Uuid
+  sdsPdfUrl                String?   @map("sds_pdf_url") @db.Text
+  ghsSignalWord            String?   @map("ghs_signal_word")
+  /// GHS hazard statement codes, e.g. ["H225","H302"]
+  hazardStatements         Json      @default("[]") @map("hazard_statements")
+  revisionDate             DateTime? @map("revision_date") @db.Date
+  reviewDueDate            DateTime? @map("review_due_date") @db.Date
+  supplierEmergencyContact String?   @map("supplier_emergency_contact") @db.Text
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([reviewDueDate])
+  @@map("product_sds")
 }
 
 model Cin7BomMaster {
@@ -1189,6 +1217,45 @@ model AgentRun {
   completedAt  DateTime? @map("completed_at")
 
   @@map("agent_runs")
+}
+
+model PriceList {
+  id             String   @id @default(uuid()) @db.Uuid
+  ownerUserId    String   @map("owner_user_id") @db.Uuid
+  name           String
+  description    String?
+  /// JSON array of { product_id, unit_price }
+  priceOverrides Json     @default("[]") @map("price_overrides")
+  /// JSON array of { product_id, min_qty, unit_price }
+  volumeBreaks   Json     @default("[]") @map("volume_breaks")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  customerTiers CustomerPriceTier[]
+
+  @@unique([ownerUserId, name])
+  @@index([ownerUserId])
+  @@map("price_lists")
+}
+
+/// Links a Customer to a PriceList with an optional expiry.
+model CustomerPriceTier {
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerUserId String    @map("owner_user_id") @db.Uuid
+  customerId  String    @unique @map("customer_id") @db.Uuid
+  priceListId String    @map("price_list_id") @db.Uuid
+  expiresAt   DateTime? @map("expires_at")
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  customer  Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  priceList PriceList @relation(fields: [priceListId], references: [id], onDelete: Restrict)
+
+  @@index([ownerUserId])
+  @@index([priceListId])
+  @@map("customer_price_tiers")
 }
 
 /// Per-workspace company profile (Settings → Company, UNI-2111).
