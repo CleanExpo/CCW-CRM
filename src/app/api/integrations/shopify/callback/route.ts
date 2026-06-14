@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import {
   exchangeShopifyOAuthCode,
   getShopifyClientSecret,
   verifyShopifyOAuthHmac,
 } from '@/lib/integrations/shopify';
+import {
+  clearShopifyOAuthStateCookies,
+  verifyShopifyOAuthShop,
+  verifyShopifyOAuthState,
+} from '@/lib/integrations/shopify-oauth';
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
@@ -12,7 +19,6 @@ export async function GET(request: NextRequest) {
   const shop = params.get('shop')?.trim();
   const state = params.get('state');
   const cookieState = request.cookies.get('shopify_oauth_state')?.value;
-  const cookieShop = request.cookies.get('shopify_oauth_shop')?.value?.trim();
 
   const base = process.env.NEXT_PUBLIC_FRONTEND_URL?.trim() || 'http://localhost:3000';
   const settingsUrl = `${base.replace(/\/$/, '')}/dashboard/settings/integrations`;
@@ -23,14 +29,24 @@ export async function GET(request: NextRequest) {
   if (!code || !shop) {
     return fail('Missing OAuth code or shop.');
   }
-  if (!state || !cookieState || state !== cookieState) {
+  if (!verifyShopifyOAuthState(request, state)) {
     return fail('Invalid OAuth state. Retry authorization.');
   }
   if (!shop.endsWith('.myshopify.com')) {
     return fail('Invalid shop hostname.');
   }
-  if (cookieShop && cookieShop !== shop) {
+  if (!verifyShopifyOAuthShop(request, shop)) {
     return fail('Shop mismatch during OAuth. Retry authorization.');
+  }
+
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return fail('You must be logged in to complete Shopify connection.');
+  }
+
+  const workspaceId = await getWorkspaceIdForUser(scope.userId);
+  if (!workspaceId) {
+    return fail('No workspace found for this user.');
   }
 
   const secret = getShopifyClientSecret();
@@ -46,8 +62,7 @@ export async function GET(request: NextRequest) {
     res.cookies.set('shopify_shop_domain', shop, common);
     res.cookies.set('shopify_access_token', access_token, common);
     res.cookies.set('shopify_connected', '1', common);
-    res.cookies.set('shopify_oauth_state', '', { path: '/', maxAge: 0 });
-    res.cookies.set('shopify_oauth_shop', '', { path: '/', maxAge: 0 });
+    clearShopifyOAuthStateCookies(res);
     return res;
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'OAuth token exchange failed.';
