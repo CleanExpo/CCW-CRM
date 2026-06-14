@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import {
   fetchShopifyShop,
   getConfiguredShopifyFromRequest,
@@ -8,6 +10,16 @@ import {
 } from '@/lib/integrations/shopify';
 
 export async function GET(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
+  const workspaceId = await getWorkspaceIdForUser(scope.userId);
+  if (!workspaceId) {
+    return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+  }
+
   const configuredMode = getShopifyMode();
   const connectedCookie = request.cookies.get('shopify_connected')?.value === '1';
 
