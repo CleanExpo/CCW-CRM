@@ -1,31 +1,20 @@
 /**
  * POST /api/bank-feeds/bulk-reconcile
  *
- * Bulk match N bank-feed transactions to N POS transactions.
- *
- * UNI-2113 requirements:
- * (a) Audit trail — one ReconciliationMatchAudit row per pair (success or failure).
- * (b) Partial failures — if some pairs fail validation the rest still succeed.
- *     The 200 response itemises every failure with its reason.
- * (c) Auth/workspace scoping — requireAuthScope → getWorkspaceIdForUser → 401/403.
- *
- * Request body:
- *   { "matches": [{ "bank_feed_id": "…", "pos_transaction_id": "…" }] }
- *
- * Response 200:
- *   {
- *     "success": boolean,        // true only when failed_count === 0
- *     "matched_count": number,
- *     "failed_count": number,
- *     "failures": [{ "bank_feed_id": "…", "pos_transaction_id": "…", "reason": "…" }],
- *     "errors": string[]         // legacy alias kept for backwards compat
- *   }
+ * UNI-2113: bulk POS matching with audit trail, partial failures, workspace scoping.
+ * Uses the shared applyBankMatch path (same as single reconcile) plus POS audit rows.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
+import { applyBankMatch } from '@/lib/bank-reconciliation/apply-match';
+import {
+  bankAccountOwnerFilter,
+  workspaceOwnerIds,
+} from '@/lib/bank-reconciliation/scope';
+import { exportReconciledFeedToXero } from '@/lib/integrations/xero-reconciliation-export';
 
 interface MatchPair {
   bank_feed_id?: string;
@@ -38,8 +27,31 @@ interface FailureDetail {
   reason: string;
 }
 
+const PLACEHOLDER_UUID = '00000000-0000-0000-0000-000000000000';
+
+async function recordBulkMatchAudit(input: {
+  userId: string;
+  bankFeedId: string;
+  posTransactionId: string;
+  outcome: 'matched' | 'failed';
+  failureReason?: string;
+}) {
+  try {
+    await prisma.reconciliationMatchAudit.create({
+      data: {
+        matchedByUserId: input.userId,
+        bankFeedId: input.bankFeedId,
+        posTransactionId: input.posTransactionId,
+        outcome: input.outcome,
+        failureReason: input.failureReason ?? null,
+      },
+    });
+  } catch {
+    // Audit failure must not block bulk response counts
+  }
+}
+
 export async function POST(request: NextRequest) {
-  // ── Auth gate ──────────────────────────────────────────────────────────────
   const scope = await requireAuthScope(request);
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
@@ -50,7 +62,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
   }
 
-  // ── Input validation ───────────────────────────────────────────────────────
+  const ownerIds = await workspaceOwnerIds(scope.userId);
+
   let body: { matches?: MatchPair[] };
   try {
     body = (await request.json()) as { matches?: MatchPair[] };
@@ -66,44 +79,43 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── Per-pair processing with partial-failure semantics ─────────────────────
   let matchedCount = 0;
   let failedCount = 0;
   const failures: FailureDetail[] = [];
-  const errors: string[] = []; // backwards-compat field
+  const errors: string[] = [];
 
   for (const pair of matches) {
     const feedId = String(pair.bank_feed_id ?? '').trim();
     const posId = String(pair.pos_transaction_id ?? '').trim();
 
-    // Validate IDs present
     if (!feedId || !posId) {
       const reason = 'Missing bank_feed_id or pos_transaction_id';
       failures.push({ bank_feed_id: feedId, pos_transaction_id: posId, reason });
       errors.push(reason);
       failedCount += 1;
-
-      // Audit the failure (no DB rows to update, but record intent)
-      await prisma.reconciliationMatchAudit.create({
-        data: {
-          matchedByUserId: scope.userId,
-          bankFeedId: feedId || '00000000-0000-0000-0000-000000000000',
-          posTransactionId: posId || '00000000-0000-0000-0000-000000000000',
-          outcome: 'failed',
-          failureReason: reason,
-        },
+      await recordBulkMatchAudit({
+        userId: scope.userId,
+        bankFeedId: feedId || PLACEHOLDER_UUID,
+        posTransactionId: posId || PLACEHOLDER_UUID,
+        outcome: 'failed',
+        failureReason: reason,
       });
       continue;
     }
 
-    // Validate ownership: bank feed must belong to this user's workspace,
-    // POS transaction must be owned by this user.
     const [feed, pos] = await Promise.all([
       prisma.bankFeedTransaction.findFirst({
-        where: { id: feedId, bankAccount: { ownerUserId: scope.userId } },
+        where: {
+          id: feedId,
+          reconciled: false,
+          bankAccount: bankAccountOwnerFilter(ownerIds),
+        },
       }),
       prisma.posTransaction.findFirst({
-        where: { id: posId, ownerUserId: scope.userId },
+        where: {
+          id: posId,
+          ownerUserId: { in: ownerIds },
+        },
       }),
     ]);
 
@@ -112,14 +124,12 @@ export async function POST(request: NextRequest) {
       failures.push({ bank_feed_id: feedId, pos_transaction_id: posId, reason });
       errors.push(reason);
       failedCount += 1;
-      await prisma.reconciliationMatchAudit.create({
-        data: {
-          matchedByUserId: scope.userId,
-          bankFeedId: feedId,
-          posTransactionId: posId,
-          outcome: 'failed',
-          failureReason: reason,
-        },
+      await recordBulkMatchAudit({
+        userId: scope.userId,
+        bankFeedId: feedId,
+        posTransactionId: posId,
+        outcome: 'failed',
+        failureReason: reason,
       });
       continue;
     }
@@ -129,32 +139,12 @@ export async function POST(request: NextRequest) {
       failures.push({ bank_feed_id: feedId, pos_transaction_id: posId, reason });
       errors.push(reason);
       failedCount += 1;
-      await prisma.reconciliationMatchAudit.create({
-        data: {
-          matchedByUserId: scope.userId,
-          bankFeedId: feedId,
-          posTransactionId: posId,
-          outcome: 'failed',
-          failureReason: reason,
-        },
-      });
-      continue;
-    }
-
-    // Guard: skip already-reconciled pairs
-    if (feed.reconciled) {
-      const reason = `Bank feed transaction already reconciled: ${feedId}`;
-      failures.push({ bank_feed_id: feedId, pos_transaction_id: posId, reason });
-      errors.push(reason);
-      failedCount += 1;
-      await prisma.reconciliationMatchAudit.create({
-        data: {
-          matchedByUserId: scope.userId,
-          bankFeedId: feedId,
-          posTransactionId: posId,
-          outcome: 'failed',
-          failureReason: reason,
-        },
+      await recordBulkMatchAudit({
+        userId: scope.userId,
+        bankFeedId: feedId,
+        posTransactionId: posId,
+        outcome: 'failed',
+        failureReason: reason,
       });
       continue;
     }
@@ -164,60 +154,47 @@ export async function POST(request: NextRequest) {
       failures.push({ bank_feed_id: feedId, pos_transaction_id: posId, reason });
       errors.push(reason);
       failedCount += 1;
-      await prisma.reconciliationMatchAudit.create({
-        data: {
-          matchedByUserId: scope.userId,
-          bankFeedId: feedId,
-          posTransactionId: posId,
-          outcome: 'failed',
-          failureReason: reason,
-        },
+      await recordBulkMatchAudit({
+        userId: scope.userId,
+        bankFeedId: feedId,
+        posTransactionId: posId,
+        outcome: 'failed',
+        failureReason: reason,
       });
       continue;
     }
 
-    // Attempt the match inside a DB transaction; catch per-pair errors
     try {
-      await prisma.$transaction([
-        prisma.bankFeedTransaction.update({
-          where: { id: feedId },
-          data: { reconciled: true, matchedPosTxId: posId },
-        }),
-        prisma.posTransaction.update({
-          where: { id: posId },
-          data: { reconciliationStatus: 'reconciled' },
-        }),
-        // Audit record — the single source of truth for "who matched what, when"
-        prisma.reconciliationMatchAudit.create({
-          data: {
-            matchedByUserId: scope.userId,
-            bankFeedId: feedId,
-            posTransactionId: posId,
-            outcome: 'matched',
-          },
-        }),
-      ]);
+      await applyBankMatch({
+        feedId,
+        userId: scope.userId,
+        targetType: 'pos_transaction',
+        targetId: posId,
+        notes: 'Bulk POS reconciliation',
+      });
+      await exportReconciledFeedToXero({
+        feedTransactionId: feedId,
+        performedBy: scope.userId,
+      });
+      await recordBulkMatchAudit({
+        userId: scope.userId,
+        bankFeedId: feedId,
+        posTransactionId: posId,
+        outcome: 'matched',
+      });
       matchedCount += 1;
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
       failures.push({ bank_feed_id: feedId, pos_transaction_id: posId, reason });
       errors.push(reason);
       failedCount += 1;
-
-      // Best-effort audit of the failure
-      try {
-        await prisma.reconciliationMatchAudit.create({
-          data: {
-            matchedByUserId: scope.userId,
-            bankFeedId: feedId,
-            posTransactionId: posId,
-            outcome: 'failed',
-            failureReason: reason,
-          },
-        });
-      } catch {
-        // If even the audit write fails we still return the correct counts
-      }
+      await recordBulkMatchAudit({
+        userId: scope.userId,
+        bankFeedId: feedId,
+        posTransactionId: posId,
+        outcome: 'failed',
+        failureReason: reason,
+      });
     }
   }
 
@@ -226,6 +203,6 @@ export async function POST(request: NextRequest) {
     matched_count: matchedCount,
     failed_count: failedCount,
     failures,
-    errors, // backwards compat
+    errors,
   });
 }
