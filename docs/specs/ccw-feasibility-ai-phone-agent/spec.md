@@ -24,6 +24,7 @@ This is done when CCW-CRM can recreate the add-on database from committed Prisma
 - Toby needs the feasibility statement to behave like a constant AI ally looking for growth, diversification, and cost-saving opportunities that improve future decision-making. [VERIFIED - user clarification on 16 June 2026]
 - The ElevenLabs/Twilio implementation should be designed alongside the new CRM as a modern phone gatekeeper that decides whether a caller truly needs a human or can be answered from CCW-owned and approved credible knowledge. [VERIFIED - user clarification on 16 June 2026]
 - Phone conversations must become a learning source: discover repeated intents, objections, personas, service needs, sales opportunities, training demand, and campaign ideas, then generate specialised agents/playbooks that improve user experience and conversion over time. [VERIFIED - user clarification on 16 June 2026]
+- Follow-up agents are required to monitor opportunities, tracking updates, service intervals, and company-day/event signals, then fire approved emails/messages or draft campaigns that build CCW and Unite-Group into a stronger industry hub. [VERIFIED - user clarification on 16 June 2026]
 
 ## 0. Where This Sits In The Pipeline
 
@@ -52,6 +53,7 @@ This add-on adds a decision and pilot layer for NSW access strategy and Toby's o
 - use the ElevenLabs/Twilio agent as the CRM phone gatekeeper, separating calls that truly need a human from calls answerable with approved CCW knowledge;
 - convert qualified AI-phone outcomes into CRM leads, service-request drafts, quote opportunities, or human follow-up activities;
 - discover call patterns and convert them into specialised agents, sales/service playbooks, booking flows, support flows, training opportunities, newsletters, email campaigns, and social media blitz ideas;
+- run follow-up agents that detect when customers should receive tracking updates, service reminders, sales follow-ups, training invitations, company-day invites, appreciation-day invites, industry-awards outreach, or mini-tradeshow campaigns;
 - keep every consequential action behind a human or hard-rule gate.
 
 ### Infrastructure Already In Place
@@ -83,6 +85,20 @@ The phone layer must learn from past conversations without mutating live behavio
 - **Campaign extraction:** convert conversation patterns into draft newsletters, email campaigns, social media blitzes, training offers, and follow-up lists.
 - **Approval gate:** new agent personas, prompts, routing rules, campaign drafts, and outbound actions are proposed first and only promoted after human approval and test review.
 
+### Follow-Up Agents And Industry Hub
+
+Follow-up agents are specialised agents that look for timing, relationship, and opportunity signals after the first interaction. They should help CCW and Unite-Group create an industry feel, not only chase transactions:
+
+- **Tracking updates:** monitor order/shipment/status signals and send or draft customer updates when the message is approved, consent-safe, and tied to a real record.
+- **Service intervals:** monitor equipment, service reminders, warranty/service history, product category, and customer profile to trigger service check-ins or booking drafts.
+- **Sales and lead nurture:** follow up open quotes, abandoned online sales opportunities, phone-order drafts, high-intent product enquiries, and dormant accounts.
+- **Company days:** manage invite lists, speaker/guest records, RSVPs, follow-up packs, and post-event sales/support tasks for CCW company days.
+- **Industry events:** support mini-tradeshows, appreciation days, industry awards, supplier showcases, training days, and new-opportunity showcases.
+- **Channel orchestration:** prepare or send approved emails, SMS/messages, newsletters, email campaigns, and social campaign briefs using consent and unsubscribe rules.
+- **Learning loop:** measure opens, replies, bookings, sales, service work, RSVPs, attendance, award nominations, and post-event conversions so the next follow-up agent improves.
+
+The default posture is draft-first until a template, audience, consent basis, frequency cap, sender identity, and owner approval are configured. Recurring operational notifications can be auto-sent only when the rule is explicitly approved and tied to a specific record state.
+
 ### Owner-Adjustable Claims And Xero Backing
 
 Financial claims are not hardcoded constants. Each financial input must be stored with value, currency, period, source type, evidence state, Toby override history, and optional Xero backing reference. [INFERENCE - implementation requirement from user clarification and existing Xero integration]
@@ -96,6 +112,7 @@ Financial claims are not hardcoded constants. Each financial input must be store
 - [UNCONFIRMED] CCW Shopify, website, catalogue, SDS, manuals, FAQs, supplier guidance, and selected credible external sources can provide enough coverage to answer most routine phone calls without human intervention.
 - [UNCONFIRMED] The first measurable opportunity categories should be growth, diversification, and cost saving; Toby may choose more categories later.
 - [UNCONFIRMED] CARSI training scope, booking rules, online-training flow, and source material need to be defined before the phone agent can answer or book CARSI-related enquiries.
+- [UNCONFIRMED] Company-day, mini-tradeshow, appreciation-day, and industry-awards formats, cadence, invite criteria, and approval owners need to be defined.
 
 ## 2. Definition Of Production-Ready & Owned
 
@@ -116,6 +133,8 @@ The add-on is **Production-Ready & Owned** only when:
 - past phone conversations are mined for repeat intents, personas, objections, conversion gaps, service needs, training demand, and campaign ideas;
 - specialised agents/playbooks can be generated from approved learnings and versioned before being activated;
 - call-derived actions can create leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, training/CARSI follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs;
+- follow-up agents can monitor approved CRM/order/service/event triggers and send or draft emails/messages for tracking updates, service intervals, sales nurture, company days, mini-tradeshows, appreciation days, industry awards, and training/event follow-ups;
+- every automated follow-up has a source trigger, consent basis, template/version, send state, owner, and performance outcome;
 - phone-agent-created CRM records reference the originating call session ID;
 - feature defaults keep outbound AI calling and call recording disabled;
 - all code, config, migrations, tests, and docs live in Phill's/GitHub-owned repo and deployment accounts;
@@ -136,6 +155,8 @@ Before each implementation phase, run a mechanical gap pass and record results i
 | P1 | Phone gatekeeping | Calls are logged without a triage decision or the AI cannot explain why it answered versus escalated. |
 | P1 | Conversation intelligence | Past conversations are stored but not clustered into intents, personas, answer gaps, objections, conversion opportunities, or training/campaign ideas. |
 | P1 | Agent learning | Agent prompts/personas can change without versioning, test review, or human approval. |
+| P1 | Follow-up automation | Follow-up emails/messages can fire without a source trigger, approved template, consent basis, frequency cap, or audit trail. |
+| P1 | Industry hub events | Company days, mini-tradeshows, appreciation days, and industry awards have no event model, invite list, RSVP tracking, follow-up plan, or outcome measurement. |
 | P1 | Knowledge grounding | Phone answers are not tied to approved Shopify/website/catalogue/knowledge sources or credible external sources. |
 | P1 | Evidence Standard | Tagged claims and `[UNCONFIRMED]` assumptions are not extracted into findings. |
 | P1 | Lineage | Refinement creates a disconnected version without `parent_*` linkage. |
@@ -159,6 +180,8 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 | AI phone calls | Answer routine questions, qualify intent, capture details, create draft records, and decide whether a human is required. | Pretend to be staff, provide ungrounded advice, resolve complaints/warranty disputes, or answer complex service/install questions as final. | Approved knowledge source, confidence threshold, and escalation rule. |
 | Specialised agents and learning | Generate agent personas, prompts, routing rules, scripts, and playbooks from past conversations. | Activate a new live agent/persona, change routing, or alter customer-facing messaging automatically. | Human approval plus test conversation review. |
 | Sales/service/training/campaign actions | Prepare online sales nudges, phone-order drafts, booking drafts, training follow-ups, newsletters, email campaigns, and social blitz briefs. | Place orders, book paid services, send campaigns, publish social content, or enrol training automatically. | Human approval, consent rules, and channel-specific send/publish gate. |
+| Follow-up agents | Detect approved triggers and prepare/send tracking updates, service interval reminders, sales nurture, company-day invites, event follow-ups, and awards outreach. | Send unapproved messages, ignore unsubscribe/consent, spam contacts, or create event commitments without owner approval. | Approved rule, consent basis, frequency cap, and audit log. |
+| Industry hub events | Draft event concepts, invite lists, speaker lists, RSVP workflows, award categories, showcase themes, and post-event follow-ups. | Invite guests, announce awards, book speakers, publish events, or send campaigns without approval. | Toby/owner approval plus event-specific checklist. |
 | Knowledge sourcing | Use CCW Shopify/website/catalogue/SDS/manual/FAQ/service-rule knowledge and approved credible external sources. | Treat unapproved web content as fact or answer from unknown provenance. | Source approval status, evidence tag, and source citation stored. |
 | Recording/privacy | Detect whether recording is configured. | Record a call or store transcript by default. | Recording flag enabled, consent captured, retention policy set. |
 | Outbound contact | Draft a follow-up task. | Run outbound AI campaigns, SMS/email marketing, or automated callbacks. | Explicit outbound flag, consent/unsubscribe compliance, human approval. |
@@ -208,6 +231,12 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 **Definition of Done:** Twilio status webhook, ElevenLabs post-call webhook, customer lookup by caller phone, call-session storage, knowledge-source lookup, triage decision logging, conversation-intelligence extraction, specialised-agent draft generation, lead/quote/order/service/training/support/campaign draft creation, and human handoff markers are implemented behind safe flags.
 **Hard Test Gate:** invalid webhook signatures are rejected; valid calls can create traceable records with `call_session_id`; every handled call stores a triage outcome, discovered intent/persona, knowledge-source basis, and recommended next action; agent learning creates draft versions only; outbound calling, recording, campaign send, social publish, paid booking, and order placement remain disabled by default.
 **Review Gate:** Atlas/orchestrator review confirms provider state, knowledge-source status, triage rules, learning queue, draft specialised agents, flags, and pilot readiness are visible in the status endpoint.
+
+### Phase 6A - Follow-Up Agents And Industry Hub Workflows
+
+**Definition of Done:** follow-up agents can detect approved triggers for tracking updates, service intervals, sales nurture, phone/order follow-ups, training/CARSI follow-ups, company days, mini-tradeshows, appreciation days, industry awards, newsletters, email campaigns, and social blitz briefs.
+**Hard Test Gate:** each follow-up has a source record, consent basis, approved template/version, frequency cap, send/draft state, and audit trail; auto-send is disabled unless the rule is explicitly approved.
+**Review Gate:** Grid/ops and Lens review confirms follow-ups are useful, consent-safe, non-spammy, and tied to measurable business outcomes.
 
 ### Phase 7 - Refinement Lineage And Export
 
@@ -263,6 +292,9 @@ This checklist is the only honest basis for any "% complete" claim.
 - [ ] Past conversations produce visible discovered intents, personas, objections, answer gaps, and conversion opportunities.
 - [ ] Specialised agents/playbooks are generated as draft versions and require approval before activation.
 - [ ] Phone conversations can create draft leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, CARSI/training follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs.
+- [ ] Follow-up agents can create or send approved tracking updates, service interval reminders, sales nurture messages, company-day invites, event follow-ups, appreciation-day outreach, industry-awards outreach, newsletters, email campaigns, and social blitz briefs.
+- [ ] Company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training days have event records, invite/RSVP tracking, follow-up plans, and outcome metrics.
+- [ ] Auto-send follow-up rules require consent basis, approved template, frequency cap, audit trail, and owner approval.
 - [ ] Recording is disabled unless the recording flag, consent copy, and retention policy are approved.
 - [ ] Outbound AI calling is disabled unless a separate compliance approval enables it.
 - [ ] Toby can see the objective, recommendation, assumptions, blocked gates, and next decision in the UI.
@@ -281,6 +313,9 @@ This checklist is the only honest basis for any "% complete" claim.
 - Confirm what CARSI means in this operating context, what training products are in scope, and which bookings can be drafted versus confirmed.
 - Confirm which specialised phone agents should ship first: sales, service booking, product advice, phone orders, support booking, training/CARSI, campaigns, or escalation triage.
 - Confirm approval rules for newsletters, email campaigns, and social media blitzes generated from conversation learnings.
+- Confirm which follow-up agents should ship first: tracking updates, service intervals, quote follow-up, phone-order follow-up, dormant-account reactivation, company-day invites, event follow-up, appreciation days, industry awards, newsletters, email, SMS/messages, or social blitzes.
+- Confirm company-day/event cadence, target audiences, speaker/guest approval, RSVP process, award categories, supplier showcase rules, and post-event sales/support follow-up process.
+- Confirm which follow-ups may auto-send after approval and which must remain draft-only.
 - Confirm the privacy/consent wording before any call recording or transcript storage is enabled.
 - Confirm whether AI-created "lead" records should map to existing `customers`/`crm_activities`, a new lead table, or draft quote/service-request workflows.
 - Confirm who is allowed to override parcel eligibility for edge cases.
@@ -311,6 +346,13 @@ Required entities:
 - `CcwSpecializedAgentVersion`
 - `CcwAgentLearning`
 - `CcwCallGeneratedAction`
+- `CcwFollowUpAgent`
+- `CcwFollowUpRule`
+- `CcwFollowUpAction`
+- `CcwFollowUpTemplate`
+- `CcwIndustryEvent`
+- `CcwIndustryEventInvite`
+- `CcwIndustryAwardNomination`
 - `CcwAiCallEvent`
 - `CcwAiCallTranscript` only if consent/retention gates are implemented
 - `CcwAiConsent`
@@ -332,6 +374,11 @@ Required lineage fields:
 - `CcwSpecializedAgentVersion.agentId`
 - `CcwAgentLearning.agentVersionId`
 - `CcwCallGeneratedAction.callSessionId`
+- `CcwFollowUpRule.agentId`
+- `CcwFollowUpAction.ruleId`
+- `CcwFollowUpAction.templateId`
+- `CcwIndustryEventInvite.eventId`
+- `CcwIndustryAwardNomination.eventId`
 - AI-created CRM draft records must include or be linkable through `callSessionId`.
 
 ### Required API Surface
@@ -370,6 +417,16 @@ Required lineage fields:
 - `POST /api/phone-agent/specialized-agents/[id]/approve`
 - `GET /api/phone-agent/generated-actions`
 - `POST /api/phone-agent/generated-actions/[id]/approve`
+- `GET /api/follow-up-agents`
+- `POST /api/follow-up-agents`
+- `POST /api/follow-up-agents/[id]/rules`
+- `POST /api/follow-up-actions/[id]/approve`
+- `POST /api/follow-up-actions/[id]/send`
+- `GET /api/industry-events`
+- `POST /api/industry-events`
+- `GET /api/industry-events/[id]/invites`
+- `POST /api/industry-events/[id]/invites`
+- `POST /api/industry-events/[id]/awards`
 - `GET /api/phone-agent/customer-context`
 - `POST /api/webhooks/twilio/voice/status`
 - `POST /api/webhooks/elevenlabs/post-call`

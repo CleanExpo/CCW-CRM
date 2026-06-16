@@ -25,6 +25,8 @@ The ElevenLabs/Twilio work must be implemented alongside the new CRM as the mode
 
 The phone system must also learn from past conversations. It should discover intents, personas, objections, answer gaps, conversion patterns, service/training demand, and campaign ideas; then generate specialised agent/playbook drafts that improve user experience, lead capture, sales conversion, phone orders, service bookings, hands-on support bookings, CARSI/in-house/online training, newsletters, email campaigns, and social media blitzes.
 
+Follow-up agents must monitor CRM/order/service/event signals and fire approved follow-up emails/messages or draft campaigns for tracking updates, service intervals, quote/order follow-up, company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, training days, newsletters, email campaigns, and social media blitzes.
+
 The first implementation must also absorb the Senior Project Method inclusions pulled from `CleanExpo/Fabel-Prompt-Engineer`: recreate-able schema, durable read path, Evidence Standard findings, refinement lineage, export, and parser tests.
 
 ## Known Repo Observations
@@ -63,7 +65,7 @@ Create committed schema source of truth:
 - add Prisma models for the add-on;
 - add a real migration under `prisma/migrations/<timestamp>_ccw_feasibility_ai_phone_agent/migration.sql`;
 - include owner/workspace scoping consistent with existing CRM records;
-- include indexes and foreign keys for statement/scenario lineage, financial claims, financial claim evidence, Xero backing references, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, conversation insights, specialised agents, agent learnings, generated actions, and CRM traceability;
+- include indexes and foreign keys for statement/scenario lineage, financial claims, financial claim evidence, Xero backing references, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, conversation insights, specialised agents, agent learnings, generated actions, follow-up agents, follow-up rules/actions/templates, industry events, invites, awards, and CRM traceability;
 - seed only safe baseline/candidate records using repo conventions.
 
 Done when a fresh empty database can run the migrations and reproduce every add-on table, column, index, and relationship the app uses.
@@ -82,6 +84,7 @@ Implement authenticated list/detail APIs and minimal UI for:
 - approved phone knowledge sources;
 - phone-agent call sessions.
 - conversation insights, specialised agent drafts, agent learning history, and generated action drafts.
+- follow-up agents, follow-up rules/actions/templates, industry events, invites, RSVPs, awards, and event follow-up outcomes.
 
 Done when a user can save a statement/scenario, refresh the page, reopen it from a list, and verify it came from the database.
 
@@ -129,6 +132,8 @@ Add meaningful Vitest coverage for:
 - conversation insight extraction;
 - specialised agent version approval gates;
 - generated action routing for lead, sale, order, booking, training, and campaign drafts.
+- follow-up rule gating, consent/frequency caps, template approval, and send audit;
+- industry event invite, RSVP, awards, and post-event follow-up workflows.
 
 Ensure CI runs `npm run test` alongside lint/type-check/build if it does not already.
 
@@ -209,6 +214,19 @@ Security requirements:
 - AI-created CRM records must link back to `callSessionId`;
 - escalate pricing exceptions, complaints, warranty, dangerous goods, and complex service questions.
 
+### 9A. Follow-Up Agents And Industry Hub
+
+Implement follow-up agents behind safe approval controls:
+
+- monitor tracking/status changes and create customer update actions;
+- monitor service intervals and equipment/service history for service reminder actions;
+- monitor open quotes, phone-order drafts, online sales intent, dormant accounts, and high-intent enquiries for nurture actions;
+- manage company days, mini-tradeshows, appreciation days, supplier showcases, industry awards, and training/event workflows;
+- create invite lists, RSVP records, speaker/guest records, award nominations, post-event tasks, and outcome metrics;
+- support email/message/newsletter/social campaign drafts and approved sends;
+- require consent basis, approved template/version, frequency cap, send state, and audit trail for every outbound follow-up;
+- keep follow-ups draft-only until a rule is explicitly approved for auto-send.
+
 ### 10. UI MVP
 
 Build only after data/API basics work:
@@ -227,6 +245,9 @@ Build only after data/API basics work:
 - conversation insight dashboard;
 - specialised agent draft/version review;
 - generated action queue for leads, sales, orders, bookings, training, newsletters, email campaigns, and social blitzes;
+- follow-up agent control panel;
+- follow-up action queue with draft/approved/sent/blocked states;
+- company day, mini-tradeshow, appreciation day, industry awards, supplier showcase, and training event management;
 - call-session list/detail if ingestion exists;
 - Markdown export button.
 
@@ -268,6 +289,16 @@ Avoid paid map integrations or external map keys in the first pass unless the re
 - `POST /api/phone-agent/specialized-agents/[id]/approve`
 - `GET /api/phone-agent/generated-actions`
 - `POST /api/phone-agent/generated-actions/[id]/approve`
+- `GET /api/follow-up-agents`
+- `POST /api/follow-up-agents`
+- `POST /api/follow-up-agents/[id]/rules`
+- `POST /api/follow-up-actions/[id]/approve`
+- `POST /api/follow-up-actions/[id]/send`
+- `GET /api/industry-events`
+- `POST /api/industry-events`
+- `GET /api/industry-events/[id]/invites`
+- `POST /api/industry-events/[id]/invites`
+- `POST /api/industry-events/[id]/awards`
 - `GET /api/phone-agent/customer-context`
 - `POST /api/webhooks/twilio/voice/status`
 - `POST /api/webhooks/elevenlabs/post-call`
@@ -325,6 +356,9 @@ For schema work, also verify a fresh database migration replay using the repo's 
 - Conversation insight extraction produces intents, personas, objections, answer gaps, and conversion opportunities.
 - Specialised agents/playbooks are generated as inactive draft versions and require approval before activation.
 - Generated action drafts cover leads, online sales nudges, phone orders, service bookings, support bookings, CARSI/training follow-ups, newsletters, email campaigns, and social media blitz briefs.
+- Follow-up agents can produce approved/draft tracking updates, service interval reminders, quote/order follow-ups, company-day invites, event follow-ups, appreciation-day outreach, awards outreach, newsletters, messages, email campaigns, and social blitz briefs.
+- Company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training days have event records, invites, RSVPs, follow-up plans, and outcome metrics.
+- Auto-send follow-up rules require approved template/version, consent basis, frequency cap, audit log, and owner approval.
 - Phone-agent-created records reference a call session ID.
 - Recording and outbound calling remain disabled by default.
 - `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build` pass before PR is marked ready.
