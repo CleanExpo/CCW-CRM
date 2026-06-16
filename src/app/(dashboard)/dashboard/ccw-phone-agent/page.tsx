@@ -109,6 +109,8 @@ export default function CcwPhoneAgentPage() {
   const [transcript, setTranscript] = useState(DEFAULT_TRANSCRIPT);
   const [summary, setSummary] = useState('Service booking discovery call');
   const [eventName, setEventName] = useState('CCW Company Day - Supplier Showcase');
+  const [linkCustomerId, setLinkCustomerId] = useState('');
+  const [linkContactId, setLinkContactId] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -223,6 +225,66 @@ export default function CcwPhoneAgentPage() {
     }
   }
 
+  async function promoteLearning(callId: string) {
+    setSaving(true);
+    setError(null);
+    try {
+      await readJson(
+        await fetch(`/api/phone-agent/call-sessions/${callId}/learning`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+      );
+      await loadAll();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function linkCall(callId: string) {
+    setSaving(true);
+    setError(null);
+    try {
+      await readJson(
+        await fetch(`/api/phone-agent/call-sessions/${callId}/link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: linkCustomerId,
+            contact_id: linkContactId,
+          }),
+        })
+      );
+      await loadAll();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function updateFollowUp(actionId: string, action: 'approve' | 'reject') {
+    setSaving(true);
+    setError(null);
+    try {
+      await readJson(
+        await fetch(`/api/phone-agent/follow-up-actions/${actionId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        })
+      );
+      await loadAll();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -327,6 +389,24 @@ export default function CcwPhoneAgentPage() {
                 <Button onClick={captureCall} disabled={saving} leftIcon={<Sparkles />}>
                   Triage
                 </Button>
+                <div className="grid gap-3 border-t pt-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="link-customer-id">Customer ID</Label>
+                    <Input
+                      id="link-customer-id"
+                      value={linkCustomerId}
+                      onChange={(event) => setLinkCustomerId(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="link-contact-id">Contact ID</Label>
+                    <Input
+                      id="link-contact-id"
+                      value={linkContactId}
+                      onChange={(event) => setLinkContactId(event.target.value)}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -359,6 +439,26 @@ export default function CcwPhoneAgentPage() {
                         <span>{call.intent ?? 'unknown'} intent</span>
                         <span>{call.counts.insights} insights</span>
                         <span>{call.counts.follow_up_actions} follow-ups</span>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => promoteLearning(call.id)}
+                          disabled={saving}
+                          leftIcon={<Bot />}
+                        >
+                          Promote Learning
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => linkCall(call.id)}
+                          disabled={saving || (!linkCustomerId && !linkContactId)}
+                          leftIcon={<CheckCircle2 />}
+                        >
+                          Link CRM
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -432,6 +532,25 @@ export default function CcwPhoneAgentPage() {
                       <Badge variant={badgeVariant(action.status)}>{action.status}</Badge>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{action.body}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateFollowUp(action.id, 'reject')}
+                        disabled={saving}
+                        leftIcon={<ShieldAlert />}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => updateFollowUp(action.id, 'approve')}
+                        disabled={saving}
+                        leftIcon={<Send />}
+                      >
+                        Approve Draft
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}
