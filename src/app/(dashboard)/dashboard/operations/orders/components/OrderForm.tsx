@@ -35,6 +35,10 @@ import { useToast } from '@/hooks/use-toast';
 import { OrderLineItems, LineItem } from './OrderLineItems';
 import { QuickCustomerAdd } from './QuickCustomerAdd';
 import { Order, Customer, OrderItem } from '../types';
+import {
+  CreditLimitBlockedModal,
+  type CreditLimitBlockedPayload,
+} from './CreditLimitBlockedModal';
 import { Plus } from 'lucide-react';
 import { useRecentItems } from '@/hooks/use-recent-items';
 // PHASE AI: Form Auto-Fill imports
@@ -112,6 +116,14 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
   const [customersHydrated, setCustomersHydrated] = useState(false);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
+  /** Credit gate: populated when POST /api/orders returns 402 CREDIT_LIMIT_EXCEEDED. */
+  const [creditBlock, setCreditBlock] = useState<{
+    open: boolean;
+    payload: CreditLimitBlockedPayload | null;
+    /** The last submitted payload — re-used for manager override. */
+    pendingPayload: Record<string, unknown> | null;
+    isOverriding: boolean;
+  }>({ open: false, payload: null, pendingPayload: null, isOverriding: false });
   const [selectedLocation, setSelectedLocation] = useState<string>('brisbane');
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [anomalyDetected, setAnomalyDetected] = useState<
@@ -392,7 +404,7 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
     try {
       // PHASE 4 OPTIMIZATION: Include item IDs for diff-based updates
-      const payload = {
+      const payload: Record<string, unknown> = {
         customer_id: values.customer_id,
         fulfillment_location: values.fulfillment_location,
         status: values.status,
@@ -403,6 +415,8 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
           quantity: item.quantity,
         })),
       };
+      // Store for potential credit override re-submission
+      setCreditBlock((prev) => ({ ...prev, pendingPayload: payload }));
 
       if (isEdit && order?.id) {
         await apiClient.put(`/api/orders/${order.id}`, payload);
@@ -419,6 +433,8 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         });
         onSuccess({ created: true });
       }
+      // Store payload in case credit gate fires (we clear it on success)
+      setCreditBlock((prev) => ({ ...prev, pendingPayload: null }));
 
       // PHASE 4: Add customer to recent items (only when we have a row from the loaded list)
       const recent = customers.find((c) => c.id === values.customer_id);
@@ -428,6 +444,29 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
 
       onOpenChange(false);
     } catch (error) {
+      // ── Credit limit gate: intercept 402 ────────────────────────────────────
+      if (error instanceof ApiClientError && error.status === 402) {
+        let outstanding = 0;
+        let limit = 0;
+        try {
+          // ApiClientError.message may contain the JSON detail string; we try to
+          // parse structured data from the raw response body via error.errorCode.
+          // Fallback: parse numbers from the human-readable message.
+          const match = error.message.match(/Outstanding:\s*\$?([\d.]+).*?new order:\s*\$?([\d.]+)/i);
+          const limitMatch = error.message.match(/limit of \$?([\d.]+)/i);
+          if (match) outstanding = parseFloat(match[1]);
+          if (limitMatch) limit = parseFloat(limitMatch[1]);
+        } catch { /* ignore parse errors, defaults to 0 */ }
+        setCreditBlock((prev) => ({
+          ...prev,
+          open: true,
+          payload: { outstanding, limit },
+        }));
+        setIsLoading(false);
+        return;
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       let description: string;
       let title = isEdit ? 'Could not update order' : 'Could not create order';
 
@@ -482,11 +521,38 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
     });
   }
 
+  /** Manager overrides the credit block and re-submits with managerOverride=true. */
+  async function handleCreditOverride() {
+    if (!creditBlock.pendingPayload) return;
+    setCreditBlock((prev) => ({ ...prev, isOverriding: true }));
+    try {
+      const overridePayload = { ...creditBlock.pendingPayload, managerOverride: true };
+      await apiClient.post('/api/orders', overridePayload);
+      setCreditBlock({ open: false, payload: null, pendingPayload: null, isOverriding: false });
+      toast({ title: 'Order placed', description: 'Credit limit override applied.' });
+      onSuccess({ created: true });
+      onOpenChange(false);
+    } catch (e) {
+      const msg = e instanceof ApiClientError ? e.message : String(e);
+      toast({ variant: 'destructive', title: 'Override failed', description: msg });
+      setCreditBlock((prev) => ({ ...prev, isOverriding: false }));
+    }
+  }
+
   const subtotal = lineItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
   return (
+    <>
+    {/* Credit limit blocked modal — rendered outside the main Dialog so it layers above */}
+    <CreditLimitBlockedModal
+      open={creditBlock.open}
+      payload={creditBlock.payload}
+      onDismiss={() => setCreditBlock((prev) => ({ ...prev, open: false }))}
+      onManagerOverride={handleCreditOverride}
+      isOverriding={creditBlock.isOverriding}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
@@ -743,5 +809,6 @@ export function OrderForm({ order, open, onOpenChange, onSuccess }: OrderFormPro
         onCustomerCreated={handleCustomerCreated}
       />
     </Dialog>
+    </>
   );
 }

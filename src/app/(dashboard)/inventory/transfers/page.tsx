@@ -251,7 +251,7 @@ export default function TransfersPage() {
           >
             View Details
           </Button>
-          {transfer.status === "pending" && (
+          {(transfer.status === "pending" || transfer.status === "in_transit") && (
             <Button
               size="sm"
               variant="outline"

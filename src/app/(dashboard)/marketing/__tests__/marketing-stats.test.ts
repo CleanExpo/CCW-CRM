@@ -1,5 +1,5 @@
 /**
- * UNI-2116: Marketing stats loadStats() — verifies that API failures
+ * UNI-2116: Marketing stats loadStats() - verifies that API failures
  * surface an error (never silently substitute mock data) unless demo mode
  * is explicitly on.
  *
@@ -39,7 +39,7 @@ function simulateLoadStatsError(error: Error): {
   console.error('[UNI-2116] Marketing stats fetch failed:', message);
 
   if (isDemoMode()) {
-    console.warn('[UNI-2116] DEMO MODE active — using demo marketing stats');
+    console.warn('[UNI-2116] DEMO MODE active - using demo marketing stats');
     stats = DEMO_PLACEHOLDER;
   } else {
     statsError = message;

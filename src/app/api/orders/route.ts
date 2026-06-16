@@ -80,18 +80,54 @@ export async function POST(request: NextRequest) {
 
     const customerRow = await prisma.customer.findFirst({
       where: { id: customerId, ownerUserId: { in: workspaceUserIds }, isActive: true },
-      select: { id: true },
+      select: { id: true, creditLimitAUD: true },
     });
     if (!customerRow) {
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
     }
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items, workspaceUserIds);
+    const { lines, subtotal } = await resolveLinesFromPayload(
+      body.items,
+      workspaceUserIds,
+      undefined,
+      customerId
+    );
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }
 
     const totalWithTax = subtotal * 1.1;
+
+    const creditLimit =
+      customerRow.creditLimitAUD != null ? Number(customerRow.creditLimitAUD) : null;
+    if (creditLimit !== null) {
+      const outstandingAgg = await prisma.invoice.aggregate({
+        where: {
+          customerId,
+          ownerUserId: { in: workspaceUserIds },
+          status: { notIn: ['draft', 'cancelled', 'paid'] },
+        },
+        _sum: { total: true, amountPaid: true },
+      });
+      const outstanding =
+        (outstandingAgg._sum.total ?? 0) - (outstandingAgg._sum.amountPaid ?? 0);
+
+      if (outstanding + totalWithTax > creditLimit) {
+        const managerOverride = body.managerOverride === true || body.manager_override === true;
+        const isManager = scope.isAdmin || scope.role === 'admin' || scope.role === 'owner';
+        if (!(managerOverride && isManager)) {
+          return NextResponse.json(
+            {
+              code: 'CREDIT_LIMIT_EXCEEDED',
+              outstanding: Math.round(outstanding * 100) / 100,
+              limit: creditLimit,
+              detail: `Credit limit of $${creditLimit.toFixed(2)} would be exceeded. Outstanding: $${outstanding.toFixed(2)}, new order: $${totalWithTax.toFixed(2)}.`,
+            },
+            { status: 402 }
+          );
+        }
+      }
+    }
 
     const created = await prisma.order.create({
       data: {

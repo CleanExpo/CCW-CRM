@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { quoteDetailToApi } from '@/lib/db/quote-serialize';
 import { buildQuoteLinesFromItems } from '@/lib/db/quote-mutations';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 
 export async function GET(
   _request: NextRequest,
@@ -12,9 +13,10 @@ export async function GET(
     const scope = await requireAuthScope(_request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
     const { id } = await context.params;
     const row = await prisma.quote.findFirst({
-      where: { id, ownerUserId: scope.userId },
+      where: { id, ownerUserId: { in: workspaceUserIds } },
       include: {
         customer: { select: { companyName: true } },
         lineItems: { include: { product: true } },
@@ -36,8 +38,11 @@ export async function PUT(
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
     const { id } = await context.params;
-    const existing = await prisma.quote.findFirst({ where: { id, ownerUserId: scope.userId } });
+    const existing = await prisma.quote.findFirst({
+      where: { id, ownerUserId: { in: workspaceUserIds } },
+    });
     if (!existing) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
 
     const body = (await request.json()) as {
@@ -53,12 +58,14 @@ export async function PUT(
       return NextResponse.json({ detail: 'At least one line item is required' }, { status: 400 });
     }
 
-    const lineData = await buildQuoteLinesFromItems(items, scope.userId);
+    const customerId =
+      body.customer_id !== undefined ? String(body.customer_id) : existing.customerId;
+    const lineData = await buildQuoteLinesFromItems(items, workspaceUserIds, customerId);
     const total = lineData.reduce((s, l) => s + l.lineTotal, 0);
 
     if (body.customer_id !== undefined) {
       const target = await prisma.customer.findFirst({
-        where: { id: String(body.customer_id), ownerUserId: scope.userId, isActive: true },
+        where: { id: String(body.customer_id), ownerUserId: { in: workspaceUserIds }, isActive: true },
         select: { id: true },
       });
       if (!target) {
@@ -124,9 +131,10 @@ export async function DELETE(
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
     const { id } = await context.params;
     const existing = await prisma.quote.findFirst({
-      where: { id, ownerUserId: scope.userId },
+      where: { id, ownerUserId: { in: workspaceUserIds } },
       select: { id: true },
     });
     if (!existing) return NextResponse.json({ detail: 'Not found' }, { status: 404 });

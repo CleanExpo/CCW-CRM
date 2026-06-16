@@ -73,6 +73,16 @@ export interface Invoice {
   amount_due: number;     // total - amount_paid
   items: InvoiceItem[];
   payments?: InvoicePayment[];
+  /** Hazardous-chemical SDS records for line items — injected at invoice generation time. */
+  sds_attachments?: Array<{
+    product_id: string;
+    sds_pdf_url: string | null;
+    ghs_signal_word: string | null;
+    hazard_statements: string[];
+    revision_date: string | null;
+    review_due_date: string | null;
+    supplier_emergency_contact: string | null;
+  }>;
   created_at: string;
   updated_at: string;
 }

@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { requireAuthScope } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import {
   getShopifyClientId,
   getShopifyRedirectUri,
   getShopifyScopes,
   resolveMyshopifyHost,
 } from '@/lib/integrations/shopify';
+import {
+  SHOPIFY_OAUTH_SHOP_COOKIE,
+  SHOPIFY_OAUTH_STATE_COOKIE,
+} from '@/lib/integrations/shopify-oauth';
 
 export async function GET(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+
+  const workspaceId = await getWorkspaceIdForUser(scope.userId);
+  if (!workspaceId) {
+    return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+  }
+
   const shopParam = request.nextUrl.searchParams.get('shop')?.trim();
   const shopFromCookie = request.cookies.get('shopify_shop_domain')?.value?.trim();
   const shopFromEnv = process.env.SHOPIFY_SHOP_DOMAIN?.trim();
@@ -45,7 +61,7 @@ export async function GET(request: NextRequest) {
   const res = NextResponse.redirect(url.toString());
   const secure = process.env.NODE_ENV === 'production';
   const cookieOpts = { httpOnly: true, sameSite: 'lax' as const, secure, path: '/', maxAge: 600 };
-  res.cookies.set('shopify_oauth_state', state, cookieOpts);
-  res.cookies.set('shopify_oauth_shop', adminHost, cookieOpts);
+  res.cookies.set(SHOPIFY_OAUTH_STATE_COOKIE, state, cookieOpts);
+  res.cookies.set(SHOPIFY_OAUTH_SHOP_COOKIE, adminHost, cookieOpts);
   return res;
 }

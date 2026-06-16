@@ -226,7 +226,7 @@ describe('company settings route: cross-workspace isolation', () => {
     await PUT(makePutRequest(attackBody) as never);
 
     // Workspace A still has original value in the store
-    const storeA = getCompanySettings(WORKSPACE_A);
+    const storeA = await getCompanySettings(WORKSPACE_A);
     expect(storeA.name).toBe('Real Org A Name');
   });
 });

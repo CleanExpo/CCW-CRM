@@ -379,7 +379,7 @@ export default function MarketingPage() {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-4xl font-semibold tracking-tight">
-            AI Marketing Hub — Cleaning Equipment
+            AI Marketing Hub - Cleaning Equipment
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
             Generate professional cleaning equipment marketing assets with AI-powered tools

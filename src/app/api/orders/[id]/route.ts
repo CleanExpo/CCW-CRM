@@ -51,7 +51,9 @@ export async function PUT(
     const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
 
     const { id } = await context.params;
-    const existing = await prisma.order.findFirst({ where: { id, ownerUserId: scope.userId } });
+    const existing = await prisma.order.findFirst({
+      where: { id, ownerUserId: { in: workspaceUserIds } },
+    });
     if (!existing) {
       return NextResponse.json({ detail: 'Order not found' }, { status: 404 });
     }
@@ -102,7 +104,12 @@ export async function PUT(
       return NextResponse.json({ detail: 'Customer not found' }, { status: 404 });
     }
 
-    const { lines, subtotal } = await resolveLinesFromPayload(body.items, workspaceUserIds);
+    const { lines, subtotal } = await resolveLinesFromPayload(
+      body.items,
+      workspaceUserIds,
+      undefined,
+      customerId
+    );
     if (lines.length === 0) {
       return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
     }
