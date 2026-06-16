@@ -120,34 +120,39 @@ export default function CrmHubPage() {
             <Skeleton className="h-28 rounded-xl" />
             <Skeleton className="h-28 rounded-xl" />
           </>
-        ) : stats ? (
+        ) : (
           <>
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Active customers</CardDescription>
-                <CardTitle className="text-3xl tabular-nums">{stats.customers}</CardTitle>
+                <CardTitle className="text-3xl tabular-nums">{stats?.customers ?? 0}</CardTitle>
               </CardHeader>
+              {!stats && (
+                <CardContent className="pt-0">
+                  <p className="text-muted-foreground text-xs">Overview stats unavailable — modules below still work.</p>
+                </CardContent>
+              )}
             </Card>
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Contacts</CardDescription>
-                <CardTitle className="text-3xl tabular-nums">{stats.contacts}</CardTitle>
+                <CardTitle className="text-3xl tabular-nums">{stats?.contacts ?? 0}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Activities (30 days)</CardDescription>
-                <CardTitle className="text-3xl tabular-nums">{stats.activities_last_30_days}</CardTitle>
+                <CardTitle className="text-3xl tabular-nums">{stats?.activities_last_30_days ?? 0}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Open tasks</CardDescription>
-                <CardTitle className="text-3xl tabular-nums">{stats.pending_tasks}</CardTitle>
+                <CardTitle className="text-3xl tabular-nums">{stats?.pending_tasks ?? 0}</CardTitle>
               </CardHeader>
             </Card>
           </>
-        ) : null}
+        )}
       </div>
 
       <Card className="border-dashed">
