@@ -1,0 +1,161 @@
+{
+  "$schema": "https://ccw-crm-erp.local/schemas/addon-feature.v1.json",
+  "schema_version": "1.0.0",
+  "feature_slug": "ccw_nsw_feasibility_ai_phone_agent",
+  "feature_name": "NSW Feasibility + AI Phone Sales Agent",
+  "created_at": "2026-06-16T00:00:00+10:00",
+  "timezone": "Australia/Sydney",
+  "codex_access_mode": "read:write",
+  "repository": {
+    "full_name": "CleanExpo/CCW-CRM",
+    "branch": "feature/ccw-feasibility-ai-phone-agent-20260616",
+    "base_branch": "main",
+    "spec_path": "docs/specs/ccw-feasibility-ai-phone-agent/spec.md",
+    "codex_task_path": "docs/specs/ccw-feasibility-ai-phone-agent/codex-task.md",
+    "migration_stub_path": "docs/specs/ccw-feasibility-ai-phone-agent/migration_stub.sql"
+  },
+  "business": {
+    "name": "Carpet Cleaners Warehouse",
+    "short_name": "CCW",
+    "country": "Australia",
+    "primary_decision_owner": "Toby",
+    "current_main_locations": ["Brisbane", "Sydney / Seven Hills", "Melbourne"],
+    "satellite_locations": ["Perth", "Adelaide", "Hobart"]
+  },
+  "strategic_objective": {
+    "owner_question": "What are we trying to achieve?",
+    "answer": "Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.",
+    "sub_goals": [
+      "Protect the low-cost Seven Hills NSW base until data proves a better option.",
+      "Improve customer access through parcel collection and AI phone support before taking on higher property cost.",
+      "Use actual CRM/ERP sales, margin, postcode, pickup, delivery and service data to decide whether Artarmon is justified.",
+      "Capture more phone enquiries and convert them into CRM leads, service jobs and quote opportunities."
+    ],
+    "non_goals": [
+      "Do not automatically replace Seven Hills with Artarmon.",
+      "Do not create unapproved dangerous-goods collection flows.",
+      "Do not enable outbound AI calling or call recording by default."
+    ]
+  },
+  "feature_flags": {
+    "FEATURE_CCW_FEASIBILITY_AI_PHONE_AGENT": true,
+    "FEATURE_CCW_FEASIBILITY_DASHBOARD": true,
+    "FEATURE_CCW_PARCEL_COLLECTION_SCENARIOS": true,
+    "FEATURE_CCW_AI_PHONE_AGENT": true,
+    "FEATURE_CCW_AI_PHONE_AGENT_AFTER_HOURS": true,
+    "FEATURE_CCW_AI_PHONE_AGENT_OUTBOUND": false,
+    "FEATURE_CCW_AI_PHONE_RECORDING": false
+  },
+  "seed_data": {
+    "site_options": [
+      {
+        "code": "seven_hills_current",
+        "name": "Seven Hills current NSW base",
+        "annual_rent_aud": 60000,
+        "annual_staff_cost_aud": 105000,
+        "role": "NSW operational/service base",
+        "recommendation_bias": "keep_as_baseline"
+      },
+      {
+        "code": "artarmon_micro_showroom",
+        "name": "Artarmon micro-showroom / service intake",
+        "annual_rent_aud": null,
+        "role": "Small central showroom, service intake and curated pickup point",
+        "recommendation_bias": "pilot_only_if_incremental_margin_proven"
+      }
+    ],
+    "parcel_collection_locations": [
+      {"code": "newcastle", "name": "Newcastle", "state": "NSW", "priority": 1, "model": "parcel_point_plus_trade_partner_candidate"},
+      {"code": "wollongong", "name": "Wollongong", "state": "NSW", "priority": 2, "model": "parcel_point_plus_sydney_service_run"},
+      {"code": "canberra", "name": "Canberra", "state": "ACT", "priority": 3, "model": "parcel_point_plus_monthly_service_day"},
+      {"code": "coffs_harbour", "name": "Coffs Harbour", "state": "NSW", "priority": 4, "model": "parcel_point_first"},
+      {"code": "orange", "name": "Orange", "state": "NSW", "priority": 5, "model": "parcel_point_first"},
+      {"code": "tamworth", "name": "Tamworth", "state": "NSW", "priority": 6, "model": "parcel_point_first"},
+      {"code": "townsville", "name": "Townsville", "state": "QLD", "priority": 7, "model": "brisbane_supported_regional_partner_candidate"},
+      {"code": "gladstone", "name": "Gladstone", "state": "QLD", "priority": 8, "model": "brisbane_supported_regional_partner_candidate"}
+    ],
+    "initial_scenarios": [
+      "seven_hills_optimised",
+      "artarmon_micro_showroom",
+      "seven_hills_parcel_collection",
+      "hybrid_ai_phone_agent"
+    ],
+    "swot": {
+      "strengths": [
+        "Existing national branch/satellite footprint.",
+        "Very low Seven Hills rent compared with likely central Sydney alternatives.",
+        "Machine installs and service capability create differentiation."
+      ],
+      "weaknesses": [
+        "Single-staff Sydney operating risk.",
+        "Seven Hills may be less convenient for North Shore, CBD and Northern Beaches customers.",
+        "Reduced stock model could frustrate walk-in customers without clear stock status."
+      ],
+      "opportunities": [
+        "Parcel collection pilot for eligible products.",
+        "AI phone agent for after-hours and overflow enquiry capture.",
+        "Artarmon micro-showroom if incremental contribution margin is proven."
+      ],
+      "threats": [
+        "Higher Artarmon occupancy cost could erode profit.",
+        "Competitors already cover Sydney trade zones.",
+        "Dangerous goods and bulky products cannot be treated like standard parcels."
+      ]
+    }
+  },
+  "ai_phone_agent": {
+    "provider": "ElevenLabs Conversational AI",
+    "telephony_provider": "Twilio",
+    "agent_name": "CCW After-Hours Sales and Service Assistant",
+    "mode": "after_hours_overflow_pilot",
+    "first_message": "Thanks for calling Carpet Cleaners Warehouse. I can help with product information, machine servicing, order pickup options and getting the right person to call you back. If this is urgent or you need a staff member, I can take the details and escalate it.",
+    "knowledge_base_sources_to_upload": [
+      "CCW product catalogue",
+      "Safety Data Sheets",
+      "machine manuals",
+      "FAQs",
+      "service rules",
+      "parcel collection eligibility rules",
+      "branch and opening hours"
+    ],
+    "mandatory_guardrails": [
+      "Identify as an AI assistant.",
+      "Do not pretend to be Toby or a CCW staff member.",
+      "Use approved knowledge only.",
+      "Escalate pricing exceptions, complaints, warranty disputes, dangerous goods questions and complex service issues.",
+      "Do not record calls unless recording flag and consent workflow are enabled.",
+      "Do not run outbound AI campaigns unless outbound flag and compliance approvals are enabled."
+    ]
+  },
+  "api_endpoints": [
+    {"method": "GET", "path": "/api/addons/ccw-feasibility-ai/status"},
+    {"method": "GET", "path": "/api/feasibility/scenarios"},
+    {"method": "POST", "path": "/api/feasibility/scenarios"},
+    {"method": "POST", "path": "/api/feasibility/scenarios/[id]/calculate"},
+    {"method": "GET", "path": "/api/feasibility/map-points"},
+    {"method": "GET", "path": "/api/parcel-collection/locations"},
+    {"method": "POST", "path": "/api/parcel-collection/eligibility-check"},
+    {"method": "GET", "path": "/api/phone-agent/config"},
+    {"method": "PUT", "path": "/api/phone-agent/config"},
+    {"method": "POST", "path": "/api/webhooks/twilio/voice/status"},
+    {"method": "POST", "path": "/api/webhooks/elevenlabs/post-call"},
+    {"method": "GET", "path": "/api/phone-agent/customer-context"}
+  ],
+  "environment_variables": [
+    "ELEVENLABS_API_KEY",
+    "ELEVENLABS_AGENT_ID",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_PHONE_NUMBER",
+    "PHONE_AGENT_WEBHOOK_SECRET"
+  ],
+  "acceptance_criteria": [
+    "npm run lint passes",
+    "npm run type-check passes",
+    "scenario scoring tests pass",
+    "webhook invalid-signature tests pass",
+    "no secrets are committed",
+    "outbound AI calling and call recording remain disabled by default",
+    "phone-agent-created CRM records link back to call session IDs"
+  ]
+}
