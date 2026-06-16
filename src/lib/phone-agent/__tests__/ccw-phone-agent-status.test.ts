@@ -28,6 +28,7 @@ describe('getCcwPhoneAgentPilotStatus', () => {
     expect(status.ready_for_inbound_pilot).toBe(false);
     expect(status.provider_config.missing_env).toContain('ELEVENLABS_API_KEY');
     expect(status.provider_config.missing_env).toContain('TWILIO_PHONE_NUMBER');
+    expect(status.provider_config.missing_env).toContain('PHONE_AGENT_OWNER_USER_ID');
   });
 
   it('is ready for inbound after-hours pilot when all required env values are present', () => {
@@ -42,6 +43,8 @@ describe('getCcwPhoneAgentPilotStatus', () => {
         TWILIO_AUTH_TOKEN: 'token',
         TWILIO_PHONE_NUMBER: '+61200000000',
         PHONE_AGENT_WEBHOOK_SECRET: 'secret',
+        PHONE_AGENT_OWNER_USER_ID: '11111111-1111-4111-8111-111111111111',
+        PHONE_AGENT_PUBLIC_BASE_URL: 'https://ccw.example.com',
       })
     );
 
@@ -50,6 +53,9 @@ describe('getCcwPhoneAgentPilotStatus', () => {
     expect(status.provider_config.missing_env).toEqual([]);
     expect(status.safety_defaults.outbound_ai_calling_enabled).toBe(false);
     expect(status.safety_defaults.call_recording_enabled).toBe(false);
+    expect(status.provider_config.webhook_urls.twilio_voice_url).toBe(
+      'https://ccw.example.com/api/phone-agent/webhooks/twilio/voice'
+    );
   });
 
   it('does not treat outbound and recording feature flags as automatic approval', () => {

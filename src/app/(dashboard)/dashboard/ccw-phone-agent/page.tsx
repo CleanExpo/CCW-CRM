@@ -23,7 +23,13 @@ type PhoneConfig = {
   pilot_status: {
     ready_for_inbound_pilot: boolean;
     mode: string;
-    provider_config: { missing_env: string[] };
+    provider_config: {
+      missing_env: string[];
+      webhook_urls: {
+        twilio_voice_url: string | null;
+        elevenlabs_callback_url: string | null;
+      };
+    };
   };
 };
 
@@ -483,10 +489,42 @@ export default function CcwPhoneAgentPage() {
         <TabsContent value="safety">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Human Gates</CardTitle>
-              <CardDescription>Consequential phone-agent actions remain blocked until an explicit approval path exists.</CardDescription>
+            <CardTitle className="text-base">Human Gates</CardTitle>
+              <CardDescription>Consequential phone-agent actions remain blocked until Toby supplies live keys and approval.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 lg:grid-cols-2">
+              <div className="rounded-md border p-4 lg:col-span-2">
+                <div className="font-medium">Provider Callback URLs</div>
+                <dl className="mt-3 grid gap-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Twilio voice webhook</dt>
+                    <dd className="break-all font-mono text-xs">
+                      {config?.pilot_status.provider_config.webhook_urls.twilio_voice_url ?? 'Set PHONE_AGENT_PUBLIC_BASE_URL'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">ElevenLabs conversation callback</dt>
+                    <dd className="break-all font-mono text-xs">
+                      {config?.pilot_status.provider_config.webhook_urls.elevenlabs_callback_url ??
+                        'Set PHONE_AGENT_PUBLIC_BASE_URL'}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+              <div className="rounded-md border p-4 lg:col-span-2">
+                <div className="font-medium">Missing Live Inputs</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(config?.pilot_status.provider_config.missing_env ?? []).length === 0 ? (
+                    <Badge variant="success">all provider keys configured</Badge>
+                  ) : (
+                    config?.pilot_status.provider_config.missing_env.map((item) => (
+                      <Badge key={item} variant="pending">
+                        {item}
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </div>
               <div className="rounded-md border p-4">
                 <div className="flex items-center gap-2 font-medium">
                   <CheckCircle2 className="h-4 w-4 text-muted-foreground" />

@@ -1,3 +1,10 @@
+import {
+  getCcwPhoneAgentOwnerUserId,
+  getCcwPhoneAgentPublicBaseUrl,
+  getCcwPhoneAgentWebhookUrls,
+  missingCcwPhoneAgentLiveKeys,
+} from './provider-readiness';
+
 export type CcwPhoneAgentFeatureFlags = {
   feasibility_addon_enabled: boolean;
   feasibility_dashboard_enabled: boolean;
@@ -14,7 +21,13 @@ export type CcwPhoneAgentProviderConfig = {
   twilio_account_configured: boolean;
   twilio_phone_number_configured: boolean;
   webhook_secret_configured: boolean;
+  owner_user_configured: boolean;
+  public_base_url_configured: boolean;
   missing_env: string[];
+  webhook_urls: {
+    twilio_voice_url: string | null;
+    elevenlabs_callback_url: string | null;
+  };
 };
 
 export type CcwPhoneAgentPilotStatus = {
@@ -55,15 +68,9 @@ export function getCcwPhoneAgentPilotStatus(
     ai_phone_recording_enabled: envFlag(env, 'FEATURE_CCW_AI_PHONE_RECORDING'),
   };
 
-  const requiredEnv = [
-    'ELEVENLABS_API_KEY',
-    'ELEVENLABS_AGENT_ID',
-    'TWILIO_ACCOUNT_SID',
-    'TWILIO_AUTH_TOKEN',
-    'TWILIO_PHONE_NUMBER',
-    'PHONE_AGENT_WEBHOOK_SECRET',
-  ];
-  const missingEnv = requiredEnv.filter((name) => !hasEnv(env, name));
+  const missingEnv = missingCcwPhoneAgentLiveKeys(env);
+  const ownerUserId = getCcwPhoneAgentOwnerUserId(env);
+  const publicBaseUrl = getCcwPhoneAgentPublicBaseUrl(env);
 
   const providerConfig: CcwPhoneAgentProviderConfig = {
     elevenlabs_api_key_configured: hasEnv(env, 'ELEVENLABS_API_KEY'),
@@ -71,7 +78,10 @@ export function getCcwPhoneAgentPilotStatus(
     twilio_account_configured: hasEnv(env, 'TWILIO_ACCOUNT_SID') && hasEnv(env, 'TWILIO_AUTH_TOKEN'),
     twilio_phone_number_configured: hasEnv(env, 'TWILIO_PHONE_NUMBER'),
     webhook_secret_configured: hasEnv(env, 'PHONE_AGENT_WEBHOOK_SECRET'),
+    owner_user_configured: Boolean(ownerUserId),
+    public_base_url_configured: Boolean(publicBaseUrl),
     missing_env: missingEnv,
+    webhook_urls: getCcwPhoneAgentWebhookUrls(env),
   };
 
   const readyForInboundPilot =
