@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { resolveCcwWorkspaceContext } from '@/lib/auth/ccw-workspace-context';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 
 function text(value: unknown, fallback = '') {
@@ -54,15 +55,36 @@ export async function POST(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const bodyText = text(body.body);
     if (!bodyText) return NextResponse.json({ detail: 'body is required' }, { status: 400 });
 
+    const ruleId = text(body.rule_id) || null;
+    if (ruleId) {
+      const rule = await prisma.ccwFollowUpRule.findFirst({
+        where: { id: ruleId, ownerUserId: { in: ctx.workspaceUserIds } },
+        select: { id: true },
+      });
+      if (!rule) return NextResponse.json({ detail: 'Follow-up rule not found' }, { status: 404 });
+    }
+
+    const callSessionId = text(body.call_session_id) || null;
+    if (callSessionId) {
+      const call = await prisma.ccwAiCallSession.findFirst({
+        where: { id: callSessionId, ownerUserId: { in: ctx.workspaceUserIds } },
+        select: { id: true },
+      });
+      if (!call) return NextResponse.json({ detail: 'Call session not found' }, { status: 404 });
+    }
+
     const row = await prisma.ccwFollowUpAction.create({
       data: {
         ownerUserId: scope.userId,
-        ruleId: text(body.rule_id) || null,
-        callSessionId: text(body.call_session_id) || null,
+        ruleId,
+        callSessionId,
         actionType: text(body.action_type, 'email'),
         channel: text(body.channel, 'email'),
         status: 'draft',
