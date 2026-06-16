@@ -4,6 +4,21 @@ const DEFAULT_MODEL = 'gpt-4o-mini';
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_RETRIES = 2;
+const MAX_SUGGESTIONS = 4;
+
+type ParsedQuotePreview = {
+  customer?: string;
+  products?: Array<{ name?: string; quantity?: number; price?: number }>;
+  total?: number;
+  ready?: boolean;
+};
+
+type NormalizedQuotePreview = {
+  customer: string | null;
+  products: Array<{ name: string; quantity: number; price: number }>;
+  total: number;
+  ready: boolean;
+};
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -39,6 +54,56 @@ async function requestOpenAiWithRetry(apiKey: string, payload: Record<string, un
   }
 
   throw lastError;
+}
+
+function normalizeSuggestions(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is { label: unknown; action: unknown } => {
+      return !!item && typeof item === 'object' && 'label' in item && 'action' in item;
+    })
+    .map((item) => ({
+      label: String(item.label).trim().slice(0, 80),
+      action: String(item.action).trim().slice(0, 80),
+    }))
+    .filter((item) => item.label.length > 0 && item.action.length > 0)
+    .slice(0, MAX_SUGGESTIONS);
+}
+
+function normalizeQuotePreview(value: ParsedQuotePreview | undefined): NormalizedQuotePreview | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const customer =
+    typeof value.customer === 'string' && value.customer.trim().length > 0
+      ? value.customer.trim()
+      : null;
+
+  const products = Array.isArray(value.products)
+    ? value.products
+        .map((product) => {
+          const name = typeof product.name === 'string' ? product.name.trim() : '';
+          const quantity = Number(product.quantity);
+          const price = Number(product.price);
+          if (!name || !Number.isFinite(quantity) || !Number.isFinite(price)) return null;
+          if (quantity <= 0 || price < 0) return null;
+          return {
+            name,
+            quantity,
+            price,
+          };
+        })
+        .filter((product): product is { name: string; quantity: number; price: number } => product !== null)
+    : [];
+
+  const total = products.reduce((sum, product) => sum + product.quantity * product.price, 0);
+  const ready = value.ready === true && Boolean(customer) && products.length > 0 && total > 0;
+
+  return {
+    customer,
+    products,
+    total: Math.round(total * 100) / 100,
+    ready,
+  };
 }
 
 /**
@@ -119,8 +184,8 @@ Rules:
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      console.error('OpenAI quote copilot error', res.status, errText.slice(0, 500));
+      await res.text().catch(() => '');
+      console.error('OpenAI quote copilot error', res.status);
       return NextResponse.json(
         { detail: `Assistant request failed (${res.status}).` },
         { status: 502 }
@@ -137,13 +202,8 @@ Rules:
 
     let parsed: {
       message?: string;
-      suggestions?: Array<{ label: string; action: string }>;
-      quote_preview?: {
-        customer?: string;
-        products?: Array<{ name: string; quantity: number; price: number }>;
-        total?: number;
-        ready?: boolean;
-      };
+      suggestions?: unknown;
+      quote_preview?: ParsedQuotePreview;
       action?: string;
     };
     try {
@@ -152,14 +212,17 @@ Rules:
       return NextResponse.json({ detail: 'Assistant returned invalid JSON.' }, { status: 502 });
     }
 
+    const quotePreview = normalizeQuotePreview(parsed.quote_preview);
+    const action = parsed.action === 'create_quote' && quotePreview?.ready ? 'create_quote' : null;
+
     return NextResponse.json({
       message:
         typeof parsed.message === 'string' && parsed.message.length > 0
           ? parsed.message
           : 'Could you tell me which customer this quote is for?',
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
-      quote_preview: parsed.quote_preview,
-      action: parsed.action,
+      suggestions: normalizeSuggestions(parsed.suggestions),
+      quote_preview: quotePreview,
+      action,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
