@@ -17,6 +17,10 @@ Product answer:
 
 > Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.
 
+The feasibility statement must behave like Toby's ongoing AI ally: constantly looking for growth, diversification, and cost-saving opportunities, measuring them over time, and preparing decision material without committing owner-level decisions.
+
+The ElevenLabs/Twilio work must be implemented alongside the new CRM as the modern phone gatekeeper: answer routine calls when CCW already has approved knowledge, create traceable CRM drafts when useful, and escalate cleanly when a human is truly required.
+
 The first implementation must also absorb the Senior Project Method inclusions pulled from `CleanExpo/Fabel-Prompt-Engineer`: recreate-able schema, durable read path, Evidence Standard findings, refinement lineage, export, and parser tests.
 
 ## Known Repo Observations
@@ -54,7 +58,7 @@ Create committed schema source of truth:
 - add Prisma models for the add-on;
 - add a real migration under `prisma/migrations/<timestamp>_ccw_feasibility_ai_phone_agent/migration.sql`;
 - include owner/workspace scoping consistent with existing CRM records;
-- include indexes and foreign keys for statement/scenario lineage, findings, call sessions, and CRM traceability;
+- include indexes and foreign keys for statement/scenario lineage, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, and CRM traceability;
 - seed only safe baseline/candidate records using repo conventions.
 
 Done when a fresh empty database can run the migrations and reproduce every add-on table, column, index, and relationship the app uses.
@@ -65,8 +69,11 @@ Implement authenticated list/detail APIs and minimal UI for:
 
 - feasibility statements;
 - scenarios;
+- growth/diversification/cost-saving opportunities;
+- opportunity measurements;
 - evidence findings/assumptions;
 - refinement/version chain;
+- approved phone knowledge sources;
 - phone-agent call sessions.
 
 Done when a user can save a statement/scenario, refresh the page, reopen it from a list, and verify it came from the database.
@@ -127,11 +134,19 @@ Create a small domain service that calculates:
 - weighted feasibility score;
 - recommendation: `keep`, `pilot`, `defer`, or `reject`.
 
+Also create the opportunity engine for Toby's AI ally:
+
+- classify opportunities as `growth`, `diversification`, `cost_saving`, or `risk_reduction`;
+- store expected value, effort, risk, evidence basis, source records, status, owner decision needed, and next review date;
+- record measured outcomes so recommendations can be compared against actual results;
+- keep every opportunity as advisory until Toby or an approved human commits it.
+
 Minimum tests:
 
 1. Seven Hills baseline remains attractive under low rent.
 2. Artarmon requires incremental contribution before recommendation improves.
 3. Parcel collection hybrid can be recommended when low cost and high strategic score.
+4. Opportunity ranking prioritises high-value, low-risk growth/cost-saving records with evidence over unsupported ideas.
 
 ### 8. Parcel Collection
 
@@ -151,6 +166,8 @@ Implement behind safe flags:
 - `GET /api/addons/ccw-feasibility-ai/status`
 - `GET /api/phone-agent/config`
 - `PUT /api/phone-agent/config`
+- `GET /api/phone-agent/knowledge-sources`
+- `POST /api/phone-agent/knowledge-sources`
 - `GET /api/phone-agent/customer-context`
 - `GET /api/phone-agent/call-sessions`
 - `GET /api/phone-agent/call-sessions/[id]`
@@ -163,6 +180,9 @@ Security requirements:
 - require shared-secret/provider verification for ElevenLabs;
 - never log secrets;
 - default recording and outbound calling to false;
+- ground answers only in approved CCW-owned sources and approved credible external sources;
+- store the source basis/confidence for each AI-resolved call where available;
+- store a triage outcome for every handled call: `answered_by_ai`, `human_handoff_required`, `follow_up_created`, `lead_created`, `quote_draft_created`, `service_draft_created`, or `blocked_escalated`;
 - AI-created CRM records must link back to `callSessionId`;
 - escalate pricing exceptions, complaints, warranty, dangerous goods, and complex service questions.
 
@@ -173,10 +193,14 @@ Build only after data/API basics work:
 - objective card with Toby's answer;
 - saved statement list/detail;
 - scenario comparison table;
+- AI ally opportunity list for growth, diversification, and cost saving;
+- opportunity measurement history;
 - evidence findings/assumption register;
 - refinement lineage;
 - parcel candidate and eligibility view;
 - phone-agent pilot status;
+- knowledge source approval/status panel;
+- phone triage outcome labels;
 - call-session list/detail if ingestion exists;
 - Markdown export button.
 
@@ -193,12 +217,17 @@ Avoid paid map integrations or external map keys in the first pass unless the re
 - `GET /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios/[id]/calculate`
+- `GET /api/feasibility/opportunities`
+- `POST /api/feasibility/opportunities`
+- `POST /api/feasibility/opportunities/[id]/measure`
 - `GET /api/feasibility/findings`
 - `GET /api/feasibility/map-points`
 - `GET /api/parcel-collection/locations`
 - `POST /api/parcel-collection/eligibility-check`
 - `GET /api/phone-agent/config`
 - `PUT /api/phone-agent/config`
+- `GET /api/phone-agent/knowledge-sources`
+- `POST /api/phone-agent/knowledge-sources`
 - `GET /api/phone-agent/call-sessions`
 - `GET /api/phone-agent/call-sessions/[id]`
 - `GET /api/phone-agent/customer-context`
@@ -242,6 +271,7 @@ For schema work, also verify a fresh database migration replay using the repo's 
 
 - Real Prisma migration and models exist for every add-on table the app uses.
 - Save/refresh/reopen works for feasibility statements and scenarios.
+- Growth, diversification, and cost-saving opportunities can be generated, ranked, measured, and reopened.
 - Evidence findings are created and visible.
 - `[UNCONFIRMED]` assumptions are surfaced.
 - Refinement lineage is visible.
@@ -250,6 +280,8 @@ For schema work, also verify a fresh database migration replay using the repo's 
 - Parser tests pass.
 - Parcel blocklist tests pass.
 - Webhook invalid-signature/secret tests pass.
+- Phone triage outcomes are stored for handled calls.
+- AI-resolved phone calls are grounded in approved knowledge sources or escalated.
 - Phone-agent-created records reference a call session ID.
 - Recording and outbound calling remain disabled by default.
 - `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build` pass before PR is marked ready.

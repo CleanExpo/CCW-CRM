@@ -29,13 +29,37 @@
       "Protect the low-cost Seven Hills NSW base until data proves a better option.",
       "Improve customer access through parcel collection and AI phone support before taking on higher property cost.",
       "Use actual CRM/ERP sales, margin, postcode, pickup, delivery and service data to decide whether Artarmon is justified.",
-      "Capture more phone enquiries and convert them into CRM leads, service jobs and quote opportunities."
+      "Capture more phone enquiries and convert them into CRM leads, service jobs and quote opportunities.",
+      "Generate and measure growth, diversification, and cost-saving opportunities for Toby.",
+      "Use ElevenLabs and Twilio as a CRM phone gatekeeper that answers routine calls from approved knowledge and escalates calls that need a human."
     ],
     "non_goals": [
       "Do not automatically replace Seven Hills with Artarmon.",
       "Do not create unapproved dangerous-goods collection flows.",
-      "Do not enable outbound AI calling or call recording by default."
+      "Do not enable outbound AI calling or call recording by default.",
+      "Do not let AI commit spend, staffing, pricing, supplier, property, or customer-impacting policy decisions without approval.",
+      "Do not let the phone agent answer from unapproved or unknown-provenance sources."
     ]
+  },
+  "ai_ally": {
+    "name": "Toby Growth and Cost Ally",
+    "purpose": "Continuously generate, rank, and measure growth, diversification, and cost-saving opportunities for Toby's decisions.",
+    "opportunity_categories": ["growth", "diversification", "cost_saving", "risk_reduction"],
+    "required_fields": [
+      "title",
+      "category",
+      "summary",
+      "expected_value_aud",
+      "effort_score",
+      "risk_score",
+      "evidence_basis",
+      "source_refs",
+      "status",
+      "owner_decision_needed",
+      "next_review_at",
+      "measured_outcome"
+    ],
+    "decision_boundary": "The ally prepares recommendations and decision material, but Toby or an approved human commits consequential decisions."
   },
   "senior_project_method_inclusions": {
     "source": "CleanExpo/Fabel-Prompt-Engineer",
@@ -127,22 +151,36 @@
   "ai_phone_agent": {
     "provider": "ElevenLabs Conversational AI",
     "telephony_provider": "Twilio",
-    "agent_name": "CCW After-Hours Sales and Service Assistant",
-    "mode": "after_hours_overflow_pilot",
+    "agent_name": "CCW CRM Phone Gatekeeper",
+    "mode": "after_hours_overflow_and_front_door_gatekeeper_pilot",
     "first_message": "Thanks for calling Carpet Cleaners Warehouse. I can help with product information, machine servicing, order pickup options and getting the right person to call you back. If this is urgent or you need a staff member, I can take the details and escalate it.",
+    "gatekeeper_outcomes": [
+      "answered_by_ai",
+      "human_handoff_required",
+      "follow_up_created",
+      "lead_created",
+      "quote_draft_created",
+      "service_draft_created",
+      "blocked_escalated"
+    ],
     "knowledge_base_sources_to_upload": [
+      "CCW Shopify product data",
+      "CCW website content",
       "CCW product catalogue",
       "Safety Data Sheets",
       "machine manuals",
       "FAQs",
       "service rules",
       "parcel collection eligibility rules",
-      "branch and opening hours"
+      "branch and opening hours",
+      "approved credible external sources"
     ],
     "mandatory_guardrails": [
       "Identify as an AI assistant.",
       "Do not pretend to be Toby or a CCW staff member.",
-      "Use approved knowledge only.",
+      "Use approved CCW-owned knowledge and approved credible external sources only.",
+      "Escalate when source coverage, confidence, or permission is insufficient.",
+      "Store the triage outcome and source basis for handled calls where available.",
       "Escalate pricing exceptions, complaints, warranty disputes, dangerous goods questions and complex service issues.",
       "Do not record calls unless recording flag and consent workflow are enabled.",
       "Do not run outbound AI campaigns unless outbound flag and compliance approvals are enabled."
@@ -158,12 +196,17 @@
     {"method": "GET", "path": "/api/feasibility/scenarios"},
     {"method": "POST", "path": "/api/feasibility/scenarios"},
     {"method": "POST", "path": "/api/feasibility/scenarios/[id]/calculate"},
+    {"method": "GET", "path": "/api/feasibility/opportunities"},
+    {"method": "POST", "path": "/api/feasibility/opportunities"},
+    {"method": "POST", "path": "/api/feasibility/opportunities/[id]/measure"},
     {"method": "GET", "path": "/api/feasibility/findings"},
     {"method": "GET", "path": "/api/feasibility/map-points"},
     {"method": "GET", "path": "/api/parcel-collection/locations"},
     {"method": "POST", "path": "/api/parcel-collection/eligibility-check"},
     {"method": "GET", "path": "/api/phone-agent/config"},
     {"method": "PUT", "path": "/api/phone-agent/config"},
+    {"method": "GET", "path": "/api/phone-agent/knowledge-sources"},
+    {"method": "POST", "path": "/api/phone-agent/knowledge-sources"},
     {"method": "GET", "path": "/api/phone-agent/call-sessions"},
     {"method": "GET", "path": "/api/phone-agent/call-sessions/[id]"},
     {"method": "POST", "path": "/api/webhooks/twilio/voice/status"},
@@ -181,6 +224,7 @@
   "acceptance_criteria": [
     "fresh database migrations recreate the add-on schema",
     "saved feasibility items can be listed and reopened after refresh",
+    "growth diversification and cost-saving opportunities can be generated ranked measured and reopened",
     "tagged claims and assumptions are stored as visible findings",
     "refinements record and display parent lineage",
     "finished feasibility statements can be exported as Markdown",
@@ -191,6 +235,8 @@
     "npm run build passes",
     "scenario scoring tests pass",
     "webhook invalid-signature tests pass",
+    "phone gatekeeper calls store triage outcomes",
+    "AI-resolved calls are grounded in approved knowledge sources or escalated",
     "no secrets are committed",
     "outbound AI calling and call recording remain disabled by default",
     "phone-agent-created CRM records link back to call session IDs"
