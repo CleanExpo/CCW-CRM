@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { resolveCcwWorkspaceContext } from '@/lib/auth/ccw-workspace-context';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import {
   findingsPayloadFromMarkdown,
@@ -98,12 +99,15 @@ export async function POST(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const seed = normaliseCcwFeasibilityStatementSeed(body);
 
     if (seed.parent_statement_id) {
       const parent = await prisma.ccwFeasibilityStatement.findFirst({
-        where: { id: seed.parent_statement_id, ownerUserId: scope.userId },
+        where: { id: seed.parent_statement_id, ownerUserId: { in: ctx.workspaceUserIds } },
         select: { id: true },
       });
       if (!parent) return NextResponse.json({ detail: 'Parent statement not found' }, { status: 404 });
