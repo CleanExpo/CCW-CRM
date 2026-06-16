@@ -17,6 +17,8 @@ import {
   RefreshCw,
   Save,
   ShieldCheck,
+  Target,
+  TrendingUp,
 } from 'lucide-react';
 
 type StatementListItem = {
@@ -85,6 +87,22 @@ type StatementDetail = StatementListItem & {
     opportunity_type: string;
     status: string;
     description: string | null;
+    expected_benefit?: {
+      expected_value_aud?: number;
+      priority_score?: number;
+      effort_score?: number;
+      risk_score?: number;
+      evidence_score?: number;
+    };
+    decision_gate?: string | null;
+    measurements?: Array<{
+      id: string;
+      metric_name: string;
+      metric_value: number | null;
+      unit: string | null;
+      source_system: string;
+      measured_at: string;
+    }>;
   }>;
   created_at: string;
 };
@@ -157,6 +175,14 @@ export default function CcwFeasibilityDashboardPage() {
   const [content, setContent] = useState(DEFAULT_BODY);
   const [scenarioName, setScenarioName] = useState('Seven Hills + AI phone pilot');
   const [expectedMargin, setExpectedMargin] = useState('30000');
+  const [claimLabel, setClaimLabel] = useState('Seven Hills annual occupancy cost');
+  const [claimValue, setClaimValue] = useState('165000');
+  const [claimState, setClaimState] = useState('owner_entered');
+  const [claimSourceReference, setClaimSourceReference] = useState('');
+  const [opportunityTitle, setOpportunityTitle] = useState('After-hours AI phone lead capture');
+  const [opportunityType, setOpportunityType] = useState('growth');
+  const [opportunityValue, setOpportunityValue] = useState('85000');
+  const [opportunityEvidenceScore, setOpportunityEvidenceScore] = useState('55');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -302,6 +328,62 @@ export default function CcwFeasibilityDashboardPage() {
     }
   }
 
+  async function addFinancialClaim() {
+    if (!detail) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await readJson(
+        await fetch(`${API_BASE}/${detail.id}/financial-claims`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            claim_type: 'operating_claim',
+            label: claimLabel,
+            value_aud: Number(claimValue),
+            state: claimState,
+            source_system: claimState === 'xero_backed' ? 'xero' : 'manual',
+            source_reference: claimSourceReference,
+          }),
+        })
+      );
+      await loadDetail(detail.id);
+      await loadList();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addOpportunity() {
+    if (!detail) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await readJson(
+        await fetch(`${API_BASE}/${detail.id}/opportunities`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: opportunityTitle,
+            opportunity_type: opportunityType,
+            expected_value_aud: Number(opportunityValue),
+            effort_score: 45,
+            risk_score: 35,
+            evidence_score: Number(opportunityEvidenceScore),
+          }),
+        })
+      );
+      await loadDetail(detail.id);
+      await loadList();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function exportMarkdown() {
     if (!detail) return;
     const response = await fetch(`${API_BASE}/${detail.id}/export`, { cache: 'no-store' });
@@ -377,6 +459,8 @@ export default function CcwFeasibilityDashboardPage() {
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <span>{item.counts.findings} findings</span>
                     <span>{item.counts.scenarios} scenarios</span>
+                    <span>{item.counts.financial_claims} claims</span>
+                    <span>{item.counts.opportunities} opportunities</span>
                     <span>{item.counts.children} refinements</span>
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">Updated {formatDate(item.updated_at)}</div>
@@ -436,6 +520,8 @@ export default function CcwFeasibilityDashboardPage() {
             <TabsList>
               <TabsTrigger value="findings">Findings</TabsTrigger>
               <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
+              <TabsTrigger value="claims">Claims</TabsTrigger>
+              <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
               <TabsTrigger value="lineage">Lineage</TabsTrigger>
             </TabsList>
 
@@ -536,6 +622,210 @@ export default function CcwFeasibilityDashboardPage() {
                           </dl>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="claims">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Owner-Adjustable Claims</CardTitle>
+                  <CardDescription>
+                    Capture planning numbers Toby can adjust, then back with Xero evidence.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 lg:grid-cols-[1fr_150px_160px_1fr_auto]">
+                    <div className="space-y-2">
+                      <Label htmlFor="claim-label">Claim</Label>
+                      <Input id="claim-label" value={claimLabel} onChange={(event) => setClaimLabel(event.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="claim-value">Value AUD</Label>
+                      <Input
+                        id="claim-value"
+                        inputMode="decimal"
+                        value={claimValue}
+                        onChange={(event) => setClaimValue(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="claim-state">State</Label>
+                      <select
+                        id="claim-state"
+                        value={claimState}
+                        onChange={(event) => setClaimState(event.target.value)}
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="owner_entered">Owner entered</option>
+                        <option value="toby_adjusted">Toby adjusted</option>
+                        <option value="xero_backed">Xero backed</option>
+                        <option value="disputed">Disputed</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="claim-source">Source reference</Label>
+                      <Input
+                        id="claim-source"
+                        placeholder="xero:ProfitAndLoss:2026"
+                        value={claimSourceReference}
+                        onChange={(event) => setClaimSourceReference(event.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button onClick={addFinancialClaim} disabled={!detail || saving} leftIcon={<Plus />}>
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+
+                  {(detail?.financial_claims ?? []).length === 0 ? (
+                    <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                      No financial claims saved against this statement yet.
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      {detail?.financial_claims.map((claim) => (
+                        <div key={claim.id} className="rounded-md border p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h3 className="font-medium">{claim.label}</h3>
+                              <p className="mt-1 text-xs text-muted-foreground">{claim.claim_type}</p>
+                            </div>
+                            <Badge variant={badgeVariant(claim.state)}>{claim.state}</Badge>
+                          </div>
+                          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <dt className="text-muted-foreground">Value</dt>
+                              <dd className="font-medium">{money(claim.value_aud)}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Source</dt>
+                              <dd className="font-medium">{claim.source_system}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Xero account</dt>
+                              <dd className="font-medium">{claim.xero_account_code ?? 'Not mapped'}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Backed</dt>
+                              <dd className="font-medium">{claim.backed_at ? formatDate(claim.backed_at) : 'Not yet'}</dd>
+                            </div>
+                          </dl>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="opportunities">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Growth And Savings Queue</CardTitle>
+                  <CardDescription>
+                    Rank growth, diversity, cost-saving, and risk-reduction opportunities for Toby.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 lg:grid-cols-[1fr_180px_150px_150px_auto]">
+                    <div className="space-y-2">
+                      <Label htmlFor="opportunity-title">Opportunity</Label>
+                      <Input
+                        id="opportunity-title"
+                        value={opportunityTitle}
+                        onChange={(event) => setOpportunityTitle(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="opportunity-type">Type</Label>
+                      <select
+                        id="opportunity-type"
+                        value={opportunityType}
+                        onChange={(event) => setOpportunityType(event.target.value)}
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="growth">Growth</option>
+                        <option value="diversification">Diversification</option>
+                        <option value="cost_saving">Cost saving</option>
+                        <option value="risk_reduction">Risk reduction</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="opportunity-value">Value AUD</Label>
+                      <Input
+                        id="opportunity-value"
+                        inputMode="decimal"
+                        value={opportunityValue}
+                        onChange={(event) => setOpportunityValue(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="opportunity-evidence">Evidence score</Label>
+                      <Input
+                        id="opportunity-evidence"
+                        inputMode="numeric"
+                        value={opportunityEvidenceScore}
+                        onChange={(event) => setOpportunityEvidenceScore(event.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button onClick={addOpportunity} disabled={!detail || saving} leftIcon={<Plus />}>
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+
+                  {(detail?.opportunities ?? []).length === 0 ? (
+                    <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                      No opportunities saved against this statement yet.
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      {detail?.opportunities.map((opportunity) => {
+                        const priority =
+                          opportunity.expected_benefit?.priority_score ??
+                          opportunity.measurements?.find((item) => item.metric_name === 'priority_score')?.metric_value ??
+                          null;
+
+                        return (
+                          <div key={opportunity.id} className="rounded-md border p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <h3 className="font-medium">{opportunity.title}</h3>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                                  <TrendingUp className="h-3.5 w-3.5" />
+                                  {opportunity.opportunity_type}
+                                </p>
+                              </div>
+                              <Badge variant={badgeVariant(opportunity.status)}>{opportunity.status}</Badge>
+                            </div>
+                            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <dt className="text-muted-foreground">Priority</dt>
+                                <dd className="flex items-center gap-1 font-medium">
+                                  <Target className="h-4 w-4 text-muted-foreground" />
+                                  {priority ?? 'Not scored'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-muted-foreground">Expected value</dt>
+                                <dd className="font-medium">
+                                  {money(opportunity.expected_benefit?.expected_value_aud ?? null)}
+                                </dd>
+                              </div>
+                            </dl>
+                            {opportunity.decision_gate ? (
+                              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                                Gate: {opportunity.decision_gate}
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
