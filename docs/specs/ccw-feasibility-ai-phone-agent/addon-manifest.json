@@ -32,7 +32,8 @@
       "Capture more phone enquiries and convert them into CRM leads, service jobs and quote opportunities.",
       "Generate and measure growth, diversification, and cost-saving opportunities for Toby.",
       "Let Toby adjust financial claims and back them with Xero accounting evidence where available.",
-      "Use ElevenLabs and Twilio as a CRM phone gatekeeper that answers routine calls from approved knowledge and escalates calls that need a human."
+      "Use ElevenLabs and Twilio as a CRM phone gatekeeper that answers routine calls from approved knowledge and escalates calls that need a human.",
+      "Discover patterns in phone conversations and generate specialised agents, playbooks, training follow-ups, and campaign drafts from approved learnings."
     ],
     "non_goals": [
       "Do not automatically replace Seven Hills with Artarmon.",
@@ -40,6 +41,7 @@
       "Do not enable outbound AI calling or call recording by default.",
       "Do not let AI commit spend, staffing, pricing, supplier, property, or customer-impacting policy decisions without approval.",
       "Do not silently overwrite Toby-adjusted financial claims with Xero values.",
+      "Do not activate new specialised phone agents or send generated campaigns without approval.",
       "Do not let the phone agent answer from unapproved or unknown-provenance sources."
     ]
   },
@@ -192,9 +194,67 @@
       "human_handoff_required",
       "follow_up_created",
       "lead_created",
+      "online_sale_nudge_created",
+      "phone_order_draft_created",
       "quote_draft_created",
       "service_draft_created",
+      "support_booking_draft_created",
+      "training_followup_created",
+      "campaign_idea_created",
       "blocked_escalated"
+    ],
+    "conversation_intelligence": {
+      "discovered_intents": [
+        "product_advice",
+        "price_check",
+        "online_sales_support",
+        "phone_order",
+        "service_booking",
+        "hands_on_support_booking",
+        "training_carsi",
+        "newsletter_signup",
+        "email_campaign_interest",
+        "social_media_campaign_signal",
+        "warranty",
+        "complaint",
+        "dangerous_goods",
+        "technical_handover",
+        "human_escalation"
+      ],
+      "persona_candidates": [
+        "new_carpet_cleaner",
+        "experienced_operator",
+        "restoration_technician",
+        "procurement_or_admin",
+        "service_customer",
+        "training_lead",
+        "price_sensitive_buyer",
+        "urgent_repair_customer"
+      ],
+      "learning_outputs": [
+        "specialized_agent_draft",
+        "sales_playbook_update",
+        "service_booking_flow_update",
+        "support_booking_flow_update",
+        "training_followup",
+        "newsletter_idea",
+        "email_campaign_draft",
+        "social_media_blitz_brief",
+        "knowledge_gap",
+        "objection_pattern"
+      ],
+      "activation_rule": "Conversation learnings may generate drafts, but new agents, live prompt changes, sends, publishes, bookings, and orders require approval."
+    },
+    "specialized_agent_modes": [
+      "sales_qualification",
+      "product_advice",
+      "online_sales_conversion",
+      "phone_order_capture",
+      "service_booking",
+      "hands_on_support_booking",
+      "training_carsi",
+      "campaign_capture",
+      "escalation_triage"
     ],
     "knowledge_base_sources_to_upload": [
       "CCW Shopify product data",
@@ -246,6 +306,14 @@
     {"method": "POST", "path": "/api/phone-agent/knowledge-sources"},
     {"method": "GET", "path": "/api/phone-agent/call-sessions"},
     {"method": "GET", "path": "/api/phone-agent/call-sessions/[id]"},
+    {"method": "GET", "path": "/api/phone-agent/conversation-insights"},
+    {"method": "POST", "path": "/api/phone-agent/conversation-insights/discover"},
+    {"method": "GET", "path": "/api/phone-agent/specialized-agents"},
+    {"method": "POST", "path": "/api/phone-agent/specialized-agents"},
+    {"method": "POST", "path": "/api/phone-agent/specialized-agents/[id]/versions"},
+    {"method": "POST", "path": "/api/phone-agent/specialized-agents/[id]/approve"},
+    {"method": "GET", "path": "/api/phone-agent/generated-actions"},
+    {"method": "POST", "path": "/api/phone-agent/generated-actions/[id]/approve"},
     {"method": "POST", "path": "/api/webhooks/twilio/voice/status"},
     {"method": "POST", "path": "/api/webhooks/elevenlabs/post-call"},
     {"method": "GET", "path": "/api/phone-agent/customer-context"}
@@ -276,6 +344,9 @@
     "webhook invalid-signature tests pass",
     "phone gatekeeper calls store triage outcomes",
     "AI-resolved calls are grounded in approved knowledge sources or escalated",
+    "conversation insights discover intents personas objections answer gaps and conversion opportunities",
+    "specialised agents are generated as inactive draft versions requiring approval",
+    "generated action drafts cover leads online sales phone orders service bookings support bookings CARSI training newsletters email campaigns and social media blitz briefs",
     "no secrets are committed",
     "outbound AI calling and call recording remain disabled by default",
     "phone-agent-created CRM records link back to call session IDs"

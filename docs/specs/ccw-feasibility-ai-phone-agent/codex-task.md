@@ -23,6 +23,8 @@ Financial claims must be owner-adjustable and accounting-aware. Toby can edit pl
 
 The ElevenLabs/Twilio work must be implemented alongside the new CRM as the modern phone gatekeeper: answer routine calls when CCW already has approved knowledge, create traceable CRM drafts when useful, and escalate cleanly when a human is truly required.
 
+The phone system must also learn from past conversations. It should discover intents, personas, objections, answer gaps, conversion patterns, service/training demand, and campaign ideas; then generate specialised agent/playbook drafts that improve user experience, lead capture, sales conversion, phone orders, service bookings, hands-on support bookings, CARSI/in-house/online training, newsletters, email campaigns, and social media blitzes.
+
 The first implementation must also absorb the Senior Project Method inclusions pulled from `CleanExpo/Fabel-Prompt-Engineer`: recreate-able schema, durable read path, Evidence Standard findings, refinement lineage, export, and parser tests.
 
 ## Known Repo Observations
@@ -61,7 +63,7 @@ Create committed schema source of truth:
 - add Prisma models for the add-on;
 - add a real migration under `prisma/migrations/<timestamp>_ccw_feasibility_ai_phone_agent/migration.sql`;
 - include owner/workspace scoping consistent with existing CRM records;
-- include indexes and foreign keys for statement/scenario lineage, financial claims, financial claim evidence, Xero backing references, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, and CRM traceability;
+- include indexes and foreign keys for statement/scenario lineage, financial claims, financial claim evidence, Xero backing references, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, conversation insights, specialised agents, agent learnings, generated actions, and CRM traceability;
 - seed only safe baseline/candidate records using repo conventions.
 
 Done when a fresh empty database can run the migrations and reproduce every add-on table, column, index, and relationship the app uses.
@@ -79,6 +81,7 @@ Implement authenticated list/detail APIs and minimal UI for:
 - refinement/version chain;
 - approved phone knowledge sources;
 - phone-agent call sessions.
+- conversation insights, specialised agent drafts, agent learning history, and generated action drafts.
 
 Done when a user can save a statement/scenario, refresh the page, reopen it from a list, and verify it came from the database.
 
@@ -123,6 +126,9 @@ Add meaningful Vitest coverage for:
 - Twilio invalid-signature rejection;
 - ElevenLabs invalid-secret rejection;
 - refinement lineage service.
+- conversation insight extraction;
+- specialised agent version approval gates;
+- generated action routing for lead, sale, order, booking, training, and campaign drafts.
 
 Ensure CI runs `npm run test` alongside lint/type-check/build if it does not already.
 
@@ -196,6 +202,10 @@ Security requirements:
 - ground answers only in approved CCW-owned sources and approved credible external sources;
 - store the source basis/confidence for each AI-resolved call where available;
 - store a triage outcome for every handled call: `answered_by_ai`, `human_handoff_required`, `follow_up_created`, `lead_created`, `quote_draft_created`, `service_draft_created`, or `blocked_escalated`;
+- discover and store call intents, caller personas, objections, answer gaps, escalation reasons, conversion signals, training demand, and campaign opportunities;
+- generate specialised agent/playbook drafts for sales qualification, product advice, online sales, phone orders, service bookings, hands-on customer support bookings, training/CARSI enquiries, campaign capture, and escalation triage;
+- keep specialised agents versioned, inactive by default, and approval-gated before live use;
+- convert call learnings into generated action drafts: lead, online sale nudge, phone order draft, service booking draft, support booking draft, CARSI/training follow-up, newsletter idea, email campaign draft, or social media blitz brief;
 - AI-created CRM records must link back to `callSessionId`;
 - escalate pricing exceptions, complaints, warranty, dangerous goods, and complex service questions.
 
@@ -214,6 +224,9 @@ Build only after data/API basics work:
 - phone-agent pilot status;
 - knowledge source approval/status panel;
 - phone triage outcome labels;
+- conversation insight dashboard;
+- specialised agent draft/version review;
+- generated action queue for leads, sales, orders, bookings, training, newsletters, email campaigns, and social blitzes;
 - call-session list/detail if ingestion exists;
 - Markdown export button.
 
@@ -247,6 +260,14 @@ Avoid paid map integrations or external map keys in the first pass unless the re
 - `POST /api/phone-agent/knowledge-sources`
 - `GET /api/phone-agent/call-sessions`
 - `GET /api/phone-agent/call-sessions/[id]`
+- `GET /api/phone-agent/conversation-insights`
+- `POST /api/phone-agent/conversation-insights/discover`
+- `GET /api/phone-agent/specialized-agents`
+- `POST /api/phone-agent/specialized-agents`
+- `POST /api/phone-agent/specialized-agents/[id]/versions`
+- `POST /api/phone-agent/specialized-agents/[id]/approve`
+- `GET /api/phone-agent/generated-actions`
+- `POST /api/phone-agent/generated-actions/[id]/approve`
 - `GET /api/phone-agent/customer-context`
 - `POST /api/webhooks/twilio/voice/status`
 - `POST /api/webhooks/elevenlabs/post-call`
@@ -301,6 +322,9 @@ For schema work, also verify a fresh database migration replay using the repo's 
 - Webhook invalid-signature/secret tests pass.
 - Phone triage outcomes are stored for handled calls.
 - AI-resolved phone calls are grounded in approved knowledge sources or escalated.
+- Conversation insight extraction produces intents, personas, objections, answer gaps, and conversion opportunities.
+- Specialised agents/playbooks are generated as inactive draft versions and require approval before activation.
+- Generated action drafts cover leads, online sales nudges, phone orders, service bookings, support bookings, CARSI/training follow-ups, newsletters, email campaigns, and social media blitz briefs.
 - Phone-agent-created records reference a call session ID.
 - Recording and outbound calling remain disabled by default.
 - `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build` pass before PR is marked ready.

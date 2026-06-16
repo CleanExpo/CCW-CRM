@@ -23,6 +23,7 @@ This is done when CCW-CRM can recreate the add-on database from committed Prisma
 - Seven Hills rent, staff cost, Artarmon viability, parcel pilot locations, and commercial assumptions are real owner-supplied planning claims that must be editable by Toby and capable of being backed by Xero accounting evidence where Xero contains the relevant records. [VERIFIED - user clarification on 16 June 2026]
 - Toby needs the feasibility statement to behave like a constant AI ally looking for growth, diversification, and cost-saving opportunities that improve future decision-making. [VERIFIED - user clarification on 16 June 2026]
 - The ElevenLabs/Twilio implementation should be designed alongside the new CRM as a modern phone gatekeeper that decides whether a caller truly needs a human or can be answered from CCW-owned and approved credible knowledge. [VERIFIED - user clarification on 16 June 2026]
+- Phone conversations must become a learning source: discover repeated intents, objections, personas, service needs, sales opportunities, training demand, and campaign ideas, then generate specialised agents/playbooks that improve user experience and conversion over time. [VERIFIED - user clarification on 16 June 2026]
 
 ## 0. Where This Sits In The Pipeline
 
@@ -50,6 +51,7 @@ This add-on adds a decision and pilot layer for NSW access strategy and Toby's o
 - ingest Twilio and ElevenLabs call events;
 - use the ElevenLabs/Twilio agent as the CRM phone gatekeeper, separating calls that truly need a human from calls answerable with approved CCW knowledge;
 - convert qualified AI-phone outcomes into CRM leads, service-request drafts, quote opportunities, or human follow-up activities;
+- discover call patterns and convert them into specialised agents, sales/service playbooks, booking flows, support flows, training opportunities, newsletters, email campaigns, and social media blitz ideas;
 - keep every consequential action behind a human or hard-rule gate.
 
 ### Infrastructure Already In Place
@@ -70,6 +72,17 @@ The feasibility statement is not a static report. It is Toby's operating ally in
 - **Measurement:** every opportunity needs expected value, effort, risk, required evidence, data source, status, next review date, and a plain-English recommendation.
 - **Owner control:** the AI may recommend and prepare decision material, but Toby remains the decision maker for commitments, spend, staffing, pricing, and customer-impacting policy.
 
+### Conversation Intelligence And Specialised Agents
+
+The phone layer must learn from past conversations without mutating live behaviour silently. Conversation discovery should turn call history into structured improvements:
+
+- **Intent discovery:** detect repeated intents such as product advice, price checks, order status, online sales support, phone orders, service bookings, hands-on customer support, training, warranty, complaints, dangerous goods, and technical handover.
+- **Persona discovery:** infer caller personas such as new carpet cleaner, experienced operator, restoration tech, procurement/admin, service customer, training lead, or price-sensitive buyer.
+- **Agent generation:** propose specialised agents or agent modes for sales qualification, online-sales conversion, phone orders, service booking, support booking, product advice, training/CARSI enquiry, campaign capture, and escalation triage.
+- **Learning memory:** store approved learnings, successful scripts, objections, answer gaps, source gaps, conversion patterns, and escalation reasons for future agent versions.
+- **Campaign extraction:** convert conversation patterns into draft newsletters, email campaigns, social media blitzes, training offers, and follow-up lists.
+- **Approval gate:** new agent personas, prompts, routing rules, campaign drafts, and outbound actions are proposed first and only promoted after human approval and test review.
+
 ### Owner-Adjustable Claims And Xero Backing
 
 Financial claims are not hardcoded constants. Each financial input must be stored with value, currency, period, source type, evidence state, Toby override history, and optional Xero backing reference. [INFERENCE - implementation requirement from user clarification and existing Xero integration]
@@ -82,6 +95,7 @@ Financial claims are not hardcoded constants. Each financial input must be store
 - [UNCONFIRMED] ElevenLabs and Twilio commercial/pricing terms are acceptable for the pilot.
 - [UNCONFIRMED] CCW Shopify, website, catalogue, SDS, manuals, FAQs, supplier guidance, and selected credible external sources can provide enough coverage to answer most routine phone calls without human intervention.
 - [UNCONFIRMED] The first measurable opportunity categories should be growth, diversification, and cost saving; Toby may choose more categories later.
+- [UNCONFIRMED] CARSI training scope, booking rules, online-training flow, and source material need to be defined before the phone agent can answer or book CARSI-related enquiries.
 
 ## 2. Definition Of Production-Ready & Owned
 
@@ -99,6 +113,9 @@ The add-on is **Production-Ready & Owned** only when:
 - webhooks reject invalid signatures before storing or acting on provider payloads;
 - the phone agent records a triage decision for each handled call: answered by AI, human handoff needed, follow-up task created, lead/quote/service draft created, or blocked/escalated;
 - the phone agent answers only from approved CCW-owned knowledge and approved credible external sources, and escalates when confidence or permission is insufficient;
+- past phone conversations are mined for repeat intents, personas, objections, conversion gaps, service needs, training demand, and campaign ideas;
+- specialised agents/playbooks can be generated from approved learnings and versioned before being activated;
+- call-derived actions can create leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, training/CARSI follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs;
 - phone-agent-created CRM records reference the originating call session ID;
 - feature defaults keep outbound AI calling and call recording disabled;
 - all code, config, migrations, tests, and docs live in Phill's/GitHub-owned repo and deployment accounts;
@@ -117,6 +134,8 @@ Before each implementation phase, run a mechanical gap pass and record results i
 | P1 | Opportunity measurement | Growth, diversification, and cost-saving recommendations have no expected value, risk, evidence, review date, or measured outcome. |
 | P1 | Xero backing | Financial claims such as rent, staff cost, margin, revenue, or savings cannot be marked owner-entered, Toby-adjusted, Xero-backed, stale, or disputed. |
 | P1 | Phone gatekeeping | Calls are logged without a triage decision or the AI cannot explain why it answered versus escalated. |
+| P1 | Conversation intelligence | Past conversations are stored but not clustered into intents, personas, answer gaps, objections, conversion opportunities, or training/campaign ideas. |
+| P1 | Agent learning | Agent prompts/personas can change without versioning, test review, or human approval. |
 | P1 | Knowledge grounding | Phone answers are not tied to approved Shopify/website/catalogue/knowledge sources or credible external sources. |
 | P1 | Evidence Standard | Tagged claims and `[UNCONFIRMED]` assumptions are not extracted into findings. |
 | P1 | Lineage | Refinement creates a disconnected version without `parent_*` linkage. |
@@ -138,6 +157,8 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 | Growth/diversification/cost opportunities | Rank opportunities, estimate value/effort/risk, and prepare recommendation briefs. | Commit spend, change supplier/channel strategy, launch offers, alter staffing, or promise savings as fact. | Toby approval plus verified or Toby-adjusted supporting data. |
 | Parcel collection | Mark eligible candidate items and locations. | Collection promise for DG, bulky machines, large drums, technical handover, or unapproved partner sites. | Hard blocklist plus human override log. |
 | AI phone calls | Answer routine questions, qualify intent, capture details, create draft records, and decide whether a human is required. | Pretend to be staff, provide ungrounded advice, resolve complaints/warranty disputes, or answer complex service/install questions as final. | Approved knowledge source, confidence threshold, and escalation rule. |
+| Specialised agents and learning | Generate agent personas, prompts, routing rules, scripts, and playbooks from past conversations. | Activate a new live agent/persona, change routing, or alter customer-facing messaging automatically. | Human approval plus test conversation review. |
+| Sales/service/training/campaign actions | Prepare online sales nudges, phone-order drafts, booking drafts, training follow-ups, newsletters, email campaigns, and social blitz briefs. | Place orders, book paid services, send campaigns, publish social content, or enrol training automatically. | Human approval, consent rules, and channel-specific send/publish gate. |
 | Knowledge sourcing | Use CCW Shopify/website/catalogue/SDS/manual/FAQ/service-rule knowledge and approved credible external sources. | Treat unapproved web content as fact or answer from unknown provenance. | Source approval status, evidence tag, and source citation stored. |
 | Recording/privacy | Detect whether recording is configured. | Record a call or store transcript by default. | Recording flag enabled, consent captured, retention policy set. |
 | Outbound contact | Draft a follow-up task. | Run outbound AI campaigns, SMS/email marketing, or automated callbacks. | Explicit outbound flag, consent/unsubscribe compliance, human approval. |
@@ -184,9 +205,9 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 
 ### Phase 6 - ElevenLabs/Twilio AI Phone Pilot
 
-**Definition of Done:** Twilio status webhook, ElevenLabs post-call webhook, customer lookup by caller phone, call-session storage, knowledge-source lookup, triage decision logging, lead/quote/service-request draft creation, and human handoff markers are implemented behind safe flags.
-**Hard Test Gate:** invalid webhook signatures are rejected; valid calls can create traceable records with `call_session_id`; every handled call stores a triage outcome and knowledge-source basis; outbound calling and recording remain false by default.
-**Review Gate:** Atlas/orchestrator review confirms provider state, knowledge-source status, triage rules, flags, and pilot readiness are visible in the status endpoint.
+**Definition of Done:** Twilio status webhook, ElevenLabs post-call webhook, customer lookup by caller phone, call-session storage, knowledge-source lookup, triage decision logging, conversation-intelligence extraction, specialised-agent draft generation, lead/quote/order/service/training/support/campaign draft creation, and human handoff markers are implemented behind safe flags.
+**Hard Test Gate:** invalid webhook signatures are rejected; valid calls can create traceable records with `call_session_id`; every handled call stores a triage outcome, discovered intent/persona, knowledge-source basis, and recommended next action; agent learning creates draft versions only; outbound calling, recording, campaign send, social publish, paid booking, and order placement remain disabled by default.
+**Review Gate:** Atlas/orchestrator review confirms provider state, knowledge-source status, triage rules, learning queue, draft specialised agents, flags, and pilot readiness are visible in the status endpoint.
 
 ### Phase 7 - Refinement Lineage And Export
 
@@ -239,6 +260,9 @@ This checklist is the only honest basis for any "% complete" claim.
 - [ ] AI-created CRM records reference a call session ID.
 - [ ] Every AI-handled call records whether it was answered, escalated, blocked, or converted to a draft CRM action.
 - [ ] Phone answers cite or link to approved CCW Shopify/website/catalogue/knowledge sources or approved credible external sources.
+- [ ] Past conversations produce visible discovered intents, personas, objections, answer gaps, and conversion opportunities.
+- [ ] Specialised agents/playbooks are generated as draft versions and require approval before activation.
+- [ ] Phone conversations can create draft leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, CARSI/training follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs.
 - [ ] Recording is disabled unless the recording flag, consent copy, and retention policy are approved.
 - [ ] Outbound AI calling is disabled unless a separate compliance approval enables it.
 - [ ] Toby can see the objective, recommendation, assumptions, blocked gates, and next decision in the UI.
@@ -254,6 +278,9 @@ This checklist is the only honest basis for any "% complete" claim.
 - Confirm which Shopify/website content should be treated as authoritative and how often it should be refreshed into the AI knowledge base.
 - Confirm which external sites count as trusted credible sources, who approves them, and which topics they are allowed to support.
 - Confirm the first KPI set for Toby's AI ally: growth value, cost saved, conversion lift, missed calls recovered, service work captured, or another ranking.
+- Confirm what CARSI means in this operating context, what training products are in scope, and which bookings can be drafted versus confirmed.
+- Confirm which specialised phone agents should ship first: sales, service booking, product advice, phone orders, support booking, training/CARSI, campaigns, or escalation triage.
+- Confirm approval rules for newsletters, email campaigns, and social media blitzes generated from conversation learnings.
 - Confirm the privacy/consent wording before any call recording or transcript storage is enabled.
 - Confirm whether AI-created "lead" records should map to existing `customers`/`crm_activities`, a new lead table, or draft quote/service-request workflows.
 - Confirm who is allowed to override parcel eligibility for edge cases.
@@ -279,6 +306,11 @@ Required entities:
 - `CcwAiKnowledgeSource`
 - `CcwAiCallSession`
 - `CcwAiCallTriageDecision`
+- `CcwAiConversationInsight`
+- `CcwSpecializedAgent`
+- `CcwSpecializedAgentVersion`
+- `CcwAgentLearning`
+- `CcwCallGeneratedAction`
 - `CcwAiCallEvent`
 - `CcwAiCallTranscript` only if consent/retention gates are implemented
 - `CcwAiConsent`
@@ -296,6 +328,10 @@ Required lineage fields:
 - `CcwGrowthOpportunity.statementId`
 - `CcwOpportunityMeasurement.opportunityId`
 - `CcwAiCallTriageDecision.callSessionId`
+- `CcwAiConversationInsight.callSessionId`
+- `CcwSpecializedAgentVersion.agentId`
+- `CcwAgentLearning.agentVersionId`
+- `CcwCallGeneratedAction.callSessionId`
 - AI-created CRM draft records must include or be linkable through `callSessionId`.
 
 ### Required API Surface
@@ -326,6 +362,14 @@ Required lineage fields:
 - `POST /api/phone-agent/knowledge-sources`
 - `GET /api/phone-agent/call-sessions`
 - `GET /api/phone-agent/call-sessions/[id]`
+- `GET /api/phone-agent/conversation-insights`
+- `POST /api/phone-agent/conversation-insights/discover`
+- `GET /api/phone-agent/specialized-agents`
+- `POST /api/phone-agent/specialized-agents`
+- `POST /api/phone-agent/specialized-agents/[id]/versions`
+- `POST /api/phone-agent/specialized-agents/[id]/approve`
+- `GET /api/phone-agent/generated-actions`
+- `POST /api/phone-agent/generated-actions/[id]/approve`
 - `GET /api/phone-agent/customer-context`
 - `POST /api/webhooks/twilio/voice/status`
 - `POST /api/webhooks/elevenlabs/post-call`
