@@ -1,200 +1,211 @@
-# Codex Task — Build CCW NSW Feasibility + AI Phone Agent Add-on
+# Codex Task - Implement CCW NSW Feasibility + AI Phone Agent Add-on
 
-**Access mode:** `[read:write]`  
-**Repo:** `CleanExpo/CCW-CRM`  
-**Branch:** `feature/ccw-feasibility-ai-phone-agent-20260616`  
-**Source spec:** `docs/specs/ccw-feasibility-ai-phone-agent/spec.md`  
-**Migration stub:** `docs/specs/ccw-feasibility-ai-phone-agent/migration_stub.sql`
+**Access mode:** `[read:write]`
+**Repo:** `CleanExpo/CCW-CRM`
+**Branch:** `feature/ccw-feasibility-ai-phone-agent-20260616`
+**Linear:** `UNI-2140`
+**Source spec:** `docs/specs/ccw-feasibility-ai-phone-agent/spec.md`
+**Planning stub:** `docs/specs/ccw-feasibility-ai-phone-agent/migration_stub.sql`
 
----
+## Product Goal
 
-## Goal
-
-Build the first implementation pass for the CCW-CRM add-on that helps Carpet Cleaners Warehouse answer Toby's core question:
+Build the CCW-CRM add-on that answers Toby's question:
 
 > What are we trying to achieve?
 
-The product answer is:
+Product answer:
 
-> **Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.**
+> Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.
 
----
+The first implementation must also absorb the Senior Project Method inclusions pulled from `CleanExpo/Fabel-Prompt-Engineer`: recreate-able schema, durable read path, Evidence Standard findings, refinement lineage, export, and parser tests.
 
-## Operating Principles
+## Known Repo Observations
 
-Follow the existing CCW project principles:
+- This repo uses Next.js route handlers under `src/app/api/**/route.ts`.
+- The data layer is Prisma with committed migrations under `prisma/migrations/`.
+- Existing authenticated APIs use `requireAuthScope(request)` and workspace member scoping.
+- Vitest is already available through `npm run test`.
+- The migration stub in this spec folder is not the final migration. Convert it into real Prisma models and a real migration.
 
-1. Think before coding.
-2. Keep changes surgical.
-3. Avoid speculative abstractions.
-4. Add verify steps with each implementation slice.
-5. Do not modify locked files.
+## Locked/Unrelated Files
 
-Locked files for this pass:
-
-- `apps/backend/src/db/demo_models.py`
-- `apps/web/middleware.ts`
-- `apps/backend/src/api/routes/demo_auth.py`
-
----
+Do not modify unrelated local files or historical locked paths. In this repo pass, keep changes scoped to Prisma schema/migrations, add-on domain services, add-on API routes, focused UI, tests, and the docs in this spec folder.
 
 ## Build Order
 
-### 1. Inspect existing architecture
+### 0. Confirm Architecture
 
-Before writing code, inspect:
+Inspect before editing:
 
 - `package.json`
 - `prisma/schema.prisma`
-- existing Next.js API route patterns under `src/app/api/**/route.ts`
-- existing auth/data-scope helpers under `src/lib/auth/**`
-- existing Prisma client setup under `src/lib/db/**`
-- existing webhook verification helpers under `src/lib/integrations/**`
-- existing tests using Vitest
+- `src/app/api/customers/route.ts`
+- `src/lib/auth/data-scope.ts`
+- `src/lib/auth/workspace-scope.ts`
+- `src/lib/db/prisma.ts`
+- existing Vitest tests under `src/**/*.test.ts` and `src/**/__tests__/*.test.ts`
 
-Document any assumptions in the PR body or a comment before implementation.
+Record any deviations in the PR body.
 
----
+### 1. P0 - Schema Into The Repo
 
-### 2. Data layer
+Create committed schema source of truth:
 
-Implement the add-on tables using the repo's established migration convention.
+- add Prisma models for the add-on;
+- add a real migration under `prisma/migrations/<timestamp>_ccw_feasibility_ai_phone_agent/migration.sql`;
+- include owner/workspace scoping consistent with existing CRM records;
+- include indexes and foreign keys for statement/scenario lineage, findings, call sessions, and CRM traceability;
+- seed only safe baseline/candidate records using repo conventions.
 
-Create or adapt models/tables for:
+Done when a fresh empty database can run the migrations and reproduce every add-on table, column, index, and relationship the app uses.
 
-- feature registry/config
-- feasibility statements
-- feasibility scenarios
-- market map points
-- parcel collection locations
-- AI phone agents/config
-- AI call sessions
-- AI call events
-- AI call transcripts, if safe for MVP
-- consent/audit records
+### 2. P0 - Build The Read Path
 
-Default posture:
+Implement authenticated list/detail APIs and minimal UI for:
 
-- AI phone agent inactive until explicitly configured.
-- Call recording disabled.
-- Outbound AI calling disabled.
-- After-hours / overflow pilot enabled only when feature flag is true.
+- feasibility statements;
+- scenarios;
+- evidence findings/assumptions;
+- refinement/version chain;
+- phone-agent call sessions.
 
----
+Done when a user can save a statement/scenario, refresh the page, reopen it from a list, and verify it came from the database.
 
-### 3. Scenario scoring service
+### 3. P1 - Wire Up The Evidence Standard
 
-Create a small domain service that can calculate feasibility scores for scenarios.
+Implement a parser/service equivalent to the Fabel evidence ledger:
 
-Minimum input fields:
+- extract `[VERIFIED]`, `[INFERENCE]`, and `[UNCONFIRMED]` claims from generated/refined statements;
+- store findings with tag, claim, source URL/path if present, and statement/scenario IDs;
+- surface findings and assumption register in the UI.
 
-- annual rent
-- annual staff cost
-- annual outgoings
-- fit-out cost
-- relocation cost
-- expected incremental margin
-- strategic score
-- risk score
-- cost score
+Done when generating/refining a statement produces visible findings and `[UNCONFIRMED]` assumptions are readable.
 
-Minimum output fields:
+### 4. P1 - Add Refinement Lineage
 
-- total annual cost
-- estimated first-year cost
-- required extra monthly contribution
-- weighted feasibility score
-- recommendation: `keep`, `pilot`, `defer`, or `reject`
+When a statement or scenario is refined/re-run:
 
-Add unit tests for at least:
+- create a new version;
+- set `parentStatementId` or `parentScenarioId`;
+- show the version chain in the UI.
+
+Done when a re-run spec clearly shows which version it descended from after refresh.
+
+### 5. P1 - Export
+
+Add an export action for finished feasibility statements:
+
+- Markdown is required first;
+- PDF is optional only after Markdown works;
+- include evidence tags and a findings summary in the export.
+
+Done when clicking export downloads a `.md` file locally.
+
+### 6. P1 - Tests And CI Coverage
+
+Add meaningful Vitest coverage for:
+
+- evidence/tagged-claim parser;
+- board/critique finding parser if implemented;
+- scenario scoring;
+- parcel eligibility/blocklist;
+- Twilio invalid-signature rejection;
+- ElevenLabs invalid-secret rejection;
+- refinement lineage service.
+
+Ensure CI runs `npm run test` alongside lint/type-check/build if it does not already.
+
+Done when a parser break fails `npm run test` and CI would block the PR.
+
+### 7. Feasibility Engine
+
+Create a small domain service that calculates:
+
+- total annual cost;
+- estimated first-year cost;
+- required extra monthly contribution;
+- weighted feasibility score;
+- recommendation: `keep`, `pilot`, `defer`, or `reject`.
+
+Minimum tests:
 
 1. Seven Hills baseline remains attractive under low rent.
 2. Artarmon requires incremental contribution before recommendation improves.
 3. Parcel collection hybrid can be recommended when low cost and high strategic score.
 
----
+### 8. Parcel Collection
 
-### 4. API endpoints
+Implement:
 
-Implement safe, authenticated endpoints matching the spec.
+- candidate location register;
+- eligibility check API;
+- default blocklist for dangerous goods, bulky machines, large drums, carrier-limit breaches, and technical-handover items;
+- override audit shape if overrides are allowed later.
 
-Minimum first-pass endpoints:
+Do not promise collection availability for blocked items by default.
+
+### 9. ElevenLabs/Twilio Phone-Agent Pilot
+
+Implement behind safe flags:
 
 - `GET /api/addons/ccw-feasibility-ai/status`
+- `GET /api/phone-agent/config`
+- `PUT /api/phone-agent/config`
+- `GET /api/phone-agent/customer-context`
+- `GET /api/phone-agent/call-sessions`
+- `GET /api/phone-agent/call-sessions/[id]`
+- `POST /api/webhooks/twilio/voice/status`
+- `POST /api/webhooks/elevenlabs/post-call`
+
+Security requirements:
+
+- verify Twilio signatures before processing;
+- require shared-secret/provider verification for ElevenLabs;
+- never log secrets;
+- default recording and outbound calling to false;
+- AI-created CRM records must link back to `callSessionId`;
+- escalate pricing exceptions, complaints, warranty, dangerous goods, and complex service questions.
+
+### 10. UI MVP
+
+Build only after data/API basics work:
+
+- objective card with Toby's answer;
+- saved statement list/detail;
+- scenario comparison table;
+- evidence findings/assumption register;
+- refinement lineage;
+- parcel candidate and eligibility view;
+- phone-agent pilot status;
+- call-session list/detail if ingestion exists;
+- Markdown export button.
+
+Avoid paid map integrations or external map keys in the first pass unless the repo already has a map stack.
+
+## Required API Surface
+
+- `GET /api/addons/ccw-feasibility-ai/status`
+- `GET /api/feasibility/statements`
+- `POST /api/feasibility/statements`
+- `GET /api/feasibility/statements/[id]`
+- `PUT /api/feasibility/statements/[id]`
+- `POST /api/feasibility/statements/[id]/refine`
 - `GET /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios/[id]/calculate`
+- `GET /api/feasibility/findings`
 - `GET /api/feasibility/map-points`
 - `GET /api/parcel-collection/locations`
 - `POST /api/parcel-collection/eligibility-check`
 - `GET /api/phone-agent/config`
 - `PUT /api/phone-agent/config`
+- `GET /api/phone-agent/call-sessions`
+- `GET /api/phone-agent/call-sessions/[id]`
+- `GET /api/phone-agent/customer-context`
 - `POST /api/webhooks/twilio/voice/status`
 - `POST /api/webhooks/elevenlabs/post-call`
-- `GET /api/phone-agent/customer-context`
 
-Use existing auth patterns. Do not expose admin/config endpoints publicly.
-
----
-
-### 5. Webhook security
-
-Implement webhook verification before any production path is enabled.
-
-Minimum requirements:
-
-- Verify Twilio signature for Twilio webhook endpoints.
-- Require a shared secret or provider verification strategy for ElevenLabs post-call ingestion.
-- Store raw webhook payloads only as needed for audit/debugging.
-- Never log secrets.
-- Add tests for invalid signatures.
-
----
-
-### 6. CRM actions from phone calls
-
-Implement service functions that can:
-
-- lookup customer context by caller phone number
-- create a lead from a qualified AI phone call
-- create a service-request draft from service intake
-- create a human follow-up task/handoff marker
-
-Lead/service records must reference the originating call session ID.
-
----
-
-### 7. Seed data
-
-Add safe seed data for the pilot:
-
-- Seven Hills baseline
-- Artarmon micro-showroom option template
-- parcel collection candidates: Newcastle, Wollongong, Canberra, Coffs Harbour, Orange, Tamworth, Townsville, Gladstone
-- competitor/map-point starter records
-- SWOT categories where suitable
-
-Do not create fake customer/order records unless the repo already has demo seeding conventions and those conventions are followed.
-
----
-
-### 8. UI MVP
-
-Build only after the data/API layer is stable.
-
-Minimum UI:
-
-- feasibility objective card showing Toby's answer
-- scenario comparison table
-- parcel collection pilot table
-- phone-agent pilot status panel
-- call-session list/detail if call-session ingestion exists
-
-Do not add map vendor keys or paid-map integrations in the first pass unless the repo already has a map stack.
-
----
-
-## Environment Variables
+## Safe Defaults
 
 ```env
 FEATURE_CCW_FEASIBILITY_AI_PHONE_AGENT=true
@@ -214,27 +225,42 @@ PHONE_AGENT_WEBHOOK_SECRET=
 
 Do not commit real keys.
 
----
+## Verification Commands
+
+Run as implementation reaches each layer:
+
+```bash
+npm run lint
+npm run type-check
+npm run test
+npm run build
+```
+
+For schema work, also verify a fresh database migration replay using the repo's Prisma migration workflow before marking Phase 1 complete.
 
 ## Acceptance Criteria
 
-- `npm run lint` passes.
-- `npm run type-check` passes.
-- Tests cover scenario scoring and webhook rejection paths.
-- Feature defaults remain safe: no outbound AI calling and no recording.
-- All phone-agent-created CRM records are linked back to a call session.
-- The status endpoint clearly shows whether the add-on is configured for pilot use.
-- PR remains draft until implementation and tests are complete.
-
----
+- Real Prisma migration and models exist for every add-on table the app uses.
+- Save/refresh/reopen works for feasibility statements and scenarios.
+- Evidence findings are created and visible.
+- `[UNCONFIRMED]` assumptions are surfaced.
+- Refinement lineage is visible.
+- Markdown export works.
+- Scenario scoring tests pass.
+- Parser tests pass.
+- Parcel blocklist tests pass.
+- Webhook invalid-signature/secret tests pass.
+- Phone-agent-created records reference a call session ID.
+- Recording and outbound calling remain disabled by default.
+- `npm run lint`, `npm run type-check`, `npm run test`, and `npm run build` pass before PR is marked ready.
 
 ## Suggested First Commit
 
 Implement only:
 
-1. schema/migration
-2. scenario scoring service
-3. scenario scoring tests
-4. feature-status endpoint
+1. Prisma schema/migration;
+2. evidence parser and tests;
+3. scenario scoring service and tests;
+4. feature-status endpoint.
 
-Then run verify before moving to webhooks.
+Then verify before moving to read-path UI and webhooks.

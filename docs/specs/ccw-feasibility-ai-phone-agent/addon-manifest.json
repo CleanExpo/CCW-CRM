@@ -37,6 +37,27 @@
       "Do not enable outbound AI calling or call recording by default."
     ]
   },
+  "senior_project_method_inclusions": {
+    "source": "CleanExpo/Fabel-Prompt-Engineer",
+    "required_capabilities": [
+      "schema_as_committed_source_of_truth",
+      "durable_read_path_for_saved_items",
+      "evidence_standard_findings",
+      "assumption_register",
+      "refinement_lineage",
+      "markdown_export",
+      "parser_tests_in_ci"
+    ],
+    "evidence_tags": ["VERIFIED", "INFERENCE", "UNCONFIRMED"],
+    "done_when": [
+      "fresh_database_migrations_recreate_addon_schema",
+      "saved_items_can_be_listed_and_reopened_after_refresh",
+      "tagged_claims_are_stored_as_findings_and_visible_in_ui",
+      "refinements_display_parent_child_version_chain",
+      "finished_statement_downloads_as_markdown",
+      "parser_failures_fail_npm_run_test_and_ci"
+    ]
+  },
   "feature_flags": {
     "FEATURE_CCW_FEASIBILITY_AI_PHONE_AGENT": true,
     "FEATURE_CCW_FEASIBILITY_DASHBOARD": true,
@@ -129,14 +150,22 @@
   },
   "api_endpoints": [
     {"method": "GET", "path": "/api/addons/ccw-feasibility-ai/status"},
+    {"method": "GET", "path": "/api/feasibility/statements"},
+    {"method": "POST", "path": "/api/feasibility/statements"},
+    {"method": "GET", "path": "/api/feasibility/statements/[id]"},
+    {"method": "PUT", "path": "/api/feasibility/statements/[id]"},
+    {"method": "POST", "path": "/api/feasibility/statements/[id]/refine"},
     {"method": "GET", "path": "/api/feasibility/scenarios"},
     {"method": "POST", "path": "/api/feasibility/scenarios"},
     {"method": "POST", "path": "/api/feasibility/scenarios/[id]/calculate"},
+    {"method": "GET", "path": "/api/feasibility/findings"},
     {"method": "GET", "path": "/api/feasibility/map-points"},
     {"method": "GET", "path": "/api/parcel-collection/locations"},
     {"method": "POST", "path": "/api/parcel-collection/eligibility-check"},
     {"method": "GET", "path": "/api/phone-agent/config"},
     {"method": "PUT", "path": "/api/phone-agent/config"},
+    {"method": "GET", "path": "/api/phone-agent/call-sessions"},
+    {"method": "GET", "path": "/api/phone-agent/call-sessions/[id]"},
     {"method": "POST", "path": "/api/webhooks/twilio/voice/status"},
     {"method": "POST", "path": "/api/webhooks/elevenlabs/post-call"},
     {"method": "GET", "path": "/api/phone-agent/customer-context"}
@@ -150,8 +179,16 @@
     "PHONE_AGENT_WEBHOOK_SECRET"
   ],
   "acceptance_criteria": [
+    "fresh database migrations recreate the add-on schema",
+    "saved feasibility items can be listed and reopened after refresh",
+    "tagged claims and assumptions are stored as visible findings",
+    "refinements record and display parent lineage",
+    "finished feasibility statements can be exported as Markdown",
+    "parser tests run in CI",
     "npm run lint passes",
     "npm run type-check passes",
+    "npm run test passes",
+    "npm run build passes",
     "scenario scoring tests pass",
     "webhook invalid-signature tests pass",
     "no secrets are committed",
