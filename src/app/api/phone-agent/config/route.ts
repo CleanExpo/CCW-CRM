@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import {
+  ccwWorkspaceRecordOwnerId,
+  resolveCcwWorkspaceContext,
+} from '@/lib/auth/ccw-workspace-context';
 import { getCcwPhoneAgentPilotStatus } from '@/lib/phone-agent/ccw-phone-agent-status';
 import {
   buildCcwPhoneAgentConfigResponse,
@@ -21,8 +25,15 @@ export async function GET(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
-    const row = await prisma.ccwAddonFeatureConfig.findUnique({
-      where: { ownerUserId_featureSlug: { ownerUserId: scope.userId, featureSlug: FEATURE_SLUG } },
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
+    const row = await prisma.ccwAddonFeatureConfig.findFirst({
+      where: {
+        featureSlug: FEATURE_SLUG,
+        ownerUserId: { in: [ctx.workspaceId, ...ctx.workspaceUserIds] },
+      },
+      orderBy: { updatedAt: 'desc' },
     });
 
     return NextResponse.json(
@@ -38,8 +49,16 @@ export async function PUT(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
-    const existing = await prisma.ccwAddonFeatureConfig.findUnique({
-      where: { ownerUserId_featureSlug: { ownerUserId: scope.userId, featureSlug: FEATURE_SLUG } },
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
+    const workspaceOwnerUserId = ccwWorkspaceRecordOwnerId(ctx);
+    const existing = await prisma.ccwAddonFeatureConfig.findFirst({
+      where: {
+        featureSlug: FEATURE_SLUG,
+        ownerUserId: { in: [workspaceOwnerUserId, ...ctx.workspaceUserIds] },
+      },
+      orderBy: { updatedAt: 'desc' },
     });
     const pilotStatus = getCcwPhoneAgentPilotStatus();
     const defaults = buildCcwPhoneAgentConfigResponse(
@@ -51,9 +70,11 @@ export async function PUT(request: NextRequest) {
     const next = normaliseCcwPhoneAgentConfigInput(body, defaults);
 
     const row = await prisma.ccwAddonFeatureConfig.upsert({
-      where: { ownerUserId_featureSlug: { ownerUserId: scope.userId, featureSlug: FEATURE_SLUG } },
+      where: {
+        ownerUserId_featureSlug: { ownerUserId: workspaceOwnerUserId, featureSlug: FEATURE_SLUG },
+      },
       create: {
-        ownerUserId: scope.userId,
+        ownerUserId: workspaceOwnerUserId,
         featureSlug: FEATURE_SLUG,
         status: next.status,
         config: next.config,
