@@ -1,0 +1,232 @@
+{"kind":"deck","id":"pr/0p6f59","name":"Deck"}
+{"kind":"layout","layoutId":"c3a2d509-39f9-4100-b913-3222ecb6e713","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"9bb80901-3d31-43bb-93f5-c5d69891597c","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/aosjdc","slide":1,"title":"Approval request","textShapes":14}
+{"kind":"shape","id":"sh/y90je9cv","slide":1,"bbox":[72,60,158,34]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":1,"text":"Approval request","textPreview":"Approval request","textChars":16,"textLines":1,"bbox":[86,67,130,20]}
+{"kind":"textbox","id":"sh/gbq1oryt","slide":1,"text":"CCW-CRM","textPreview":"CCW-CRM","textChars":7,"textLines":1,"bbox":[72,128,420,52]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":1,"text":"AI phone, growth ally, and follow-up agent system","textPreview":"AI phone, growth ally, and follow-up agent system","textChars":49,"textLines":1,"bbox":[72,184,760,44]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":1,"text":"Approve the build direction: protect Seven Hills economics, capture more customer demand, and turn CCW into a stronger industry hub.","textPreview":"Approve the build direction: protect Seven Hills economics, capture more customer demand, and turn CCW into a stronger industry hub.","textChars":132,"textLines":1,"bbox":[72,258,670,96]}
+{"kind":"shape","id":"sh/58z25kb6","slide":1,"bbox":[790,82,360,460]}
+{"kind":"textbox","id":"sh/gn29gr2p","slide":1,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[828,126,284,58]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":1,"text":"living feasibility statement for Toby","textPreview":"living feasibility statement for Toby","textChars":37,"textLines":1,"bbox":[836,184,268,40]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":1,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[828,258,284,58]}
+{"kind":"textbox","id":"sh/83itgfml","slide":1,"text":"agent layers: phone, learning, follow-up","textPreview":"agent layers: phone, learning, follow-up","textChars":40,"textLines":1,"bbox":[836,316,268,40]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":1,"text":"0","textPreview":"0","textChars":1,"textLines":1,"bbox":[828,390,284,58]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":1,"text":"silent commitments without approval gates","textPreview":"silent commitments without approval gates","textChars":41,"textLines":1,"bbox":[836,448,268,40]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":1,"text":"Prepared for Toby","textPreview":"Prepared for Toby","textChars":17,"textLines":1,"bbox":[72,600,360,24]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":1,"text":"Carpet Cleaners Warehouse | approval deck","textPreview":"Carpet Cleaners Warehouse | approval deck","textChars":41,"textLines":1,"bbox":[72,626,460,24]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":1,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/aosjdc","slide":1,"text":""}
+{"kind":"slide","id":"sl/5kfkno","slide":2,"title":"DECISION","textShapes":14}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":2,"text":"DECISION","textPreview":"DECISION","textChars":8,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":2,"text":"What Toby is approving","textPreview":"What Toby is approving","textChars":22,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":2,"text":"A controlled build that improves access, conversion, follow-up, and decision quality.","textPreview":"A controlled build that improves access, conversion, follow-up, and decision quality.","textChars":85,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/j6tovaho","slide":2,"bbox":[72,260,548,125]}
+{"kind":"shape","id":"sh/ulwval87","slide":2,"bbox":[72,260,7,125]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":2,"text":"Build the CRM operating layer","textPreview":"Build the CRM operating layer","textChars":29,"textLines":1,"bbox":[96,280,506,26]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":2,"text":"Feasibility, financial claims, Xero backing, opportunities, read path, and version history.","textPreview":"Feasibility, financial claims, Xero backing, opportunities, read path, and version history.","textChars":91,"textLines":1,"bbox":[96,318,506,53]}
+{"kind":"shape","id":"sh/j2t83itg","slide":2,"bbox":[660,260,548,125]}
+{"kind":"shape","id":"sh/qh0fepkz","slide":2,"bbox":[660,260,7,125]}
+{"kind":"textbox","id":"sh/s36hcrmh","slide":2,"text":"Launch the AI phone gatekeeper","textPreview":"Launch the AI phone gatekeeper","textChars":30,"textLines":1,"bbox":[684,280,506,26]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":2,"text":"Answer routine calls from approved knowledge and escalate calls that truly need a human.","textPreview":"Answer routine calls from approved knowledge and escalate calls that truly need a human.","textChars":88,"textLines":1,"bbox":[684,318,506,53]}
+{"kind":"shape","id":"sh/a1gvy90j","slide":2,"bbox":[72,430,548,125]}
+{"kind":"shape","id":"sh/zidonyd0","slide":2,"bbox":[72,430,7,125]}
+{"kind":"textbox","id":"sh/svu9knih","slide":2,"text":"Create learning agents","textPreview":"Create learning agents","textChars":22,"textLines":1,"bbox":[96,450,506,26]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":2,"text":"Mine conversations for intents, personas, objections, and specialised agent/playbook drafts.","textPreview":"Mine conversations for intents, personas, objections, and specialised agent/playbook drafts.","textChars":92,"textLines":1,"bbox":[96,488,506,53]}
+{"kind":"shape","id":"sh/ap4r65wj","slide":2,"bbox":[660,430,548,125]}
+{"kind":"shape","id":"sh/za1gvy90","slide":2,"bbox":[660,430,7,125]}
+{"kind":"textbox","id":"sh/sji5snel","slide":2,"text":"Start follow-up agents","textPreview":"Start follow-up agents","textChars":22,"textLines":1,"bbox":[684,450,506,26]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":2,"text":"Tracking updates, service intervals, company days, awards, campaigns, and industry-hub workflows.","textPreview":"Tracking updates, service intervals, company days, awards, campaigns, and industry-hub workflows.","textChars":97,"textLines":1,"bbox":[684,488,506,53]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":2,"text":"Approval is for direction and gated build sequence, not for ungated automation.","textPreview":"Approval is for direction and gated build sequence, not for ungated automation.","textChars":79,"textLines":1,"bbox":[72,612,980,28]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":2,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/5kfkno","slide":2,"text":""}
+{"kind":"slide","id":"sl/sezmtz","slide":3,"title":"OUTCOME","textShapes":13}
+{"kind":"textbox","id":"sh/3ex0nuxc","slide":3,"text":"OUTCOME","textPreview":"OUTCOME","textChars":7,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/szqtcj6t","slide":3,"text":"What changes for CCW","textPreview":"What changes for CCW","textChars":20,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":3,"text":"The project turns CCW-CRM from a record system into an operating ally for Toby.","textPreview":"The project turns CCW-CRM from a record system into an operating ally for Toby.","textChars":79,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/ahoza1gv","slide":3,"bbox":[72,245,330,250]}
+{"kind":"shape","id":"sh/32lszqtc","slide":3,"bbox":[72,245,7,250]}
+{"kind":"textbox","id":"sh/sneloj2t","slide":3,"text":"Growth","textPreview":"Growth","textChars":6,"textLines":1,"bbox":[96,265,288,26]}
+{"kind":"textbox","id":"sh/l87ed8ba","slide":3,"text":"Missed calls, product demand, quote gaps, regional pickup demand, service upsells, and event opportunities become visible.","textPreview":"Missed calls, product demand, quote gaps, regional pickup demand, service upsells, and event opportunities become visible.","textChars":122,"textLines":1,"bbox":[96,303,288,178]}
+{"kind":"shape","id":"sh/e9cvixcz","slide":3,"bbox":[475,245,330,250]}
+{"kind":"shape","id":"sh/3q5o7qpg","slide":3,"bbox":[475,245,7,250]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":3,"text":"Conversion","textPreview":"Conversion","textChars":10,"textLines":1,"bbox":[499,265,288,26]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":3,"text":"Phone enquiries become qualified leads, online sale nudges, phone-order drafts, service bookings, and support tasks.","textPreview":"Phone enquiries become qualified leads, online sale nudges, phone-order drafts, service bookings, and support tasks.","textChars":116,"textLines":1,"bbox":[499,303,288,178]}
+{"kind":"shape","id":"sh/5kb6xkf6","slide":3,"bbox":[878,245,330,250]}
+{"kind":"shape","id":"sh/czed8v6p","slide":3,"bbox":[878,245,7,250]}
+{"kind":"textbox","id":"sh/nqxs72x4","slide":3,"text":"Industry hub","textPreview":"Industry hub","textChars":12,"textLines":1,"bbox":[902,265,288,26]}
+{"kind":"textbox","id":"sh/u54zidon","slide":3,"text":"Company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training events become repeatable workflows.","textPreview":"Company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training events become repeatable workflows.","textChars":135,"textLines":1,"bbox":[902,303,288,178]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":3,"text":"Core objective","textPreview":"Core objective","textChars":14,"textLines":1,"bbox":[72,555,170,24]}
+{"kind":"textbox","id":"sh/cbulwval","slide":3,"text":"Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.","textPreview":"Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.","textChars":105,"textLines":1,"bbox":[72,584,920,34]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":3,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/y90je9cv","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/sezmtz","slide":3,"text":""}
+{"kind":"slide","id":"sl/7u4tfb","slide":4,"title":"SYSTEM MAP","textShapes":14}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":4,"text":"SYSTEM MAP","textPreview":"SYSTEM MAP","textChars":10,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":4,"text":"The approval architecture","textPreview":"The approval architecture","textChars":25,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":4,"text":"Four connected layers, all grounded by evidence and approval gates.","textPreview":"Four connected layers, all grounded by evidence and approval gates.","textChars":67,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/nih4byhg","slide":4,"bbox":[82,270,240,170]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":4,"text":"CRM core","textPreview":"CRM core","textChars":8,"textLines":1,"bbox":[106,300,192,30]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":4,"text":"Customers, orders, quotes, products, service, events","textPreview":"Customers, orders, quotes, products, service, events","textChars":52,"textLines":1,"bbox":[106,348,190,70]}
+{"kind":"shape","id":"sh/g3ex0nux","slide":4,"bbox":[326,332,44,46]}
+{"kind":"shape","id":"sh/rmhk3q5o","slide":4,"bbox":[374,270,240,170]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":4,"text":"Data backing","textPreview":"Data backing","textChars":12,"textLines":1,"bbox":[398,300,192,30]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":4,"text":"Xero, Shopify, website, approved knowledge","textPreview":"Xero, Shopify, website, approved knowledge","textChars":42,"textLines":1,"bbox":[398,348,190,70]}
+{"kind":"shape","id":"sh/94fu18jq","slide":4,"bbox":[618,332,44,46]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":4,"bbox":[666,270,240,170]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":4,"text":"Agent layer","textPreview":"Agent layer","textChars":11,"textLines":1,"bbox":[690,300,192,30]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":4,"text":"Phone gatekeeper, learning agents, follow-up agents","textPreview":"Phone gatekeeper, learning agents, follow-up agents","textChars":51,"textLines":1,"bbox":[690,348,190,70]}
+{"kind":"shape","id":"sh/9gr2p8nq","slide":4,"bbox":[910,332,44,46]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":4,"bbox":[958,270,240,170]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":4,"text":"Owner gates","textPreview":"Owner gates","textChars":11,"textLines":1,"bbox":[982,300,192,30]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":4,"text":"Toby approvals, consent, templates, audit trail","textPreview":"Toby approvals, consent, templates, audit trail","textChars":47,"textLines":1,"bbox":[982,348,190,70]}
+{"kind":"shape","id":"sh/9knih4by","slide":4,"bbox":[176,500,928,76]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":4,"text":"Principle: the system may prepare and recommend; approved rules or humans commit.","textPreview":"Principle: the system may prepare and recommend; approved rules or humans commit.","textChars":81,"textLines":1,"bbox":[216,522,848,30]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":4,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/7u4tfb","slide":4,"text":""}
+{"kind":"slide","id":"sl/f2tw2k","slide":5,"title":"PHONE GATEKEEPER","textShapes":15}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":5,"text":"PHONE GATEKEEPER","textPreview":"PHONE GATEKEEPER","textChars":16,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":5,"text":"Answer what we know. Escalate what we should not guess.","textPreview":"Answer what we know. Escalate what we should not guess.","textChars":55,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":5,"text":"ElevenLabs + Twilio becomes the front door for routine calls and qualified handoff.","textPreview":"ElevenLabs + Twilio becomes the front door for routine calls and qualified handoff.","textChars":83,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/9w3m94fu","slide":5,"bbox":[70,250,238,145]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":5,"text":"Inbound call","textPreview":"Inbound call","textChars":12,"textLines":1,"bbox":[92,278,194,26]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":5,"text":"Caller intent, number, context","textPreview":"Caller intent, number, context","textChars":30,"textLines":1,"bbox":[92,318,194,48]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":5,"bbox":[312,300,42,46]}
+{"kind":"shape","id":"sh/94fu18jq","slide":5,"bbox":[362,250,238,145]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":5,"text":"Knowledge check","textPreview":"Knowledge check","textChars":15,"textLines":1,"bbox":[384,278,194,26]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":5,"text":"Shopify, website, catalogue, SDS, FAQs","textPreview":"Shopify, website, catalogue, SDS, FAQs","textChars":38,"textLines":1,"bbox":[384,318,194,48]}
+{"kind":"shape","id":"sh/f6dcbulw","slide":5,"bbox":[604,300,42,46]}
+{"kind":"shape","id":"sh/4r65wjud","slide":5,"bbox":[654,250,238,145]}
+{"kind":"textbox","id":"sh/xc3ylc7u","slide":5,"text":"Triage decision","textPreview":"Triage decision","textChars":15,"textLines":1,"bbox":[676,278,194,26]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":5,"text":"Answer, draft action, or handoff","textPreview":"Answer, draft action, or handoff","textChars":32,"textLines":1,"bbox":[676,318,194,48]}
+{"kind":"shape","id":"sh/fepkzupw","slide":5,"bbox":[896,300,42,46]}
+{"kind":"shape","id":"sh/4zidonyd","slide":5,"bbox":[946,250,238,145]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":5,"text":"CRM outcome","textPreview":"CRM outcome","textChars":11,"textLines":1,"bbox":[968,278,194,26]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":5,"text":"Lead, quote/order draft, booking, task","textPreview":"Lead, quote/order draft, booking, task","textChars":38,"textLines":1,"bbox":[968,318,194,48]}
+{"kind":"shape","id":"sh/fil0rqd4","slide":5,"bbox":[140,470,1000,92]}
+{"kind":"shape","id":"sh/7ed8bat4","slide":5,"bbox":[140,470,7,92]}
+{"kind":"textbox","id":"sh/itgfmlkj","slide":5,"text":"Escalation stays deliberate","textPreview":"Escalation stays deliberate","textChars":27,"textLines":1,"bbox":[164,490,958,26]}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":5,"text":"Pricing exceptions, complaints, warranty disputes, dangerous goods, complex service questions, and low-confidence answers require human handoff.","textPreview":"Pricing exceptions, complaints, warranty disputes, dangerous goods, complex service questions, and low-confidence answers require human h...","textChars":144,"textLines":1,"bbox":[164,528,958,20]}
+{"kind":"textbox","id":"sh/0z61032l","slide":5,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/f2tw2k","slide":5,"text":""}
+{"kind":"slide","id":"sl/yjq37l","slide":6,"title":"LEARNING LOOP","textShapes":15}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":6,"text":"LEARNING LOOP","textPreview":"LEARNING LOOP","textChars":13,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/xczed8v6","slide":6,"text":"Conversations become specialised agents","textPreview":"Conversations become specialised agents","textChars":39,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":6,"text":"Past calls become insight, but live behaviour changes only after approval.","textPreview":"Past calls become insight, but live behaviour changes only after approval.","textChars":74,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/fyxobm58","slide":6,"bbox":[112,238,210,152]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":6,"text":"Discover","textPreview":"Discover","textChars":8,"textLines":1,"bbox":[132,270,170,30]}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":6,"text":"Intents, personas, objections, gaps","textPreview":"Intents, personas, objections, gaps","textChars":35,"textLines":1,"bbox":[132,318,166,48]}
+{"kind":"shape","id":"sh/8jqh0fep","slide":6,"bbox":[326,292,38,46]}
+{"kind":"shape","id":"sh/fmlkjm1c","slide":6,"bbox":[372,238,210,152]}
+{"kind":"textbox","id":"sh/q1orytsv","slide":6,"text":"Draft","textPreview":"Draft","textChars":5,"textLines":1,"bbox":[392,270,170,30]}
+{"kind":"textbox","id":"sh/4nap4r65","slide":6,"text":"Specialised agent or playbook version","textPreview":"Specialised agent or playbook version","textChars":37,"textLines":1,"bbox":[392,318,166,48]}
+{"kind":"shape","id":"sh/t83itgfm","slide":6,"bbox":[586,292,38,46]}
+{"kind":"shape","id":"sh/mhk3q5o7","slide":6,"bbox":[632,238,210,152]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":6,"text":"Review","textPreview":"Review","textChars":6,"textLines":1,"bbox":[652,270,170,30]}
+{"kind":"textbox","id":"sh/4byhgn29","slide":6,"text":"Test conversations and approval","textPreview":"Test conversations and approval","textChars":31,"textLines":1,"bbox":[652,318,166,48]}
+{"kind":"shape","id":"sh/twra5gbq","slide":6,"bbox":[846,292,38,46]}
+{"kind":"shape","id":"sh/m58z25kb","slide":6,"bbox":[892,238,210,152]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":6,"text":"Improve","textPreview":"Improve","textChars":7,"textLines":1,"bbox":[912,270,170,30]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":6,"text":"Activate, measure, learn again","textPreview":"Activate, measure, learn again","textChars":30,"textLines":1,"bbox":[912,318,166,48]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":6,"text":"Specialised agent modes","textPreview":"Specialised agent modes","textChars":23,"textLines":1,"bbox":[142,460,350,24]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":6,"text":"Sales qualification | Product advice | Online sales | Phone orders | Service booking | Support booking | CARSI/training | Campaign capture | Escalation triage","textPreview":"Sales qualification | Product advice | Online sales | Phone orders | Service booking | Support booking | CARSI/training | Campaign captur...","textChars":158,"textLines":1,"bbox":[142,492,990,62]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":6,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/yjq37l","slide":6,"text":""}
+{"kind":"slide","id":"sl/ww9obm","slide":7,"title":"FOLLOW-UP AGENTS","textShapes":14}
+{"kind":"textbox","id":"sh/vy90je9c","slide":7,"text":"FOLLOW-UP AGENTS","textPreview":"FOLLOW-UP AGENTS","textChars":16,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":7,"text":"From CRM signals to industry momentum","textPreview":"From CRM signals to industry momentum","textChars":37,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":7,"text":"Specialised agents watch for the next useful contact point.","textPreview":"Specialised agents watch for the next useful contact point.","textChars":59,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/61032lsz","slide":7,"bbox":[110,235,1060,62]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":7,"text":"Operational","textPreview":"Operational","textChars":11,"textLines":1,"bbox":[140,252,190,24]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":7,"text":"Tracking updates, service intervals, service check-ins","textPreview":"Tracking updates, service intervals, service check-ins","textChars":54,"textLines":1,"bbox":[350,252,760,24]}
+{"kind":"shape","id":"sh/dsji5sne","slide":7,"bbox":[110,321,1060,62]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":7,"text":"Commercial","textPreview":"Commercial","textChars":10,"textLines":1,"bbox":[140,338,190,24]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":7,"text":"Quote follow-up, phone orders, online sales nurture","textPreview":"Quote follow-up, phone orders, online sales nurture","textChars":51,"textLines":1,"bbox":[350,338,760,24]}
+{"kind":"shape","id":"sh/7qpg3ex0","slide":7,"bbox":[110,407,1060,62]}
+{"kind":"textbox","id":"sh/i5sneloj","slide":7,"text":"Community","textPreview":"Community","textChars":9,"textLines":1,"bbox":[140,424,190,24]}
+{"kind":"textbox","id":"sh/pwb2hwfy","slide":7,"text":"Company days, appreciation days, industry awards","textPreview":"Company days, appreciation days, industry awards","textChars":48,"textLines":1,"bbox":[350,424,760,24]}
+{"kind":"shape","id":"sh/0bi9s36h","slide":7,"bbox":[110,493,1060,62]}
+{"kind":"textbox","id":"sh/7y1kre1w","slide":7,"text":"Campaign","textPreview":"Campaign","textChars":8,"textLines":1,"bbox":[140,510,190,24]}
+{"kind":"textbox","id":"sh/ed8v6psf","slide":7,"text":"Newsletters, email campaigns, messages, social blitzes","textPreview":"Newsletters, email campaigns, messages, social blitzes","textChars":54,"textLines":1,"bbox":[350,510,760,24]}
+{"kind":"textbox","id":"sh/p4r65wju","slide":7,"text":"Default posture: draft-first. Auto-send only after consent basis, approved template, frequency cap, audit trail, and owner approval.","textPreview":"Default posture: draft-first. Auto-send only after consent basis, approved template, frequency cap, audit trail, and owner approval.","textChars":132,"textLines":1,"bbox":[110,606,1030,32]}
+{"kind":"textbox","id":"sh/wjudg7ad","slide":7,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/ww9obm","slide":7,"text":""}
+{"kind":"slide","id":"sl/cvblqj","slide":8,"title":"EVIDENCE AND ACCOUNTING","textShapes":13}
+{"kind":"textbox","id":"sh/yd0z6103","slide":8,"text":"EVIDENCE AND ACCOUNTING","textPreview":"EVIDENCE AND ACCOUNTING","textChars":23,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/90je9cvi","slide":8,"text":"Real claims, adjustable by Toby, backed by Xero where available","textPreview":"Real claims, adjustable by Toby, backed by Xero where available","textChars":63,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/gfmlkjm1","slide":8,"text":"The CRM separates owner-entered inputs from accounting-backed values.","textPreview":"The CRM separates owner-entered inputs from accounting-backed values.","textChars":69,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/rmhk3q5o","slide":8,"bbox":[90,260,230,116]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":8,"text":"Owner-entered","textPreview":"Owner-entered","textChars":13,"textLines":1,"bbox":[108,300,194,24]}
+{"kind":"shape","id":"sh/9s36hcrm","slide":8,"bbox":[375,260,230,116]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":8,"text":"Toby-adjusted","textPreview":"Toby-adjusted","textChars":13,"textLines":1,"bbox":[393,300,194,24]}
+{"kind":"shape","id":"sh/nih4byhg","slide":8,"bbox":[660,260,230,116]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":8,"text":"Xero-backed","textPreview":"Xero-backed","textChars":11,"textLines":1,"bbox":[678,300,194,24]}
+{"kind":"shape","id":"sh/obm58z25","slide":8,"bbox":[945,260,230,116]}
+{"kind":"textbox","id":"sh/hwfyxobm","slide":8,"text":"Stale or disputed","textPreview":"Stale or disputed","textChars":17,"textLines":1,"bbox":[963,300,194,24]}
+{"kind":"shape","id":"sh/65wjudg7","slide":8,"bbox":[112,438,494,108]}
+{"kind":"shape","id":"sh/zqtcj6to","slide":8,"bbox":[112,438,7,108]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":8,"text":"Xero cannot silently overwrite","textPreview":"Xero cannot silently overwrite","textChars":30,"textLines":1,"bbox":[136,458,452,26]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":8,"text":"Xero proposes or backs values. Toby-adjusted claims keep their audit trail and accepted/disputed state.","textPreview":"Xero proposes or backs values. Toby-adjusted claims keep their audit trail and accepted/disputed state.","textChars":103,"textLines":1,"bbox":[136,496,452,36]}
+{"kind":"shape","id":"sh/6xkf6dcb","slide":8,"bbox":[674,438,494,108]}
+{"kind":"shape","id":"sh/zed8v6ps","slide":8,"bbox":[674,438,7,108]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":8,"text":"Evidence Standard stays visible","textPreview":"Evidence Standard stays visible","textChars":31,"textLines":1,"bbox":[698,458,452,26]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":8,"text":"Verified, inferred, and unconfirmed claims are extracted into findings and the assumption register.","textPreview":"Verified, inferred, and unconfirmed claims are extracted into findings and the assumption register.","textChars":99,"textLines":1,"bbox":[698,496,452,36]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":8,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/cvixczed","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/cvblqj","slide":8,"text":""}
+{"kind":"slide","id":"sl/iu9cgs","slide":9,"title":"SAFETY GATES","textShapes":18}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":9,"text":"SAFETY GATES","textPreview":"SAFETY GATES","textChars":12,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/loj2t83i","slide":9,"text":"What the system cannot do without approval","textPreview":"What the system cannot do without approval","textChars":42,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":9,"text":"The build is powerful because it is gated.","textPreview":"The build is powerful because it is gated.","textChars":42,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/3q5o7qpg","slide":9,"bbox":[88,235,520,68]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":9,"text":"LOCKED","textPreview":"LOCKED","textChars":6,"textLines":1,"bbox":[108,257,82,20]}
+{"kind":"textbox","id":"sh/lwval87e","slide":9,"text":"No recording without consent and retention policy","textPreview":"No recording without consent and retention policy","textChars":49,"textLines":1,"bbox":[200,252,370,32]}
+{"kind":"shape","id":"sh/wb2hwfyx","slide":9,"bbox":[658,235,520,68]}
+{"kind":"textbox","id":"sh/32lszqtc","slide":9,"text":"LOCKED","textPreview":"LOCKED","textChars":6,"textLines":1,"bbox":[678,257,82,20]}
+{"kind":"textbox","id":"sh/ahoza1gv","slide":9,"text":"No outbound AI calling by default","textPreview":"No outbound AI calling by default","textChars":33,"textLines":1,"bbox":[770,252,370,32]}
+{"kind":"shape","id":"sh/cj6tovah","slide":9,"bbox":[88,333,520,68]}
+{"kind":"textbox","id":"sh/54zidony","slide":9,"text":"LOCKED","textPreview":"LOCKED","textChars":6,"textLines":1,"bbox":[108,355,82,20]}
+{"kind":"textbox","id":"sh/udg7adsj","slide":9,"text":"No order placement, paid booking, campaign send, or social publish without approval","textPreview":"No order placement, paid booking, campaign send, or social publish without approval","textChars":83,"textLines":1,"bbox":[200,350,370,32]}
+{"kind":"shape","id":"sh/nyd0z610","slide":9,"bbox":[658,333,520,68]}
+{"kind":"textbox","id":"sh/cvixczed","slide":9,"text":"LOCKED","textPreview":"LOCKED","textChars":6,"textLines":1,"bbox":[678,355,82,20]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":9,"text":"No specialised agent activation without version review","textPreview":"No specialised agent activation without version review","textChars":54,"textLines":1,"bbox":[770,350,370,32]}
+{"kind":"shape","id":"sh/upwb2hwf","slide":9,"bbox":[88,431,520,68]}
+{"kind":"textbox","id":"sh/nap4r65w","slide":9,"text":"LOCKED","textPreview":"LOCKED","textChars":6,"textLines":1,"bbox":[108,453,82,20]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":9,"text":"No unapproved knowledge or unknown-provenance answers","textPreview":"No unapproved knowledge or unknown-provenance answers","textChars":53,"textLines":1,"bbox":[200,448,370,32]}
+{"kind":"shape","id":"sh/1orytsvu","slide":9,"bbox":[658,431,520,68]}
+{"kind":"textbox","id":"sh/5kb6xkf6","slide":9,"text":"LOCKED","textPreview":"LOCKED","textChars":6,"textLines":1,"bbox":[678,453,82,20]}
+{"kind":"textbox","id":"sh/czed8v6p","slide":9,"text":"No financial commitment from stale or disputed data","textPreview":"No financial commitment from stale or disputed data","textChars":51,"textLines":1,"bbox":[770,448,370,32]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":9,"text":"Approval gates are a feature, not friction.","textPreview":"Approval gates are a feature, not friction.","textChars":43,"textLines":1,"bbox":[72,610,780,30]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":9,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/iu9cgs","slide":9,"text":""}
+{"kind":"slide","id":"sl/gwvb03","slide":10,"title":"APPROVAL PATH","textShapes":16}
+{"kind":"textbox","id":"sh/z61032ls","slide":10,"text":"APPROVAL PATH","textPreview":"APPROVAL PATH","textChars":13,"textLines":1,"bbox":[72,50,680,24]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":10,"text":"Approve the direction, then build in controlled slices","textPreview":"Approve the direction, then build in controlled slices","textChars":54,"textLines":1,"bbox":[72,84,850,86]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":10,"text":"Toby approval unlocks the first implementation pass.","textPreview":"Toby approval unlocks the first implementation pass.","textChars":52,"textLines":1,"bbox":[72,178,820,52]}
+{"kind":"shape","id":"sh/a9w3m94f","slide":10,"bbox":[82,235,520,54]}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":10,"text":"Phase 1","textPreview":"Phase 1","textChars":7,"textLines":1,"bbox":[112,250,110,20]}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":10,"text":"Schema, read path, evidence, Xero-backed claims","textPreview":"Schema, read path, evidence, Xero-backed claims","textChars":47,"textLines":1,"bbox":[240,250,330,22]}
+{"kind":"shape","id":"sh/h0fepkzu","slide":10,"bbox":[82,313,520,54]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":10,"text":"Phase 2","textPreview":"Phase 2","textChars":7,"textLines":1,"bbox":[112,328,110,20]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":10,"text":"Feasibility engine, opportunities, phone gatekeeper","textPreview":"Feasibility engine, opportunities, phone gatekeeper","textChars":51,"textLines":1,"bbox":[240,328,330,22]}
+{"kind":"shape","id":"sh/zupwb2hw","slide":10,"bbox":[82,391,520,54]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":10,"text":"Phase 3","textPreview":"Phase 3","textChars":7,"textLines":1,"bbox":[112,406,110,20]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":10,"text":"Conversation learning, specialised agents, follow-up agents","textPreview":"Conversation learning, specialised agents, follow-up agents","textChars":59,"textLines":1,"bbox":[240,406,330,22]}
+{"kind":"shape","id":"sh/sfil0rqd","slide":10,"bbox":[82,469,520,54]}
+{"kind":"textbox","id":"sh/z61032ls","slide":10,"text":"Phase 4","textPreview":"Phase 4","textChars":7,"textLines":1,"bbox":[112,484,110,20]}
+{"kind":"textbox","id":"sh/al87ed8b","slide":10,"text":"Industry events, campaigns, measurement, polish","textPreview":"Industry events, campaigns, measurement, polish","textChars":47,"textLines":1,"bbox":[240,484,330,22]}
+{"kind":"shape","id":"sh/hcrmhk3q","slide":10,"bbox":[690,234,420,310]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":10,"text":"Toby decisions needed","textPreview":"Toby decisions needed","textChars":21,"textLines":1,"bbox":[720,268,360,28]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":10,"text":"1. Approve the gated build direction\n2. Confirm first specialised agents\n3. Confirm Xero claim mappings\n4. Confirm company-day/event priorities\n5. Confirm follow-up auto-send boundaries","textPreview":"1. Approve the gated build direction | 2. Confirm first specialised agents | 3. Confirm Xero claim mappings | 4. Confirm company-day/even...","textChars":185,"textLines":5,"bbox":[720,318,350,164]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":10,"text":"Recommended decision: approve Phase 1 and keep later automation draft-first until reviewed.","textPreview":"Recommended decision: approve Phase 1 and keep later automation draft-first until reviewed.","textChars":91,"textLines":1,"bbox":[130,610,980,32]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":10,"text":"CCW-CRM approval deck | 16 Jun 2026","textPreview":"CCW-CRM approval deck | 16 Jun 2026","textChars":35,"textLines":1,"bbox":[72,670,500,18]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1168,666,40,22]}
+{"kind":"notes","id":"nt/gwvb03","slide":10,"text":""}

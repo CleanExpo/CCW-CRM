@@ -1,0 +1,421 @@
+{
+  "$schema": "https://ccw-crm-erp.local/schemas/addon-feature.v1.json",
+  "schema_version": "1.0.0",
+  "feature_slug": "ccw_nsw_feasibility_ai_phone_agent",
+  "feature_name": "NSW Feasibility + AI Phone Sales Agent",
+  "created_at": "2026-06-16T00:00:00+10:00",
+  "timezone": "Australia/Sydney",
+  "codex_access_mode": "read:write",
+  "repository": {
+    "full_name": "CleanExpo/CCW-CRM",
+    "branch": "feature/ccw-feasibility-ai-phone-agent-20260616",
+    "base_branch": "main",
+    "spec_path": "docs/specs/ccw-feasibility-ai-phone-agent/spec.md",
+    "codex_task_path": "docs/specs/ccw-feasibility-ai-phone-agent/codex-task.md",
+    "migration_stub_path": "docs/specs/ccw-feasibility-ai-phone-agent/migration_stub.sql"
+  },
+  "business": {
+    "name": "Carpet Cleaners Warehouse",
+    "short_name": "CCW",
+    "country": "Australia",
+    "primary_decision_owner": "Toby",
+    "current_main_locations": ["Brisbane", "Sydney / Seven Hills", "Melbourne"],
+    "satellite_locations": ["Perth", "Adelaide", "Hobart"]
+  },
+  "strategic_objective": {
+    "owner_question": "What are we trying to achieve?",
+    "answer": "Increase profitable customer access and sales conversion while protecting the Seven Hills cost advantage.",
+    "sub_goals": [
+      "Protect the low-cost Seven Hills NSW base until data proves a better option.",
+      "Improve customer access through parcel collection and AI phone support before taking on higher property cost.",
+      "Use actual CRM/ERP sales, margin, postcode, pickup, delivery and service data to decide whether Artarmon is justified.",
+      "Capture more phone enquiries and convert them into CRM leads, service jobs and quote opportunities.",
+      "Generate and measure growth, diversification, and cost-saving opportunities for Toby.",
+      "Let Toby adjust financial claims and back them with Xero accounting evidence where available.",
+      "Use ElevenLabs and Twilio as a CRM phone gatekeeper that answers routine calls from approved knowledge and escalates calls that need a human.",
+      "Discover patterns in phone conversations and generate specialised agents, playbooks, training follow-ups, and campaign drafts from approved learnings.",
+      "Use follow-up agents to send or draft approved emails and messages from CRM, order, service, and event signals.",
+      "Build CCW and Unite-Group into an industry hub through company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training events."
+    ],
+    "non_goals": [
+      "Do not automatically replace Seven Hills with Artarmon.",
+      "Do not create unapproved dangerous-goods collection flows.",
+      "Do not enable outbound AI calling or call recording by default.",
+      "Do not let AI commit spend, staffing, pricing, supplier, property, or customer-impacting policy decisions without approval.",
+      "Do not silently overwrite Toby-adjusted financial claims with Xero values.",
+      "Do not activate new specialised phone agents or send generated campaigns without approval.",
+      "Do not auto-send follow-up messages without consent basis, approved template, frequency cap, and audit trail.",
+      "Do not let the phone agent answer from unapproved or unknown-provenance sources."
+    ]
+  },
+  "financial_claim_controls": {
+    "purpose": "Keep feasibility figures editable by Toby while making them accounting-backed through Xero where possible.",
+    "claim_types": ["rent", "staff_cost", "revenue", "margin", "expected_saving", "expected_incremental_contribution", "fitout_cost", "relocation_cost"],
+    "evidence_states": ["owner_entered", "toby_adjusted", "xero_backed", "stale", "disputed"],
+    "required_fields": [
+      "claim_key",
+      "label",
+      "value_aud",
+      "period",
+      "source_type",
+      "evidence_state",
+      "toby_override_note",
+      "xero_source_ref",
+      "xero_last_synced_at",
+      "accepted_by",
+      "accepted_at"
+    ],
+    "xero_backing": {
+      "existing_integration_paths": [
+        "src/lib/integrations/xero.ts",
+        "src/lib/integrations/xero-oauth.ts",
+        "src/lib/integrations/xero-storage.ts",
+        "src/lib/integrations/xero-tokens.ts",
+        "src/app/api/integrations/xero",
+        "src/lib/api/xero.ts"
+      ],
+      "rule": "Xero values may propose or back a claim, but Toby-adjusted values are not overwritten silently."
+    }
+  },
+  "ai_ally": {
+    "name": "Toby Growth and Cost Ally",
+    "purpose": "Continuously generate, rank, and measure growth, diversification, and cost-saving opportunities for Toby's decisions.",
+    "opportunity_categories": ["growth", "diversification", "cost_saving", "risk_reduction"],
+    "required_fields": [
+      "title",
+      "category",
+      "summary",
+      "expected_value_aud",
+      "effort_score",
+      "risk_score",
+      "evidence_basis",
+      "source_refs",
+      "status",
+      "owner_decision_needed",
+      "next_review_at",
+      "measured_outcome"
+    ],
+    "decision_boundary": "The ally prepares recommendations and decision material, but Toby or an approved human commits consequential decisions."
+  },
+  "senior_project_method_inclusions": {
+    "source": "CleanExpo/Fabel-Prompt-Engineer",
+    "required_capabilities": [
+      "schema_as_committed_source_of_truth",
+      "durable_read_path_for_saved_items",
+      "evidence_standard_findings",
+      "assumption_register",
+      "refinement_lineage",
+      "markdown_export",
+      "parser_tests_in_ci"
+    ],
+    "evidence_tags": ["VERIFIED", "INFERENCE", "UNCONFIRMED"],
+    "done_when": [
+      "fresh_database_migrations_recreate_addon_schema",
+      "saved_items_can_be_listed_and_reopened_after_refresh",
+      "tagged_claims_are_stored_as_findings_and_visible_in_ui",
+      "refinements_display_parent_child_version_chain",
+      "finished_statement_downloads_as_markdown",
+      "parser_failures_fail_npm_run_test_and_ci"
+    ]
+  },
+  "feature_flags": {
+    "FEATURE_CCW_FEASIBILITY_AI_PHONE_AGENT": true,
+    "FEATURE_CCW_FEASIBILITY_DASHBOARD": true,
+    "FEATURE_CCW_PARCEL_COLLECTION_SCENARIOS": true,
+    "FEATURE_CCW_AI_PHONE_AGENT": true,
+    "FEATURE_CCW_AI_PHONE_AGENT_AFTER_HOURS": true,
+    "FEATURE_CCW_AI_PHONE_AGENT_OUTBOUND": false,
+    "FEATURE_CCW_AI_PHONE_RECORDING": false
+  },
+  "seed_data": {
+    "site_options": [
+      {
+        "code": "seven_hills_current",
+        "name": "Seven Hills current NSW base",
+        "annual_rent_aud": 60000,
+        "annual_staff_cost_aud": 105000,
+        "financial_claim_state": "owner_entered",
+        "xero_backing_required": true,
+        "role": "NSW operational/service base",
+        "recommendation_bias": "keep_as_baseline"
+      },
+      {
+        "code": "artarmon_micro_showroom",
+        "name": "Artarmon micro-showroom / service intake",
+        "annual_rent_aud": null,
+        "role": "Small central showroom, service intake and curated pickup point",
+        "recommendation_bias": "pilot_only_if_incremental_margin_proven"
+      }
+    ],
+    "parcel_collection_locations": [
+      {"code": "newcastle", "name": "Newcastle", "state": "NSW", "priority": 1, "model": "parcel_point_plus_trade_partner_candidate"},
+      {"code": "wollongong", "name": "Wollongong", "state": "NSW", "priority": 2, "model": "parcel_point_plus_sydney_service_run"},
+      {"code": "canberra", "name": "Canberra", "state": "ACT", "priority": 3, "model": "parcel_point_plus_monthly_service_day"},
+      {"code": "coffs_harbour", "name": "Coffs Harbour", "state": "NSW", "priority": 4, "model": "parcel_point_first"},
+      {"code": "orange", "name": "Orange", "state": "NSW", "priority": 5, "model": "parcel_point_first"},
+      {"code": "tamworth", "name": "Tamworth", "state": "NSW", "priority": 6, "model": "parcel_point_first"},
+      {"code": "townsville", "name": "Townsville", "state": "QLD", "priority": 7, "model": "brisbane_supported_regional_partner_candidate"},
+      {"code": "gladstone", "name": "Gladstone", "state": "QLD", "priority": 8, "model": "brisbane_supported_regional_partner_candidate"}
+    ],
+    "initial_scenarios": [
+      "seven_hills_optimised",
+      "artarmon_micro_showroom",
+      "seven_hills_parcel_collection",
+      "hybrid_ai_phone_agent"
+    ],
+    "swot": {
+      "strengths": [
+        "Existing national branch/satellite footprint.",
+        "Very low Seven Hills rent compared with likely central Sydney alternatives.",
+        "Machine installs and service capability create differentiation."
+      ],
+      "weaknesses": [
+        "Single-staff Sydney operating risk.",
+        "Seven Hills may be less convenient for North Shore, CBD and Northern Beaches customers.",
+        "Reduced stock model could frustrate walk-in customers without clear stock status."
+      ],
+      "opportunities": [
+        "Parcel collection pilot for eligible products.",
+        "AI phone agent for after-hours and overflow enquiry capture.",
+        "Artarmon micro-showroom if incremental contribution margin is proven."
+      ],
+      "threats": [
+        "Higher Artarmon occupancy cost could erode profit.",
+        "Competitors already cover Sydney trade zones.",
+        "Dangerous goods and bulky products cannot be treated like standard parcels."
+      ]
+    }
+  },
+  "ai_phone_agent": {
+    "provider": "ElevenLabs Conversational AI",
+    "telephony_provider": "Twilio",
+    "agent_name": "CCW CRM Phone Gatekeeper",
+    "mode": "after_hours_overflow_and_front_door_gatekeeper_pilot",
+    "first_message": "Thanks for calling Carpet Cleaners Warehouse. I can help with product information, machine servicing, order pickup options and getting the right person to call you back. If this is urgent or you need a staff member, I can take the details and escalate it.",
+    "gatekeeper_outcomes": [
+      "answered_by_ai",
+      "human_handoff_required",
+      "follow_up_created",
+      "lead_created",
+      "online_sale_nudge_created",
+      "phone_order_draft_created",
+      "quote_draft_created",
+      "service_draft_created",
+      "support_booking_draft_created",
+      "training_followup_created",
+      "campaign_idea_created",
+      "blocked_escalated"
+    ],
+    "conversation_intelligence": {
+      "discovered_intents": [
+        "product_advice",
+        "price_check",
+        "online_sales_support",
+        "phone_order",
+        "service_booking",
+        "hands_on_support_booking",
+        "training_carsi",
+        "newsletter_signup",
+        "email_campaign_interest",
+        "social_media_campaign_signal",
+        "warranty",
+        "complaint",
+        "dangerous_goods",
+        "technical_handover",
+        "human_escalation"
+      ],
+      "persona_candidates": [
+        "new_carpet_cleaner",
+        "experienced_operator",
+        "restoration_technician",
+        "procurement_or_admin",
+        "service_customer",
+        "training_lead",
+        "price_sensitive_buyer",
+        "urgent_repair_customer"
+      ],
+      "learning_outputs": [
+        "specialized_agent_draft",
+        "sales_playbook_update",
+        "service_booking_flow_update",
+        "support_booking_flow_update",
+        "training_followup",
+        "newsletter_idea",
+        "email_campaign_draft",
+        "social_media_blitz_brief",
+        "knowledge_gap",
+        "objection_pattern"
+      ],
+      "activation_rule": "Conversation learnings may generate drafts, but new agents, live prompt changes, sends, publishes, bookings, and orders require approval."
+    },
+    "specialized_agent_modes": [
+      "sales_qualification",
+      "product_advice",
+      "online_sales_conversion",
+      "phone_order_capture",
+      "service_booking",
+      "hands_on_support_booking",
+      "training_carsi",
+      "campaign_capture",
+      "escalation_triage"
+    ],
+    "knowledge_base_sources_to_upload": [
+      "CCW Shopify product data",
+      "CCW website content",
+      "CCW product catalogue",
+      "Safety Data Sheets",
+      "machine manuals",
+      "FAQs",
+      "service rules",
+      "parcel collection eligibility rules",
+      "branch and opening hours",
+      "approved credible external sources"
+    ],
+    "mandatory_guardrails": [
+      "Identify as an AI assistant.",
+      "Do not pretend to be Toby or a CCW staff member.",
+      "Use approved CCW-owned knowledge and approved credible external sources only.",
+      "Escalate when source coverage, confidence, or permission is insufficient.",
+      "Store the triage outcome and source basis for handled calls where available.",
+      "Escalate pricing exceptions, complaints, warranty disputes, dangerous goods questions and complex service issues.",
+      "Do not record calls unless recording flag and consent workflow are enabled.",
+      "Do not run outbound AI campaigns unless outbound flag and compliance approvals are enabled."
+    ]
+  },
+  "follow_up_agents": {
+    "purpose": "Monitor CRM, order, service, and event signals to trigger approved follow-up emails/messages and campaign drafts.",
+    "trigger_types": [
+      "tracking_update",
+      "service_interval",
+      "open_quote_followup",
+      "phone_order_followup",
+      "online_sales_nurture",
+      "dormant_account_reactivation",
+      "company_day_invite",
+      "mini_tradeshow_invite",
+      "appreciation_day_invite",
+      "industry_awards_outreach",
+      "supplier_showcase_invite",
+      "training_event_invite",
+      "post_event_followup",
+      "newsletter_campaign",
+      "email_campaign",
+      "message_campaign",
+      "social_media_blitz"
+    ],
+    "channels": ["email", "message", "newsletter", "phone_task", "social_brief", "crm_task"],
+    "required_send_controls": [
+      "source_record_ref",
+      "consent_basis",
+      "approved_template_version",
+      "frequency_cap",
+      "send_state",
+      "audit_log",
+      "owner_approval"
+    ],
+    "event_types": [
+      "company_day",
+      "mini_tradeshow",
+      "appreciation_day",
+      "industry_awards",
+      "supplier_showcase",
+      "training_day",
+      "carsi_training"
+    ],
+    "industry_hub_outputs": [
+      "invite_list",
+      "speaker_or_guest_record",
+      "rsvp_record",
+      "award_nomination",
+      "showcase_theme",
+      "post_event_followup",
+      "event_outcome_metrics"
+    ],
+    "default_posture": "Draft-first. Auto-send is allowed only for explicitly approved rules with consent, template, frequency cap, and audit trail."
+  },
+  "api_endpoints": [
+    {"method": "GET", "path": "/api/addons/ccw-feasibility-ai/status"},
+    {"method": "GET", "path": "/api/feasibility/statements"},
+    {"method": "POST", "path": "/api/feasibility/statements"},
+    {"method": "GET", "path": "/api/feasibility/statements/[id]"},
+    {"method": "PUT", "path": "/api/feasibility/statements/[id]"},
+    {"method": "POST", "path": "/api/feasibility/statements/[id]/refine"},
+    {"method": "GET", "path": "/api/feasibility/scenarios"},
+    {"method": "POST", "path": "/api/feasibility/scenarios"},
+    {"method": "POST", "path": "/api/feasibility/scenarios/[id]/calculate"},
+    {"method": "GET", "path": "/api/feasibility/financial-claims"},
+    {"method": "POST", "path": "/api/feasibility/financial-claims"},
+    {"method": "PUT", "path": "/api/feasibility/financial-claims/[id]"},
+    {"method": "POST", "path": "/api/feasibility/financial-claims/[id]/xero-reconcile"},
+    {"method": "GET", "path": "/api/feasibility/opportunities"},
+    {"method": "POST", "path": "/api/feasibility/opportunities"},
+    {"method": "POST", "path": "/api/feasibility/opportunities/[id]/measure"},
+    {"method": "GET", "path": "/api/feasibility/findings"},
+    {"method": "GET", "path": "/api/feasibility/map-points"},
+    {"method": "GET", "path": "/api/parcel-collection/locations"},
+    {"method": "POST", "path": "/api/parcel-collection/eligibility-check"},
+    {"method": "GET", "path": "/api/phone-agent/config"},
+    {"method": "PUT", "path": "/api/phone-agent/config"},
+    {"method": "GET", "path": "/api/phone-agent/knowledge-sources"},
+    {"method": "POST", "path": "/api/phone-agent/knowledge-sources"},
+    {"method": "GET", "path": "/api/phone-agent/call-sessions"},
+    {"method": "GET", "path": "/api/phone-agent/call-sessions/[id]"},
+    {"method": "GET", "path": "/api/phone-agent/conversation-insights"},
+    {"method": "POST", "path": "/api/phone-agent/conversation-insights/discover"},
+    {"method": "GET", "path": "/api/phone-agent/specialized-agents"},
+    {"method": "POST", "path": "/api/phone-agent/specialized-agents"},
+    {"method": "POST", "path": "/api/phone-agent/specialized-agents/[id]/versions"},
+    {"method": "POST", "path": "/api/phone-agent/specialized-agents/[id]/approve"},
+    {"method": "GET", "path": "/api/phone-agent/generated-actions"},
+    {"method": "POST", "path": "/api/phone-agent/generated-actions/[id]/approve"},
+    {"method": "GET", "path": "/api/follow-up-agents"},
+    {"method": "POST", "path": "/api/follow-up-agents"},
+    {"method": "POST", "path": "/api/follow-up-agents/[id]/rules"},
+    {"method": "POST", "path": "/api/follow-up-actions/[id]/approve"},
+    {"method": "POST", "path": "/api/follow-up-actions/[id]/send"},
+    {"method": "GET", "path": "/api/industry-events"},
+    {"method": "POST", "path": "/api/industry-events"},
+    {"method": "GET", "path": "/api/industry-events/[id]/invites"},
+    {"method": "POST", "path": "/api/industry-events/[id]/invites"},
+    {"method": "POST", "path": "/api/industry-events/[id]/awards"},
+    {"method": "POST", "path": "/api/webhooks/twilio/voice/status"},
+    {"method": "POST", "path": "/api/webhooks/elevenlabs/post-call"},
+    {"method": "GET", "path": "/api/phone-agent/customer-context"}
+  ],
+  "environment_variables": [
+    "ELEVENLABS_API_KEY",
+    "ELEVENLABS_AGENT_ID",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_PHONE_NUMBER",
+    "PHONE_AGENT_WEBHOOK_SECRET"
+  ],
+  "acceptance_criteria": [
+    "fresh database migrations recreate the add-on schema",
+    "saved feasibility items can be listed and reopened after refresh",
+    "Toby can adjust financial claims and see whether each is owner-entered adjusted Xero-backed stale or disputed",
+    "Xero-backed financial claims show source reference and last synced timestamp",
+    "growth diversification and cost-saving opportunities can be generated ranked measured and reopened",
+    "tagged claims and assumptions are stored as visible findings",
+    "refinements record and display parent lineage",
+    "finished feasibility statements can be exported as Markdown",
+    "parser tests run in CI",
+    "npm run lint passes",
+    "npm run type-check passes",
+    "npm run test passes",
+    "npm run build passes",
+    "scenario scoring tests pass",
+    "webhook invalid-signature tests pass",
+    "phone gatekeeper calls store triage outcomes",
+    "AI-resolved calls are grounded in approved knowledge sources or escalated",
+    "conversation insights discover intents personas objections answer gaps and conversion opportunities",
+    "specialised agents are generated as inactive draft versions requiring approval",
+    "generated action drafts cover leads online sales phone orders service bookings support bookings CARSI training newsletters email campaigns and social media blitz briefs",
+    "follow-up agents generate approved or draft tracking updates service reminders sales nurture company-day invites event follow-ups awards outreach newsletters messages email campaigns and social blitz briefs",
+    "company days mini-tradeshows appreciation days industry awards supplier showcases and training days have event records invites RSVPs follow-up plans and outcome metrics",
+    "auto-send follow-up rules require consent basis approved template frequency cap audit log and owner approval",
+    "no secrets are committed",
+    "outbound AI calling and call recording remain disabled by default",
+    "phone-agent-created CRM records link back to call session IDs"
+  ]
+}
