@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { resolveCcwWorkspaceContext } from '@/lib/auth/ccw-workspace-context';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 
 function text(value: unknown, fallback = '') {
@@ -45,6 +46,9 @@ export async function POST(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const name = text(body.name);
     if (!name) return NextResponse.json({ detail: 'name is required' }, { status: 400 });
@@ -52,10 +56,13 @@ export async function POST(request: NextRequest) {
     const agentCode = text(body.agent_code);
     const agent = agentCode
       ? await prisma.ccwSpecializedAgent.findFirst({
-          where: { ownerUserId: scope.userId, agentCode },
+          where: { ownerUserId: { in: ctx.workspaceUserIds }, agentCode },
           select: { id: true },
         })
       : null;
+    if (agentCode && !agent) {
+      return NextResponse.json({ detail: 'Specialized agent not found' }, { status: 404 });
+    }
 
     const row = await prisma.ccwFollowUpRule.create({
       data: {
