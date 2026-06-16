@@ -21,12 +21,16 @@ function PanelFallback() {
   );
 }
 
-const TeamPage = dynamic(() => import('./team/page'), { loading: () => <PanelFallback /> });
-const BillingPage = dynamic(() => import('./billing/page'), { loading: () => <PanelFallback /> });
-const IntegrationsPage = dynamic(() => import('./integrations/page'), {
+const TeamPage = dynamic(() => import('./team/team-panel'), { loading: () => <PanelFallback /> });
+const BillingPage = dynamic(() => import('./billing/billing-panel'), {
   loading: () => <PanelFallback />,
 });
-const ShadowPage = dynamic(() => import('./shadow/page'), { loading: () => <PanelFallback /> });
+const IntegrationsPage = dynamic(() => import('./integrations/integrations-panel'), {
+  loading: () => <PanelFallback />,
+});
+const ShadowPage = dynamic(() => import('./shadow/shadow-panel'), {
+  loading: () => <PanelFallback />,
+});
 
 export function SettingsHubClient() {
   const router = useRouter();
