@@ -1,3 +1,5 @@
+'use client';
+
 import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { cn } from '@/lib/utils';
