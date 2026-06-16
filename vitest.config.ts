@@ -11,6 +11,7 @@ export default defineConfig({
       '**/dist/**',
       '**/.next/**',
       '**/e2e/**',
+      '**/CCW-CRM/**',
     ],
   },
   resolve: {

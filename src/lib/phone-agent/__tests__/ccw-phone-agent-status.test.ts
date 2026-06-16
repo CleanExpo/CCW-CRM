@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getCcwPhoneAgentPilotStatus } from '../ccw-phone-agent-status';
 
 function env(overrides: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
-  return overrides;
+  return { NODE_ENV: 'test', ...overrides };
 }
 
 describe('getCcwPhoneAgentPilotStatus', () => {
@@ -50,5 +50,21 @@ describe('getCcwPhoneAgentPilotStatus', () => {
     expect(status.provider_config.missing_env).toEqual([]);
     expect(status.safety_defaults.outbound_ai_calling_enabled).toBe(false);
     expect(status.safety_defaults.call_recording_enabled).toBe(false);
+  });
+
+  it('does not treat outbound and recording feature flags as automatic approval', () => {
+    const status = getCcwPhoneAgentPilotStatus(
+      env({
+        FEATURE_CCW_AI_PHONE_AGENT_OUTBOUND: 'true',
+        FEATURE_CCW_AI_PHONE_RECORDING: 'true',
+      })
+    );
+
+    expect(status.feature_flags.ai_phone_agent_outbound_enabled).toBe(true);
+    expect(status.feature_flags.ai_phone_recording_enabled).toBe(true);
+    expect(status.safety_defaults.outbound_ai_calling_enabled).toBe(false);
+    expect(status.safety_defaults.call_recording_enabled).toBe(false);
+    expect(status.safety_defaults.approval_required_before).toContain('outbound AI calling');
+    expect(status.safety_defaults.approval_required_before).toContain('call recording');
   });
 });

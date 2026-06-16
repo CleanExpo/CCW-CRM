@@ -26,5 +26,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "backend", ".next", "video"]
+  "exclude": ["node_modules", "backend", ".next", "video", "CCW-CRM"]
 }

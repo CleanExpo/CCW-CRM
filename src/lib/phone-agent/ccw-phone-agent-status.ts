@@ -26,6 +26,7 @@ export type CcwPhoneAgentPilotStatus = {
     outbound_ai_calling_enabled: boolean;
     call_recording_enabled: boolean;
     human_handoff_required_for: string[];
+    approval_required_before: string[];
   };
 };
 
@@ -94,14 +95,22 @@ export function getCcwPhoneAgentPilotStatus(
     feature_flags: featureFlags,
     provider_config: providerConfig,
     safety_defaults: {
-      outbound_ai_calling_enabled: featureFlags.ai_phone_agent_outbound_enabled,
-      call_recording_enabled: featureFlags.ai_phone_recording_enabled,
+      outbound_ai_calling_enabled: false,
+      call_recording_enabled: false,
       human_handoff_required_for: [
         'pricing exceptions',
         'complaints',
         'warranty disputes',
         'dangerous goods questions',
         'complex machine service or install questions',
+      ],
+      approval_required_before: [
+        'outbound AI calling',
+        'call recording',
+        'creating orders',
+        'confirming paid bookings',
+        'activating specialised agents',
+        'sending campaign messages',
       ],
     },
   };

@@ -1469,3 +1469,430 @@ model WorkspaceBillingInvoice {
   @@index([workspaceId])
   @@map("workspace_billing_invoices")
 }
+
+/// Feature-level switches and guardrails for the approved CCW feasibility / AI phone add-on.
+model CcwAddonFeatureConfig {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  featureSlug String   @map("feature_slug")
+  status      String   @default("disabled")
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, featureSlug])
+  @@index([ownerUserId])
+  @@index([status])
+  @@map("ccw_addon_feature_configs")
+}
+
+/// Toby-facing living feasibility statement with lineage for every refinement.
+model CcwFeasibilityStatement {
+  id                String    @id @default(uuid()) @db.Uuid
+  ownerUserId       String    @map("owner_user_id") @db.Uuid
+  parentStatementId String?   @map("parent_statement_id") @db.Uuid
+  title             String
+  objective         String    @db.Text
+  status            String    @default("draft")
+  contentMarkdown   String?   @map("content_markdown") @db.Text
+  evidenceSummary   Json      @default("{}") @map("evidence_summary")
+  generatedBy       String    @default("codex") @map("generated_by")
+  approvedBy        String?   @map("approved_by") @db.Uuid
+  approvedAt        DateTime? @map("approved_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  parentStatement CcwFeasibilityStatement?  @relation("CcwFeasibilityStatementLineage", fields: [parentStatementId], references: [id], onDelete: SetNull)
+  childStatements  CcwFeasibilityStatement[] @relation("CcwFeasibilityStatementLineage")
+  scenarios        CcwFeasibilityScenario[]
+  financialClaims  CcwFinancialClaim[]
+  findings         CcwEvidenceFinding[]
+  opportunities    CcwGrowthOpportunity[]
+
+  @@index([ownerUserId])
+  @@index([parentStatementId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ccw_feasibility_statements")
+}
+
+/// Measurable feasibility options, including Seven Hills, Artarmon, hybrid AI phone, and future branches.
+model CcwFeasibilityScenario {
+  id                                  String    @id @default(uuid()) @db.Uuid
+  ownerUserId                         String    @map("owner_user_id") @db.Uuid
+  statementId                         String    @map("statement_id") @db.Uuid
+  parentScenarioId                    String?   @map("parent_scenario_id") @db.Uuid
+  scenarioCode                        String    @map("scenario_code")
+  scenarioName                        String    @map("scenario_name")
+  status                              String    @default("draft")
+  annualRentAud                       Float?    @map("annual_rent_aud")
+  annualStaffCostAud                  Float?    @map("annual_staff_cost_aud")
+  annualOutgoingsAud                  Float?    @map("annual_outgoings_aud")
+  oneOffFitoutAud                     Float?    @map("one_off_fitout_aud")
+  oneOffRelocationAud                 Float?    @map("one_off_relocation_aud")
+  expectedIncrementalMarginAud        Float?    @map("expected_incremental_margin_aud")
+  baselineAnnualCostAud               Float?    @map("baseline_annual_cost_aud")
+  requiredExtraMonthlyContributionAud Float?    @map("required_extra_monthly_contribution_aud")
+  weightedFeasibilityScore            Float?    @map("weighted_feasibility_score")
+  recommendation                      String?   @map("recommendation")
+  scoreBreakdown                      Json      @default("{}") @map("score_breakdown")
+  createdAt                           DateTime  @default(now()) @map("created_at")
+  updatedAt                           DateTime  @updatedAt @map("updated_at")
+
+  statement      CcwFeasibilityStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  parentScenario CcwFeasibilityScenario?  @relation("CcwFeasibilityScenarioLineage", fields: [parentScenarioId], references: [id], onDelete: SetNull)
+  childScenarios CcwFeasibilityScenario[] @relation("CcwFeasibilityScenarioLineage")
+  financialClaims CcwFinancialClaim[]
+  findings        CcwEvidenceFinding[]
+  measurements    CcwOpportunityMeasurement[]
+
+  @@unique([statementId, scenarioCode])
+  @@index([ownerUserId])
+  @@index([statementId])
+  @@index([parentScenarioId])
+  @@index([recommendation])
+  @@map("ccw_feasibility_scenarios")
+}
+
+/// Owner-adjustable financial claims with explicit Xero backing state.
+model CcwFinancialClaim {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerUserId     String    @map("owner_user_id") @db.Uuid
+  statementId     String?   @map("statement_id") @db.Uuid
+  scenarioId      String?   @map("scenario_id") @db.Uuid
+  claimType       String    @map("claim_type")
+  label           String
+  valueAud        Float?    @map("value_aud")
+  periodStart     DateTime? @map("period_start")
+  periodEnd       DateTime? @map("period_end")
+  state           String    @default("owner_entered")
+  sourceSystem    String    @default("manual") @map("source_system")
+  xeroAccountCode String?   @map("xero_account_code")
+  xeroTenantId    String?   @map("xero_tenant_id")
+  confidenceScore Float?    @map("confidence_score")
+  notes           String?   @db.Text
+  adjustedBy      String?   @map("adjusted_by") @db.Uuid
+  adjustedAt      DateTime? @map("adjusted_at")
+  backedAt        DateTime? @map("backed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  statement CcwFeasibilityStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+  scenario  CcwFeasibilityScenario?  @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+  evidence  CcwFinancialClaimEvidence[]
+
+  @@index([ownerUserId])
+  @@index([statementId])
+  @@index([scenarioId])
+  @@index([claimType])
+  @@index([state])
+  @@map("ccw_financial_claims")
+}
+
+model CcwFinancialClaimEvidence {
+  id              String   @id @default(uuid()) @db.Uuid
+  claimId         String   @map("claim_id") @db.Uuid
+  evidenceType    String   @map("evidence_type")
+  sourceSystem    String   @default("xero") @map("source_system")
+  sourceReference String?  @map("source_reference")
+  sourceUrl       String?  @map("source_url")
+  amountAud       Float?   @map("amount_aud")
+  payload         Json     @default("{}")
+  capturedAt      DateTime @default(now()) @map("captured_at")
+
+  claim CcwFinancialClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+  @@index([sourceSystem])
+  @@index([capturedAt])
+  @@map("ccw_financial_claim_evidence")
+}
+
+/// Evidence Standard findings extracted from generated specs, claims, assumptions, calls, and trusted sources.
+model CcwEvidenceFinding {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerUserId     String   @map("owner_user_id") @db.Uuid
+  statementId     String?  @map("statement_id") @db.Uuid
+  scenarioId      String?  @map("scenario_id") @db.Uuid
+  findingType     String   @map("finding_type")
+  tag             String
+  claim           String   @db.Text
+  sourceLabel     String?  @map("source_label")
+  sourceUrl       String?  @map("source_url")
+  sourcePath      String?  @map("source_path")
+  status          String   @default("open")
+  reviewRequired  Boolean  @default(true) @map("review_required")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  statement CcwFeasibilityStatement? @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  scenario  CcwFeasibilityScenario?  @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([statementId])
+  @@index([scenarioId])
+  @@index([tag])
+  @@index([status])
+  @@map("ccw_evidence_findings")
+}
+
+model CcwGrowthOpportunity {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerUserId     String    @map("owner_user_id") @db.Uuid
+  statementId     String?   @map("statement_id") @db.Uuid
+  title           String
+  opportunityType String    @map("opportunity_type")
+  status          String    @default("candidate")
+  description     String?   @db.Text
+  expectedBenefit Json      @default("{}") @map("expected_benefit")
+  decisionGate    String?   @map("decision_gate")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  statement    CcwFeasibilityStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+  measurements CcwOpportunityMeasurement[]
+
+  @@index([ownerUserId])
+  @@index([statementId])
+  @@index([opportunityType])
+  @@index([status])
+  @@map("ccw_growth_opportunities")
+}
+
+model CcwOpportunityMeasurement {
+  id            String   @id @default(uuid()) @db.Uuid
+  opportunityId String   @map("opportunity_id") @db.Uuid
+  scenarioId    String?  @map("scenario_id") @db.Uuid
+  metricName    String   @map("metric_name")
+  metricValue   Float?   @map("metric_value")
+  unit          String?
+  sourceSystem  String   @default("manual") @map("source_system")
+  sourcePayload Json     @default("{}") @map("source_payload")
+  measuredAt    DateTime @default(now()) @map("measured_at")
+
+  opportunity CcwGrowthOpportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  scenario    CcwFeasibilityScenario? @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+
+  @@index([opportunityId])
+  @@index([scenarioId])
+  @@index([metricName])
+  @@map("ccw_opportunity_measurements")
+}
+
+/// Approved knowledge sources available to the ElevenLabs/Twilio gatekeeper.
+model CcwAiKnowledgeSource {
+  id             String   @id @default(uuid()) @db.Uuid
+  ownerUserId    String   @map("owner_user_id") @db.Uuid
+  sourceType     String   @map("source_type")
+  label          String
+  url            String?
+  trustLevel     String   @default("trusted") @map("trust_level")
+  refreshCadence String?  @map("refresh_cadence")
+  lastIndexedAt  DateTime? @map("last_indexed_at")
+  status         String   @default("active")
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([sourceType])
+  @@index([status])
+  @@map("ccw_ai_knowledge_sources")
+}
+
+/// Discovered phone conversations for training, routing, lead capture, and human-handoff decisions.
+model CcwAiCallSession {
+  id                String    @id @default(uuid()) @db.Uuid
+  ownerUserId       String    @map("owner_user_id") @db.Uuid
+  customerId        String?   @map("customer_id") @db.Uuid
+  contactId         String?   @map("contact_id") @db.Uuid
+  twilioCallSid     String?   @unique @map("twilio_call_sid")
+  elevenlabsCallId  String?   @map("elevenlabs_call_id")
+  direction         String    @default("inbound")
+  channel           String    @default("phone")
+  callerNumberHash  String?   @map("caller_number_hash")
+  transcript        String?   @db.Text
+  summary           String?   @db.Text
+  intent            String?
+  outcome           String?
+  handoffRequired   Boolean   @default(false) @map("handoff_required")
+  consentCaptured   Boolean   @default(false) @map("consent_captured")
+  recordingUrl      String?   @map("recording_url")
+  startedAt         DateTime? @map("started_at")
+  endedAt           DateTime? @map("ended_at")
+  metadata          Json      @default("{}")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  triageDecision CcwAiCallTriageDecision?
+  insights       CcwAiConversationInsight[]
+  followUpActions CcwFollowUpAction[]
+
+  @@index([ownerUserId])
+  @@index([customerId])
+  @@index([contactId])
+  @@index([intent])
+  @@index([outcome])
+  @@index([startedAt])
+  @@map("ccw_ai_call_sessions")
+}
+
+model CcwAiCallTriageDecision {
+  id              String   @id @default(uuid()) @db.Uuid
+  callSessionId   String   @unique @map("call_session_id") @db.Uuid
+  decision        String
+  reason          String   @db.Text
+  confidenceScore Float?   @map("confidence_score")
+  humanReviewerId String?  @map("human_reviewer_id") @db.Uuid
+  reviewedAt      DateTime? @map("reviewed_at")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  callSession CcwAiCallSession @relation(fields: [callSessionId], references: [id], onDelete: Cascade)
+
+  @@index([decision])
+  @@map("ccw_ai_call_triage_decisions")
+}
+
+model CcwAiConversationInsight {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerUserId   String   @map("owner_user_id") @db.Uuid
+  callSessionId String?  @map("call_session_id") @db.Uuid
+  insightType   String   @map("insight_type")
+  label         String
+  detail        String   @db.Text
+  evidence      Json     @default("{}")
+  status        String   @default("new")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  callSession CcwAiCallSession? @relation(fields: [callSessionId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([callSessionId])
+  @@index([insightType])
+  @@index([status])
+  @@map("ccw_ai_conversation_insights")
+}
+
+model CcwSpecializedAgent {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerUserId     String   @map("owner_user_id") @db.Uuid
+  agentCode       String   @map("agent_code")
+  name            String
+  purpose         String   @db.Text
+  persona         Json     @default("{}")
+  playbook        Json     @default("{}")
+  status          String   @default("draft")
+  requiresApproval Boolean @default(true) @map("requires_approval")
+  approvedBy      String?  @map("approved_by") @db.Uuid
+  approvedAt      DateTime? @map("approved_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  learningItems CcwAgentLearning[]
+  followUpRules CcwFollowUpRule[]
+
+  @@unique([ownerUserId, agentCode])
+  @@index([ownerUserId])
+  @@index([status])
+  @@map("ccw_specialized_agents")
+}
+
+model CcwAgentLearning {
+  id              String   @id @default(uuid()) @db.Uuid
+  agentId         String   @map("agent_id") @db.Uuid
+  sourceType      String   @map("source_type")
+  sourceId        String?  @map("source_id") @db.Uuid
+  lesson          String   @db.Text
+  confidenceScore Float?   @map("confidence_score")
+  status          String   @default("pending_review")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  agent CcwSpecializedAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([sourceType])
+  @@index([status])
+  @@map("ccw_agent_learning")
+}
+
+model CcwFollowUpRule {
+  id             String   @id @default(uuid()) @db.Uuid
+  ownerUserId    String   @map("owner_user_id") @db.Uuid
+  agentId        String?  @map("agent_id") @db.Uuid
+  ruleType       String   @map("rule_type")
+  name           String
+  triggerConfig  Json     @default("{}") @map("trigger_config")
+  channelConfig  Json     @default("{}") @map("channel_config")
+  status         String   @default("draft")
+  requiresApproval Boolean @default(true) @map("requires_approval")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  agent   CcwSpecializedAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  actions CcwFollowUpAction[]
+
+  @@index([ownerUserId])
+  @@index([agentId])
+  @@index([ruleType])
+  @@index([status])
+  @@map("ccw_follow_up_rules")
+}
+
+model CcwFollowUpAction {
+  id            String    @id @default(uuid()) @db.Uuid
+  ownerUserId   String    @map("owner_user_id") @db.Uuid
+  ruleId        String?   @map("rule_id") @db.Uuid
+  callSessionId String?   @map("call_session_id") @db.Uuid
+  actionType    String    @map("action_type")
+  channel       String
+  status        String    @default("draft")
+  recipientRef  String?   @map("recipient_ref")
+  subject       String?
+  body          String?   @db.Text
+  payload       Json      @default("{}")
+  scheduledFor  DateTime? @map("scheduled_for")
+  approvedBy    String?   @map("approved_by") @db.Uuid
+  approvedAt    DateTime? @map("approved_at")
+  sentAt        DateTime? @map("sent_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  rule        CcwFollowUpRule?  @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  callSession CcwAiCallSession? @relation(fields: [callSessionId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId])
+  @@index([ruleId])
+  @@index([callSessionId])
+  @@index([actionType])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("ccw_follow_up_actions")
+}
+
+model CcwIndustryEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerUserId String    @map("owner_user_id") @db.Uuid
+  eventType   String    @map("event_type")
+  name        String
+  status      String    @default("concept")
+  startsAt    DateTime? @map("starts_at")
+  endsAt      DateTime? @map("ends_at")
+  venue       String?
+  description String?   @db.Text
+  agenda      Json      @default("{}")
+  speakerPlan Json      @default("{}") @map("speaker_plan")
+  marketingPlan Json    @default("{}") @map("marketing_plan")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([ownerUserId])
+  @@index([eventType])
+  @@index([status])
+  @@index([startsAt])
+  @@map("ccw_industry_events")
+}
