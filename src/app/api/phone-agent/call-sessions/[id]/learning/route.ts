@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import {
+  ccwWorkspaceRecordOwnerId,
+  resolveCcwWorkspaceContext,
+} from '@/lib/auth/ccw-workspace-context';
 import { defaultCcwSpecializedAgent } from '@/lib/phone-agent/conversation-intelligence';
 
 type Params = { params: Promise<{ id: string }> };
@@ -15,8 +18,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
     const { id } = await params;
-    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+    const workspaceUserIds = ctx.workspaceUserIds;
     const call = await prisma.ccwAiCallSession.findFirst({
       where: { id, ownerUserId: { in: workspaceUserIds } },
       include: { triageDecision: true },
@@ -30,10 +36,13 @@ export async function POST(request: NextRequest, { params }: Params) {
         : {};
     const agentCode = text(body.agent_code, text(metadata.learning_agent_code, 'front-desk-agent'));
     const seed = defaultCcwSpecializedAgent(agentCode);
+    const workspaceOwnerUserId = ccwWorkspaceRecordOwnerId(ctx);
     const agent = await prisma.ccwSpecializedAgent.upsert({
-      where: { ownerUserId_agentCode: { ownerUserId: scope.userId, agentCode } },
+      where: {
+        ownerUserId_agentCode: { ownerUserId: workspaceOwnerUserId, agentCode },
+      },
       create: {
-        ownerUserId: scope.userId,
+        ownerUserId: workspaceOwnerUserId,
         agentCode,
         name: seed.name,
         purpose: seed.purpose,
