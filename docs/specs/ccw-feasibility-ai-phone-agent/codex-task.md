@@ -19,6 +19,8 @@ Product answer:
 
 The feasibility statement must behave like Toby's ongoing AI ally: constantly looking for growth, diversification, and cost-saving opportunities, measuring them over time, and preparing decision material without committing owner-level decisions.
 
+Financial claims must be owner-adjustable and accounting-aware. Toby can edit planning inputs such as rent, staff cost, revenue, margin, and expected savings; the system should show whether each value is owner-entered, Toby-adjusted, Xero-backed, stale, or disputed.
+
 The ElevenLabs/Twilio work must be implemented alongside the new CRM as the modern phone gatekeeper: answer routine calls when CCW already has approved knowledge, create traceable CRM drafts when useful, and escalate cleanly when a human is truly required.
 
 The first implementation must also absorb the Senior Project Method inclusions pulled from `CleanExpo/Fabel-Prompt-Engineer`: recreate-able schema, durable read path, Evidence Standard findings, refinement lineage, export, and parser tests.
@@ -28,6 +30,7 @@ The first implementation must also absorb the Senior Project Method inclusions p
 - This repo uses Next.js route handlers under `src/app/api/**/route.ts`.
 - The data layer is Prisma with committed migrations under `prisma/migrations/`.
 - Existing authenticated APIs use `requireAuthScope(request)` and workspace member scoping.
+- Xero integration already exists under `src/lib/integrations/xero*`, `src/app/api/integrations/xero/**`, and `src/lib/api/xero.ts`; reuse those patterns for accounting-backed claim state.
 - Vitest is already available through `npm run test`.
 - The migration stub in this spec folder is not the final migration. Convert it into real Prisma models and a real migration.
 
@@ -58,7 +61,7 @@ Create committed schema source of truth:
 - add Prisma models for the add-on;
 - add a real migration under `prisma/migrations/<timestamp>_ccw_feasibility_ai_phone_agent/migration.sql`;
 - include owner/workspace scoping consistent with existing CRM records;
-- include indexes and foreign keys for statement/scenario lineage, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, and CRM traceability;
+- include indexes and foreign keys for statement/scenario lineage, financial claims, financial claim evidence, Xero backing references, growth opportunities, opportunity measurements, findings, knowledge sources, call sessions, phone triage decisions, and CRM traceability;
 - seed only safe baseline/candidate records using repo conventions.
 
 Done when a fresh empty database can run the migrations and reproduce every add-on table, column, index, and relationship the app uses.
@@ -69,6 +72,7 @@ Implement authenticated list/detail APIs and minimal UI for:
 
 - feasibility statements;
 - scenarios;
+- financial claims and Xero backing status;
 - growth/diversification/cost-saving opportunities;
 - opportunity measurements;
 - evidence findings/assumptions;
@@ -134,6 +138,13 @@ Create a small domain service that calculates:
 - weighted feasibility score;
 - recommendation: `keep`, `pilot`, `defer`, or `reject`.
 
+Financial claim requirements:
+
+- store each claim with value, currency, period, source type, evidence state, Toby override notes, and optional Xero source reference;
+- support evidence states: `owner_entered`, `toby_adjusted`, `xero_backed`, `stale`, and `disputed`;
+- reconcile claim values from Xero where an account/contact/tracking/report mapping is available;
+- never overwrite Toby-adjusted values silently; store proposed Xero value and require accepted/disputed state.
+
 Also create the opportunity engine for Toby's AI ally:
 
 - classify opportunities as `growth`, `diversification`, `cost_saving`, or `risk_reduction`;
@@ -144,9 +155,11 @@ Also create the opportunity engine for Toby's AI ally:
 Minimum tests:
 
 1. Seven Hills baseline remains attractive under low rent.
-2. Artarmon requires incremental contribution before recommendation improves.
-3. Parcel collection hybrid can be recommended when low cost and high strategic score.
-4. Opportunity ranking prioritises high-value, low-risk growth/cost-saving records with evidence over unsupported ideas.
+2. Toby-adjusted financial values override defaults without losing audit history.
+3. Xero-backed financial claims expose source reference, sync time, and accepted/disputed state.
+4. Artarmon requires incremental contribution before recommendation improves.
+5. Parcel collection hybrid can be recommended when low cost and high strategic score.
+6. Opportunity ranking prioritises high-value, low-risk growth/cost-saving records with evidence over unsupported ideas.
 
 ### 8. Parcel Collection
 
@@ -217,6 +230,10 @@ Avoid paid map integrations or external map keys in the first pass unless the re
 - `GET /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios/[id]/calculate`
+- `GET /api/feasibility/financial-claims`
+- `POST /api/feasibility/financial-claims`
+- `PUT /api/feasibility/financial-claims/[id]`
+- `POST /api/feasibility/financial-claims/[id]/xero-reconcile`
 - `GET /api/feasibility/opportunities`
 - `POST /api/feasibility/opportunities`
 - `POST /api/feasibility/opportunities/[id]/measure`
@@ -271,6 +288,8 @@ For schema work, also verify a fresh database migration replay using the repo's 
 
 - Real Prisma migration and models exist for every add-on table the app uses.
 - Save/refresh/reopen works for feasibility statements and scenarios.
+- Toby can adjust financial claims and see whether each value is owner-entered, adjusted, Xero-backed, stale, or disputed.
+- Xero-backed claim tests cover source reference and accepted/disputed state.
 - Growth, diversification, and cost-saving opportunities can be generated, ranked, measured, and reopened.
 - Evidence findings are created and visible.
 - `[UNCONFIRMED]` assumptions are surfaced.

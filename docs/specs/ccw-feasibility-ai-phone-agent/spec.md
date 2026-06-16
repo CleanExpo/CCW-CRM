@@ -18,8 +18,9 @@ This is done when CCW-CRM can recreate the add-on database from committed Prisma
 - `UNI-2140` scopes the add-on across feasibility scenarios, parcel collection, ElevenLabs/Twilio phone-agent webhooks, customer lookup, CRM record creation, and human handoff. [VERIFIED - Linear issue `UNI-2140`]
 - CCW-CRM is a Next.js app with Prisma migrations, Prisma Client, Vitest, lint, type-check, and build scripts in `package.json`. [VERIFIED - `package.json`, `prisma/schema.prisma`, `prisma/migrations/`]
 - Existing authenticated API routes use `requireAuthScope(request)`, workspace member scoping, and `NextResponse.json({ detail })` error shapes. [VERIFIED - `src/app/api/customers/route.ts`, `src/lib/auth/data-scope.ts`, `src/lib/auth/workspace-scope.ts`]
+- CCW-CRM already has Xero integration code for OAuth, connection status, token storage/refresh, invoice sync, and Xero API access patterns. [VERIFIED - `src/lib/integrations/xero.ts`, `src/lib/integrations/xero-oauth.ts`, `src/lib/integrations/xero-storage.ts`, `src/lib/integrations/xero-tokens.ts`, `src/app/api/integrations/xero/**`, `src/lib/api/xero.ts`]
 - The pulled Fabel method requires an Evidence Standard with `[VERIFIED]`, `[INFERENCE]`, and `[UNCONFIRMED]` claims, a findings ledger, a read path for saved specs, lineage between refinements, export, and parser tests. [VERIFIED - `CleanExpo/Fabel-Prompt-Engineer` files `CLAUDE.md`, `skills/fable-engine/SKILL.md`, `lib/evidence.ts`, `lib/supabase.ts`, `supabase/migrations/0004_spec_lineage.sql`, `tests/parsers.test.ts`]
-- Seven Hills rent, staff cost, Artarmon viability, parcel pilot locations, and commercial assumptions are supplied planning inputs, not verified accounting records. [UNCONFIRMED - business input in `UNI-2140`]
+- Seven Hills rent, staff cost, Artarmon viability, parcel pilot locations, and commercial assumptions are real owner-supplied planning claims that must be editable by Toby and capable of being backed by Xero accounting evidence where Xero contains the relevant records. [VERIFIED - user clarification on 16 June 2026]
 - Toby needs the feasibility statement to behave like a constant AI ally looking for growth, diversification, and cost-saving opportunities that improve future decision-making. [VERIFIED - user clarification on 16 June 2026]
 - The ElevenLabs/Twilio implementation should be designed alongside the new CRM as a modern phone gatekeeper that decides whether a caller truly needs a human or can be answered from CCW-owned and approved credible knowledge. [VERIFIED - user clarification on 16 June 2026]
 
@@ -69,11 +70,14 @@ The feasibility statement is not a static report. It is Toby's operating ally in
 - **Measurement:** every opportunity needs expected value, effort, risk, required evidence, data source, status, next review date, and a plain-English recommendation.
 - **Owner control:** the AI may recommend and prepare decision material, but Toby remains the decision maker for commitments, spend, staffing, pricing, and customer-impacting policy.
 
-### Claims To Verify
+### Owner-Adjustable Claims And Xero Backing
 
-- [UNCONFIRMED] Seven Hills current rent is AUD 60,000 p.a.
-- [UNCONFIRMED] One NSW staff member costs approximately AUD 105,000 p.a.
-- [UNCONFIRMED] Artarmon demand and incremental contribution margin are high enough to justify a micro-showroom.
+Financial claims are not hardcoded constants. Each financial input must be stored with value, currency, period, source type, evidence state, Toby override history, and optional Xero backing reference. [INFERENCE - implementation requirement from user clarification and existing Xero integration]
+
+- [VERIFIED] Seven Hills current rent is an owner-supplied business claim that Toby can edit and should be backed by Xero once mapped to the correct account, contact, bill, transaction, or tracking category. [VERIFIED - user clarification on 16 June 2026]
+- [VERIFIED] NSW staff cost is an owner-supplied business claim that Toby can edit and should be backed by Xero where payroll, wage, contractor, or related expense records are available to the integration. [VERIFIED - user clarification on 16 June 2026]
+- [UNCONFIRMED] The exact Xero account/contact/tracking mapping for Seven Hills rent and NSW staff cost has not been selected yet.
+- [UNCONFIRMED] Artarmon demand and incremental contribution margin are decision claims that should remain editable until backed by actual sales, margin, lead, quote, service, or Xero-derived evidence.
 - [UNCONFIRMED] Parcel collection partners can handle the proposed item classes, states, opening hours, liability, and customer ID checks.
 - [UNCONFIRMED] ElevenLabs and Twilio commercial/pricing terms are acceptable for the pilot.
 - [UNCONFIRMED] CCW Shopify, website, catalogue, SDS, manuals, FAQs, supplier guidance, and selected credible external sources can provide enough coverage to answer most routine phone calls without human intervention.
@@ -87,6 +91,8 @@ The add-on is **Production-Ready & Owned** only when:
 - a fresh empty database can be migrated and used by the app without relying on live-only Supabase/Postgres drift;
 - generated or manually authored feasibility statements can be saved, listed, reopened, refined, exported, and audited;
 - generated feasibility statements are measured over time through opportunity records, target metrics, actual outcomes, review dates, and status changes;
+- Toby can adjust owner-entered financial claims directly in the UI, see when they are owner-entered versus Xero-backed, and preserve an audit trail of changes;
+- Xero-backed financial claims store the source account/contact/transaction/report reference, last synced timestamp, and reconciliation status;
 - Toby can see a ranked list of growth, diversification, and cost-saving opportunities with evidence, expected value, effort, risk, and next decision required;
 - every tagged claim or assumption in a feasibility statement is extracted into a findings/assumption ledger;
 - every refinement records its parent, so Toby can see which version descended from which;
@@ -109,6 +115,7 @@ Before each implementation phase, run a mechanical gap pass and record results i
 | P0 | Security gate | Twilio/ElevenLabs webhooks can write data without valid signature/shared-secret verification. |
 | P0 | Consequential action | AI can enable recording, outbound calls, pricing exceptions, warranty decisions, dangerous goods handling, or lease/property commitments without a human/hard-rule gate. |
 | P1 | Opportunity measurement | Growth, diversification, and cost-saving recommendations have no expected value, risk, evidence, review date, or measured outcome. |
+| P1 | Xero backing | Financial claims such as rent, staff cost, margin, revenue, or savings cannot be marked owner-entered, Toby-adjusted, Xero-backed, stale, or disputed. |
 | P1 | Phone gatekeeping | Calls are logged without a triage decision or the AI cannot explain why it answered versus escalated. |
 | P1 | Knowledge grounding | Phone answers are not tied to approved Shopify/website/catalogue/knowledge sources or credible external sources. |
 | P1 | Evidence Standard | Tagged claims and `[UNCONFIRMED]` assumptions are not extracted into findings. |
@@ -127,7 +134,8 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 | --- | --- | --- | --- |
 | Property strategy | Compare Seven Hills, Artarmon, hybrid, and parcel models. | Lease, relocation, staffing, fit-out, or stock-transfer decisions. | Toby signs off after scenario has verified cost/margin inputs. |
 | Pricing and margin | Calculate required extra monthly contribution and scenario scores. | Discounts, quotes, margin promises, or pricing exceptions. | Human sales/admin approval. |
-| Growth/diversification/cost opportunities | Rank opportunities, estimate value/effort/risk, and prepare recommendation briefs. | Commit spend, change supplier/channel strategy, launch offers, alter staffing, or promise savings as fact. | Toby approval plus verified supporting data. |
+| Financial claims and Xero backing | Let Toby adjust planning inputs and reconcile them against Xero evidence. | Treat stale, unmapped, or disputed Xero data as final. | Toby approval plus Xero reconciliation state. |
+| Growth/diversification/cost opportunities | Rank opportunities, estimate value/effort/risk, and prepare recommendation briefs. | Commit spend, change supplier/channel strategy, launch offers, alter staffing, or promise savings as fact. | Toby approval plus verified or Toby-adjusted supporting data. |
 | Parcel collection | Mark eligible candidate items and locations. | Collection promise for DG, bulky machines, large drums, technical handover, or unapproved partner sites. | Hard blocklist plus human override log. |
 | AI phone calls | Answer routine questions, qualify intent, capture details, create draft records, and decide whether a human is required. | Pretend to be staff, provide ungrounded advice, resolve complaints/warranty disputes, or answer complex service/install questions as final. | Approved knowledge source, confidence threshold, and escalation rule. |
 | Knowledge sourcing | Use CCW Shopify/website/catalogue/SDS/manual/FAQ/service-rule knowledge and approved credible external sources. | Treat unapproved web content as fact or answer from unknown provenance. | Source approval status, evidence tag, and source citation stored. |
@@ -164,9 +172,9 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 
 ### Phase 4 - Feasibility Engine
 
-**Definition of Done:** scenario CRUD, opportunity tracking, and a scoring service calculate total annual cost, first-year cost, required extra monthly contribution, weighted feasibility score, recommendation, opportunity expected value, effort, risk, and next review date.
-**Hard Test Gate:** Vitest covers Seven Hills baseline, Artarmon contribution requirement, hybrid parcel/AI-phone scenario recommendation, and opportunity ranking for growth/diversification/cost-saving records.
-**Review Gate:** Vex/data review confirms formulas, opportunity assumptions, measured outcomes, and data sources are visible, not hidden in prose.
+**Definition of Done:** scenario CRUD, financial claim records, Xero backing state, opportunity tracking, and a scoring service calculate total annual cost, first-year cost, required extra monthly contribution, weighted feasibility score, recommendation, opportunity expected value, effort, risk, and next review date.
+**Hard Test Gate:** Vitest covers Seven Hills baseline, Toby-adjusted financial inputs, Xero-backed claim state, Artarmon contribution requirement, hybrid parcel/AI-phone scenario recommendation, and opportunity ranking for growth/diversification/cost-saving records.
+**Review Gate:** Vex/data review confirms formulas, opportunity assumptions, measured outcomes, Toby overrides, Xero backing status, and data sources are visible, not hidden in prose.
 
 ### Phase 5 - Parcel Collection Pilot Rules
 
@@ -215,6 +223,9 @@ This checklist is the only honest basis for any "% complete" claim.
 
 - [ ] Fresh database migration recreates all add-on tables, fields, indexes, and relationships.
 - [ ] Saved feasibility statements and scenarios survive refresh and reopen from a list.
+- [ ] Toby can adjust financial claims such as rent, staff cost, revenue, margin, and expected savings.
+- [ ] Financial claims show source state: owner-entered, Toby-adjusted, Xero-backed, stale, or disputed.
+- [ ] Xero-backed values show source references and last synced timestamp.
 - [ ] Growth, diversification, and cost-saving opportunities are generated, ranked, measured, and reviewable.
 - [ ] Evidence findings are created from tagged claims and visible in the UI.
 - [ ] `[UNCONFIRMED]` claims appear in the assumption register.
@@ -235,7 +246,8 @@ This checklist is the only honest basis for any "% complete" claim.
 
 ## 8. Open Items For Phill/Toby To Close
 
-- Confirm whether the Seven Hills rent and NSW staff-cost figures are current accounting facts or planning placeholders.
+- Confirm which Xero accounts, contacts, tracking categories, bills, invoices, reports, or manual adjustments should back Seven Hills rent, NSW staff cost, revenue, margin, and savings claims.
+- Confirm who can edit owner-entered financial claims and who can mark a Xero-backed claim as disputed or accepted.
 - Confirm the exact Artarmon cost range, lease constraints, and minimum acceptable payback period.
 - Confirm whether the first export format should be Markdown only or Markdown plus PDF.
 - Confirm which knowledge sources are approved for the AI phone agent: catalogue, SDS, manuals, FAQs, branch hours, service rules, parcel rules.
@@ -257,6 +269,8 @@ Required entities:
 - `CcwAddonFeatureConfig`
 - `CcwFeasibilityStatement`
 - `CcwFeasibilityScenario`
+- `CcwFinancialClaim`
+- `CcwFinancialClaimEvidence`
 - `CcwGrowthOpportunity`
 - `CcwOpportunityMeasurement`
 - `CcwMarketMapPoint`
@@ -274,6 +288,9 @@ Required lineage fields:
 
 - `CcwFeasibilityStatement.parentStatementId`
 - `CcwFeasibilityScenario.parentScenarioId`
+- `CcwFinancialClaim.statementId`
+- `CcwFinancialClaim.scenarioId`
+- `CcwFinancialClaimEvidence.financialClaimId`
 - `CcwEvidenceFinding.statementId`
 - `CcwEvidenceFinding.scenarioId`
 - `CcwGrowthOpportunity.statementId`
@@ -292,6 +309,10 @@ Required lineage fields:
 - `GET /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios`
 - `POST /api/feasibility/scenarios/[id]/calculate`
+- `GET /api/feasibility/financial-claims`
+- `POST /api/feasibility/financial-claims`
+- `PUT /api/feasibility/financial-claims/[id]`
+- `POST /api/feasibility/financial-claims/[id]/xero-reconcile`
 - `GET /api/feasibility/opportunities`
 - `POST /api/feasibility/opportunities`
 - `POST /api/feasibility/opportunities/[id]/measure`
@@ -342,4 +363,10 @@ PHONE_AGENT_WEBHOOK_SECRET=
 - `src/lib/auth/data-scope.ts`.
 - `src/lib/auth/workspace-scope.ts`.
 - `src/lib/db/prisma.ts`.
+- `src/lib/integrations/xero.ts`.
+- `src/lib/integrations/xero-oauth.ts`.
+- `src/lib/integrations/xero-storage.ts`.
+- `src/lib/integrations/xero-tokens.ts`.
+- `src/app/api/integrations/xero/**`.
+- `src/lib/api/xero.ts`.
 - `CleanExpo/Fabel-Prompt-Engineer` files: `CLAUDE.md`, `skills/fable-engine/SKILL.md`, `knowledge/board/senior-pm/profile.md`, `lib/evidence.ts`, `lib/supabase.ts`, `supabase/migrations/0004_spec_lineage.sql`, `tests/parsers.test.ts`.

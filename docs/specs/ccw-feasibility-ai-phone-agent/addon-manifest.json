@@ -31,6 +31,7 @@
       "Use actual CRM/ERP sales, margin, postcode, pickup, delivery and service data to decide whether Artarmon is justified.",
       "Capture more phone enquiries and convert them into CRM leads, service jobs and quote opportunities.",
       "Generate and measure growth, diversification, and cost-saving opportunities for Toby.",
+      "Let Toby adjust financial claims and back them with Xero accounting evidence where available.",
       "Use ElevenLabs and Twilio as a CRM phone gatekeeper that answers routine calls from approved knowledge and escalates calls that need a human."
     ],
     "non_goals": [
@@ -38,8 +39,38 @@
       "Do not create unapproved dangerous-goods collection flows.",
       "Do not enable outbound AI calling or call recording by default.",
       "Do not let AI commit spend, staffing, pricing, supplier, property, or customer-impacting policy decisions without approval.",
+      "Do not silently overwrite Toby-adjusted financial claims with Xero values.",
       "Do not let the phone agent answer from unapproved or unknown-provenance sources."
     ]
+  },
+  "financial_claim_controls": {
+    "purpose": "Keep feasibility figures editable by Toby while making them accounting-backed through Xero where possible.",
+    "claim_types": ["rent", "staff_cost", "revenue", "margin", "expected_saving", "expected_incremental_contribution", "fitout_cost", "relocation_cost"],
+    "evidence_states": ["owner_entered", "toby_adjusted", "xero_backed", "stale", "disputed"],
+    "required_fields": [
+      "claim_key",
+      "label",
+      "value_aud",
+      "period",
+      "source_type",
+      "evidence_state",
+      "toby_override_note",
+      "xero_source_ref",
+      "xero_last_synced_at",
+      "accepted_by",
+      "accepted_at"
+    ],
+    "xero_backing": {
+      "existing_integration_paths": [
+        "src/lib/integrations/xero.ts",
+        "src/lib/integrations/xero-oauth.ts",
+        "src/lib/integrations/xero-storage.ts",
+        "src/lib/integrations/xero-tokens.ts",
+        "src/app/api/integrations/xero",
+        "src/lib/api/xero.ts"
+      ],
+      "rule": "Xero values may propose or back a claim, but Toby-adjusted values are not overwritten silently."
+    }
   },
   "ai_ally": {
     "name": "Toby Growth and Cost Ally",
@@ -98,6 +129,8 @@
         "name": "Seven Hills current NSW base",
         "annual_rent_aud": 60000,
         "annual_staff_cost_aud": 105000,
+        "financial_claim_state": "owner_entered",
+        "xero_backing_required": true,
         "role": "NSW operational/service base",
         "recommendation_bias": "keep_as_baseline"
       },
@@ -196,6 +229,10 @@
     {"method": "GET", "path": "/api/feasibility/scenarios"},
     {"method": "POST", "path": "/api/feasibility/scenarios"},
     {"method": "POST", "path": "/api/feasibility/scenarios/[id]/calculate"},
+    {"method": "GET", "path": "/api/feasibility/financial-claims"},
+    {"method": "POST", "path": "/api/feasibility/financial-claims"},
+    {"method": "PUT", "path": "/api/feasibility/financial-claims/[id]"},
+    {"method": "POST", "path": "/api/feasibility/financial-claims/[id]/xero-reconcile"},
     {"method": "GET", "path": "/api/feasibility/opportunities"},
     {"method": "POST", "path": "/api/feasibility/opportunities"},
     {"method": "POST", "path": "/api/feasibility/opportunities/[id]/measure"},
@@ -224,6 +261,8 @@
   "acceptance_criteria": [
     "fresh database migrations recreate the add-on schema",
     "saved feasibility items can be listed and reopened after refresh",
+    "Toby can adjust financial claims and see whether each is owner-entered adjusted Xero-backed stale or disputed",
+    "Xero-backed financial claims show source reference and last synced timestamp",
     "growth diversification and cost-saving opportunities can be generated ranked measured and reopened",
     "tagged claims and assumptions are stored as visible findings",
     "refinements record and display parent lineage",
