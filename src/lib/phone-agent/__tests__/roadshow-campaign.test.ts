@@ -4,11 +4,13 @@ import {
   CCW_ROADSHOW_BOOKING_URL,
   CCW_ROADSHOW_DISTRIBUTION_EMAIL,
   CCW_ROADSHOW_OWNER_EMAIL,
+  buildCcwRoadshowInternalTestEmail,
   buildCcwRoadshowReadiness,
   ccwRoadshowEventSeeds,
   ccwRoadshowInternalDrafts,
   ccwRoadshowTrustedSources,
   defaultCcwRoadshowComplianceState,
+  isCcwRoadshowInternalRecipient,
   normaliseCcwRoadshowComplianceState,
 } from '../roadshow-campaign';
 
@@ -93,5 +95,20 @@ describe('CARSI x CCW roadshow campaign gate', () => {
     expect(state.client_list_source_confirmed).toBe(true);
     expect(state.final_approval_confirmed).toBe(false);
     expect(state.notes).toContain('suppression count');
+  });
+
+  it('only allows internal proof sends to Toby and Anne', () => {
+    expect(isCcwRoadshowInternalRecipient('toby.b@ccwarehouse.com.au')).toBe(true);
+    expect(isCcwRoadshowInternalRecipient('annef@ccwarehouse.com.au')).toBe(true);
+    expect(isCcwRoadshowInternalRecipient('customer@example.com')).toBe(false);
+    expect(isCcwRoadshowInternalRecipient(null)).toBe(false);
+  });
+
+  it('builds internal test email copy with the booking page and customer-list warning', () => {
+    const body = buildCcwRoadshowInternalTestEmail(ccwRoadshowInternalDrafts[0]);
+
+    expect(body).toContain(CCW_ROADSHOW_BOOKING_URL);
+    expect(body).toContain('Internal proof only');
+    expect(body).toContain('Toby final approval');
   });
 });

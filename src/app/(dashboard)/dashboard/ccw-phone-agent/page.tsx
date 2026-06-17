@@ -96,7 +96,18 @@ type RoadshowCampaign = {
   compliance_state: RoadshowComplianceState;
   saved_events: Array<{ id: string; name: string; status: string; starts_at: string | null; venue: string | null }>;
   trusted_sources: Array<{ id: string; label: string; url: string | null; status: string }>;
-  internal_test_drafts: Array<{ id: string; recipient_ref: string | null; subject: string | null; status: string }>;
+  internal_test_drafts: Array<{
+    id: string;
+    recipient_ref: string | null;
+    subject: string | null;
+    status: string;
+    sent_at: string | null;
+  }>;
+  internal_test_send?: {
+    status: string;
+    detail?: string;
+    results?: Array<{ action_id: string; recipient_ref: string | null; status: string; detail?: string }>;
+  };
 };
 
 type RoadshowComplianceKey =
@@ -349,6 +360,32 @@ export default function CcwPhoneAgentPage() {
         })
       );
       setRoadshow(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function sendRoadshowInternalTests() {
+    setSaving(true);
+    setError(null);
+    try {
+      const data = await readJson<RoadshowCampaign>(
+        await fetch('/api/phone-agent/roadshow-campaign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seed_events: false,
+            seed_sources: false,
+            seed_internal_drafts: false,
+            send_internal_tests: true,
+            ...(roadshow?.compliance_state ?? {}),
+          }),
+        })
+      );
+      setRoadshow(data);
+      await loadAll();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -737,9 +774,27 @@ export default function CcwPhoneAgentPage() {
                     </div>
                   </div>
                 </div>
-                <Button onClick={seedRoadshowCampaign} disabled={saving} leftIcon={<Mail />}>
-                  Seed Roadshow Campaign
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={seedRoadshowCampaign} disabled={saving} leftIcon={<Mail />}>
+                    Seed Roadshow Campaign
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={sendRoadshowInternalTests}
+                    disabled={saving}
+                    leftIcon={<Send />}
+                  >
+                    Send Internal Tests
+                  </Button>
+                </div>
+                {roadshow?.internal_test_send ? (
+                  <div className="rounded-md border p-3 text-sm">
+                    <div className="font-medium">Internal test send: {roadshow.internal_test_send.status}</div>
+                    {roadshow.internal_test_send.detail ? (
+                      <p className="mt-1 text-muted-foreground">{roadshow.internal_test_send.detail}</p>
+                    ) : null}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 
@@ -874,6 +929,10 @@ export default function CcwPhoneAgentPage() {
                         <div key={draft.id} className="rounded-md border p-3 text-sm">
                           <div className="font-medium">{draft.subject}</div>
                           <div className="mt-1 text-xs text-muted-foreground">{draft.recipient_ref}</div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <Badge variant={badgeVariant(draft.status)}>{draft.status}</Badge>
+                            {draft.sent_at ? <Badge variant="outline">sent {formatDate(draft.sent_at)}</Badge> : null}
+                          </div>
                         </div>
                       ))
                     )}

@@ -107,6 +107,22 @@ export const ccwRoadshowInternalDrafts: CcwRoadshowInternalDraft[] = [
   },
 ];
 
+export function isCcwRoadshowInternalRecipient(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const email = value.trim().toLowerCase();
+  return [CCW_ROADSHOW_OWNER_EMAIL, CCW_ROADSHOW_DISTRIBUTION_EMAIL].includes(email);
+}
+
+export function buildCcwRoadshowInternalTestEmail(draft: CcwRoadshowInternalDraft): string {
+  return [
+    draft.body,
+    '',
+    `Booking page: ${CCW_ROADSHOW_BOOKING_URL}`,
+    '',
+    'Internal proof only. Do not forward as a customer-list campaign until the CRM Roadshow readiness gates are complete and Toby final approval is recorded.',
+  ].join('\n');
+}
+
 function bool(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
