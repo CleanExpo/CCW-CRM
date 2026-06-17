@@ -8,7 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, CalendarDays, CheckCircle2, PhoneCall, RefreshCw, Send, ShieldAlert, Sparkles } from 'lucide-react';
+import {
+  Bot,
+  CalendarDays,
+  CheckCircle2,
+  ExternalLink,
+  Mail,
+  PhoneCall,
+  RefreshCw,
+  Send,
+  ShieldAlert,
+  Sparkles,
+} from 'lucide-react';
 
 type PhoneConfig = {
   status: string;
@@ -24,6 +35,7 @@ type PhoneConfig = {
     ready_for_inbound_pilot: boolean;
     mode: string;
     provider_config: {
+      owner_contact_email: string;
       missing_env: string[];
       webhook_urls: {
         twilio_voice_url: string | null;
@@ -71,6 +83,20 @@ type IndustryEvent = {
   starts_at: string | null;
 };
 
+type RoadshowCampaign = {
+  campaign_slug: string;
+  booking_url: string;
+  owner_email: string;
+  distribution_email: string;
+  ready_for_client_list_send: boolean;
+  ready_count: number;
+  total_count: number;
+  items: Array<{ key: string; label: string; ready: boolean; blocker?: string }>;
+  saved_events: Array<{ id: string; name: string; status: string; starts_at: string | null; venue: string | null }>;
+  trusted_sources: Array<{ id: string; label: string; url: string | null; status: string }>;
+  internal_test_drafts: Array<{ id: string; recipient_ref: string | null; subject: string | null; status: string }>;
+};
+
 async function readJson<T>(response: Response): Promise<T> {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -106,6 +132,7 @@ export default function CcwPhoneAgentPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [followUps, setFollowUps] = useState<FollowUpAction[]>([]);
   const [events, setEvents] = useState<IndustryEvent[]>([]);
+  const [roadshow, setRoadshow] = useState<RoadshowCampaign | null>(null);
   const [transcript, setTranscript] = useState(DEFAULT_TRANSCRIPT);
   const [summary, setSummary] = useState('Service booking discovery call');
   const [eventName, setEventName] = useState('CCW Company Day - Supplier Showcase');
@@ -119,7 +146,7 @@ export default function CcwPhoneAgentPage() {
     setLoading(true);
     setError(null);
     try {
-      const [configData, callData, agentData, followUpData, eventData] = await Promise.all([
+      const [configData, callData, agentData, followUpData, eventData, roadshowData] = await Promise.all([
         readJson<PhoneConfig>(await fetch('/api/phone-agent/config', { cache: 'no-store' })),
         readJson<{ items: CallSession[] }>(await fetch('/api/phone-agent/call-sessions', { cache: 'no-store' })),
         readJson<{ items: Agent[] }>(await fetch('/api/phone-agent/specialized-agents', { cache: 'no-store' })),
@@ -127,12 +154,14 @@ export default function CcwPhoneAgentPage() {
           await fetch('/api/phone-agent/follow-up-actions?status=draft', { cache: 'no-store' })
         ),
         readJson<{ items: IndustryEvent[] }>(await fetch('/api/phone-agent/industry-events', { cache: 'no-store' })),
+        readJson<RoadshowCampaign>(await fetch('/api/phone-agent/roadshow-campaign', { cache: 'no-store' })),
       ]);
       setConfig(configData);
       setCalls(callData.items);
       setAgents(agentData.items);
       setFollowUps(followUpData.items);
       setEvents(eventData.items);
+      setRoadshow(roadshowData);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -217,6 +246,30 @@ export default function CcwPhoneAgentPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: eventName, event_type: 'company_day' }),
       }));
+      await loadAll();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function seedRoadshowCampaign() {
+    setSaving(true);
+    setError(null);
+    try {
+      const data = await readJson<RoadshowCampaign>(
+        await fetch('/api/phone-agent/roadshow-campaign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seed_events: true,
+            seed_sources: true,
+            seed_internal_drafts: true,
+          }),
+        })
+      );
+      setRoadshow(data);
       await loadAll();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -361,6 +414,7 @@ export default function CcwPhoneAgentPage() {
           <TabsTrigger value="calls">Calls</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="follow-ups">Follow-Ups</TabsTrigger>
+          <TabsTrigger value="roadshow">Roadshow</TabsTrigger>
           <TabsTrigger value="events">Company Days</TabsTrigger>
           <TabsTrigger value="safety">Safety</TabsTrigger>
         </TabsList>
@@ -558,6 +612,150 @@ export default function CcwPhoneAgentPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="roadshow">
+          <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">CARSI x CCW Roadshow</CardTitle>
+                <CardDescription>
+                  Operational campaign gate for the Melbourne and Sydney Business Growth Days.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-md border p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-medium">Client-list send status</div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {roadshow?.ready_count ?? 0} of {roadshow?.total_count ?? 0} readiness gates complete.
+                      </p>
+                    </div>
+                    <Badge variant={badgeVariant(Boolean(roadshow?.ready_for_client_list_send))}>
+                      {roadshow?.ready_for_client_list_send ? 'send ready' : 'blocked'}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid gap-3 text-sm">
+                  <div>
+                    <div className="text-muted-foreground">Booking URL</div>
+                    <a
+                      className="inline-flex items-center gap-1 break-all font-mono text-xs text-primary hover:underline"
+                      href={roadshow?.booking_url ?? 'https://www.carsi.com.au/events/ccw-roadshow'}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {roadshow?.booking_url ?? 'https://www.carsi.com.au/events/ccw-roadshow'}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Approval owner</div>
+                    <div className="font-mono text-xs">{roadshow?.owner_email ?? 'toby.b@ccwarehouse.com.au'}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Distribution test</div>
+                    <div className="font-mono text-xs">
+                      {roadshow?.distribution_email ?? 'annef@ccwarehouse.com.au'}
+                    </div>
+                  </div>
+                </div>
+                <Button onClick={seedRoadshowCampaign} disabled={saving} leftIcon={<Mail />}>
+                  Seed Roadshow Campaign
+                </Button>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Readiness Gates</CardTitle>
+                  <CardDescription>
+                    The CRM can prepare the send, but customer-list delivery stays blocked until every gate is green.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-3 lg:grid-cols-2">
+                  {(roadshow?.items ?? []).map((item) => (
+                    <div key={item.key} className="rounded-md border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="font-medium">{item.label}</div>
+                        <Badge variant={badgeVariant(item.ready)}>{item.ready ? 'ready' : 'blocked'}</Badge>
+                      </div>
+                      {!item.ready && item.blocker ? (
+                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.blocker}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-4 lg:grid-cols-3">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Saved Events</CardTitle>
+                    <CardDescription>{roadshow?.saved_events.length ?? 0} campaign events.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {(roadshow?.saved_events ?? []).length === 0 ? (
+                      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        Seed the campaign to create Melbourne and Sydney records.
+                      </div>
+                    ) : (
+                      roadshow?.saved_events.map((event) => (
+                        <div key={event.id} className="rounded-md border p-3 text-sm">
+                          <div className="font-medium">{event.name}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">{formatDate(event.starts_at)}</div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Trusted Sources</CardTitle>
+                    <CardDescription>{roadshow?.trusted_sources.length ?? 0} approved sources.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {(roadshow?.trusted_sources ?? []).length === 0 ? (
+                      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        Seed CARSI, CCW and booking-page sources.
+                      </div>
+                    ) : (
+                      roadshow?.trusted_sources.map((source) => (
+                        <div key={source.id} className="rounded-md border p-3 text-sm">
+                          <div className="font-medium">{source.label}</div>
+                          <div className="mt-1 break-all text-xs text-muted-foreground">{source.url}</div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Internal Drafts</CardTitle>
+                    <CardDescription>{roadshow?.internal_test_drafts.length ?? 0} test drafts.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {(roadshow?.internal_test_drafts ?? []).length === 0 ? (
+                      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        Seed Toby and Anne draft approvals.
+                      </div>
+                    ) : (
+                      roadshow?.internal_test_drafts.map((draft) => (
+                        <div key={draft.id} className="rounded-md border p-3 text-sm">
+                          <div className="font-medium">{draft.subject}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">{draft.recipient_ref}</div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="events">
           <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
             <Card>
@@ -615,6 +813,12 @@ export default function CcwPhoneAgentPage() {
               <div className="rounded-md border p-4 lg:col-span-2">
                 <div className="font-medium">Provider Callback URLs</div>
                 <dl className="mt-3 grid gap-3 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Owner approval contact</dt>
+                    <dd className="break-all font-mono text-xs">
+                      {config?.pilot_status.provider_config.owner_contact_email ?? 'toby.b@ccwarehouse.com.au'}
+                    </dd>
+                  </div>
                   <div>
                     <dt className="text-muted-foreground">Twilio voice webhook</dt>
                     <dd className="break-all font-mono text-xs">

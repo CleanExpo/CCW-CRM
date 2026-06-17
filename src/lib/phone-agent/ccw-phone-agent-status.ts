@@ -1,4 +1,5 @@
 import {
+  getCcwPhoneAgentOwnerEmail,
   getCcwPhoneAgentOwnerUserId,
   getCcwPhoneAgentPublicBaseUrl,
   getCcwPhoneAgentWebhookUrls,
@@ -22,6 +23,7 @@ export type CcwPhoneAgentProviderConfig = {
   twilio_phone_number_configured: boolean;
   webhook_secret_configured: boolean;
   owner_user_configured: boolean;
+  owner_contact_email: string;
   public_base_url_configured: boolean;
   missing_env: string[];
   webhook_urls: {
@@ -79,6 +81,7 @@ export function getCcwPhoneAgentPilotStatus(
     twilio_phone_number_configured: hasEnv(env, 'TWILIO_PHONE_NUMBER'),
     webhook_secret_configured: hasEnv(env, 'PHONE_AGENT_WEBHOOK_SECRET'),
     owner_user_configured: Boolean(ownerUserId),
+    owner_contact_email: getCcwPhoneAgentOwnerEmail(env),
     public_base_url_configured: Boolean(publicBaseUrl),
     missing_env: missingEnv,
     webhook_urls: getCcwPhoneAgentWebhookUrls(env),
