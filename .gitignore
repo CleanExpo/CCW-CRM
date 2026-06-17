@@ -75,6 +75,7 @@ coverage/
 htmlcov/
 .pytest_cache/
 test-results/
+smoke-test-results/
 playwright-report/
 playwright/.cache/
 .auth/

@@ -85,12 +85,42 @@ jobs:
           echo "Docker image verification would happen here"
 
   # ============================================================================
+  # Legacy SSH Deployment Readiness
+  # ============================================================================
+  production-config:
+    name: Production SSH Config
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Check production SSH secrets
+        env:
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          PRODUCTION_SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          PRODUCTION_SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+        run: |
+          missing=()
+          [ -n "$PRODUCTION_SSH_KEY" ] || missing+=("PRODUCTION_SSH_KEY")
+          [ -n "$PRODUCTION_SSH_HOST" ] || missing+=("PRODUCTION_SSH_HOST")
+          [ -n "$PRODUCTION_SSH_USER" ] || missing+=("PRODUCTION_SSH_USER")
+
+          if [ ${#missing[@]} -eq 0 ]; then
+            echo "Production SSH deployment secrets are configured."
+            exit 0
+          fi
+
+          printf -v missing_list '%s, ' "${missing[@]}"
+          missing_list="${missing_list%, }"
+          echo "::error::Manual production SSH deploy requires missing GitHub Actions secrets: $missing_list"
+          exit 1
+
+  # ============================================================================
   # Run tests (root Next.js app only; apps/ monorepo removed)
   # ============================================================================
   test:
     name: Full Test Suite
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, production-config]
 
     steps:
       - name: Checkout code
@@ -142,7 +172,7 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [validate, test, build-images]
+    needs: [validate, production-config, test, build-images]
     environment:
       name: production
       url: https://ccw-erp.com

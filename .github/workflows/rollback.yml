@@ -91,12 +91,53 @@ jobs:
           fi
 
   # ============================================================================
+  # Legacy SSH Rollback Readiness
+  # ============================================================================
+  rollback-config:
+    name: Rollback SSH Config
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Check rollback SSH secrets
+        env:
+          ROLLBACK_ENVIRONMENT: ${{ needs.validate.outputs.environment }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          PRODUCTION_SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          PRODUCTION_SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+        run: |
+          missing=()
+
+          if [ "$ROLLBACK_ENVIRONMENT" = "production" ]; then
+            [ -n "$PRODUCTION_SSH_KEY" ] || missing+=("PRODUCTION_SSH_KEY")
+            [ -n "$PRODUCTION_SSH_HOST" ] || missing+=("PRODUCTION_SSH_HOST")
+            [ -n "$PRODUCTION_SSH_USER" ] || missing+=("PRODUCTION_SSH_USER")
+          else
+            [ -n "$STAGING_SSH_KEY" ] || missing+=("STAGING_SSH_KEY")
+            [ -n "$STAGING_SSH_HOST" ] || missing+=("STAGING_SSH_HOST")
+            [ -n "$STAGING_SSH_USER" ] || missing+=("STAGING_SSH_USER")
+          fi
+
+          if [ ${#missing[@]} -eq 0 ]; then
+            echo "$ROLLBACK_ENVIRONMENT rollback SSH secrets are configured."
+            exit 0
+          fi
+
+          printf -v missing_list '%s, ' "${missing[@]}"
+          missing_list="${missing_list%, }"
+          echo "::error::Rollback requires missing GitHub Actions secrets: $missing_list"
+          exit 1
+
+  # ============================================================================
   # Execute Rollback
   # ============================================================================
   rollback:
     name: Execute Rollback
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, rollback-config]
     environment:
       name: ${{ needs.validate.outputs.environment }}
 
@@ -273,7 +314,7 @@ jobs:
   verify:
     name: Verify Rollback
     runs-on: ubuntu-latest
-    needs: [validate, rollback]
+    needs: [validate, rollback-config, rollback]
 
     steps:
       - name: Checkout code
@@ -298,7 +339,7 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-latest
-    needs: [validate, rollback, verify]
+    needs: [validate, rollback-config, rollback, verify]
     if: always()
 
     steps:
@@ -338,52 +379,6 @@ jobs:
             echo "- :x: Verification: ${{ needs.verify.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Send Slack notification
-        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v3.0.1
-        with:
-          payload: |
-            {
-              "attachments": [
-                {
-                  "color": "${{ steps.status.outputs.color }}",
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": ":warning: *Emergency Rollback - ${{ needs.validate.outputs.environment }}*"
-                      }
-                    },
-                    {
-                      "type": "section",
-                      "fields": [
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Environment:*\n${{ needs.validate.outputs.environment }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Rollback Type:*\n${{ needs.validate.outputs.rollback_type }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Rolled back to:*\n${{ needs.validate.outputs.short_sha }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Initiated by:*\n${{ github.actor }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Status:*\n${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      # Slack notification removed. GitHub does not allow direct secrets.* checks
+      # in step if-conditions, and the deployment workflows already report their
+      # result through the run summary.
