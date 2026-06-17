@@ -8,12 +8,24 @@ import {
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 import {
+  getSendGridSendReadiness,
+  resolveSendGridFromEmail,
+  sendMailViaSendGrid,
+} from '@/lib/integrations/sendgrid-mail';
+import {
+  createOutboundEmailDraft,
+  finalizeOutboundEmail,
+  markOutboundEmailFailed,
+} from '@/lib/integrations/sendgrid-persistence';
+import {
   CCW_ROADSHOW_CAMPAIGN_SLUG,
   CCW_ROADSHOW_FEATURE_SLUG,
+  buildCcwRoadshowInternalTestEmail,
   buildCcwRoadshowReadiness,
   ccwRoadshowEventSeeds,
   ccwRoadshowInternalDrafts,
   ccwRoadshowTrustedSources,
+  isCcwRoadshowInternalRecipient,
   normaliseCcwRoadshowComplianceState,
 } from '@/lib/phone-agent/roadshow-campaign';
 
@@ -24,8 +36,195 @@ function text(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
 function date(value: string) {
   return new Date(value);
+}
+
+function findInternalDraft(recipientRef: string, subject: string | null, body: string | null) {
+  const seed = ccwRoadshowInternalDrafts.find((draft) => draft.recipient_ref === recipientRef);
+  return {
+    recipient_ref: recipientRef,
+    subject: subject || seed?.subject || 'CARSI x CCW Roadshow internal test',
+    body: body || seed?.body || 'Please review the CARSI x CCW Roadshow campaign proof.',
+  };
+}
+
+async function sendInternalTests(input: {
+  request: NextRequest;
+  actingUserId: string;
+  workspaceOwnerUserId: string;
+  ownerUserIds: string[];
+}) {
+  const readiness = await getSendGridSendReadiness(input.request, input.actingUserId);
+  if (!readiness.ok) {
+    return {
+      status: readiness.status,
+      payload: {
+        internal_test_send: {
+          status: 'blocked',
+          detail: readiness.detail,
+          sendgrid: readiness.payload,
+        },
+      },
+    };
+  }
+
+  const apiKey = readiness.creds.apiKey;
+  if (!apiKey) {
+    return {
+      status: 503,
+      payload: {
+        internal_test_send: {
+          status: 'blocked',
+          detail: 'SendGrid API key is missing.',
+          sendgrid: readiness.payload,
+        },
+      },
+    };
+  }
+
+  const fromEmail = resolveSendGridFromEmail(input.request, readiness.creds);
+  if (!fromEmail) {
+    return {
+      status: 503,
+      payload: {
+        internal_test_send: {
+          status: 'blocked',
+          detail: 'SendGrid from email is missing.',
+          sendgrid: readiness.payload,
+        },
+      },
+    };
+  }
+
+  const drafts = await prisma.ccwFollowUpAction.findMany({
+    where: {
+      ownerUserId: { in: input.ownerUserIds },
+      payload: { path: ['campaign_slug'], equals: CCW_ROADSHOW_CAMPAIGN_SLUG },
+      recipientRef: {
+        in: ccwRoadshowInternalDrafts.map((draft) => draft.recipient_ref),
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (drafts.length === 0) {
+    return {
+      status: 409,
+      payload: {
+        internal_test_send: {
+          status: 'blocked',
+          detail: 'Seed Toby and Anne internal drafts before sending tests.',
+        },
+      },
+    };
+  }
+
+  const sentAt = new Date();
+  const results = [];
+  for (const draft of drafts) {
+    const payload = asRecord(draft.payload);
+    const recipientRef = text(draft.recipientRef);
+    const isInternalOnly = payload.internal_test_only === true;
+    if (!isInternalOnly || !isCcwRoadshowInternalRecipient(recipientRef)) {
+      results.push({
+        action_id: draft.id,
+        recipient_ref: recipientRef || null,
+        status: 'blocked',
+        detail: 'Skipped because this action is not an approved internal roadshow test recipient.',
+      });
+      continue;
+    }
+
+    const email = findInternalDraft(recipientRef, draft.subject, draft.body);
+    const bodyText = buildCcwRoadshowInternalTestEmail(email);
+    const outbound = await createOutboundEmailDraft({
+      ownerUserId: input.workspaceOwnerUserId,
+      workspaceUserIds: input.ownerUserIds,
+      toEmail: recipientRef,
+      fromEmail,
+      subject: email.subject,
+      bodyText,
+      wasAiGenerated: false,
+    });
+    const result = await sendMailViaSendGrid(apiKey, fromEmail, readiness.creds.fromName, {
+      to_email: recipientRef,
+      subject: email.subject,
+      body_text: bodyText,
+      template_id: readiness.creds.templateIdGeneral ?? undefined,
+      custom_args: {
+        campaign_slug: CCW_ROADSHOW_CAMPAIGN_SLUG,
+        follow_up_action_id: draft.id,
+        email_message_id: outbound.messageId,
+      },
+    });
+
+    if (!result.ok) {
+      await markOutboundEmailFailed(outbound.messageId, result.detail);
+      await prisma.ccwFollowUpAction.update({
+        where: { id: draft.id },
+        data: {
+          status: 'internal_test_failed',
+          payload: {
+            ...payload,
+            internal_test_failed_at: sentAt.toISOString(),
+            internal_test_error: result.detail,
+            email_thread_id: outbound.threadId,
+            email_message_id: outbound.messageId,
+          },
+        },
+      });
+      results.push({
+        action_id: draft.id,
+        recipient_ref: recipientRef,
+        status: 'failed',
+        detail: result.detail,
+      });
+      continue;
+    }
+
+    await finalizeOutboundEmail(outbound.messageId, result.message_id || null);
+    await prisma.ccwFollowUpAction.update({
+      where: { id: draft.id },
+      data: {
+        status: 'sent_internal_test',
+        sentAt,
+        payload: {
+          ...payload,
+          internal_test_sent_at: sentAt.toISOString(),
+          internal_test_sent_by: input.actingUserId,
+          email_thread_id: outbound.threadId,
+          email_message_id: outbound.messageId,
+          sendgrid_message_id: result.message_id,
+          sendgrid_mode: result.mode,
+          client_list_send_still_blocked: true,
+        },
+      },
+    });
+    results.push({
+      action_id: draft.id,
+      recipient_ref: recipientRef,
+      status: 'sent',
+      mode: result.mode,
+      message_id: result.message_id,
+    });
+  }
+
+  const failed = results.filter((result) => result.status === 'failed' || result.status === 'blocked');
+  return {
+    status: failed.length ? 502 : 200,
+    payload: {
+      internal_test_send: {
+        status: failed.length ? 'partial_or_failed' : 'sent',
+        results,
+        sendgrid: readiness.payload,
+      },
+    },
+  };
 }
 
 async function campaignSnapshot(ownerUserIds: string[], flags: unknown = {}) {
@@ -78,6 +277,7 @@ async function campaignSnapshot(ownerUserIds: string[], flags: unknown = {}) {
       recipient_ref: draft.recipientRef,
       subject: draft.subject,
       status: draft.status,
+      sent_at: draft.sentAt?.toISOString() ?? null,
       created_at: draft.createdAt.toISOString(),
     })),
   };
@@ -121,6 +321,7 @@ export async function POST(request: NextRequest) {
     const seedEvents = body.seed_events !== false;
     const seedSources = body.seed_sources !== false;
     const seedInternalDrafts = body.seed_internal_drafts !== false;
+    const shouldSendInternalTests = body.send_internal_tests === true;
 
     if (seedEvents) {
       for (const event of ccwRoadshowEventSeeds) {
@@ -277,8 +478,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    let internalTestSend: Record<string, unknown> = {};
+    if (shouldSendInternalTests) {
+      const sendResult = await sendInternalTests({
+        request,
+        actingUserId: scope.userId,
+        workspaceOwnerUserId,
+        ownerUserIds,
+      });
+      internalTestSend = sendResult.payload;
+      if (sendResult.status >= 400) {
+        return NextResponse.json(
+          {
+            ...(await campaignSnapshot(ownerUserIds, nextComplianceState)),
+            ...internalTestSend,
+          },
+          { status: sendResult.status }
+        );
+      }
+    }
+
     return NextResponse.json(
-      await campaignSnapshot(ownerUserIds, nextComplianceState),
+      {
+        ...(await campaignSnapshot(ownerUserIds, nextComplianceState)),
+        ...internalTestSend,
+      },
       { status: 201 }
     );
   } catch (e) {
