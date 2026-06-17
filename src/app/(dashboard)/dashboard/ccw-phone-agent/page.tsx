@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -92,10 +93,36 @@ type RoadshowCampaign = {
   ready_count: number;
   total_count: number;
   items: Array<{ key: string; label: string; ready: boolean; blocker?: string }>;
+  compliance_state: RoadshowComplianceState;
   saved_events: Array<{ id: string; name: string; status: string; starts_at: string | null; venue: string | null }>;
   trusted_sources: Array<{ id: string; label: string; url: string | null; status: string }>;
   internal_test_drafts: Array<{ id: string; recipient_ref: string | null; subject: string | null; status: string }>;
 };
+
+type RoadshowComplianceKey =
+  | 'client_list_source_confirmed'
+  | 'consent_basis_confirmed'
+  | 'suppression_rules_confirmed'
+  | 'unsubscribe_url_confirmed'
+  | 'sender_footer_confirmed'
+  | 'seat_capacity_confirmed'
+  | 'final_approval_confirmed';
+
+type RoadshowComplianceState = Record<RoadshowComplianceKey, boolean> & {
+  updated_by: string | null;
+  updated_at: string | null;
+  notes: string | null;
+};
+
+const roadshowComplianceControls: Array<{ key: RoadshowComplianceKey; label: string }> = [
+  { key: 'client_list_source_confirmed', label: 'Client-list source and export date confirmed' },
+  { key: 'consent_basis_confirmed', label: 'Marketing consent basis confirmed' },
+  { key: 'suppression_rules_confirmed', label: 'Suppressions and unsubscribes excluded' },
+  { key: 'unsubscribe_url_confirmed', label: 'Working unsubscribe URL confirmed' },
+  { key: 'sender_footer_confirmed', label: 'Sender business footer confirmed' },
+  { key: 'seat_capacity_confirmed', label: 'Venue capacity and limited-places claim confirmed' },
+  { key: 'final_approval_confirmed', label: 'Toby final approval recorded' },
+];
 
 async function readJson<T>(response: Response): Promise<T> {
   const body = await response.json().catch(() => ({}));
@@ -271,6 +298,57 @@ export default function CcwPhoneAgentPage() {
       );
       setRoadshow(data);
       await loadAll();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateRoadshowCompliance(key: RoadshowComplianceKey, value: boolean) {
+    setRoadshow((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        compliance_state: {
+          ...current.compliance_state,
+          [key]: value,
+        },
+      };
+    });
+  }
+
+  function updateRoadshowNotes(value: string) {
+    setRoadshow((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        compliance_state: {
+          ...current.compliance_state,
+          notes: value,
+        },
+      };
+    });
+  }
+
+  async function saveRoadshowReadiness() {
+    if (!roadshow) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const data = await readJson<RoadshowCampaign>(
+        await fetch('/api/phone-agent/roadshow-campaign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seed_events: false,
+            seed_sources: false,
+            seed_internal_drafts: false,
+            ...roadshow.compliance_state,
+          }),
+        })
+      );
+      setRoadshow(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -685,6 +763,56 @@ export default function CcwPhoneAgentPage() {
                       ) : null}
                     </div>
                   ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-base">Compliance Approval Record</CardTitle>
+                      <CardDescription>
+                        Saved operational sign-off before any CCW client-list send can be marked ready.
+                      </CardDescription>
+                    </div>
+                    <Button onClick={saveRoadshowReadiness} disabled={saving || !roadshow} leftIcon={<CheckCircle2 />}>
+                      Save Readiness
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    {roadshowComplianceControls.map((control) => (
+                      <label
+                        key={control.key}
+                        className="flex min-h-16 cursor-pointer items-start gap-3 rounded-md border p-4 text-sm"
+                      >
+                        <Checkbox
+                          className="mt-0.5"
+                          checked={roadshow?.compliance_state[control.key] ?? false}
+                          onCheckedChange={(checked) => updateRoadshowCompliance(control.key, checked === true)}
+                          disabled={!roadshow || saving}
+                        />
+                        <span className="font-medium leading-relaxed">{control.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="roadshow-notes">Source, segment and approval notes</Label>
+                    <Textarea
+                      id="roadshow-notes"
+                      value={roadshow?.compliance_state.notes ?? ''}
+                      onChange={(event) => updateRoadshowNotes(event.target.value)}
+                      placeholder="Client-list source, export date, segment counts, suppression count, approver and approval timestamp."
+                      rows={3}
+                      disabled={!roadshow || saving}
+                    />
+                  </div>
+                  {roadshow?.compliance_state.updated_at ? (
+                    <div className="text-xs text-muted-foreground">
+                      Last saved {formatDate(roadshow.compliance_state.updated_at)}
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 

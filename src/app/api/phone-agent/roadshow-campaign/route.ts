@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 
+import {
+  ccwWorkspaceRecordOwnerId,
+  resolveCcwWorkspaceContext,
+} from '@/lib/auth/ccw-workspace-context';
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { prisma } from '@/lib/db/prisma';
 import {
   CCW_ROADSHOW_CAMPAIGN_SLUG,
+  CCW_ROADSHOW_FEATURE_SLUG,
   buildCcwRoadshowReadiness,
   ccwRoadshowEventSeeds,
   ccwRoadshowInternalDrafts,
   ccwRoadshowTrustedSources,
+  normaliseCcwRoadshowComplianceState,
 } from '@/lib/phone-agent/roadshow-campaign';
 
 const EVENT_TYPE = 'carsi_ccw_roadshow';
@@ -19,15 +24,12 @@ function text(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
-function bool(value: unknown) {
-  return value === true || value === 'true';
-}
-
 function date(value: string) {
   return new Date(value);
 }
 
-async function campaignSnapshot(ownerUserIds: string[], flags: Record<string, unknown> = {}) {
+async function campaignSnapshot(ownerUserIds: string[], flags: unknown = {}) {
+  const complianceState = normaliseCcwRoadshowComplianceState(flags);
   const [events, sources, drafts] = await Promise.all([
     prisma.ccwIndustryEvent.findMany({
       where: { ownerUserId: { in: ownerUserIds }, eventType: EVENT_TYPE },
@@ -55,14 +57,9 @@ async function campaignSnapshot(ownerUserIds: string[], flags: Record<string, un
       saved_events: events.length,
       internal_test_drafts: drafts.length,
       trusted_sources: sources.length,
-      client_list_source_confirmed: bool(flags.client_list_source_confirmed),
-      consent_basis_confirmed: bool(flags.consent_basis_confirmed),
-      suppression_rules_confirmed: bool(flags.suppression_rules_confirmed),
-      unsubscribe_url_confirmed: bool(flags.unsubscribe_url_confirmed),
-      sender_footer_confirmed: bool(flags.sender_footer_confirmed),
-      seat_capacity_confirmed: bool(flags.seat_capacity_confirmed),
-      final_approval_confirmed: bool(flags.final_approval_confirmed),
+      ...complianceState,
     }),
+    compliance_state: complianceState,
     saved_events: events.map((event) => ({
       id: event.id,
       name: event.name,
@@ -91,8 +88,20 @@ export async function GET(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
-    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
-    return NextResponse.json(await campaignSnapshot(workspaceUserIds));
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
+    const workspaceOwnerUserId = ccwWorkspaceRecordOwnerId(ctx);
+    const ownerUserIds = [workspaceOwnerUserId, ...ctx.workspaceUserIds];
+    const config = await prisma.ccwAddonFeatureConfig.findFirst({
+      where: {
+        featureSlug: CCW_ROADSHOW_FEATURE_SLUG,
+        ownerUserId: { in: ownerUserIds },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return NextResponse.json(await campaignSnapshot(ownerUserIds, config?.config));
   } catch (e) {
     return NextResponse.json({ detail: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
@@ -103,6 +112,11 @@ export async function POST(request: NextRequest) {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
 
+    const ctx = await resolveCcwWorkspaceContext(scope.userId);
+    if (!ctx) return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+
+    const workspaceOwnerUserId = ccwWorkspaceRecordOwnerId(ctx);
+    const ownerUserIds = [workspaceOwnerUserId, ...ctx.workspaceUserIds];
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const seedEvents = body.seed_events !== false;
     const seedSources = body.seed_sources !== false;
@@ -111,7 +125,7 @@ export async function POST(request: NextRequest) {
     if (seedEvents) {
       for (const event of ccwRoadshowEventSeeds) {
         const existing = await prisma.ccwIndustryEvent.findFirst({
-          where: { ownerUserId: scope.userId, eventType: EVENT_TYPE, name: event.name },
+          where: { ownerUserId: { in: ownerUserIds }, eventType: EVENT_TYPE, name: event.name },
           select: { id: true },
         });
 
@@ -144,7 +158,7 @@ export async function POST(request: NextRequest) {
         } else {
           await prisma.ccwIndustryEvent.create({
             data: {
-              ownerUserId: scope.userId,
+              ownerUserId: workspaceOwnerUserId,
               eventType: EVENT_TYPE,
               name: event.name,
               ...data,
@@ -157,7 +171,7 @@ export async function POST(request: NextRequest) {
     if (seedSources) {
       for (const source of ccwRoadshowTrustedSources) {
         const existing = await prisma.ccwAiKnowledgeSource.findFirst({
-          where: { ownerUserId: scope.userId, label: source.label },
+          where: { ownerUserId: { in: ownerUserIds }, label: source.label },
           select: { id: true },
         });
         const data = {
@@ -179,7 +193,7 @@ export async function POST(request: NextRequest) {
         } else {
           await prisma.ccwAiKnowledgeSource.create({
             data: {
-              ownerUserId: scope.userId,
+              ownerUserId: workspaceOwnerUserId,
               label: source.label,
               ...data,
             },
@@ -192,7 +206,7 @@ export async function POST(request: NextRequest) {
       for (const draft of ccwRoadshowInternalDrafts) {
         const existing = await prisma.ccwFollowUpAction.findFirst({
           where: {
-            ownerUserId: scope.userId,
+            ownerUserId: { in: ownerUserIds },
             recipientRef: draft.recipient_ref,
             subject: draft.subject,
           },
@@ -217,7 +231,7 @@ export async function POST(request: NextRequest) {
         } else {
           await prisma.ccwFollowUpAction.create({
             data: {
-              ownerUserId: scope.userId,
+              ownerUserId: workspaceOwnerUserId,
               recipientRef: draft.recipient_ref,
               subject: draft.subject,
               ...data,
@@ -227,17 +241,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
+    const existingConfig = await prisma.ccwAddonFeatureConfig.findFirst({
+      where: {
+        featureSlug: CCW_ROADSHOW_FEATURE_SLUG,
+        ownerUserId: { in: ownerUserIds },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+    const nextComplianceState = normaliseCcwRoadshowComplianceState(
+      {
+        ...normaliseCcwRoadshowComplianceState(existingConfig?.config),
+        ...body,
+        updated_by: scope.userId,
+        updated_at: new Date().toISOString(),
+      },
+      normaliseCcwRoadshowComplianceState(existingConfig?.config)
+    );
+
+    await prisma.ccwAddonFeatureConfig.upsert({
+      where: {
+        ownerUserId_featureSlug: {
+          ownerUserId: workspaceOwnerUserId,
+          featureSlug: CCW_ROADSHOW_FEATURE_SLUG,
+        },
+      },
+      create: {
+        ownerUserId: workspaceOwnerUserId,
+        featureSlug: CCW_ROADSHOW_FEATURE_SLUG,
+        status: nextComplianceState.final_approval_confirmed ? 'approval_recorded' : 'draft',
+        config: nextComplianceState,
+      },
+      update: {
+        status: nextComplianceState.final_approval_confirmed ? 'approval_recorded' : 'draft',
+        config: nextComplianceState,
+      },
+    });
+
     return NextResponse.json(
-      await campaignSnapshot(workspaceUserIds, {
-        client_list_source_confirmed: body.client_list_source_confirmed,
-        consent_basis_confirmed: body.consent_basis_confirmed,
-        suppression_rules_confirmed: body.suppression_rules_confirmed,
-        unsubscribe_url_confirmed: body.unsubscribe_url_confirmed,
-        sender_footer_confirmed: body.sender_footer_confirmed,
-        seat_capacity_confirmed: body.seat_capacity_confirmed,
-        final_approval_confirmed: body.final_approval_confirmed,
-      }),
+      await campaignSnapshot(ownerUserIds, nextComplianceState),
       { status: 201 }
     );
   } catch (e) {

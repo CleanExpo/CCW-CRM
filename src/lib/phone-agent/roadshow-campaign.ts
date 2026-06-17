@@ -1,7 +1,26 @@
 export const CCW_ROADSHOW_CAMPAIGN_SLUG = 'carsi-ccw-roadshow-2026';
+export const CCW_ROADSHOW_FEATURE_SLUG = 'carsi_ccw_roadshow_campaign';
 export const CCW_ROADSHOW_BOOKING_URL = 'https://www.carsi.com.au/events/ccw-roadshow';
 export const CCW_ROADSHOW_OWNER_EMAIL = 'toby.b@ccwarehouse.com.au';
 export const CCW_ROADSHOW_DISTRIBUTION_EMAIL = 'annef@ccwarehouse.com.au';
+
+export const ccwRoadshowComplianceFlagKeys = [
+  'client_list_source_confirmed',
+  'consent_basis_confirmed',
+  'suppression_rules_confirmed',
+  'unsubscribe_url_confirmed',
+  'sender_footer_confirmed',
+  'seat_capacity_confirmed',
+  'final_approval_confirmed',
+] as const;
+
+export type CcwRoadshowComplianceFlagKey = (typeof ccwRoadshowComplianceFlagKeys)[number];
+
+export type CcwRoadshowComplianceState = Record<CcwRoadshowComplianceFlagKey, boolean> & {
+  updated_by: string | null;
+  updated_at: string | null;
+  notes: string | null;
+};
 
 export type CcwRoadshowEventSeed = {
   slug: 'melbourne' | 'sydney';
@@ -23,14 +42,7 @@ export type CcwRoadshowReadinessInput = {
   saved_events: number;
   internal_test_drafts: number;
   trusted_sources: number;
-  client_list_source_confirmed?: boolean;
-  consent_basis_confirmed?: boolean;
-  suppression_rules_confirmed?: boolean;
-  unsubscribe_url_confirmed?: boolean;
-  sender_footer_confirmed?: boolean;
-  seat_capacity_confirmed?: boolean;
-  final_approval_confirmed?: boolean;
-};
+} & Partial<Record<CcwRoadshowComplianceFlagKey, boolean>>;
 
 export type CcwRoadshowReadinessItem = {
   key: string;
@@ -94,6 +106,54 @@ export const ccwRoadshowInternalDrafts: CcwRoadshowInternalDraft[] = [
       'Draft only: Please review the final CARSI x CCW Roadshow email proof for distribution readiness. No client-list send should happen until Toby approval and compliance checks are recorded.',
   },
 ];
+
+function bool(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalised = value.trim().toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalised)) return true;
+    if (['false', '0', 'no', 'off'].includes(normalised)) return false;
+  }
+  return fallback;
+}
+
+function text(value: unknown, fallback: string | null = null): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim().slice(0, 2000) : fallback;
+}
+
+export function defaultCcwRoadshowComplianceState(): CcwRoadshowComplianceState {
+  return {
+    client_list_source_confirmed: false,
+    consent_basis_confirmed: false,
+    suppression_rules_confirmed: false,
+    unsubscribe_url_confirmed: false,
+    sender_footer_confirmed: false,
+    seat_capacity_confirmed: false,
+    final_approval_confirmed: false,
+    updated_by: null,
+    updated_at: null,
+    notes: null,
+  };
+}
+
+export function normaliseCcwRoadshowComplianceState(
+  input: unknown,
+  defaults: CcwRoadshowComplianceState = defaultCcwRoadshowComplianceState()
+): CcwRoadshowComplianceState {
+  const source = input && typeof input === 'object' && !Array.isArray(input) ? (input as Record<string, unknown>) : {};
+  return {
+    client_list_source_confirmed: bool(source.client_list_source_confirmed, defaults.client_list_source_confirmed),
+    consent_basis_confirmed: bool(source.consent_basis_confirmed, defaults.consent_basis_confirmed),
+    suppression_rules_confirmed: bool(source.suppression_rules_confirmed, defaults.suppression_rules_confirmed),
+    unsubscribe_url_confirmed: bool(source.unsubscribe_url_confirmed, defaults.unsubscribe_url_confirmed),
+    sender_footer_confirmed: bool(source.sender_footer_confirmed, defaults.sender_footer_confirmed),
+    seat_capacity_confirmed: bool(source.seat_capacity_confirmed, defaults.seat_capacity_confirmed),
+    final_approval_confirmed: bool(source.final_approval_confirmed, defaults.final_approval_confirmed),
+    updated_by: text(source.updated_by, defaults.updated_by),
+    updated_at: text(source.updated_at, defaults.updated_at),
+    notes: text(source.notes, defaults.notes),
+  };
+}
 
 export function buildCcwRoadshowReadiness(input: CcwRoadshowReadinessInput) {
   const items: CcwRoadshowReadinessItem[] = [
