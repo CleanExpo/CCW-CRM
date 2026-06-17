@@ -19,7 +19,11 @@ import {
 } from '@/lib/integrations/sendgrid-persistence';
 import {
   CCW_ROADSHOW_CAMPAIGN_SLUG,
+  CCW_ROADSHOW_CURRENCY,
+  CCW_ROADSHOW_FIVE_PACK_PRICE,
+  CCW_ROADSHOW_FIVE_PACK_QUANTITY,
   CCW_ROADSHOW_FEATURE_SLUG,
+  CCW_ROADSHOW_SINGLE_TICKET_PRICE,
   buildCcwRoadshowInternalTestEmail,
   buildCcwRoadshowReadiness,
   ccwRoadshowEventSeeds,
@@ -340,6 +344,12 @@ export async function POST(request: NextRequest) {
             campaign_slug: CCW_ROADSHOW_CAMPAIGN_SLUG,
             topics: ['carpet cleaning', 'rug cleaning', 'stain removal', 'tile cleaning', 'business growth'],
             course_material_includes: ['course outline', 'chemical decision details'],
+            pricing: {
+              currency: CCW_ROADSHOW_CURRENCY,
+              single_ticket_price: CCW_ROADSHOW_SINGLE_TICKET_PRICE,
+              five_pack_price: CCW_ROADSHOW_FIVE_PACK_PRICE,
+              five_pack_quantity: CCW_ROADSHOW_FIVE_PACK_QUANTITY,
+            },
           } satisfies Prisma.InputJsonValue,
           speakerPlan: {
             presenter: 'Phil McGurk',
@@ -350,6 +360,7 @@ export async function POST(request: NextRequest) {
             campaign_slug: CCW_ROADSHOW_CAMPAIGN_SLUG,
             channels: ['CCW client-list email', 'CARSI social', 'CCW social', 'Australian carpet cleaner groups'],
             send_requires_approval: true,
+            payment_link_required_before_publish: true,
             paid_ads_require_separate_approval: true,
           } satisfies Prisma.InputJsonValue,
         };
