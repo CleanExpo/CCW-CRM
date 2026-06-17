@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CCW_ROADSHOW_BOOKING_URL,
+  CCW_ROADSHOW_CURRENCY,
   CCW_ROADSHOW_DISTRIBUTION_EMAIL,
+  CCW_ROADSHOW_FIVE_PACK_PRICE,
   CCW_ROADSHOW_OWNER_EMAIL,
+  CCW_ROADSHOW_SINGLE_TICKET_PRICE,
   buildCcwRoadshowInternalTestEmail,
   buildCcwRoadshowReadiness,
   ccwRoadshowEventSeeds,
@@ -11,6 +14,7 @@ import {
   ccwRoadshowTrustedSources,
   defaultCcwRoadshowComplianceState,
   isCcwRoadshowInternalRecipient,
+  isValidCcwRoadshowPaymentUrl,
   normaliseCcwRoadshowComplianceState,
 } from '../roadshow-campaign';
 
@@ -57,6 +61,9 @@ describe('CARSI x CCW roadshow campaign gate', () => {
       unsubscribe_url_confirmed: true,
       sender_footer_confirmed: true,
       seat_capacity_confirmed: true,
+      payment_pricing_confirmed: true,
+      payment_checkout_url_confirmed: true,
+      payment_checkout_url: 'https://buy.stripe.com/test-roadshow',
       final_approval_confirmed: true,
     });
 
@@ -86,6 +93,9 @@ describe('CARSI x CCW roadshow campaign gate', () => {
       unsubscribe_url_confirmed: true,
       sender_footer_confirmed: true,
       seat_capacity_confirmed: true,
+      payment_pricing_confirmed: true,
+      payment_checkout_url_confirmed: false,
+      payment_checkout_url: 'https://buy.stripe.com/test-roadshow',
       final_approval_confirmed: false,
       notes: 'CCW Shopify export checked, suppression count recorded.',
       updated_by: 'user-1',
@@ -93,6 +103,8 @@ describe('CARSI x CCW roadshow campaign gate', () => {
     });
 
     expect(state.client_list_source_confirmed).toBe(true);
+    expect(state.payment_pricing_confirmed).toBe(true);
+    expect(state.payment_checkout_url).toBe('https://buy.stripe.com/test-roadshow');
     expect(state.final_approval_confirmed).toBe(false);
     expect(state.notes).toContain('suppression count');
   });
@@ -110,5 +122,34 @@ describe('CARSI x CCW roadshow campaign gate', () => {
     expect(body).toContain(CCW_ROADSHOW_BOOKING_URL);
     expect(body).toContain('Internal proof only');
     expect(body).toContain('Toby final approval');
+  });
+
+  it('requires a valid CARSI or Stripe payment URL before payment readiness passes', () => {
+    expect(CCW_ROADSHOW_CURRENCY).toBe('AUD');
+    expect(CCW_ROADSHOW_SINGLE_TICKET_PRICE).toBe(175);
+    expect(CCW_ROADSHOW_FIVE_PACK_PRICE).toBe(500);
+    expect(isValidCcwRoadshowPaymentUrl('https://buy.stripe.com/live-link')).toBe(true);
+    expect(isValidCcwRoadshowPaymentUrl('https://www.carsi.com.au/events/ccw-roadshow')).toBe(true);
+    expect(isValidCcwRoadshowPaymentUrl('http://buy.stripe.com/not-secure')).toBe(false);
+    expect(isValidCcwRoadshowPaymentUrl('https://example.com/pay')).toBe(false);
+
+    const readiness = buildCcwRoadshowReadiness({
+      saved_events: ccwRoadshowEventSeeds.length,
+      internal_test_drafts: ccwRoadshowInternalDrafts.length,
+      trusted_sources: ccwRoadshowTrustedSources.length,
+      client_list_source_confirmed: true,
+      consent_basis_confirmed: true,
+      suppression_rules_confirmed: true,
+      unsubscribe_url_confirmed: true,
+      sender_footer_confirmed: true,
+      seat_capacity_confirmed: true,
+      payment_pricing_confirmed: true,
+      payment_checkout_url_confirmed: true,
+      payment_checkout_url: 'https://example.com/pay',
+      final_approval_confirmed: true,
+    });
+
+    expect(readiness.ready_for_client_list_send).toBe(false);
+    expect(readiness.items.find((item) => item.key === 'payment_checkout_url')?.ready).toBe(false);
   });
 });

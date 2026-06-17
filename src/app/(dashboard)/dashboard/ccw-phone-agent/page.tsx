@@ -87,6 +87,14 @@ type IndustryEvent = {
 type RoadshowCampaign = {
   campaign_slug: string;
   booking_url: string;
+  payment_checkout_url: string | null;
+  payment: {
+    currency: string;
+    single_ticket_price: number;
+    five_pack_price: number;
+    five_pack_quantity: number;
+    checkout_url_ready: boolean;
+  };
   owner_email: string;
   distribution_email: string;
   ready_for_client_list_send: boolean;
@@ -117,12 +125,15 @@ type RoadshowComplianceKey =
   | 'unsubscribe_url_confirmed'
   | 'sender_footer_confirmed'
   | 'seat_capacity_confirmed'
+  | 'payment_pricing_confirmed'
+  | 'payment_checkout_url_confirmed'
   | 'final_approval_confirmed';
 
 type RoadshowComplianceState = Record<RoadshowComplianceKey, boolean> & {
   updated_by: string | null;
   updated_at: string | null;
   notes: string | null;
+  payment_checkout_url: string | null;
 };
 
 const roadshowComplianceControls: Array<{ key: RoadshowComplianceKey; label: string }> = [
@@ -132,6 +143,8 @@ const roadshowComplianceControls: Array<{ key: RoadshowComplianceKey; label: str
   { key: 'unsubscribe_url_confirmed', label: 'Working unsubscribe URL confirmed' },
   { key: 'sender_footer_confirmed', label: 'Sender business footer confirmed' },
   { key: 'seat_capacity_confirmed', label: 'Venue capacity and limited-places claim confirmed' },
+  { key: 'payment_pricing_confirmed', label: '$175 single and $500 five-pack pricing confirmed' },
+  { key: 'payment_checkout_url_confirmed', label: 'Live CARSI/Stripe checkout URL confirmed' },
   { key: 'final_approval_confirmed', label: 'Toby final approval recorded' },
 ];
 
@@ -337,6 +350,20 @@ export default function CcwPhoneAgentPage() {
         compliance_state: {
           ...current.compliance_state,
           notes: value,
+        },
+      };
+    });
+  }
+
+  function updateRoadshowPaymentUrl(value: string) {
+    setRoadshow((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        payment_checkout_url: value,
+        compliance_state: {
+          ...current.compliance_state,
+          payment_checkout_url: value,
         },
       };
     });
@@ -762,6 +789,42 @@ export default function CcwPhoneAgentPage() {
                       {roadshow?.booking_url ?? 'https://www.carsi.com.au/events/ccw-roadshow'}
                       <ExternalLink className="h-3 w-3" />
                     </a>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium">Payment setup</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {roadshow?.payment.currency ?? 'AUD'} ${roadshow?.payment.single_ticket_price ?? 175} per
+                          person or ${roadshow?.payment.five_pack_price ?? 500} for{' '}
+                          {roadshow?.payment.five_pack_quantity ?? 5}
+                        </div>
+                      </div>
+                      <Badge variant={badgeVariant(Boolean(roadshow?.payment.checkout_url_ready))}>
+                        {roadshow?.payment.checkout_url_ready ? 'payment ready' : 'payment blocked'}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      <Label htmlFor="roadshow-payment-url">Live checkout URL</Label>
+                      <Input
+                        id="roadshow-payment-url"
+                        value={roadshow?.compliance_state.payment_checkout_url ?? ''}
+                        onChange={(event) => updateRoadshowPaymentUrl(event.target.value)}
+                        placeholder="https://buy.stripe.com/... or https://www.carsi.com.au/..."
+                        disabled={!roadshow || saving}
+                      />
+                      {roadshow?.payment_checkout_url ? (
+                        <a
+                          className="inline-flex items-center gap-1 break-all font-mono text-xs text-primary hover:underline"
+                          href={roadshow.payment_checkout_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {roadshow.payment_checkout_url}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : null}
+                    </div>
                   </div>
                   <div>
                     <div className="text-muted-foreground">Approval owner</div>

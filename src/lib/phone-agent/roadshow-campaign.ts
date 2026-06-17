@@ -3,6 +3,10 @@ export const CCW_ROADSHOW_FEATURE_SLUG = 'carsi_ccw_roadshow_campaign';
 export const CCW_ROADSHOW_BOOKING_URL = 'https://www.carsi.com.au/events/ccw-roadshow';
 export const CCW_ROADSHOW_OWNER_EMAIL = 'toby.b@ccwarehouse.com.au';
 export const CCW_ROADSHOW_DISTRIBUTION_EMAIL = 'annef@ccwarehouse.com.au';
+export const CCW_ROADSHOW_CURRENCY = 'AUD';
+export const CCW_ROADSHOW_SINGLE_TICKET_PRICE = 175;
+export const CCW_ROADSHOW_FIVE_PACK_PRICE = 500;
+export const CCW_ROADSHOW_FIVE_PACK_QUANTITY = 5;
 
 export const ccwRoadshowComplianceFlagKeys = [
   'client_list_source_confirmed',
@@ -11,6 +15,8 @@ export const ccwRoadshowComplianceFlagKeys = [
   'unsubscribe_url_confirmed',
   'sender_footer_confirmed',
   'seat_capacity_confirmed',
+  'payment_pricing_confirmed',
+  'payment_checkout_url_confirmed',
   'final_approval_confirmed',
 ] as const;
 
@@ -20,6 +26,7 @@ export type CcwRoadshowComplianceState = Record<CcwRoadshowComplianceFlagKey, bo
   updated_by: string | null;
   updated_at: string | null;
   notes: string | null;
+  payment_checkout_url: string | null;
 };
 
 export type CcwRoadshowEventSeed = {
@@ -42,6 +49,7 @@ export type CcwRoadshowReadinessInput = {
   saved_events: number;
   internal_test_drafts: number;
   trusted_sources: number;
+  payment_checkout_url?: string | null;
 } & Partial<Record<CcwRoadshowComplianceFlagKey, boolean>>;
 
 export type CcwRoadshowReadinessItem = {
@@ -123,6 +131,23 @@ export function buildCcwRoadshowInternalTestEmail(draft: CcwRoadshowInternalDraf
   ].join('\n');
 }
 
+export function isValidCcwRoadshowPaymentUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  try {
+    const url = new URL(value.trim());
+    const hostname = url.hostname.toLowerCase();
+    return (
+      url.protocol === 'https:' &&
+      (hostname === 'www.carsi.com.au' ||
+        hostname === 'carsi.com.au' ||
+        hostname.endsWith('.stripe.com') ||
+        hostname === 'stripe.com')
+    );
+  } catch {
+    return false;
+  }
+}
+
 function bool(value: unknown, fallback = false): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
@@ -145,10 +170,13 @@ export function defaultCcwRoadshowComplianceState(): CcwRoadshowComplianceState 
     unsubscribe_url_confirmed: false,
     sender_footer_confirmed: false,
     seat_capacity_confirmed: false,
+    payment_pricing_confirmed: false,
+    payment_checkout_url_confirmed: false,
     final_approval_confirmed: false,
     updated_by: null,
     updated_at: null,
     notes: null,
+    payment_checkout_url: null,
   };
 }
 
@@ -164,14 +192,21 @@ export function normaliseCcwRoadshowComplianceState(
     unsubscribe_url_confirmed: bool(source.unsubscribe_url_confirmed, defaults.unsubscribe_url_confirmed),
     sender_footer_confirmed: bool(source.sender_footer_confirmed, defaults.sender_footer_confirmed),
     seat_capacity_confirmed: bool(source.seat_capacity_confirmed, defaults.seat_capacity_confirmed),
+    payment_pricing_confirmed: bool(source.payment_pricing_confirmed, defaults.payment_pricing_confirmed),
+    payment_checkout_url_confirmed: bool(
+      source.payment_checkout_url_confirmed,
+      defaults.payment_checkout_url_confirmed
+    ),
     final_approval_confirmed: bool(source.final_approval_confirmed, defaults.final_approval_confirmed),
     updated_by: text(source.updated_by, defaults.updated_by),
     updated_at: text(source.updated_at, defaults.updated_at),
     notes: text(source.notes, defaults.notes),
+    payment_checkout_url: text(source.payment_checkout_url, defaults.payment_checkout_url),
   };
 }
 
 export function buildCcwRoadshowReadiness(input: CcwRoadshowReadinessInput) {
+  const paymentUrlReady = input.payment_checkout_url_confirmed === true && isValidCcwRoadshowPaymentUrl(input.payment_checkout_url);
   const items: CcwRoadshowReadinessItem[] = [
     {
       key: 'events_seeded',
@@ -222,6 +257,19 @@ export function buildCcwRoadshowReadiness(input: CcwRoadshowReadinessInput) {
       blocker: 'Confirm the capacity for Melbourne and Sydney before using urgency claims.',
     },
     {
+      key: 'payment_pricing',
+      label: '$175 single and $500 five-pack pricing confirmed',
+      ready: input.payment_pricing_confirmed === true,
+      blocker: 'Confirm the public roadshow pricing before publishing payment links or campaign copy.',
+    },
+    {
+      key: 'payment_checkout_url',
+      label: 'CARSI/Stripe checkout URL saved and verified',
+      ready: paymentUrlReady,
+      blocker:
+        'Add the live CARSI or Stripe checkout URL and tick the payment URL gate before bookings are treated as payment-ready.',
+    },
+    {
       key: 'final_approval',
       label: 'Toby final approval recorded before live send',
       ready: input.final_approval_confirmed === true,
@@ -233,6 +281,14 @@ export function buildCcwRoadshowReadiness(input: CcwRoadshowReadinessInput) {
   return {
     campaign_slug: CCW_ROADSHOW_CAMPAIGN_SLUG,
     booking_url: CCW_ROADSHOW_BOOKING_URL,
+    payment_checkout_url: input.payment_checkout_url ?? null,
+    payment: {
+      currency: CCW_ROADSHOW_CURRENCY,
+      single_ticket_price: CCW_ROADSHOW_SINGLE_TICKET_PRICE,
+      five_pack_price: CCW_ROADSHOW_FIVE_PACK_PRICE,
+      five_pack_quantity: CCW_ROADSHOW_FIVE_PACK_QUANTITY,
+      checkout_url_ready: paymentUrlReady,
+    },
     owner_email: CCW_ROADSHOW_OWNER_EMAIL,
     distribution_email: CCW_ROADSHOW_DISTRIBUTION_EMAIL,
     ready_for_client_list_send: readyCount === items.length,
