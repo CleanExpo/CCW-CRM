@@ -80,7 +80,7 @@ The phone layer must learn from past conversations without mutating live behavio
 
 - **Intent discovery:** detect repeated intents such as product advice, price checks, order status, online sales support, phone orders, service bookings, hands-on customer support, training, warranty, complaints, dangerous goods, and technical handover.
 - **Persona discovery:** infer caller personas such as new carpet cleaner, experienced operator, restoration tech, procurement/admin, service customer, training lead, or price-sensitive buyer.
-- **Agent generation:** propose specialised agents or agent modes for sales qualification, online-sales conversion, phone orders, service booking, support booking, product advice, training/CARSI enquiry, campaign capture, and escalation triage.
+- **Agent generation:** propose specialised agents or agent modes for sales qualification, online-sales conversion, phone orders, service booking, support booking, product advice, training enquiry, campaign capture, and escalation triage.
 - **Learning memory:** store approved learnings, successful scripts, objections, answer gaps, source gaps, conversion patterns, and escalation reasons for future agent versions.
 - **Campaign extraction:** convert conversation patterns into draft newsletters, email campaigns, social media blitzes, training offers, and follow-up lists.
 - **Approval gate:** new agent personas, prompts, routing rules, campaign drafts, and outbound actions are proposed first and only promoted after human approval and test review.
@@ -111,7 +111,7 @@ Financial claims are not hardcoded constants. Each financial input must be store
 - [UNCONFIRMED] ElevenLabs and Twilio commercial/pricing terms are acceptable for the pilot.
 - [UNCONFIRMED] CCW Shopify, website, catalogue, SDS, manuals, FAQs, supplier guidance, and selected credible external sources can provide enough coverage to answer most routine phone calls without human intervention.
 - [UNCONFIRMED] The first measurable opportunity categories should be growth, diversification, and cost saving; Toby may choose more categories later.
-- [UNCONFIRMED] CARSI training scope, booking rules, online-training flow, and source material need to be defined before the phone agent can answer or book CARSI-related enquiries.
+- [UNCONFIRMED] Training scope, booking rules, online-training flow, and source material need to be defined before the phone agent can answer or book training-related enquiries.
 - [UNCONFIRMED] Company-day, mini-tradeshow, appreciation-day, and industry-awards formats, cadence, invite criteria, and approval owners need to be defined.
 
 ## 2. Definition Of Production-Ready & Owned
@@ -132,7 +132,7 @@ The add-on is **Production-Ready & Owned** only when:
 - the phone agent answers only from approved CCW-owned knowledge and approved credible external sources, and escalates when confidence or permission is insufficient;
 - past phone conversations are mined for repeat intents, personas, objections, conversion gaps, service needs, training demand, and campaign ideas;
 - specialised agents/playbooks can be generated from approved learnings and versioned before being activated;
-- call-derived actions can create leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, training/CARSI follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs;
+- call-derived actions can create leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, training follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs;
 - follow-up agents can monitor approved CRM/order/service/event triggers and send or draft emails/messages for tracking updates, service intervals, sales nurture, company days, mini-tradeshows, appreciation days, industry awards, and training/event follow-ups;
 - every automated follow-up has a source trigger, consent basis, template/version, send state, owner, and performance outcome;
 - phone-agent-created CRM records reference the originating call session ID;
@@ -234,7 +234,7 @@ Standing rule: the system may prepare consequential actions, but may not commit 
 
 ### Phase 6A - Follow-Up Agents And Industry Hub Workflows
 
-**Definition of Done:** follow-up agents can detect approved triggers for tracking updates, service intervals, sales nurture, phone/order follow-ups, training/CARSI follow-ups, company days, mini-tradeshows, appreciation days, industry awards, newsletters, email campaigns, and social blitz briefs.
+**Definition of Done:** follow-up agents can detect approved triggers for tracking updates, service intervals, sales nurture, phone/order follow-ups, training follow-ups, company days, mini-tradeshows, appreciation days, industry awards, newsletters, email campaigns, and social blitz briefs.
 **Hard Test Gate:** each follow-up has a source record, consent basis, approved template/version, frequency cap, send/draft state, and audit trail; auto-send is disabled unless the rule is explicitly approved.
 **Review Gate:** Grid/ops and Lens review confirms follow-ups are useful, consent-safe, non-spammy, and tied to measurable business outcomes.
 
@@ -291,7 +291,7 @@ This checklist is the only honest basis for any "% complete" claim.
 - [ ] Phone answers cite or link to approved CCW Shopify/website/catalogue/knowledge sources or approved credible external sources.
 - [ ] Past conversations produce visible discovered intents, personas, objections, answer gaps, and conversion opportunities.
 - [ ] Specialised agents/playbooks are generated as draft versions and require approval before activation.
-- [ ] Phone conversations can create draft leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, CARSI/training follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs.
+- [ ] Phone conversations can create draft leads, online sales nudges, phone-order drafts, service bookings, hands-on support bookings, training follow-ups, newsletter ideas, email campaign drafts, and social media blitz briefs.
 - [ ] Follow-up agents can create or send approved tracking updates, service interval reminders, sales nurture messages, company-day invites, event follow-ups, appreciation-day outreach, industry-awards outreach, newsletters, email campaigns, and social blitz briefs.
 - [ ] Company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training days have event records, invite/RSVP tracking, follow-up plans, and outcome metrics.
 - [ ] Auto-send follow-up rules require consent basis, approved template, frequency cap, audit trail, and owner approval.
@@ -310,8 +310,8 @@ This checklist is the only honest basis for any "% complete" claim.
 - Confirm which Shopify/website content should be treated as authoritative and how often it should be refreshed into the AI knowledge base.
 - Confirm which external sites count as trusted credible sources, who approves them, and which topics they are allowed to support.
 - Confirm the first KPI set for Toby's AI ally: growth value, cost saved, conversion lift, missed calls recovered, service work captured, or another ranking.
-- Confirm what CARSI means in this operating context, what training products are in scope, and which bookings can be drafted versus confirmed.
-- Confirm which specialised phone agents should ship first: sales, service booking, product advice, phone orders, support booking, training/CARSI, campaigns, or escalation triage.
+- Confirm what training products are in scope, where the source material lives, and which bookings can be drafted versus confirmed.
+- Confirm which specialised phone agents should ship first: sales, service booking, product advice, phone orders, support booking, training, campaigns, or escalation triage.
 - Confirm approval rules for newsletters, email campaigns, and social media blitzes generated from conversation learnings.
 - Confirm which follow-up agents should ship first: tracking updates, service intervals, quote follow-up, phone-order follow-up, dormant-account reactivation, company-day invites, event follow-up, appreciation days, industry awards, newsletters, email, SMS/messages, or social blitzes.
 - Confirm company-day/event cadence, target audiences, speaker/guest approval, RSVP process, award categories, supplier showcase rules, and post-event sales/support follow-up process.

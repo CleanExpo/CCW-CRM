@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,8 +12,6 @@ import {
   Bot,
   CalendarDays,
   CheckCircle2,
-  ExternalLink,
-  Mail,
   PhoneCall,
   RefreshCw,
   Send,
@@ -84,70 +81,6 @@ type IndustryEvent = {
   starts_at: string | null;
 };
 
-type RoadshowCampaign = {
-  campaign_slug: string;
-  booking_url: string;
-  payment_checkout_url: string | null;
-  payment: {
-    currency: string;
-    single_ticket_price: number;
-    five_pack_price: number;
-    five_pack_quantity: number;
-    checkout_url_ready: boolean;
-  };
-  owner_email: string;
-  distribution_email: string;
-  ready_for_client_list_send: boolean;
-  ready_count: number;
-  total_count: number;
-  items: Array<{ key: string; label: string; ready: boolean; blocker?: string }>;
-  compliance_state: RoadshowComplianceState;
-  saved_events: Array<{ id: string; name: string; status: string; starts_at: string | null; venue: string | null }>;
-  trusted_sources: Array<{ id: string; label: string; url: string | null; status: string }>;
-  internal_test_drafts: Array<{
-    id: string;
-    recipient_ref: string | null;
-    subject: string | null;
-    status: string;
-    sent_at: string | null;
-  }>;
-  internal_test_send?: {
-    status: string;
-    detail?: string;
-    results?: Array<{ action_id: string; recipient_ref: string | null; status: string; detail?: string }>;
-  };
-};
-
-type RoadshowComplianceKey =
-  | 'client_list_source_confirmed'
-  | 'consent_basis_confirmed'
-  | 'suppression_rules_confirmed'
-  | 'unsubscribe_url_confirmed'
-  | 'sender_footer_confirmed'
-  | 'seat_capacity_confirmed'
-  | 'payment_pricing_confirmed'
-  | 'payment_checkout_url_confirmed'
-  | 'final_approval_confirmed';
-
-type RoadshowComplianceState = Record<RoadshowComplianceKey, boolean> & {
-  updated_by: string | null;
-  updated_at: string | null;
-  notes: string | null;
-  payment_checkout_url: string | null;
-};
-
-const roadshowComplianceControls: Array<{ key: RoadshowComplianceKey; label: string }> = [
-  { key: 'client_list_source_confirmed', label: 'Client-list source and export date confirmed' },
-  { key: 'consent_basis_confirmed', label: 'Marketing consent basis confirmed' },
-  { key: 'suppression_rules_confirmed', label: 'Suppressions and unsubscribes excluded' },
-  { key: 'unsubscribe_url_confirmed', label: 'Working unsubscribe URL confirmed' },
-  { key: 'sender_footer_confirmed', label: 'Sender business footer confirmed' },
-  { key: 'seat_capacity_confirmed', label: 'Venue capacity and limited-places claim confirmed' },
-  { key: 'payment_pricing_confirmed', label: '$175 single and $500 five-pack pricing confirmed' },
-  { key: 'payment_checkout_url_confirmed', label: 'Live CARSI/Stripe checkout URL confirmed' },
-  { key: 'final_approval_confirmed', label: 'Toby final approval recorded' },
-];
-
 async function readJson<T>(response: Response): Promise<T> {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -183,7 +116,6 @@ export default function CcwPhoneAgentPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [followUps, setFollowUps] = useState<FollowUpAction[]>([]);
   const [events, setEvents] = useState<IndustryEvent[]>([]);
-  const [roadshow, setRoadshow] = useState<RoadshowCampaign | null>(null);
   const [transcript, setTranscript] = useState(DEFAULT_TRANSCRIPT);
   const [summary, setSummary] = useState('Service booking discovery call');
   const [eventName, setEventName] = useState('CCW Company Day - Supplier Showcase');
@@ -197,7 +129,7 @@ export default function CcwPhoneAgentPage() {
     setLoading(true);
     setError(null);
     try {
-      const [configData, callData, agentData, followUpData, eventData, roadshowData] = await Promise.all([
+      const [configData, callData, agentData, followUpData, eventData] = await Promise.all([
         readJson<PhoneConfig>(await fetch('/api/phone-agent/config', { cache: 'no-store' })),
         readJson<{ items: CallSession[] }>(await fetch('/api/phone-agent/call-sessions', { cache: 'no-store' })),
         readJson<{ items: Agent[] }>(await fetch('/api/phone-agent/specialized-agents', { cache: 'no-store' })),
@@ -205,14 +137,12 @@ export default function CcwPhoneAgentPage() {
           await fetch('/api/phone-agent/follow-up-actions?status=draft', { cache: 'no-store' })
         ),
         readJson<{ items: IndustryEvent[] }>(await fetch('/api/phone-agent/industry-events', { cache: 'no-store' })),
-        readJson<RoadshowCampaign>(await fetch('/api/phone-agent/roadshow-campaign', { cache: 'no-store' })),
       ]);
       setConfig(configData);
       setCalls(callData.items);
       setAgents(agentData.items);
       setFollowUps(followUpData.items);
       setEvents(eventData.items);
-      setRoadshow(roadshowData);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -297,121 +227,6 @@ export default function CcwPhoneAgentPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: eventName, event_type: 'company_day' }),
       }));
-      await loadAll();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function seedRoadshowCampaign() {
-    setSaving(true);
-    setError(null);
-    try {
-      const data = await readJson<RoadshowCampaign>(
-        await fetch('/api/phone-agent/roadshow-campaign', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            seed_events: true,
-            seed_sources: true,
-            seed_internal_drafts: true,
-          }),
-        })
-      );
-      setRoadshow(data);
-      await loadAll();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function updateRoadshowCompliance(key: RoadshowComplianceKey, value: boolean) {
-    setRoadshow((current) => {
-      if (!current) return current;
-      return {
-        ...current,
-        compliance_state: {
-          ...current.compliance_state,
-          [key]: value,
-        },
-      };
-    });
-  }
-
-  function updateRoadshowNotes(value: string) {
-    setRoadshow((current) => {
-      if (!current) return current;
-      return {
-        ...current,
-        compliance_state: {
-          ...current.compliance_state,
-          notes: value,
-        },
-      };
-    });
-  }
-
-  function updateRoadshowPaymentUrl(value: string) {
-    setRoadshow((current) => {
-      if (!current) return current;
-      return {
-        ...current,
-        payment_checkout_url: value,
-        compliance_state: {
-          ...current.compliance_state,
-          payment_checkout_url: value,
-        },
-      };
-    });
-  }
-
-  async function saveRoadshowReadiness() {
-    if (!roadshow) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const data = await readJson<RoadshowCampaign>(
-        await fetch('/api/phone-agent/roadshow-campaign', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            seed_events: false,
-            seed_sources: false,
-            seed_internal_drafts: false,
-            ...roadshow.compliance_state,
-          }),
-        })
-      );
-      setRoadshow(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function sendRoadshowInternalTests() {
-    setSaving(true);
-    setError(null);
-    try {
-      const data = await readJson<RoadshowCampaign>(
-        await fetch('/api/phone-agent/roadshow-campaign', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            seed_events: false,
-            seed_sources: false,
-            seed_internal_drafts: false,
-            send_internal_tests: true,
-            ...(roadshow?.compliance_state ?? {}),
-          }),
-        })
-      );
-      setRoadshow(data);
       await loadAll();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -556,7 +371,6 @@ export default function CcwPhoneAgentPage() {
           <TabsTrigger value="calls">Calls</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
           <TabsTrigger value="follow-ups">Follow-Ups</TabsTrigger>
-          <TabsTrigger value="roadshow">Roadshow</TabsTrigger>
           <TabsTrigger value="events">Company Days</TabsTrigger>
           <TabsTrigger value="safety">Safety</TabsTrigger>
         </TabsList>
@@ -752,258 +566,6 @@ export default function CcwPhoneAgentPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="roadshow">
-          <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">CARSI x CCW Roadshow</CardTitle>
-                <CardDescription>
-                  Operational campaign gate for the Melbourne and Sydney Business Growth Days.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-md border p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-medium">Client-list send status</div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {roadshow?.ready_count ?? 0} of {roadshow?.total_count ?? 0} readiness gates complete.
-                      </p>
-                    </div>
-                    <Badge variant={badgeVariant(Boolean(roadshow?.ready_for_client_list_send))}>
-                      {roadshow?.ready_for_client_list_send ? 'send ready' : 'blocked'}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="grid gap-3 text-sm">
-                  <div>
-                    <div className="text-muted-foreground">Booking URL</div>
-                    <a
-                      className="inline-flex items-center gap-1 break-all font-mono text-xs text-primary hover:underline"
-                      href={roadshow?.booking_url ?? 'https://www.carsi.com.au/events/ccw-roadshow'}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {roadshow?.booking_url ?? 'https://www.carsi.com.au/events/ccw-roadshow'}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <div className="rounded-md border p-3">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="font-medium">Payment setup</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {roadshow?.payment.currency ?? 'AUD'} ${roadshow?.payment.single_ticket_price ?? 175} per
-                          person or ${roadshow?.payment.five_pack_price ?? 500} for{' '}
-                          {roadshow?.payment.five_pack_quantity ?? 5}
-                        </div>
-                      </div>
-                      <Badge variant={badgeVariant(Boolean(roadshow?.payment.checkout_url_ready))}>
-                        {roadshow?.payment.checkout_url_ready ? 'payment ready' : 'payment blocked'}
-                      </Badge>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      <Label htmlFor="roadshow-payment-url">Live checkout URL</Label>
-                      <Input
-                        id="roadshow-payment-url"
-                        value={roadshow?.compliance_state.payment_checkout_url ?? ''}
-                        onChange={(event) => updateRoadshowPaymentUrl(event.target.value)}
-                        placeholder="https://buy.stripe.com/... or https://www.carsi.com.au/..."
-                        disabled={!roadshow || saving}
-                      />
-                      {roadshow?.payment_checkout_url ? (
-                        <a
-                          className="inline-flex items-center gap-1 break-all font-mono text-xs text-primary hover:underline"
-                          href={roadshow.payment_checkout_url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {roadshow.payment_checkout_url}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Approval owner</div>
-                    <div className="font-mono text-xs">{roadshow?.owner_email ?? 'toby.b@ccwarehouse.com.au'}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Distribution test</div>
-                    <div className="font-mono text-xs">
-                      {roadshow?.distribution_email ?? 'annef@ccwarehouse.com.au'}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={seedRoadshowCampaign} disabled={saving} leftIcon={<Mail />}>
-                    Seed Roadshow Campaign
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={sendRoadshowInternalTests}
-                    disabled={saving}
-                    leftIcon={<Send />}
-                  >
-                    Send Internal Tests
-                  </Button>
-                </div>
-                {roadshow?.internal_test_send ? (
-                  <div className="rounded-md border p-3 text-sm">
-                    <div className="font-medium">Internal test send: {roadshow.internal_test_send.status}</div>
-                    {roadshow.internal_test_send.detail ? (
-                      <p className="mt-1 text-muted-foreground">{roadshow.internal_test_send.detail}</p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Readiness Gates</CardTitle>
-                  <CardDescription>
-                    The CRM can prepare the send, but customer-list delivery stays blocked until every gate is green.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3 lg:grid-cols-2">
-                  {(roadshow?.items ?? []).map((item) => (
-                    <div key={item.key} className="rounded-md border p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="font-medium">{item.label}</div>
-                        <Badge variant={badgeVariant(item.ready)}>{item.ready ? 'ready' : 'blocked'}</Badge>
-                      </div>
-                      {!item.ready && item.blocker ? (
-                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.blocker}</p>
-                      ) : null}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-base">Compliance Approval Record</CardTitle>
-                      <CardDescription>
-                        Saved operational sign-off before any CCW client-list send can be marked ready.
-                      </CardDescription>
-                    </div>
-                    <Button onClick={saveRoadshowReadiness} disabled={saving || !roadshow} leftIcon={<CheckCircle2 />}>
-                      Save Readiness
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    {roadshowComplianceControls.map((control) => (
-                      <label
-                        key={control.key}
-                        className="flex min-h-16 cursor-pointer items-start gap-3 rounded-md border p-4 text-sm"
-                      >
-                        <Checkbox
-                          className="mt-0.5"
-                          checked={roadshow?.compliance_state[control.key] ?? false}
-                          onCheckedChange={(checked) => updateRoadshowCompliance(control.key, checked === true)}
-                          disabled={!roadshow || saving}
-                        />
-                        <span className="font-medium leading-relaxed">{control.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="roadshow-notes">Source, segment and approval notes</Label>
-                    <Textarea
-                      id="roadshow-notes"
-                      value={roadshow?.compliance_state.notes ?? ''}
-                      onChange={(event) => updateRoadshowNotes(event.target.value)}
-                      placeholder="Client-list source, export date, segment counts, suppression count, approver and approval timestamp."
-                      rows={3}
-                      disabled={!roadshow || saving}
-                    />
-                  </div>
-                  {roadshow?.compliance_state.updated_at ? (
-                    <div className="text-xs text-muted-foreground">
-                      Last saved {formatDate(roadshow.compliance_state.updated_at)}
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-4 lg:grid-cols-3">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Saved Events</CardTitle>
-                    <CardDescription>{roadshow?.saved_events.length ?? 0} campaign events.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {(roadshow?.saved_events ?? []).length === 0 ? (
-                      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                        Seed the campaign to create Melbourne and Sydney records.
-                      </div>
-                    ) : (
-                      roadshow?.saved_events.map((event) => (
-                        <div key={event.id} className="rounded-md border p-3 text-sm">
-                          <div className="font-medium">{event.name}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">{formatDate(event.starts_at)}</div>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Trusted Sources</CardTitle>
-                    <CardDescription>{roadshow?.trusted_sources.length ?? 0} approved sources.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {(roadshow?.trusted_sources ?? []).length === 0 ? (
-                      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                        Seed CARSI, CCW and booking-page sources.
-                      </div>
-                    ) : (
-                      roadshow?.trusted_sources.map((source) => (
-                        <div key={source.id} className="rounded-md border p-3 text-sm">
-                          <div className="font-medium">{source.label}</div>
-                          <div className="mt-1 break-all text-xs text-muted-foreground">{source.url}</div>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Internal Drafts</CardTitle>
-                    <CardDescription>{roadshow?.internal_test_drafts.length ?? 0} test drafts.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {(roadshow?.internal_test_drafts ?? []).length === 0 ? (
-                      <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                        Seed Toby and Anne draft approvals.
-                      </div>
-                    ) : (
-                      roadshow?.internal_test_drafts.map((draft) => (
-                        <div key={draft.id} className="rounded-md border p-3 text-sm">
-                          <div className="font-medium">{draft.subject}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">{draft.recipient_ref}</div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <Badge variant={badgeVariant(draft.status)}>{draft.status}</Badge>
-                            {draft.sent_at ? <Badge variant="outline">sent {formatDate(draft.sent_at)}</Badge> : null}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
         </TabsContent>
 
         <TabsContent value="events">

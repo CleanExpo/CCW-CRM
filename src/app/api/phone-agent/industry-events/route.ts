@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         },
         speakerPlan: {
           needs_toby_approval: true,
-          suggested_sources: ['supplier calls', 'trusted industry partners', 'CARSI training topics'],
+          suggested_sources: ['supplier calls', 'trusted industry partners', 'training topics'],
         },
         marketingPlan: {
           channels: ['newsletter', 'email campaign', 'social media blitz'],

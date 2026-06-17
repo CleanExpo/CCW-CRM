@@ -66,8 +66,8 @@ const INTENT_RULES: Array<{
   },
   {
     intent: 'training',
-    agentCode: 'carsi-training-agent',
-    keywords: ['training', 'carsi', 'course', 'inhouse', 'online class'],
+    agentCode: 'training-agent',
+    keywords: ['training', 'course', 'inhouse', 'online class'],
     insightType: 'training',
   },
   {
@@ -218,8 +218,8 @@ function buildCcwFollowUpDrafts(
       {
         action_type: 'email',
         channel: 'email',
-        subject: 'CARSI training follow-up',
-        body: 'Draft a CARSI training reply with inhouse and online training options.',
+        subject: 'Training follow-up',
+        body: 'Draft a training reply with in-house and online options for owner review.',
         payload: { evidence },
       },
     ];

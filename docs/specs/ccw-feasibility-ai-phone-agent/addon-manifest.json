@@ -214,7 +214,7 @@
         "phone_order",
         "service_booking",
         "hands_on_support_booking",
-        "training_carsi",
+        "training",
         "newsletter_signup",
         "email_campaign_interest",
         "social_media_campaign_signal",
@@ -255,7 +255,7 @@
       "phone_order_capture",
       "service_booking",
       "hands_on_support_booking",
-      "training_carsi",
+      "training",
       "campaign_capture",
       "escalation_triage"
     ],
@@ -320,7 +320,7 @@
       "industry_awards",
       "supplier_showcase",
       "training_day",
-      "carsi_training"
+      "training"
     ],
     "industry_hub_outputs": [
       "invite_list",
@@ -410,7 +410,7 @@
     "AI-resolved calls are grounded in approved knowledge sources or escalated",
     "conversation insights discover intents personas objections answer gaps and conversion opportunities",
     "specialised agents are generated as inactive draft versions requiring approval",
-    "generated action drafts cover leads online sales phone orders service bookings support bookings CARSI training newsletters email campaigns and social media blitz briefs",
+    "generated action drafts cover leads online sales phone orders service bookings support bookings training newsletters email campaigns and social media blitz briefs",
     "follow-up agents generate approved or draft tracking updates service reminders sales nurture company-day invites event follow-ups awards outreach newsletters messages email campaigns and social blitz briefs",
     "company days mini-tradeshows appreciation days industry awards supplier showcases and training days have event records invites RSVPs follow-up plans and outcome metrics",
     "auto-send follow-up rules require consent basis approved template frequency cap audit log and owner approval",

@@ -14,7 +14,7 @@ const DEFAULT_AGENT_CODES = [
   'online-sales-agent',
   'orders-agent',
   'service-booking-agent',
-  'carsi-training-agent',
+  'training-agent',
   'campaign-agent',
   'industry-events-agent',
 ];

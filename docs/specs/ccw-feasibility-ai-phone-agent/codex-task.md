@@ -23,7 +23,7 @@ Financial claims must be owner-adjustable and accounting-aware. Toby can edit pl
 
 The ElevenLabs/Twilio work must be implemented alongside the new CRM as the modern phone gatekeeper: answer routine calls when CCW already has approved knowledge, create traceable CRM drafts when useful, and escalate cleanly when a human is truly required.
 
-The phone system must also learn from past conversations. It should discover intents, personas, objections, answer gaps, conversion patterns, service/training demand, and campaign ideas; then generate specialised agent/playbook drafts that improve user experience, lead capture, sales conversion, phone orders, service bookings, hands-on support bookings, CARSI/in-house/online training, newsletters, email campaigns, and social media blitzes.
+The phone system must also learn from past conversations. It should discover intents, personas, objections, answer gaps, conversion patterns, service/training demand, and campaign ideas; then generate specialised agent/playbook drafts that improve user experience, lead capture, sales conversion, phone orders, service bookings, hands-on support bookings, training enquiries, newsletters, email campaigns, and social media blitzes.
 
 Follow-up agents must monitor CRM/order/service/event signals and fire approved follow-up emails/messages or draft campaigns for tracking updates, service intervals, quote/order follow-up, company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, training days, newsletters, email campaigns, and social media blitzes.
 
@@ -208,9 +208,9 @@ Security requirements:
 - store the source basis/confidence for each AI-resolved call where available;
 - store a triage outcome for every handled call: `answered_by_ai`, `human_handoff_required`, `follow_up_created`, `lead_created`, `quote_draft_created`, `service_draft_created`, or `blocked_escalated`;
 - discover and store call intents, caller personas, objections, answer gaps, escalation reasons, conversion signals, training demand, and campaign opportunities;
-- generate specialised agent/playbook drafts for sales qualification, product advice, online sales, phone orders, service bookings, hands-on customer support bookings, training/CARSI enquiries, campaign capture, and escalation triage;
+- generate specialised agent/playbook drafts for sales qualification, product advice, online sales, phone orders, service bookings, hands-on customer support bookings, training enquiries, campaign capture, and escalation triage;
 - keep specialised agents versioned, inactive by default, and approval-gated before live use;
-- convert call learnings into generated action drafts: lead, online sale nudge, phone order draft, service booking draft, support booking draft, CARSI/training follow-up, newsletter idea, email campaign draft, or social media blitz brief;
+- convert call learnings into generated action drafts: lead, online sale nudge, phone order draft, service booking draft, support booking draft, training follow-up, newsletter idea, email campaign draft, or social media blitz brief;
 - AI-created CRM records must link back to `callSessionId`;
 - escalate pricing exceptions, complaints, warranty, dangerous goods, and complex service questions.
 
@@ -355,7 +355,7 @@ For schema work, also verify a fresh database migration replay using the repo's 
 - AI-resolved phone calls are grounded in approved knowledge sources or escalated.
 - Conversation insight extraction produces intents, personas, objections, answer gaps, and conversion opportunities.
 - Specialised agents/playbooks are generated as inactive draft versions and require approval before activation.
-- Generated action drafts cover leads, online sales nudges, phone orders, service bookings, support bookings, CARSI/training follow-ups, newsletters, email campaigns, and social media blitz briefs.
+- Generated action drafts cover leads, online sales nudges, phone orders, service bookings, support bookings, training follow-ups, newsletters, email campaigns, and social media blitz briefs.
 - Follow-up agents can produce approved/draft tracking updates, service interval reminders, quote/order follow-ups, company-day invites, event follow-ups, appreciation-day outreach, awards outreach, newsletters, messages, email campaigns, and social blitz briefs.
 - Company days, mini-tradeshows, appreciation days, industry awards, supplier showcases, and training days have event records, invites, RSVPs, follow-up plans, and outcome metrics.
 - Auto-send follow-up rules require approved template/version, consent basis, frequency cap, audit log, and owner approval.
