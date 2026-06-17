@@ -7,7 +7,7 @@ Complete guide for the CCW-Online ERP CI/CD pipeline.
 The CI/CD pipeline automates testing, building, and deployment of the CCW-Online ERP application. It consists of four main workflows:
 
 1. **CI (Continuous Integration)** - Automated testing on every push/PR
-2. **Deploy to Staging** - Auto-deploy to staging on merge to main
+2. **Deploy to Staging** - Auto-deploy to staging on merge to main when the legacy SSH staging secrets are configured; otherwise record a skipped staging deploy while Vercel handles the web production deployment from `main`
 3. **Deploy to Production** - Manual trigger with approval gates
 4. **Emergency Rollback** - Quick revert on failures
 
@@ -30,9 +30,9 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 │                                                 │                    │
 │  ┌──────────────────────────────────────────────▼───────────────┐   │
 │  │                    Deploy to Staging                          │   │
-│  │  • Push images to GHCR                                        │   │
-│  │  • SSH deploy to staging server                               │   │
-│  │  • Run smoke tests                                            │   │
+│  │  • Validate legacy SSH staging secrets                        │   │
+│  │  • SSH deploy to staging server when configured               │   │
+│  │  • Run smoke tests against the staging API                    │   │
 │  └──────────────────────────────────────────────────────────────┘   │
 │                                                                      │
 │  ┌──────────────────────────────────────────────────────────────┐   │
@@ -94,8 +94,8 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 2. **test** - Run full test suite
 3. **build-images** - Build and push to GHCR
 4. **deploy** - SSH deploy to staging server
-5. **smoke-tests** - Verify deployment
-6. **notify** - Send Slack notification
+5. **smoke-tests** - Verify deployment when the SSH deployment runs
+6. **notify** - Write the deployment summary
 
 **Deployment Process:**
 
@@ -109,6 +109,8 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 7. Verify health checks
 8. Run smoke tests
 ```
+
+If `STAGING_SSH_KEY`, `STAGING_SSH_HOST`, or `STAGING_SSH_USER` are missing on an automatic `main` run, the workflow records the legacy SSH deployment as skipped instead of failing the whole release. Manual staging deploys still fail fast with the exact missing secret names.
 
 ### 3. Deploy to Production (`.github/workflows/deploy-production.yml`)
 
@@ -163,7 +165,7 @@ The CI/CD pipeline automates testing, building, and deployment of the CCW-Online
 | -------------------- | ------------------- | ------------- |
 | `STAGING_API_URL`    | Staging API URL     | Docker build  |
 | `PRODUCTION_API_URL` | Production API URL  | Docker build  |
-| `SLACK_WEBHOOK_URL`  | Slack notifications | Notifications |
+| `SLACK_WEBHOOK_URL`  | Slack notifications | Not currently used |
 
 ### Environment Variables (Set on Server)
 

@@ -127,12 +127,54 @@ jobs:
           echo "Update staging server compose/deploy to match your new layout (e.g. Vercel-only web)."
 
   # ============================================================================
+  # Legacy SSH Deployment Readiness
+  # ============================================================================
+  staging-config:
+    name: Staging SSH Config
+    runs-on: ubuntu-latest
+    needs: [validate, build-images]
+    outputs:
+      ssh_ready: ${{ steps.check.outputs.ssh_ready }}
+
+    steps:
+      - name: Check staging SSH secrets
+        id: check
+        env:
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+          STAGING_SSH_USER: ${{ secrets.STAGING_SSH_USER }}
+        run: |
+          missing=()
+          [ -n "$STAGING_SSH_KEY" ] || missing+=("STAGING_SSH_KEY")
+          [ -n "$STAGING_SSH_HOST" ] || missing+=("STAGING_SSH_HOST")
+          [ -n "$STAGING_SSH_USER" ] || missing+=("STAGING_SSH_USER")
+
+          if [ ${#missing[@]} -eq 0 ]; then
+            echo "ssh_ready=true" >> "$GITHUB_OUTPUT"
+            echo "Staging SSH deployment secrets are configured."
+            exit 0
+          fi
+
+          echo "ssh_ready=false" >> "$GITHUB_OUTPUT"
+          printf -v missing_list '%s, ' "${missing[@]}"
+          missing_list="${missing_list%, }"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "::error::Manual staging deploy requires missing GitHub Actions secrets: $missing_list"
+            exit 1
+          fi
+
+          echo "::notice::Legacy SSH staging deploy skipped because GitHub Actions secrets are missing: $missing_list"
+          echo "Vercel production deploy remains handled by the Vercel GitHub integration on main."
+
+  # ============================================================================
   # Deploy to Staging Server
   # ============================================================================
   deploy:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [validate, build-images]
+    needs: [validate, staging-config]
+    if: ${{ needs.staging-config.outputs.ssh_ready == 'true' }}
     environment:
       name: staging
       url: https://staging.ccw-erp.com
@@ -235,7 +277,7 @@ jobs:
     name: Smoke Tests
     runs-on: ubuntu-latest
     needs: [validate, deploy]
-    if: ${{ github.event.inputs.skip_tests != 'true' }}
+    if: ${{ needs.deploy.result == 'success' && github.event.inputs.skip_tests != 'true' }}
 
     steps:
       - name: Checkout code
@@ -262,14 +304,20 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-latest
-    needs: [validate, deploy, smoke-tests]
+    needs: [validate, staging-config, deploy, smoke-tests]
     if: always()
 
     steps:
       - name: Set deployment status
         id: status
         run: |
-          if [ "${{ needs.deploy.result }}" == "success" ] && [ "${{ needs.smoke-tests.result }}" != "failure" ]; then
+          if [ "${{ needs.staging-config.result }}" != "success" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.staging-config.outputs.ssh_ready }}" != "true" ]; then
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "emoji=:information_source:" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.deploy.result }}" == "success" ] && [ "${{ needs.smoke-tests.result }}" != "failure" ]; then
             echo "status=success" >> $GITHUB_OUTPUT
             echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
           else
@@ -286,6 +334,12 @@ jobs:
           echo "- **URL:** https://staging.ccw-erp.com" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.staging-config.outputs.ssh_ready }}" != "true" ]; then
+            echo "- :information_source: Legacy SSH deploy skipped because staging SSH secrets are not configured." >> $GITHUB_STEP_SUMMARY
+            echo "- Production web deployment is handled by Vercel's GitHub integration on main." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
 
           if [ "${{ needs.deploy.result }}" == "success" ]; then
             echo "- :white_check_mark: Deployment: Successful" >> $GITHUB_STEP_SUMMARY
