@@ -8,6 +8,8 @@ import {
   ccwRoadshowEventSeeds,
   ccwRoadshowInternalDrafts,
   ccwRoadshowTrustedSources,
+  defaultCcwRoadshowComplianceState,
+  normaliseCcwRoadshowComplianceState,
 } from '../roadshow-campaign';
 
 describe('CARSI x CCW roadshow campaign gate', () => {
@@ -58,5 +60,38 @@ describe('CARSI x CCW roadshow campaign gate', () => {
 
     expect(readiness.ready_for_client_list_send).toBe(true);
     expect(readiness.ready_count).toBe(readiness.total_count);
+  });
+
+  it('normalises missing persisted compliance state to blocked gates', () => {
+    const state = normaliseCcwRoadshowComplianceState(null);
+
+    expect(state).toEqual(defaultCcwRoadshowComplianceState());
+    expect(
+      buildCcwRoadshowReadiness({
+        saved_events: ccwRoadshowEventSeeds.length,
+        internal_test_drafts: ccwRoadshowInternalDrafts.length,
+        trusted_sources: ccwRoadshowTrustedSources.length,
+        ...state,
+      }).ready_for_client_list_send
+    ).toBe(false);
+  });
+
+  it('keeps saved compliance confirmations and notes when reading persisted state', () => {
+    const state = normaliseCcwRoadshowComplianceState({
+      client_list_source_confirmed: 'true',
+      consent_basis_confirmed: true,
+      suppression_rules_confirmed: true,
+      unsubscribe_url_confirmed: true,
+      sender_footer_confirmed: true,
+      seat_capacity_confirmed: true,
+      final_approval_confirmed: false,
+      notes: 'CCW Shopify export checked, suppression count recorded.',
+      updated_by: 'user-1',
+      updated_at: '2026-06-17T04:00:00.000Z',
+    });
+
+    expect(state.client_list_source_confirmed).toBe(true);
+    expect(state.final_approval_confirmed).toBe(false);
+    expect(state.notes).toContain('suppression count');
   });
 });
