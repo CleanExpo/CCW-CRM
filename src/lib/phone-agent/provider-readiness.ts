@@ -18,6 +18,8 @@ export type CcwPhoneAgentWebhookUrls = {
   elevenlabs_callback_url: string | null;
 };
 
+export const CCW_PHONE_AGENT_OWNER_EMAIL = 'toby.b@ccwarehouse.com.au';
+
 function cleanUrl(value: string | undefined): string | null {
   const trimmed = value?.trim().replace(/\/+$/, '');
   return trimmed || null;
@@ -29,6 +31,10 @@ export function getCcwPhoneAgentPublicBaseUrl(env: NodeJS.ProcessEnv = process.e
 
 export function getCcwPhoneAgentOwnerUserId(env: NodeJS.ProcessEnv = process.env): string | null {
   return env.PHONE_AGENT_OWNER_USER_ID?.trim() || env.CRON_INTEGRATION_USER_ID?.trim() || null;
+}
+
+export function getCcwPhoneAgentOwnerEmail(env: NodeJS.ProcessEnv = process.env): string {
+  return env.PHONE_AGENT_OWNER_EMAIL?.trim() || CCW_PHONE_AGENT_OWNER_EMAIL;
 }
 
 export function getCcwPhoneAgentWebhookUrls(env: NodeJS.ProcessEnv = process.env): CcwPhoneAgentWebhookUrls {

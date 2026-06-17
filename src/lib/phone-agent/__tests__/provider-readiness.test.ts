@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCanonicalTwilioWebhookUrl,
+  CCW_PHONE_AGENT_OWNER_EMAIL,
+  getCcwPhoneAgentOwnerEmail,
   getCcwPhoneAgentWebhookUrls,
   missingCcwPhoneAgentLiveKeys,
   signPhoneAgentWebhookPayload,
@@ -10,6 +12,14 @@ import {
 import { createHmac } from 'crypto';
 
 describe('phone-agent provider readiness', () => {
+  it('hard-codes Toby as the owner contact fallback', () => {
+    expect(CCW_PHONE_AGENT_OWNER_EMAIL).toBe('toby.b@ccwarehouse.com.au');
+    expect(getCcwPhoneAgentOwnerEmail({ NODE_ENV: 'test' })).toBe('toby.b@ccwarehouse.com.au');
+    expect(getCcwPhoneAgentOwnerEmail({ NODE_ENV: 'test', PHONE_AGENT_OWNER_EMAIL: 'owner@example.com' })).toBe(
+      'owner@example.com'
+    );
+  });
+
   it('names every live key Toby still needs to provide', () => {
     const missing = missingCcwPhoneAgentLiveKeys({ NODE_ENV: 'test' });
 
