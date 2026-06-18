@@ -4,14 +4,15 @@ Runbooks for CCW-ERP/CRM operational incidents. Each runbook follows a standard 
 
 ## Index
 
-| Runbook                                     | Trigger                                | Severity      |
-| ------------------------------------------- | -------------------------------------- | ------------- |
-| [CRON Failure](cron-failure.md)             | CRON session does not complete         | HIGH          |
-| [Security Incident](incident-response.md)   | Credential exposure, RLS bypass        | CRITICAL/HIGH |
-| [Rollback Procedure](rollback-procedure.md) | Production regression after deployment | CRITICAL/HIGH |
-| [RLS Emergency](rls-emergency.md)           | Cross-tenant data access detected      | CRITICAL      |
-| [API Outage](api-outage.md)                 | External service circuit breaker OPEN  | HIGH/CRITICAL |
-| [Session Recovery](session-recovery.md)     | CRON session stuck or stale            | HIGH          |
+| Runbook                                       | Trigger                                | Severity      |
+| --------------------------------------------- | -------------------------------------- | ------------- |
+| [CRON Failure](cron-failure.md)               | CRON session does not complete         | HIGH          |
+| [Security Incident](incident-response.md)     | Credential exposure, RLS bypass        | CRITICAL/HIGH |
+| [Rollback Procedure](rollback-procedure.md)   | Production regression after deployment | CRITICAL/HIGH |
+| [RLS Emergency](rls-emergency.md)             | Cross-tenant data access detected      | CRITICAL      |
+| [API Outage](api-outage.md)                   | External service circuit breaker OPEN  | HIGH/CRITICAL |
+| [Session Recovery](session-recovery.md)       | CRON session stuck or stale            | HIGH          |
+| [CCW SEO Repair Loop](ccw-seo-repair-loop.md) | Semrush/site SEO repair cycle          | MEDIUM        |
 
 ## Related Docs
 
