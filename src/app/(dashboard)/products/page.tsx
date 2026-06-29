@@ -142,8 +142,10 @@ export default function ProductsPage() {
       // After: 50 products = 1 API call (98% reduction)
       const data = await apiClient.get<PaginatedResponse>(
         `/api/products?page=${page}&page_size=${pageSize}&include_inactive=true&include_stock=true${
-          debouncedSearch ? `&search=${debouncedSearch}` : ''
-        }`
+          debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ''
+        }`,
+        undefined,
+        45_000
       );
 
       // Stock data is now included in the response - no additional API calls needed!
@@ -151,11 +153,15 @@ export default function ProductsPage() {
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load products';
-      console.error('Failed to load products:', error);
+      const message =
+        error instanceof Error && error.message.includes('timeout')
+          ? 'Products are taking longer than usual to load. Please wait a moment and try again.'
+          : error instanceof Error
+            ? error.message
+            : 'Failed to load products';
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Could not load products',
         description: message,
       });
       setProducts([]);
