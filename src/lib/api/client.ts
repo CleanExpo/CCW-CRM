@@ -144,11 +144,16 @@ async function attemptTokenRefresh(): Promise<boolean> {
 function shouldRetry(method: string, status: number | null, retryCount: number): boolean {
   if (retryCount >= MAX_RETRIES) return false;
 
-  // Network error (status is null) — always retry
-  if (status === null) return true;
+  const idempotent = RETRYABLE_METHODS.has(method.toUpperCase());
+
+  // Network error (status is null) — always retry idempotent requests
+  if (status === null) return idempotent;
+
+  // Timeout / cold-start stalls in dev — retry GET-style reads
+  if (status === 408 && idempotent) return true;
 
   // Only retry idempotent methods on server errors
-  if (status >= 500 && status < 600 && RETRYABLE_METHODS.has(method.toUpperCase())) {
+  if (status >= 500 && status < 600 && idempotent) {
     return true;
   }
 
@@ -274,11 +279,16 @@ async function fetchApi<T>(
         'name' in error &&
         (error as { name: string }).name === 'AbortError'
       ) {
-        throw new ApiClientError(
+        const timeoutError = new ApiClientError(
           `Request timeout after ${timeout}ms [${requestId}]`,
           408,
           'REQUEST_TIMEOUT'
         );
+        if (shouldRetry(method, 408, attempt)) {
+          lastError = timeoutError;
+          continue;
+        }
+        throw timeoutError;
       }
 
       // Already an ApiClientError (from non-OK handling above) — rethrow
@@ -316,8 +326,8 @@ export const apiClient = {
   /**
    * GET request
    */
-  get: <T>(endpoint: string, options?: RequestInit) =>
-    fetchApi<T>(endpoint, { ...options, method: 'GET' }),
+  get: <T>(endpoint: string, options?: RequestInit, timeout?: number) =>
+    fetchApi<T>(endpoint, { ...options, method: 'GET' }, timeout),
 
   /**
    * POST request
