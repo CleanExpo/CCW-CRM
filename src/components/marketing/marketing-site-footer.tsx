@@ -3,8 +3,8 @@ import {
   MARKETING_SHELL,
 } from '@/components/marketing/marketing-constants';
 import { MARKETING_PRIMARY_NAV } from '@/components/marketing/marketing-nav';
+import { CcwLogo } from '@/components/brand/ccw-logo';
 import { cn } from '@/lib/utils';
-import { Layers3 } from 'lucide-react';
 import Link from 'next/link';
 
 export function MarketingSiteFooter() {
@@ -13,10 +13,12 @@ export function MarketingSiteFooter() {
       <div className={cn(MARKETING_SHELL, 'py-14 md:py-16')}>
         <div className="grid gap-10 border-b border-white/[0.08] pb-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-4">
-            <div className="flex items-center gap-2.5">
-              <Layers3 className="h-6 w-6 text-sky-400" />
-              <span className="text-lg font-bold text-white">CCW Online ERP</span>
-            </div>
+            <CcwLogo
+              variant="compact"
+              size="md"
+              title="CCW Online ERP"
+              showTagline={false}
+            />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-400">
               Operations platform for equipment wholesalers—quotes, inventory, fulfilment, and
               finance in one spine.
