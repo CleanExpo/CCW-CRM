@@ -41,14 +41,16 @@ export function MarketingAmbientCanvas({
         className={cn(
           'absolute rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.14),transparent_62%)] blur-3xl',
           'animate-landing-drift opacity-50',
-          soft ? '-right-[25%] top-[18%] h-[45%] w-[45%]' : '-right-[18%] top-[12%] h-[58%] w-[58%]'
+          soft ? 'top-[18%] -right-[25%] h-[45%] w-[45%]' : 'top-[12%] -right-[18%] h-[58%] w-[58%]'
         )}
         style={{ animationDuration: '36s' }}
       />
       <div
         className={cn(
           'absolute rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.12),transparent_58%)] blur-3xl',
-          soft ? '-bottom-[8%] -left-[12%] h-[38%] w-[38%] opacity-60' : '-bottom-[12%] -left-[8%] h-[48%] w-[48%] opacity-80'
+          soft
+            ? '-bottom-[8%] -left-[12%] h-[38%] w-[38%] opacity-60'
+            : '-bottom-[12%] -left-[8%] h-[48%] w-[48%] opacity-80'
         )}
       />
 
