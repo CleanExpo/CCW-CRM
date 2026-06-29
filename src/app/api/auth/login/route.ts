@@ -1,14 +1,11 @@
-import { NextRequest } from 'next/server';
-import { loginBodySchema } from '@/lib/auth/schemas';
-import { readJsonBody, jsonDetail, jsonValidationError, jsonOk } from '@/lib/auth/http';
-import {
-  findAppUserByEmail,
-  updateLastLogin,
-} from '@/lib/auth/app-user-repo';
-import { verifyPassword } from '@/lib/auth/password';
+import { findAppUserByEmail, updateLastLogin } from '@/lib/auth/app-user-repo';
+import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
 import { signTokenPair } from '@/lib/auth/jwt-tokens';
-import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
+import { verifyPassword } from '@/lib/auth/password';
+import { loginBodySchema } from '@/lib/auth/schemas';
+import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
+import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   const parsedBody = await readJsonBody(request);
