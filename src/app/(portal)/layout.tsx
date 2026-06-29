@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Package, FileText, Award, Wrench, LayoutDashboard, Truck } from 'lucide-react';
+import { CcwLogo } from '@/components/brand/ccw-logo';
 
 export const metadata: Metadata = {
   title: 'Customer Portal — CCW',
@@ -23,12 +24,14 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       {/* Header */}
       <header className="border-b bg-white shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link href="/portal" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-600 text-xs font-bold text-white">
-              CCW
-            </div>
-            <span className="text-sm font-semibold text-slate-800">Customer Portal</span>
-          </Link>
+          <CcwLogo
+            href="/portal"
+            variant="compact"
+            size="sm"
+            title="Customer Portal"
+            showTagline={false}
+            theme="light"
+          />
           <nav className="hidden items-center gap-1 md:flex">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
