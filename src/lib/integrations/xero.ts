@@ -9,7 +9,7 @@ export function getXeroMode(): XeroMode {
 export function getXeroScopes(): string {
   return (
     process.env.XERO_SCOPES?.trim() ||
-    'openid profile email offline_access accounting.transactions accounting.contacts'
+    'offline_access accounting.transactions accounting.contacts accounting.settings'
   );
 }
 
