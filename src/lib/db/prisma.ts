@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
-import { getDatabaseConnectionString, getPgSslConfig } from "@/lib/db/database-env";
+import { getDatabaseConnectionString, getPgSslConfig } from '@/lib/db/database-env';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -11,7 +11,7 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const connectionString = getDatabaseConnectionString();
   if (!connectionString) {
-    throw new Error("DATABASE_URL is not configured");
+    throw new Error('DATABASE_URL is not configured');
   }
 
   if (!process.env.DATABASE_URL) {
@@ -30,7 +30,7 @@ function createPrismaClient(): PrismaClient {
       connectionTimeoutMillis: 10_000,
     });
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.pgPool = pool;
   }
 
@@ -38,14 +38,16 @@ function createPrismaClient(): PrismaClient {
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
 }
 
 /** Dev hot-reload can keep an old PrismaClient missing models added after the server started. */
 function isPrismaClientStale(client: PrismaClient): boolean {
-  return typeof (client as PrismaClient & { workspaceXeroConnection?: unknown })
-    .workspaceXeroConnection === "undefined";
+  return (
+    typeof (client as PrismaClient & { workspaceXeroConnection?: unknown })
+      .workspaceXeroConnection === 'undefined'
+  );
 }
 
 function getPrismaClient(): PrismaClient {
@@ -67,7 +69,7 @@ export const prisma = new Proxy({} as PrismaClient, {
   get(_target, prop) {
     const client = getPrismaClient();
     const value = client[prop as keyof PrismaClient];
-    return typeof value === "function"
+    return typeof value === 'function'
       ? (value as (...args: unknown[]) => unknown).bind(client)
       : value;
   },
