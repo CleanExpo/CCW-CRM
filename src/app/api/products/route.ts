@@ -3,7 +3,41 @@ import { prisma } from '@/lib/db/prisma';
 import { productToApi } from '@/lib/db/api-serialize';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
-import type { Prisma } from '@prisma/client';
+import { expandWarehouseLocations } from '@/lib/db/inventory-product-view';
+import type { Prisma, Product, ProductLocationStock } from '@prisma/client';
+
+function productToApiWithOptionalStock(
+  product: Product & { locationStocks?: ProductLocationStock[] },
+  includeStock: boolean
+) {
+  const base = productToApi(product);
+  if (!includeStock) return base;
+
+  const locs = expandWarehouseLocations(
+    product.stock,
+    product.warehouseLocation,
+    (product.locationStocks ?? []).map((row) => ({
+      location: row.location,
+      quantity: row.quantity,
+      reserved: row.reserved,
+      reorderPoint: row.reorderPoint,
+      reorderQuantity: row.reorderQuantity,
+      leadTimeDays: row.leadTimeDays,
+      autoApproveUnderQty: row.autoApproveUnderQty,
+      reorderEnabled: row.reorderEnabled,
+    }))
+  );
+
+  return {
+    ...base,
+    stock_by_location: locs.map((loc) => ({
+      location: loc.location,
+      stock: loc.stock,
+      reserved: loc.reserved,
+      available: loc.available,
+    })),
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,13 +47,16 @@ export async function GET(request: NextRequest) {
     const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('page_size') || '50');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const pageSize = Math.min(parseInt(searchParams.get('page_size') || '50', 10), 200);
     const search = searchParams.get('search');
     const category = searchParams.get('category');
     const includeInactive =
       searchParams.get('include_inactive') === 'true' ||
       searchParams.get('include_inactive') === '1';
+    const includeStock =
+      searchParams.get('include_stock') === 'true' ||
+      searchParams.get('include_stock') === '1';
 
     const where: Prisma.ProductWhereInput = { ownerUserId: { in: workspaceUserIds } };
     if (!includeInactive) {
@@ -41,12 +78,13 @@ export async function GET(request: NextRequest) {
         orderBy: { name: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
+        include: includeStock ? { locationStocks: true } : undefined,
       }),
       prisma.product.count({ where }),
     ]);
 
     return NextResponse.json({
-      items: rows.map(productToApi),
+      items: rows.map((row) => productToApiWithOptionalStock(row, includeStock)),
       total,
       page,
       page_size: pageSize,
