@@ -153,15 +153,79 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
             <div className="text-muted-foreground text-sm">
               <p className="font-medium">Integration not available</p>
               <p className="mt-1 text-xs">
-                Xero has not been set up for this workspace yet. Contact your administrator to enable
-                accounting sync.
+                {status?.message ??
+                  'Xero OAuth is not configured on the server yet (missing env vars or status could not be loaded).'}
               </p>
+              {!status && (
+                <p className="mt-1 text-xs">
+                  If you are the administrator, check server env and that your user belongs to a workspace,
+                  then restart the dev server.
+                </p>
+              )}
+              {status?.mode === 'not_configured' && (
+                <p className="mt-1 text-xs">
+                  Set <code className="text-foreground">XERO_CLIENT_ID</code>,{' '}
+                  <code className="text-foreground">XERO_CLIENT_SECRET</code>,{' '}
+                  <code className="text-foreground">XERO_MODE=live</code>, and at least one of{' '}
+                  <code className="text-foreground">XERO_REDIRECT_URI</code> /{' '}
+                  <code className="text-foreground">XERO_REDIRECT_URI_LOCAL</code>, then restart the app.
+                </p>
+              )}
             </div>
           </div>
         )}
 
         {status?.message && !isConnected && !isNotConfigured && (
           <p className="text-muted-foreground text-sm">{status.message}</p>
+        )}
+
+        {(status?.oauth_redirect_uri || (status?.registered_redirect_uris?.length ?? 0) > 0) && (
+          <div className="border-muted-foreground/20 bg-muted/50 space-y-2 rounded-lg border p-3 text-xs">
+            <p className="text-foreground font-medium">OAuth redirect URLs</p>
+            {status.oauth_redirect_uri ? (
+              <p className="text-muted-foreground">
+                <span className="text-foreground/80">This session uses:</span>{' '}
+                <code className="text-foreground break-all">{status.oauth_redirect_uri}</code>
+              </p>
+            ) : null}
+            {status.registered_redirect_uris && status.registered_redirect_uris.length > 0 ? (
+              <div className="text-muted-foreground space-y-1">
+                <p className="text-foreground/80">Register each in Xero Developer Portal → Redirect URIs:</p>
+                <ul className="list-inside list-disc space-y-0.5">
+                  {status.registered_redirect_uris.map((uri) => (
+                    <li key={uri}>
+                      <code className="text-foreground break-all">{uri}</code>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="text-muted-foreground">
+              <a
+                href="https://developer.xero.com/app/manage"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                Open Xero app settings
+              </a>
+            </p>
+          </div>
+        )}
+
+        {status?.setup_steps && status.setup_steps.length > 0 && !isConnected && (
+          <ul className="text-muted-foreground space-y-1.5 text-xs">
+            {status.setup_steps.map((step) => (
+              <li key={step.id} className="flex items-start gap-2">
+                {step.done ? (
+                  <CheckCircle2 className="text-primary mt-0.5 h-3.5 w-3.5 shrink-0" />
+                ) : (
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                )}
+                <span className={step.done ? 'line-through opacity-70' : ''}>{step.label}</span>
+              </li>
+            ))}
+          </ul>
         )}
 
         <div className="flex gap-2">
