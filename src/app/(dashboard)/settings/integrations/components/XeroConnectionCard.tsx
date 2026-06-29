@@ -104,6 +104,9 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
 
   const isConnected = status?.connected ?? false;
   const isNotConfigured = !status || status.mode === 'not_configured';
+  const oauthRedirectUri = status?.oauth_redirect_uri;
+  const registeredRedirectUris = status?.registered_redirect_uris ?? [];
+  const showRedirectUrls = Boolean(oauthRedirectUri) || registeredRedirectUris.length > 0;
 
   return (
     <Card>
@@ -179,20 +182,20 @@ export function XeroConnectionCard({ status, loading, onStatusChange }: XeroConn
           <p className="text-muted-foreground text-sm">{status.message}</p>
         )}
 
-        {(status?.oauth_redirect_uri || (status?.registered_redirect_uris?.length ?? 0) > 0) && (
+        {showRedirectUrls && (
           <div className="border-muted-foreground/20 bg-muted/50 space-y-2 rounded-lg border p-3 text-xs">
             <p className="text-foreground font-medium">OAuth redirect URLs</p>
-            {status.oauth_redirect_uri ? (
+            {oauthRedirectUri ? (
               <p className="text-muted-foreground">
                 <span className="text-foreground/80">This session uses:</span>{' '}
-                <code className="text-foreground break-all">{status.oauth_redirect_uri}</code>
+                <code className="text-foreground break-all">{oauthRedirectUri}</code>
               </p>
             ) : null}
-            {status.registered_redirect_uris && status.registered_redirect_uris.length > 0 ? (
+            {registeredRedirectUris.length > 0 ? (
               <div className="text-muted-foreground space-y-1">
                 <p className="text-foreground/80">Register each in Xero Developer Portal → Redirect URIs:</p>
                 <ul className="list-inside list-disc space-y-0.5">
-                  {status.registered_redirect_uris.map((uri) => (
+                  {registeredRedirectUris.map((uri) => (
                     <li key={uri}>
                       <code className="text-foreground break-all">{uri}</code>
                     </li>
