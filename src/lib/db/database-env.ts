@@ -1,17 +1,17 @@
-import { readFileSync } from "fs";
+import { readFileSync } from 'fs';
 
 /** Resolve PostgreSQL URL from DATABASE_URL or DigitalOcean DB_* variables. */
 
 function isLocalHost(hostname: string): boolean {
-  return hostname === "localhost" || hostname === "127.0.0.1";
+  return hostname === 'localhost' || hostname === '127.0.0.1';
 }
 
 /** pg driver: libpq-compatible TLS for managed Postgres (DigitalOcean). */
-export const MANAGED_POSTGRES_SSL_QUERY = "uselibpqcompat=true&sslmode=require";
+export const MANAGED_POSTGRES_SSL_QUERY = 'uselibpqcompat=true&sslmode=require';
 
 function sslDisabledFromEnv(): boolean {
   const ssl = process.env.DB_SSL?.trim().toLowerCase();
-  return ssl === "false" || ssl === "0" || ssl === "disable";
+  return ssl === 'false' || ssl === '0' || ssl === 'disable';
 }
 
 function encodePostgresCredentials(url: string): string {
@@ -20,7 +20,7 @@ function encodePostgresCredentials(url: string): string {
 
   const creds = match[2];
   const hostPart = match[3];
-  const colon = creds.indexOf(":");
+  const colon = creds.indexOf(':');
   if (colon < 0) return url;
 
   const user = creds.slice(0, colon);
@@ -47,13 +47,13 @@ export function applyPostgresSslParams(connectionString: string): string {
   if (!url) return connectionString;
 
   if (isLocalHost(url.hostname) || sslDisabledFromEnv()) {
-    url.searchParams.set("sslmode", "disable");
-    url.searchParams.delete("uselibpqcompat");
+    url.searchParams.set('sslmode', 'disable');
+    url.searchParams.delete('uselibpqcompat');
     return url.toString();
   }
 
-  url.searchParams.set("uselibpqcompat", "true");
-  url.searchParams.set("sslmode", "require");
+  url.searchParams.set('uselibpqcompat', 'true');
+  url.searchParams.set('sslmode', 'require');
   return url.toString();
 }
 
@@ -66,12 +66,11 @@ export function getDatabaseConnectionString(): string {
   const user = process.env.DB_USER?.trim();
   const password = process.env.DB_PASSWORD?.trim();
   const host = process.env.DB_HOST?.trim();
-  const port = process.env.DB_PORT?.trim() || "5432";
-  const database =
-    process.env.DB_NAME?.trim() || process.env.DB_DATABASE?.trim() || "defaultdb";
+  const port = process.env.DB_PORT?.trim() || '5432';
+  const database = process.env.DB_NAME?.trim() || process.env.DB_DATABASE?.trim() || 'defaultdb';
 
   if (!user || !password || !host) {
-    return "";
+    return '';
   }
 
   const base = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
@@ -81,9 +80,7 @@ export function getDatabaseConnectionString(): string {
 export function hasDatabaseConfig(): boolean {
   return Boolean(
     process.env.DATABASE_URL?.trim() ||
-      (process.env.DB_USER?.trim() &&
-        process.env.DB_PASSWORD?.trim() &&
-        process.env.DB_HOST?.trim())
+    (process.env.DB_USER?.trim() && process.env.DB_PASSWORD?.trim() && process.env.DB_HOST?.trim())
   );
 }
 
@@ -98,17 +95,17 @@ export function getPgSslConfig(): boolean | { rejectUnauthorized: boolean; ca?: 
     return { rejectUnauthorized: false };
   }
 
-  const sslmode = url.searchParams.get("sslmode")?.toLowerCase();
-  if (sslmode === "disable" || isLocalHost(url.hostname)) {
+  const sslmode = url.searchParams.get('sslmode')?.toLowerCase();
+  if (sslmode === 'disable' || isLocalHost(url.hostname)) {
     return false;
   }
 
   const caPath = process.env.DB_CA_CERT?.trim();
-  if (caPath && process.env.DB_SSL_REJECT_UNAUTHORIZED === "true") {
+  if (caPath && process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true') {
     try {
       return {
         rejectUnauthorized: true,
-        ca: readFileSync(caPath, "utf8"),
+        ca: readFileSync(caPath, 'utf8'),
       };
     } catch {
       console.warn(`[db] Could not read DB_CA_CERT at ${caPath}, using relaxed TLS`);
