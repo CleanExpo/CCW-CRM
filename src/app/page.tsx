@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { MarketingLanding } from '@/components/landing/marketing-landing';
+import MarketingLanding from '@/components/landing/marketing-landing';
 import { getAppOrigin } from '@/lib/api/backend-url';
 import type { PublicStats } from '@/components/landing/LiveStatsBar';
 
