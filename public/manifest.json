@@ -1,9 +1,23 @@
 {
-  "name": "CCW ERP",
+  "name": "CCW Online ERP",
   "short_name": "CCW",
+  "description": "Operations platform for equipment suppliers",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
-  "icons": []
+  "background_color": "#09090b",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/ccw-logo-mark.svg",
+      "sizes": "40x40",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
 }
