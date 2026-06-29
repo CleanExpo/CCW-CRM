@@ -1,9 +1,14 @@
+'use client';
+
 import { LoginForm } from '@/components/auth/login-form';
 import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
 import { HeroPremiumShowcase } from '@/components/landing/hero-premium-showcase';
 import { LandingFaq } from '@/components/landing/landing-faq';
 import { LandingOperationsPulsePlaceholder } from '@/components/landing/landing-operations-pulse';
-import { MarketingSiteChrome } from '@/components/landing/marketing-site-chrome';
+import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
+import { marketingFont } from '@/components/landing/marketing-font';
+import { MarketingFooter } from '@/components/landing/marketing-footer';
+import { MarketingHeader } from '@/components/landing/marketing-header';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
 import { marketingShell as shell } from '@/components/landing/marketing-shell';
 import { Badge } from '@/components/ui/badge';
@@ -113,9 +118,18 @@ export interface MarketingLandingProps {
   stats: PublicStats | null;
 }
 
-export function MarketingLanding({ stats }: MarketingLandingProps) {
+export default function MarketingLanding({ stats }: MarketingLandingProps) {
   return (
-    <MarketingSiteChrome>
+    <div
+      className={cn(
+        marketingFont.className,
+        'dark text-foreground selection:bg-primary/30 relative min-h-screen scroll-smooth bg-[#030306] antialiased selection:text-white'
+      )}
+    >
+      <MarketingAmbientCanvas />
+      <div className="relative z-10">
+        <MarketingHeader />
+        <main>
           {/* Hero — single centered column + showcase below */}
           <section className="relative overflow-hidden pt-20 pb-12 md:pt-28 md:pb-16 lg:pt-32 lg:pb-20">
             <div
@@ -642,6 +656,9 @@ export function MarketingLanding({ stats }: MarketingLandingProps) {
               </Card>
             </div>
           </section>
-    </MarketingSiteChrome>
+        </main>
+        <MarketingFooter />
+      </div>
+    </div>
   );
 }
