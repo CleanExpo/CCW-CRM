@@ -55,6 +55,9 @@ export function parseXeroOAuthError(
 ): string {
   if (errorDescription?.trim()) return errorDescription.trim();
   if (error === 'access_denied') return 'You declined access in Xero. Try Connect again and approve the app.';
+  if (error === 'invalid_scope') {
+    return 'Invalid scope — enable the same OAuth scopes in your Xero Developer app (Configuration → OAuth 2.0 scopes) as XERO_SCOPES in server env.';
+  }
   if (error === 'invalid_request') {
     return 'Invalid OAuth request — usually a redirect URI mismatch. Register the exact Redirect URI shown in Settings → Integrations → Xero.';
   }
