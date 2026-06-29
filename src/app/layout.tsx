@@ -78,6 +78,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/brand/ccw-logo-mark.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     title: 'CCW Online | Carpet Cleaners Warehouse Australia',
@@ -134,9 +135,9 @@ export default async function RootLayout({
     url: 'https://ccwonline.com.au',
     logo: {
       '@type': 'ImageObject',
-      url: 'https://ccwonline.com.au/logo.png',
-      width: 400,
-      height: 120,
+      url: 'https://ccwonline.com.au/brand/ccw-logo-mark.svg',
+      width: 40,
+      height: 40,
     },
     description:
       "Australia's leading supplier of professional carpet cleaning equipment, chemicals, water damage restoration equipment, and IICRC-accredited training courses.",
