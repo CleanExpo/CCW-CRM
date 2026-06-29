@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Layers3, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
+import { CcwLogo } from '@/components/brand/ccw-logo';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { marketingShell } from '@/components/landing/marketing-shell';
@@ -31,23 +32,7 @@ export function MarketingHeader() {
           'flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between md:gap-6 md:py-4'
         )}
       >
-        <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-600 text-white shadow-lg shadow-sky-500/25 ring-2 ring-white/20 transition duration-300 group-hover:scale-[1.03] group-hover:shadow-sky-400/35">
-            <span
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,transparent_45%)] opacity-80"
-              aria-hidden
-            />
-            <Layers3 className="relative z-10 h-5 w-5" strokeWidth={2.25} aria-hidden />
-          </span>
-          <div className="min-w-0 leading-tight">
-            <span className="block truncate text-base font-bold tracking-tight text-white sm:text-lg">
-              CCW Online
-            </span>
-            <span className="block truncate text-[11px] font-medium text-zinc-400 sm:text-xs">
-              Equipment supplier operations
-            </span>
-          </div>
-        </Link>
+        <CcwLogo href="/" variant="full" size="md" />
 
         <nav
           className="flex flex-wrap items-center justify-center gap-1.5 text-sm font-semibold md:flex-1 md:justify-center"
