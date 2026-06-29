@@ -1,6 +1,7 @@
 'use client';
 
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { CcwLogo } from '@/components/brand/ccw-logo';
 import { authApi, logoutAndRedirectToLogin } from '@/lib/api/auth';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -183,7 +184,7 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-const DEFAULT_OPEN = ['operations', 'crm', 'inventory'];
+const DEFAULT_OPEN = ['operations', 'crm', 'workshop', 'inventory', 'finance'];
 
 /** Highlight the nav item whose href is the longest prefix of pathname (avoids parent+child both active). */
 function getActiveNavHref(pathname: string, items: NavItem[]): string | null {
@@ -362,23 +363,11 @@ export function Sidebar() {
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-zinc-950/90 backdrop-blur-xl">
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 px-4">
-        <Link href="/" className="group flex items-center gap-2 font-semibold">
-          <motion.span
-            className="text-xl"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-          >
-            ⚙️
-          </motion.span>
-          <span className="font-semibold text-zinc-100 transition-colors group-hover:text-white">
-            CCW Online
-          </span>
-        </Link>
+        <CcwLogo href="/" variant="compact" size="sm" />
         <NotificationBell />
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-1 overflow-x-hidden overflow-y-auto overscroll-y-contain p-3 [scrollbar-gutter:stable]">
+      <nav className="min-h-0 flex-1 [scrollbar-gutter:stable] space-y-1 overflow-x-hidden overflow-y-auto overscroll-y-contain p-3">
         {/* Dashboard — always visible, no group */}
         <NavLink
           item={{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }}
