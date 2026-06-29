@@ -215,14 +215,14 @@ function IntegrationsContent() {
               <div>
                 <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Integrations</h1>
                 <p className="text-muted-foreground text-sm">
-                  Connect Xero, Cin7, Shopify, and SendGrid. Other services are listed under Upcoming.
+                  Connect Cin7, Xero, Shopify, and SendGrid. Other services are listed under Upcoming.
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {[
-                { name: 'Xero', ok: xeroStatus?.connected },
                 { name: 'Cin7', ok: cin7Status?.connected },
+                { name: 'Xero', ok: xeroStatus?.connected },
                 { name: 'Shopify', ok: shopifyStatus?.connected },
                 { name: 'SendGrid', ok: sendgridStatus?.can_send ?? sendgridStatus?.connected },
               ].map((item) => (
@@ -265,21 +265,6 @@ function IntegrationsContent() {
           </TabsContent>
 
           <TabsContent value="connections" className="mt-6 space-y-6">
-          <SectionShell
-            sectionId="integration-xero"
-            title="Xero"
-            description="Accounting and invoices."
-          >
-            <div className="grid gap-6 lg:grid-cols-2">
-              <XeroConnectionCard
-                status={xeroStatus}
-                loading={loading}
-                onStatusChange={loadXeroStatus}
-              />
-              <XeroSyncControls isConnected={xeroStatus?.connected ?? false} />
-            </div>
-          </SectionShell>
-
           <SectionShell sectionId="integration-cin7" title="Cin7" description="Inventory from Cin7 Omni (read-only pulls).">
             <div className="grid gap-6 lg:grid-cols-2">
               <Cin7ConnectionCard
@@ -301,6 +286,21 @@ function IntegrationsContent() {
                 <Cin7ShadowSyncCard />
               </div>
             </details>
+          </SectionShell>
+
+          <SectionShell
+            sectionId="integration-xero"
+            title="Xero"
+            description="Accounting and invoices."
+          >
+            <div className="grid gap-6 lg:grid-cols-2">
+              <XeroConnectionCard
+                status={xeroStatus}
+                loading={loading}
+                onStatusChange={loadXeroStatus}
+              />
+              <XeroSyncControls isConnected={xeroStatus?.connected ?? false} />
+            </div>
           </SectionShell>
 
           <SectionShell sectionId="integration-shopify" title="Shopify" description="Store, orders, and inventory.">
