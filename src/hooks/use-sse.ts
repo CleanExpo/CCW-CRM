@@ -95,6 +95,7 @@ export function useSSE<T = unknown>({
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
   const isManuallyClosedRef = useRef(false);
 
   // Close connection
@@ -125,13 +126,15 @@ export function useSSE<T = unknown>({
       eventSourceRef.current = eventSource;
 
       // Connection opened
-      eventSource.addEventListener('connected', (event) => {
+      eventSource.addEventListener('connected', () => {
+        reconnectAttemptsRef.current = 0;
         setStatus('connected');
         setStats((prev) => ({
           ...prev,
           connectedAt: new Date(),
           reconnectAttempts: 0,
         }));
+        setError(null);
         onOpen?.();
       });
 
@@ -154,58 +157,55 @@ export function useSSE<T = unknown>({
         // Silent heartbeat, just keeps connection alive
       });
 
-      // Error occurred
+      // Server close / network blip — EventSource reports this as onerror, not a distinct close event.
       eventSource.onerror = (event) => {
-        console.error('SSE error:', event);
-        setStatus('error');
-        setError('Connection error');
-
-        // Close current connection
         eventSource.close();
         eventSourceRef.current = null;
 
-        onError?.(event);
+        if (isManuallyClosedRef.current) {
+          setStatus('disconnected');
+          onClose?.();
+          return;
+        }
 
-        // Auto-reconnect if enabled and not manually closed
-        if (
+        const canReconnect =
           autoReconnect &&
-          !isManuallyClosedRef.current &&
-          (maxReconnectAttempts === 0 || stats.reconnectAttempts < maxReconnectAttempts)
-        ) {
+          (maxReconnectAttempts === 0 || reconnectAttemptsRef.current < maxReconnectAttempts);
+
+        if (canReconnect) {
+          reconnectAttemptsRef.current += 1;
           setStats((prev) => ({
             ...prev,
-            reconnectAttempts: prev.reconnectAttempts + 1,
+            reconnectAttempts: reconnectAttemptsRef.current,
           }));
+          setStatus('connecting');
+          setError(null);
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`Reconnecting to SSE... (attempt ${stats.reconnectAttempts + 1})`);
-            }
             connect();
           }, reconnectDelay);
-        } else if (stats.reconnectAttempts >= maxReconnectAttempts && maxReconnectAttempts > 0) {
-          setError(`Max reconnection attempts (${maxReconnectAttempts}) reached`);
+          return;
         }
+
+        setStatus('error');
+        setError(
+          maxReconnectAttempts > 0
+            ? `Max reconnection attempts (${maxReconnectAttempts}) reached`
+            : 'Connection error'
+        );
+        onError?.(event);
       };
     } catch (err) {
       console.error('Failed to create EventSource:', err);
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Failed to connect');
     }
-  }, [
-    enabled,
-    url,
-    autoReconnect,
-    reconnectDelay,
-    maxReconnectAttempts,
-    stats.reconnectAttempts,
-    onOpen,
-    onError,
-  ]);
+  }, [enabled, url, autoReconnect, reconnectDelay, maxReconnectAttempts, onOpen, onClose, onError]);
 
   // Manually reconnect
   const reconnect = useCallback(() => {
     close();
+    reconnectAttemptsRef.current = 0;
     setStats((prev) => ({
       ...prev,
       reconnectAttempts: 0,
