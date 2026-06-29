@@ -66,20 +66,20 @@ export function IntegrationsSetupGuide({
 
   const rows: CheckRow[] = [
     {
-      id: 'xero',
-      title: 'Connect accounting (Xero)',
-      description: 'OAuth to Xero for invoices, payments, and GL alignment.',
-      done: !!xeroStatus?.connected,
-      actionLabel: xeroStatus?.connected ? 'Review connection' : 'Configure Xero',
-      onAction: () => onGoToConnections('integration-xero'),
-    },
-    {
       id: 'cin7',
       title: 'Connect inventory (Cin7)',
       description: 'Pull products, stock, and customers from Cin7 Omni (or Core if configured).',
       done: !!cin7Status?.connected,
       actionLabel: cin7Status?.connected ? 'Review connection' : 'Configure Cin7',
       onAction: () => onGoToConnections('integration-cin7'),
+    },
+    {
+      id: 'xero',
+      title: 'Connect accounting (Xero)',
+      description: 'OAuth to Xero for invoices, payments, and GL alignment.',
+      done: !!xeroStatus?.connected,
+      actionLabel: xeroStatus?.connected ? 'Review connection' : 'Configure Xero',
+      onAction: () => onGoToConnections('integration-xero'),
     },
     {
       id: 'shopify',
