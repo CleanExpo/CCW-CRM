@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       mode: 'not_configured',
       oauth_redirect_uri,
       registered_redirect_uris,
-      setup_steps: buildSetupSteps(false, oauth_redirect_uri),
+      setup_steps: buildSetupSteps(false, oauth_redirect_uri, registered_redirect_uris),
       message: 'Missing Xero OAuth credentials in environment.',
     });
   }
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       mode: 'live',
       oauth_redirect_uri,
       registered_redirect_uris,
-      setup_steps: buildSetupSteps(true, oauth_redirect_uri),
+      setup_steps: buildSetupSteps(true, oauth_redirect_uri, registered_redirect_uris),
       message: 'Not connected. Click Connect to Xero to link your organisation.',
     });
   }
@@ -82,20 +82,27 @@ export async function GET(request: NextRequest) {
   });
 }
 
-function buildSetupSteps(credentialsOk: boolean, redirectUri: string | null) {
+function buildSetupSteps(credentialsOk: boolean, redirectUri: string | null, registered: string[]) {
+  const redirectLabels =
+    registered.length > 0
+      ? registered.map((uri) => `Register in Xero Developer Portal: ${uri}`)
+      : [
+          redirectUri
+            ? `Register Redirect URI in Xero Developer Portal: ${redirectUri}`
+            : 'Configure XERO_REDIRECT_URI and XERO_REDIRECT_URI_LOCAL in server env',
+        ];
+
   return [
     {
       id: 'credentials',
       label: 'Set XERO_CLIENT_ID, XERO_CLIENT_SECRET, and XERO_MODE=live',
       done: credentialsOk,
     },
-    {
-      id: 'redirect',
-      label: redirectUri
-        ? `Register Redirect URI in Xero Developer Portal: ${redirectUri}`
-        : 'Configure XERO_REDIRECT_URI (and XERO_REDIRECT_URI_LOCAL for localhost)',
-      done: Boolean(redirectUri),
-    },
+    ...redirectLabels.map((label, i) => ({
+      id: `redirect-${i}`,
+      label,
+      done: Boolean(redirectUri || registered.length > 0),
+    })),
     {
       id: 'connect',
       label: 'Click Connect to Xero and approve access',
