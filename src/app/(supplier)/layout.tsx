@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShoppingCart, DollarSign, LayoutDashboard } from 'lucide-react';
+import { CcwLogo } from '@/components/brand/ccw-logo';
 
 export const metadata: Metadata = {
   title: 'Supplier Portal — CCW',
@@ -20,12 +21,14 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
       {/* Header */}
       <header className="border-b bg-white shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/supplier" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-slate-800 text-xs font-bold text-white">
-              CCW
-            </div>
-            <span className="text-sm font-semibold text-slate-800">Supplier Portal</span>
-          </Link>
+          <CcwLogo
+            href="/supplier"
+            variant="compact"
+            size="sm"
+            title="Supplier Portal"
+            showTagline={false}
+            theme="light"
+          />
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
