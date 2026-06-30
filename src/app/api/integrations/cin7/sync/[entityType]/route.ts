@@ -95,7 +95,7 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * 100 >= total) break;
+        if (page * pageSize >= total) break;
       }
     } else if (useOmni && omniCreds) {
       const pageSize = 100;
@@ -136,7 +136,8 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * pageSize >= total) break;
+        if (total != null && total > 0 && page * pageSize >= total) break;
+        if (sourceRowCount < pageSize) break;
       }
     }
   } else if (entityType === 'customers') {
@@ -175,8 +176,8 @@ export async function POST(
     } else if (useOmni && omniCreds) {
       const pageSize = 100;
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total } = await fetchOmniContactsPage(omniCreds, page, pageSize);
-        if (rows.length === 0) break;
+        const { rows, total, sourceRowCount } = await fetchOmniContactsPage(omniCreds, page, pageSize);
+        if (sourceRowCount === 0) break;
         for (const row of rows) {
           const companyName = row.companyName;
           const email = row.email;
@@ -203,7 +204,8 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * pageSize >= total) break;
+        if (total != null && total > 0 && page * pageSize >= total) break;
+        if (sourceRowCount < pageSize) break;
       }
     }
   } else if (entityType === 'orders') {
