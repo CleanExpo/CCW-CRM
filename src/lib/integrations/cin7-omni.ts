@@ -45,9 +45,10 @@ export async function cin7OmniGet<T>(
 }
 
 /** Omni list responses may be a raw array or an envelope with Total + array key. */
-function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number } {
+function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number | null } {
   if (Array.isArray(raw)) {
-    return { rows: raw, total: raw.length };
+    // Cin7 Omni often returns a bare array with no Total — caller must paginate by page size.
+    return { rows: raw, total: null };
   }
   if (raw && typeof raw === 'object') {
     const o = raw as Record<string, unknown>;
@@ -74,11 +75,11 @@ function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number }
     for (const k of listKeys) {
       const arr = o[k];
       if (Array.isArray(arr)) {
-        return { rows: arr, total: total || arr.length };
+        return { rows: arr, total: total > 0 ? total : null };
       }
     }
   }
-  return { rows: [], total: 0 };
+  return { rows: [], total: null };
 }
 
 /** Lightweight connectivity check (read-only friendly). */
@@ -152,7 +153,7 @@ export async function fetchOmniProductPage(
   rows: number
 ): Promise<{
   rows: ReturnType<typeof flattenOmniProducts>;
-  total: number;
+  total: number | null;
   /** Raw product records from this page (before SKU flattening). */
   sourceRowCount: number;
 }> {
@@ -161,12 +162,12 @@ export async function fetchOmniProductPage(
     `/v1/Products?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: 0, sourceRowCount: 0 };
+  if (!ok) return { rows: [], total: null, sourceRowCount: 0 };
   const { rows: rawRows, total } = parseOmniListEnvelope(data);
   const flat = flattenOmniProducts(rawRows);
   return {
     rows: flat,
-    total: total || rawRows.length,
+    total,
     sourceRowCount: rawRows.length,
   };
 }
@@ -182,14 +183,15 @@ export async function fetchOmniContactsPage(
     phone?: string;
     city?: string;
   }>;
-  total: number;
+  total: number | null;
+  sourceRowCount: number;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
   const { ok, data } = await cin7OmniGet<unknown>(
     `/v1/Contacts?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: 0 };
+  if (!ok) return { rows: [], total: null, sourceRowCount: 0 };
   const { rows: list, total } = parseOmniListEnvelope(data);
   const mapped = list
     .map((raw) => {
@@ -206,7 +208,7 @@ export async function fetchOmniContactsPage(
       return { companyName: company || 'Cin7 contact', email, phone, city };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
-  return { rows: mapped, total: total || list.length };
+  return { rows: mapped, total, sourceRowCount: list.length };
 }
 
 /** Best-effort sales order total (uses API Total when present). */
@@ -214,6 +216,6 @@ export async function fetchOmniSalesOrderCount(creds: Cin7OmniCredentials): Prom
   const { ok, data } = await cin7OmniGet<unknown>(`/v1/SalesOrders?page=1&rows=1`, creds);
   if (!ok) return 0;
   const { total, rows } = parseOmniListEnvelope(data);
-  if (total > 0) return total;
+  if (total != null && total > 0) return total;
   return rows.length;
 }
