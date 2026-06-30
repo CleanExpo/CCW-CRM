@@ -17,6 +17,7 @@ import {
 } from '@/lib/integrations/cin7-omni';
 
 const MAX_PAGES = Math.max(1, Math.min(50, Number(process.env.CIN7_SYNC_MAX_PAGES || 10)));
+const CIN7_PAGE_SIZE = 100;
 
 export async function POST(
   request: NextRequest,
@@ -63,7 +64,7 @@ export async function POST(
   if (entityType === 'products' || entityType === 'inventory') {
     if (useCore && coreCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total } = await fetchCin7ProductPage(coreCreds, page, 100);
+        const { rows, total } = await fetchCin7ProductPage(coreCreds, page, CIN7_PAGE_SIZE);
         if (rows.length === 0) break;
         for (const row of rows) {
           const sku = String(row.Sku ?? '').trim();
@@ -95,10 +96,10 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * pageSize >= total) break;
+        if (page * CIN7_PAGE_SIZE >= total) break;
       }
     } else if (useOmni && omniCreds) {
-      const pageSize = 100;
+      const pageSize = CIN7_PAGE_SIZE;
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total, sourceRowCount } = await fetchOmniProductPage(
           omniCreds,
@@ -143,7 +144,7 @@ export async function POST(
   } else if (entityType === 'customers') {
     if (useCore && coreCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, 100);
+        const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, CIN7_PAGE_SIZE);
         if (rows.length === 0) break;
         for (const row of rows) {
           const companyName = String(row.Name ?? 'Cin7 customer').trim() || 'Cin7 customer';
@@ -171,10 +172,10 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * 100 >= total) break;
+        if (page * CIN7_PAGE_SIZE >= total) break;
       }
     } else if (useOmni && omniCreds) {
-      const pageSize = 100;
+      const pageSize = CIN7_PAGE_SIZE;
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total, sourceRowCount } = await fetchOmniContactsPage(omniCreds, page, pageSize);
         if (sourceRowCount === 0) break;
