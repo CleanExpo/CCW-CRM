@@ -16,8 +16,15 @@ import {
   pingCin7Omni,
 } from '@/lib/integrations/cin7-omni';
 
-const MAX_PAGES = Math.max(1, Math.min(50, Number(process.env.CIN7_SYNC_MAX_PAGES || 10)));
-const CIN7_PAGE_SIZE = 100;
+import {
+  CIN7_PAGE_SIZE,
+  getCin7SyncMaxPages,
+  shouldContinueCin7SyncPage,
+} from '@/lib/integrations/cin7-sync-config';
+
+export const maxDuration = 300;
+
+const MAX_PAGES = getCin7SyncMaxPages();
 
 export async function POST(
   request: NextRequest,
@@ -96,7 +103,7 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * CIN7_PAGE_SIZE >= total) break;
+        if (!shouldContinueCin7SyncPage(page, CIN7_PAGE_SIZE, rows.length, total, MAX_PAGES)) break;
       }
     } else if (useOmni && omniCreds) {
       const pageSize = CIN7_PAGE_SIZE;
@@ -137,8 +144,7 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (total != null && total > 0 && page * pageSize >= total) break;
-        if (sourceRowCount < pageSize) break;
+        if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
       }
     }
   } else if (entityType === 'customers') {
@@ -172,7 +178,7 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (page * CIN7_PAGE_SIZE >= total) break;
+        if (!shouldContinueCin7SyncPage(page, CIN7_PAGE_SIZE, rows.length, total, MAX_PAGES)) break;
       }
     } else if (useOmni && omniCreds) {
       const pageSize = CIN7_PAGE_SIZE;
@@ -205,8 +211,7 @@ export async function POST(
           }
           recordsProcessed += 1;
         }
-        if (total != null && total > 0 && page * pageSize >= total) break;
-        if (sourceRowCount < pageSize) break;
+        if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
       }
     }
   } else if (entityType === 'orders') {
