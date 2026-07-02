@@ -34,6 +34,7 @@ import {
 } from '@/components/operations/OperationsPageHeader';
 import { opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
+import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 
 interface StockByLocation {
   location: string;
@@ -284,6 +285,8 @@ export default function ProductsPage() {
             </div>
           }
         />
+
+        <Cin7PageSyncToolbar entity="products" onSynced={loadProducts} />
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
