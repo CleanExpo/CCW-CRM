@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { purchaseOrderToApi } from '@/lib/db/purchase-order-serialize';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { normalizeWarehouseLocation } from '@/lib/db/inventory-location-transfer';
 import type { Prisma } from '@prisma/client';
 
 const INCLUDE = {
@@ -32,7 +33,10 @@ export async function POST(
           purchaseOrder: { ownerUserId: scope.userId },
           product: { ownerUserId: scope.userId },
         },
-        include: { product: true },
+        include: {
+          product: true,
+          purchaseOrder: { select: { deliveryLocation: true } },
+        },
       });
       if (!line) {
         throw new Error('LINE_NOT_FOUND');
@@ -50,6 +54,15 @@ export async function POST(
       await tx.product.update({
         where: { id: line.productId },
         data: { stock: { increment: qtyIn } },
+      });
+
+      // UNI-2119: land the received stock in the PO's delivery warehouse, not
+      // just the global counter, so location stock reflects the receipt.
+      const location = normalizeWarehouseLocation(line.purchaseOrder.deliveryLocation);
+      await tx.productLocationStock.upsert({
+        where: { productId_location: { productId: line.productId, location } },
+        update: { quantity: { increment: qtyIn } },
+        create: { productId: line.productId, location, quantity: qtyIn },
       });
 
       const allLines = await tx.purchaseOrderLine.findMany({ where: { purchaseOrderId: poId } });
