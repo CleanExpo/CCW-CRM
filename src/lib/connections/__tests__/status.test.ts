@@ -48,7 +48,7 @@ describe('buildCcwConnectionStatus', () => {
     expect(byId.database.state).toBe('blocked');
     expect(byId.auth.state).toBe('blocked');
     expect(byId.crons.state).toBe('blocked');
-    expect(byId.sentry.state).toBe('unknown');
+    expect(byId.sentry.state).toBe('blocked');
     expect(byId.ai_openai.state).toBe('blocked');
     expect(byId.unite_group.state).toBe('ready');
     expect(status.summary.total).toBe(status.connections.length);
@@ -71,10 +71,33 @@ describe('buildCcwConnectionStatus', () => {
 
     expect(byId.database.state).toBe('connected');
     expect(byId.auth.state).toBe('connected');
-    expect(byId.sentry.state).toBe('connected');
     expect(byId.crons.state).toBe('ready');
     expect(byId.crons.nextAction).toBe('Confirm cron enablement in the Vercel project settings.');
     expect(status.project.environment).toBe('production');
+  });
+
+  it('does not report Sentry as connected from DSN presence alone (SDK is not installed)', () => {
+    // @sentry/nextjs was removed from this repo in 5165367e "remove unused
+    // Sentry SDK to unblock UNI-1949" — no package dependency, no
+    // sentry.{client,server,edge}.config.ts, no instrumentation.ts hook, and
+    // no Sentry.captureException call anywhere in src/. Setting SENTRY_DSN
+    // per .env.example therefore does not cause a single error to be
+    // captured or transmitted. Reporting 'connected' here is a false
+    // positive: Mission Control would believe error monitoring is live when
+    // it is entirely inert.
+    const status = buildCcwConnectionStatus(FULL_ENV, [], '2026-07-02T00:00:00.000Z');
+    const byId = Object.fromEntries(status.connections.map((c) => [c.id, c]));
+
+    expect(byId.sentry.state).not.toBe('connected');
+    expect(byId.sentry.state).toBe('blocked');
+    expect(byId.sentry.detail).toMatch(/sdk/i);
+  });
+
+  it('reports Sentry as blocked (not merely unknown) when the DSN is unset', () => {
+    const status = buildCcwConnectionStatus(EMPTY_ENV, [], '2026-07-02T00:00:00.000Z');
+    const byId = Object.fromEntries(status.connections.map((c) => [c.id, c]));
+
+    expect(byId.sentry.state).toBe('blocked');
   });
 
   it('never leaks secret values into the payload', () => {

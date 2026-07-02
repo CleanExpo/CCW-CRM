@@ -124,14 +124,24 @@ export function buildCcwConnectionStatus(
         : 'Set CRON_SECRET in the deploy environment.',
     },
     {
+      // The @sentry/nextjs SDK was removed from this app entirely (see
+      // 5165367e "remove unused Sentry SDK to unblock UNI-1949"): no
+      // package dependency, no sentry.{client,server,edge}.config.ts, no
+      // instrumentation.ts hook, no Sentry.captureException call anywhere
+      // in the codebase. SENTRY_DSN/NEXT_PUBLIC_SENTRY_DSN lingering in
+      // .env.example are stale from before that removal. Do not report
+      // 'connected' from DSN presence alone — that would tell Mission
+      // Control error monitoring is live when nothing is ever captured or
+      // transmitted. Always report 'blocked' until the SDK is reinstalled.
       id: 'sentry',
       label: 'Error monitoring (Sentry)',
-      state: sentryReady ? 'connected' : 'unknown',
+      state: 'blocked',
       safeForMissionControl: true,
       detail: sentryReady
-        ? 'Sentry DSN present.'
-        : 'No Sentry DSN detected — errors are not being reported.',
-      nextAction: sentryReady ? undefined : 'Set SENTRY_DSN (and NEXT_PUBLIC_SENTRY_DSN).',
+        ? 'SENTRY_DSN is set, but the Sentry SDK is not installed in this app — no errors are captured or sent.'
+        : 'No Sentry DSN detected, and the Sentry SDK is not installed — errors are not being reported.',
+      nextAction:
+        'Reinstall @sentry/nextjs and wire sentry.{client,server,edge}.config.ts before relying on SENTRY_DSN.',
     },
     {
       id: 'ai_openai',
