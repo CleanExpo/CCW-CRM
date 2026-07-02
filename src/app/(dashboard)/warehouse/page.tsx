@@ -174,6 +174,8 @@ export default function WarehouseOpsPage() {
   const pickQueue = data?.pickQueue ?? [];
   const returnsQueue = data?.returnsQueue ?? [];
   const aiGuidance = data?.aiGuidance ?? [];
+  const returnsConnected = data?.sources?.returns === 'live';
+  const aiGuidanceConnected = data?.sources?.aiGuidance === 'live';
   const lastUpdated = useMemo(() => {
     if (!data?.updatedAt) return null;
     return new Date(data.updatedAt).toLocaleTimeString();
@@ -485,9 +487,11 @@ export default function WarehouseOpsPage() {
               <RefreshCw className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metrics?.returnsOpen ?? 0}</div>
+              <div className="text-2xl font-bold">
+                {returnsConnected ? (metrics?.returnsOpen ?? 0) : '—'}
+              </div>
               <p className="text-muted-foreground text-xs">
-                {metrics?.returnSlaRisk ?? 0} SLA risk
+                {returnsConnected ? `${metrics?.returnSlaRisk ?? 0} SLA risk` : 'Not connected'}
               </p>
             </CardContent>
           </Card>
@@ -497,8 +501,12 @@ export default function WarehouseOpsPage() {
               <Clock className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{metrics?.onTimeRate ?? 0}%</div>
-              <p className="text-muted-foreground text-xs">Last 7 days</p>
+              <div className="text-2xl font-bold">
+                {metrics?.onTimeRate != null ? `${metrics.onTimeRate}%` : '—'}
+              </div>
+              <p className="text-muted-foreground text-xs">
+                {metrics?.onTimeRate != null ? 'Last 7 days' : 'Not tracked yet'}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -542,6 +550,11 @@ export default function WarehouseOpsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {receivingQueue.length === 0 ? (
+                      <p className="text-muted-foreground py-6 text-center text-sm">
+                        No inbound shipments scheduled.
+                      </p>
+                    ) : null}
                     {receivingQueue.map((shipment) => (
                       <div
                         key={shipment.id}
@@ -586,6 +599,11 @@ export default function WarehouseOpsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {pickQueue.length === 0 ? (
+                      <p className="text-muted-foreground py-6 text-center text-sm">
+                        No orders in the pick queue.
+                      </p>
+                    ) : null}
                     {pickQueue.map((pick) => (
                       <div
                         key={pick.id}
@@ -626,6 +644,13 @@ export default function WarehouseOpsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {returnsQueue.length === 0 ? (
+                      <p className="text-muted-foreground py-6 text-center text-sm">
+                        {returnsConnected
+                          ? 'No open returns or service cases.'
+                          : 'Returns tracking is not connected yet.'}
+                      </p>
+                    ) : null}
                     {returnsQueue.map((rma) => (
                       <div
                         key={rma.id}
@@ -675,6 +700,13 @@ export default function WarehouseOpsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {aiGuidance.length === 0 ? (
+                      <p className="text-primary-foreground/70 py-6 text-center text-sm">
+                        {aiGuidanceConnected
+                          ? 'No guidance right now.'
+                          : 'AI guidance is not connected yet.'}
+                      </p>
+                    ) : null}
                     {aiGuidance.map((item) => (
                       <div
                         key={item.title}
