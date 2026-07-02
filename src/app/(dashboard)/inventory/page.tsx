@@ -30,6 +30,7 @@ import {
 } from '@/components/operations/OperationsPageHeader';
 import { opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
+import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 
 interface StockLocation {
   location: string;
@@ -321,6 +322,12 @@ export default function InventoryPage() {
           description="Multi-location stock tracking across Brisbane, Sydney, and Melbourne with reorder monitoring."
           icon={Package}
         />
+
+        <Cin7PageSyncToolbar entity="inventory" onSynced={() => {
+          void loadSummary();
+          void loadStockHealth();
+          void loadReorderAlerts();
+        }} />
 
         <SectionHubModules modules={INVENTORY_MODULES} heading="Inventory modules" />
 
