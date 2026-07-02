@@ -1,6 +1,15 @@
 import type { NextRequest } from 'next/server';
 
 const DEFAULT_BASE = 'https://inventory.dearsystems.com/ExternalApi/v2';
+const DEFAULT_TIMEOUT_MS = 45_000;
+const DEFAULT_RETRIES = 2;
+
+type Cin7HttpResult<T> = {
+  ok: boolean;
+  status: number;
+  data: T;
+  error?: string;
+};
 
 export function getCin7CoreBaseUrl(): string {
   return process.env.CIN7_CORE_API_BASE_URL?.trim() || DEFAULT_BASE;
@@ -8,6 +17,27 @@ export function getCin7CoreBaseUrl(): string {
 
 export function getCin7Mode(): 'demo' | 'live' {
   return process.env.CIN7_MODE === 'demo' ? 'demo' : 'live';
+}
+
+function getCin7RequestTimeoutMs(): number {
+  const n = Number(process.env.CIN7_SYNC_HTTP_TIMEOUT_MS || DEFAULT_TIMEOUT_MS);
+  if (!Number.isFinite(n) || n < 1_000) return DEFAULT_TIMEOUT_MS;
+  return Math.floor(n);
+}
+
+function getCin7RequestRetries(): number {
+  const n = Number(process.env.CIN7_SYNC_HTTP_RETRIES || DEFAULT_RETRIES);
+  if (!Number.isFinite(n) || n < 0) return DEFAULT_RETRIES;
+  return Math.min(5, Math.floor(n));
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function getCin7CoreCredentials(request?: NextRequest): {
@@ -29,20 +59,50 @@ export function getCin7CoreCredentials(request?: NextRequest): {
 export async function cin7CoreGet<T>(
   pathWithQuery: string,
   creds: { accountId: string; applicationKey: string }
-): Promise<{ ok: boolean; status: number; data: T }> {
+): Promise<Cin7HttpResult<T>> {
   const base = getCin7CoreBaseUrl().replace(/\/$/, '');
   const p = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
   const url = `${base}${p}`;
-  const res = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'api-auth-accountid': creds.accountId,
-      'api-auth-applicationkey': creds.applicationKey,
-    },
-    cache: 'no-store',
-  });
-  const data = (await res.json().catch(() => ({}))) as T;
-  return { ok: res.ok, status: res.status, data };
+  const retries = getCin7RequestRetries();
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), getCin7RequestTimeoutMs());
+    try {
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'api-auth-accountid': creds.accountId,
+          'api-auth-applicationkey': creds.applicationKey,
+        },
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      const data = (await res.json().catch(() => ({}))) as T;
+      clearTimeout(timeout);
+      return { ok: res.ok, status: res.status, data };
+    } catch (error) {
+      clearTimeout(timeout);
+      const message = getErrorMessage(error);
+      if (attempt < retries) {
+        await sleep(1_000 * (attempt + 1));
+        continue;
+      }
+      return {
+        ok: false,
+        status: 504,
+        data: {} as T,
+        error: `Cin7 Core request failed: ${message}`,
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    status: 504,
+    data: {} as T,
+    error: 'Cin7 Core request failed after retries.',
+  };
 }
 
 /** Lightweight ping — valid credentials return 200 with product list envelope. */
@@ -72,12 +132,12 @@ export async function fetchCin7ProductPage(
   creds: { accountId: string; applicationKey: string },
   page: number,
   limit: number
-): Promise<{ rows: Cin7ProductRow[]; total: number }> {
-  const { ok, data } = await cin7CoreGet<{
+): Promise<{ rows: Cin7ProductRow[]; total: number; error?: string }> {
+  const { ok, data, error } = await cin7CoreGet<{
     ProductList?: Cin7ProductRow[];
     Total?: number;
   }>(`/Product?Page=${page}&Limit=${limit}`, creds);
-  if (!ok) return { rows: [], total: 0 };
+  if (!ok) return { rows: [], total: 0, error };
   const rows = Array.isArray(data.ProductList) ? data.ProductList : [];
   const total = typeof data.Total === 'number' ? data.Total : rows.length;
   return { rows, total };
@@ -95,12 +155,12 @@ export async function fetchCin7CustomerPage(
   creds: { accountId: string; applicationKey: string },
   page: number,
   limit: number
-): Promise<{ rows: Cin7CustomerRow[]; total: number }> {
-  const { ok, data } = await cin7CoreGet<{
+): Promise<{ rows: Cin7CustomerRow[]; total: number; error?: string }> {
+  const { ok, data, error } = await cin7CoreGet<{
     CustomerList?: Cin7CustomerRow[];
     Total?: number;
   }>(`/Customer?Page=${page}&Limit=${limit}`, creds);
-  if (!ok) return { rows: [], total: 0 };
+  if (!ok) return { rows: [], total: 0, error };
   const rows = Array.isArray(data.CustomerList) ? data.CustomerList : [];
   const total = typeof data.Total === 'number' ? data.Total : rows.length;
   return { rows, total };
