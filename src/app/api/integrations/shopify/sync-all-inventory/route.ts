@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
+import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import { getConfiguredShopifyFromRequest } from '@/lib/integrations/shopify';
 import { findVariantInventoryItemId, setInventoryLevel } from '@/lib/integrations/shopify-ops';
 
@@ -16,7 +17,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const creds = getConfiguredShopifyFromRequest(request);
+  const workspaceId = await getWorkspaceIdForUser(scope.userId);
+  if (!workspaceId) {
+    return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
+  }
+
+  const creds = getConfiguredShopifyFromRequest(request, workspaceId);
   if (!creds) {
     return NextResponse.json({ detail: 'Shopify is not configured or token is missing.' }, { status: 401 });
   }

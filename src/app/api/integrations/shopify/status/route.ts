@@ -7,6 +7,7 @@ import {
   getShopifyApiVersion,
   getShopifyMode,
   resolveMyshopifyHost,
+  shopifyCookieName,
 } from '@/lib/integrations/shopify';
 
 export async function GET(request: NextRequest) {
@@ -21,14 +22,15 @@ export async function GET(request: NextRequest) {
   }
 
   const configuredMode = getShopifyMode();
-  const connectedCookie = request.cookies.get('shopify_connected')?.value === '1';
+  const connectedCookie =
+    request.cookies.get(shopifyCookieName('shopify_connected', workspaceId))?.value === '1';
 
   const rawShop =
-    request.cookies.get('shopify_shop_domain')?.value?.trim() ||
+    request.cookies.get(shopifyCookieName('shopify_shop_domain', workspaceId))?.value?.trim() ||
     process.env.SHOPIFY_SHOP_DOMAIN?.trim() ||
     '';
   const cookieToken =
-    request.cookies.get('shopify_access_token')?.value?.trim() ||
+    request.cookies.get(shopifyCookieName('shopify_access_token', workspaceId))?.value?.trim() ||
     process.env.SHOPIFY_ACCESS_TOKEN?.trim() ||
     '';
 
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const creds = getConfiguredShopifyFromRequest(request);
+  const creds = getConfiguredShopifyFromRequest(request, workspaceId);
   if (!creds) {
     return NextResponse.json({
       connected: false,
