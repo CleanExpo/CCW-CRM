@@ -92,7 +92,7 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               <RefreshCw className="h-5 w-5" />
               Cin7 Sync Controls
             </CardTitle>
-            <CardDescription>Manually trigger sync for each entity type</CardDescription>
+            <CardDescription>Manually trigger sync for each entity type (full Cin7 pull — all pages)</CardDescription>
           </div>
           <Button
             variant="outline"
