@@ -41,14 +41,14 @@ describe('applySendGridEvent', () => {
     // Simulate a real Prisma equality (not `contains`) match: only an exact id
     // equal to the stored value resolves; a short/incidental substring ("111")
     // must NOT resolve to tenant A's message.
-    vi.mocked(prisma.emailMessage.findFirst).mockImplementation(async (args: unknown) => {
+    vi.mocked(prisma.emailMessage.findFirst).mockImplementation(((args: unknown) => {
       const where = (args as { where?: { OR?: Array<{ sendgridMessageId?: string }> } })?.where;
       const candidates = where?.OR?.map((c) => c.sendgridMessageId) ?? [];
       if (candidates.includes('aaa111.filter001.abcde')) {
-        return tenantAMessage as never;
+        return Promise.resolve(tenantAMessage);
       }
-      return null as never;
-    });
+      return Promise.resolve(null);
+    }) as never);
 
     const result = await applySendGridEvent({
       event: 'bounce',
