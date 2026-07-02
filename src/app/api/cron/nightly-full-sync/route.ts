@@ -4,7 +4,7 @@ import { getApiRequestBase } from "@/lib/api/backend-url";
 /**
  * Nightly Full Sync Cron Job
  *
- * Schedule: Daily at 11:00 PM AEST (13:00 UTC) — "0 13 * * *"
+ * Schedule: Daily at 9:00 PM AEST / Brisbane (11:00 UTC) — "0 11 * * *"
  *
  * Orchestrates a full data sync across all connected integrations:
  * 1. Cin7 — products, customers, orders, inventory
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: allSuccess,
       timestamp: new Date().toISOString(),
-      schedule: "Daily 11:00 PM AEST (13:00 UTC)",
+      schedule: "Daily 9:00 PM AEST / Brisbane (11:00 UTC)",
       note:
         "For Cin7 and Shopify order imports, set CRON_INTEGRATION_USER_ID to a valid app user id; integrations must be configured via env or cookies on the server.",
       summary: {
