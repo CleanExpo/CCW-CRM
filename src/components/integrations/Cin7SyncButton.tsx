@@ -38,11 +38,13 @@ export function Cin7SyncButton({
     try {
       const result = await triggerCin7Sync(entity);
       const count = result.records_processed ?? 0;
+      const durationSec =
+        result.duration_ms != null ? (result.duration_ms / 1000).toFixed(1) : null;
       toast({
         title: `${ENTITY_LABELS[entity]} synced from Cin7`,
         description:
           count > 0
-            ? `${count.toLocaleString()} record(s) processed. Refresh the list to see updates.`
+            ? `${count.toLocaleString()} record(s) in ${durationSec ?? '—'}s. Refresh the list to see updates.`
             : 'Sync completed. No new records were returned from Cin7.',
       });
       onSynced?.();
