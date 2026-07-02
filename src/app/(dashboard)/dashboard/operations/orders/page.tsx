@@ -47,6 +47,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { BulkDeleteOrdersDialog } from './components/BulkDeleteOrdersDialog';
+import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 import { DeleteOrderDialog } from './components/DeleteOrderDialog';
 import { OrderDetailDialog } from './components/OrderDetailDialog';
 import { OrderForm } from './components/OrderForm';
@@ -319,6 +320,8 @@ export default function OrdersPage() {
             </>
           }
         />
+
+        <Cin7PageSyncToolbar entity="orders" onSynced={loadOrders} />
 
         {prereqState.loaded && !canCreateOrder && (
           <Alert className="my-4 border-amber-500/40 bg-amber-500/5">
