@@ -14,7 +14,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "audit:ccw-seo": "node scripts/audit-ccw-seo.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
