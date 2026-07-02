@@ -21,6 +21,12 @@ export async function applySendGridEvent(ev: SendGridEvent): Promise<boolean> {
   const eventType = ev.event?.toLowerCase();
   if (!eventType) return false;
 
+  // Resolution is intentionally exact-match only. This webhook is authenticated by a
+  // shared secret or ECDSA signature (not a per-user/workspace session), and every
+  // field on `ev` is attacker-influenceable JSON from the request body. A fuzzy
+  // (`contains`) match on sendgridMessageId, or trusting a bare `thread_id` with no
+  // corroborating message id, would let a forged or coincidentally-overlapping event
+  // resolve to — and mutate — another tenant's email record. See UNI-2106.
   let msg =
     ev.message_id
       ? await prisma.emailMessage.findUnique({ where: { id: ev.message_id } })
@@ -28,15 +34,12 @@ export async function applySendGridEvent(ev: SendGridEvent): Promise<boolean> {
 
   const sgId = normalizeSendGridMessageId(ev.sg_message_id);
   if (!msg && sgId) {
+    // Match on the normalized (base, pre-".filterNNN.xxx") id in both directions:
+    // the stored value is whatever `sendMailViaSendGrid` recorded (which may or may
+    // not carry the SMTP suffix), so compare exact-equality against either form
+    // rather than falling back to a fuzzy `contains` that can match unrelated rows.
     msg = await prisma.emailMessage.findFirst({
-      where: { sendgridMessageId: { contains: sgId } },
-    });
-  }
-
-  if (!msg && ev.thread_id) {
-    msg = await prisma.emailMessage.findFirst({
-      where: { threadId: ev.thread_id, direction: 'outbound' },
-      orderBy: { sentAt: 'desc' },
+      where: { OR: [{ sendgridMessageId: sgId }, { sendgridMessageId: ev.sg_message_id?.trim() }] },
     });
   }
 
