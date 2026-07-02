@@ -7,8 +7,8 @@ const EMPTY_ENV = {} as unknown as NodeJS.ProcessEnv;
 const FULL_ENV = {
   VERCEL_ENV: 'production',
   DATABASE_URL: 'postgresql://user:redacted@host/db',
-  JWT_SECRET_KEY: 'jwt-secret-value',
-  CRON_SECRET: 'cron-secret-value',
+  JWT_SECRET_KEY: 'jwt-test-placeholder',
+  CRON_SECRET: 'cron-test-placeholder',
   SENTRY_DSN: 'https://abc@sentry.example/1',
   OPENAI_API_KEY: 'sk-openai-value',
 } as unknown as NodeJS.ProcessEnv;
