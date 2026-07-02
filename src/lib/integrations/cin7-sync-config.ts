@@ -1,5 +1,12 @@
-/** Cin7 Omni/Core list page size (API default batch). */
-export const CIN7_PAGE_SIZE = 100;
+/** Cin7 Omni/Core list page size — 250 is Cin7 Omni max and cuts API round-trips ~2.5×. */
+export function getCin7PageSize(): number {
+  const n = Number(process.env.CIN7_SYNC_PAGE_SIZE || 250);
+  if (!Number.isFinite(n) || n < 1) return 250;
+  return Math.min(250, Math.max(50, Math.floor(n)));
+}
+
+/** @deprecated use getCin7PageSize() — kept for imports that expect a constant name */
+export const CIN7_PAGE_SIZE = 250;
 
 /** Hard safety ceiling when syncing “all” (~100k records). */
 export const CIN7_SYNC_SAFETY_MAX_PAGES = 1000;
