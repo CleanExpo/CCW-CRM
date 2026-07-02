@@ -81,6 +81,8 @@ export async function updateSession(request: NextRequest) {
     '/api/cron',
     '/api/auth',
     '/api/public',
+    // Secret-free readiness manifest polled by Unite-Group Mission Control (UNI-2139).
+    '/api/v1/connections/status',
     // OAuth redirects must load without a prior session (provider sends user back to callback).
     '/api/integrations/xero/callback',
     '/api/integrations/xero/auth',
