@@ -129,7 +129,7 @@ export async function disconnectCin7(): Promise<{ status: string }> {
 export async function triggerCin7Sync(
   entityType: 'products' | 'customers' | 'orders' | 'inventory'
 ): Promise<{ status: string; records_processed?: number }> {
-  return apiClient.post(`/api/integrations/cin7/sync/${entityType}`);
+  return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
 }
 
 /**
