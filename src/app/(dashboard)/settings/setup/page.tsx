@@ -172,7 +172,7 @@ export default function SetupPage() {
         </h1>
         <p className="text-muted-foreground mt-2">
           Connect your business systems to start syncing live data. Your data
-          will sync automatically every night at 11pm AEST.
+          will sync automatically every night at 9pm AEST.
         </p>
       </div>
 
@@ -277,7 +277,7 @@ export default function SetupPage() {
           <CardDescription>
             Once your integrations are connected, run an initial sync to pull all
             your existing data into CCW. After this, data syncs automatically
-            every night at 11:00 PM AEST.
+            every night at 9:00 PM AEST.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
