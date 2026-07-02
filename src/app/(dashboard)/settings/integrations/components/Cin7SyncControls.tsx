@@ -35,9 +35,11 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
     setSyncing((prev) => ({ ...prev, [entityType]: true }));
     try {
       const result = await triggerCin7Sync(entityType);
+      const durationSec =
+        result.duration_ms != null ? (result.duration_ms / 1000).toFixed(1) : null;
       toast({
         title: "Sync Complete",
-        description: `${entityType} sync completed. ${result.records_processed ?? 0} records processed.`,
+        description: `${entityType} sync completed. ${result.records_processed ?? 0} records in ${durationSec ?? "—"}s.`,
       });
     } catch (error: unknown) {
       toast({
