@@ -1,11 +1,31 @@
 import { prisma } from '@/lib/db/prisma';
 
-const DEFAULT_DB_BATCH = 50;
+/** Smaller default — remote managed Postgres (e.g. DigitalOcean) often exceeds Prisma's 5s tx limit at 50 upserts. */
+const DEFAULT_DB_BATCH = 20;
+const DEFAULT_DB_CONCURRENCY = 10;
 
 export function getCin7DbBatchSize(): number {
   const n = Number(process.env.CIN7_SYNC_DB_BATCH || DEFAULT_DB_BATCH);
   if (!Number.isFinite(n) || n < 1) return DEFAULT_DB_BATCH;
   return Math.min(100, Math.floor(n));
+}
+
+export function getCin7DbConcurrency(): number {
+  const n = Number(process.env.CIN7_SYNC_DB_CONCURRENCY || DEFAULT_DB_CONCURRENCY);
+  if (!Number.isFinite(n) || n < 1) return DEFAULT_DB_CONCURRENCY;
+  return Math.min(25, Math.floor(n));
+}
+
+/** Run async work in limited parallel chunks (avoids Prisma interactive tx timeout on remote DB). */
+async function runInConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<unknown>
+): Promise<void> {
+  const limit = Math.max(1, concurrency);
+  for (let i = 0; i < items.length; i += limit) {
+    await Promise.all(items.slice(i, i + limit).map(fn));
+  }
 }
 
 export type Cin7ProductSyncRow = {
@@ -23,7 +43,7 @@ export type Cin7CustomerSyncRow = {
   city?: string;
 };
 
-/** Batch upsert products by owner+sku (2 queries per batch vs 2 per row). */
+/** Batch upsert products by owner+sku — concurrent upserts, no multi-statement transaction. */
 export async function batchUpsertProducts(
   ownerUserId: string,
   rows: Cin7ProductSyncRow[]
@@ -31,30 +51,29 @@ export async function batchUpsertProducts(
   if (rows.length === 0) return 0;
 
   const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
   let processed = 0;
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const chunk = rows.slice(i, i + batchSize);
-    await prisma.$transaction(
-      chunk.map((row) =>
-        prisma.product.upsert({
-          where: { ownerUserId_sku: { ownerUserId, sku: row.sku } },
-          create: {
-            ownerUserId,
-            sku: row.sku,
-            name: row.name,
-            price: row.price,
-            stock: row.stock,
-            category: row.category,
-            isActive: true,
-          },
-          update: {
-            name: row.name,
-            price: row.price,
-            stock: row.stock,
-          },
-        })
-      )
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.product.upsert({
+        where: { ownerUserId_sku: { ownerUserId, sku: row.sku } },
+        create: {
+          ownerUserId,
+          sku: row.sku,
+          name: row.name,
+          price: row.price,
+          stock: row.stock,
+          category: row.category,
+          isActive: true,
+        },
+        update: {
+          name: row.name,
+          price: row.price,
+          stock: row.stock,
+        },
+      })
     );
     processed += chunk.length;
   }
@@ -62,7 +81,7 @@ export async function batchUpsertProducts(
   return processed;
 }
 
-/** Batch upsert customers — one lookup per page chunk, then createMany + batched updates. */
+/** Batch upsert customers — one lookup per page chunk, then createMany + concurrent updates. */
 export async function batchUpsertCustomers(
   ownerUserId: string,
   rows: Cin7CustomerSyncRow[]
@@ -70,6 +89,7 @@ export async function batchUpsertCustomers(
   if (rows.length === 0) return 0;
 
   const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
   let processed = 0;
 
   for (let i = 0; i < rows.length; i += batchSize) {
@@ -103,17 +123,15 @@ export async function batchUpsertCustomers(
       }
 
       if (toUpdate.length > 0) {
-        await prisma.$transaction(
-          toUpdate.map((r) =>
-            prisma.customer.update({
-              where: { id: byEmail.get(r.email.trim().toLowerCase())! },
-              data: {
-                companyName: r.companyName,
-                phone: r.phone,
-                city: r.city,
-              },
-            })
-          )
+        await runInConcurrency(toUpdate, concurrency, (r) =>
+          prisma.customer.update({
+            where: { id: byEmail.get(r.email.trim().toLowerCase())! },
+            data: {
+              companyName: r.companyName,
+              phone: r.phone,
+              city: r.city,
+            },
+          })
         );
       }
     }
