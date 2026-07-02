@@ -79,6 +79,9 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('brisbane');
   const [aiDialogOpen, setAiDialogOpen] = useState(false); // PHASE C: AI dialog state
+  // Gated off by default: /api/ai/generate/quote is not implemented, so the
+  // generator 404s on every use (UNI-2120). Enable once the endpoint exists.
+  const aiQuoteGeneratorEnabled = process.env.NEXT_PUBLIC_FEATURE_AI_QUOTE_GENERATOR === 'true';
   const { toast } = useToast();
   const isEdit = !!quote;
 
@@ -286,7 +289,7 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
           <DialogHeader>
             <DialogTitle className="flex w-full items-center justify-between">
               <span>{isEdit ? 'Edit Quote' : 'Create Quote'}</span>
-              {!isEdit && (
+              {!isEdit && aiQuoteGeneratorEnabled && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -487,12 +490,14 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
       </Dialog>
 
       {/* PHASE C: AI Quote Assistant */}
-      <AIQuoteGenerator
-        open={aiDialogOpen}
-        onOpenChange={setAiDialogOpen}
-        customerId={form.watch('customer_id')}
-        onQuoteGenerated={handleAIQuoteGenerated}
-      />
+      {aiQuoteGeneratorEnabled && (
+        <AIQuoteGenerator
+          open={aiDialogOpen}
+          onOpenChange={setAiDialogOpen}
+          customerId={form.watch('customer_id')}
+          onQuoteGenerated={handleAIQuoteGenerated}
+        />
+      )}
     </>
   );
 }
