@@ -136,10 +136,15 @@ export async function POST(
     }
   }
 
+  const durationMs = Date.now() - startedAt;
+  console.log(
+    `[Cin7 sync] ${entityType}: ${recordsProcessed} records in ${durationMs}ms (${useCore ? 'core' : 'omni'})`
+  );
+
   return NextResponse.json({
     status: 'ok',
     records_processed: recordsProcessed,
-    duration_ms: Date.now() - startedAt,
+    duration_ms: durationMs,
     page_size: pageSize,
   });
 }
