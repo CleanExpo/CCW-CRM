@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
 import {
   fetchCin7CustomerPage,
@@ -15,12 +14,19 @@ import {
   getCin7OmniCredentials,
   pingCin7Omni,
 } from '@/lib/integrations/cin7-omni';
-
 import {
-  CIN7_PAGE_SIZE,
+  getCin7PageSize,
   getCin7SyncMaxPages,
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
+import {
+  batchUpsertCustomers,
+  batchUpsertProducts,
+  mapCoreCustomerRows,
+  mapCoreProductRows,
+  mapOmniCustomerRows,
+  mapOmniProductRows,
+} from '@/lib/integrations/cin7-sync-persist';
 
 export const maxDuration = 300;
 
@@ -66,151 +72,59 @@ export async function POST(
     );
   }
 
+  const pageSize = getCin7PageSize();
   let recordsProcessed = 0;
+  const startedAt = Date.now();
 
   if (entityType === 'products' || entityType === 'inventory') {
     if (useCore && coreCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total } = await fetchCin7ProductPage(coreCreds, page, CIN7_PAGE_SIZE);
+        const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
         if (rows.length === 0) break;
-        for (const row of rows) {
-          const sku = String(row.Sku ?? '').trim();
-          if (!sku) continue;
-          const name = String(row.Name ?? sku).trim() || sku;
-          const price = Number(row.Price ?? row.SellPrice ?? 0) || 0;
-          const stock = Math.max(0, Math.floor(Number(row.Available ?? 0)));
-          const existing = await prisma.product.findFirst({
-            where: { ownerUserId: scope.userId, sku },
-            select: { id: true },
-          });
-          if (existing) {
-            await prisma.product.update({
-              where: { id: existing.id },
-              data: { name, price, stock },
-            });
-          } else {
-            await prisma.product.create({
-              data: {
-                ownerUserId: scope.userId,
-                sku,
-                name,
-                price,
-                stock,
-                category: 'Cin7',
-                isActive: true,
-              },
-            });
-          }
-          recordsProcessed += 1;
-        }
-        if (!shouldContinueCin7SyncPage(page, CIN7_PAGE_SIZE, rows.length, total, MAX_PAGES)) break;
+        recordsProcessed += await batchUpsertProducts(scope.userId, mapCoreProductRows(rows));
+        if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, MAX_PAGES)) break;
       }
     } else if (useOmni && omniCreds) {
-      const pageSize = CIN7_PAGE_SIZE;
+      type OmniProductPage = Awaited<ReturnType<typeof fetchOmniProductPage>>;
+      let nextFetch: Promise<OmniProductPage> = fetchOmniProductPage(omniCreds, 1, pageSize);
+
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total, sourceRowCount } = await fetchOmniProductPage(
-          omniCreds,
-          page,
-          pageSize
-        );
+        const { rows, total, sourceRowCount } = await nextFetch;
         if (sourceRowCount === 0) break;
-        for (const row of rows) {
-          const sku = row.sku.trim();
-          if (!sku) continue;
-          const name = row.name.trim() || sku;
-          const price = row.price;
-          const stock = row.stock;
-          const existing = await prisma.product.findFirst({
-            where: { ownerUserId: scope.userId, sku },
-            select: { id: true },
-          });
-          if (existing) {
-            await prisma.product.update({
-              where: { id: existing.id },
-              data: { name, price, stock },
-            });
-          } else {
-            await prisma.product.create({
-              data: {
-                ownerUserId: scope.userId,
-                sku,
-                name,
-                price,
-                stock,
-                category: 'Cin7 Omni',
-                isActive: true,
-              },
-            });
-          }
-          recordsProcessed += 1;
-        }
+
+        const nextPage = page + 1;
+        nextFetch =
+          nextPage <= MAX_PAGES
+            ? fetchOmniProductPage(omniCreds, nextPage, pageSize)
+            : Promise.resolve({ rows: [], total: null, sourceRowCount: 0 });
+
+        recordsProcessed += await batchUpsertProducts(scope.userId, mapOmniProductRows(rows));
         if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
       }
     }
   } else if (entityType === 'customers') {
     if (useCore && coreCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, CIN7_PAGE_SIZE);
+        const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, pageSize);
         if (rows.length === 0) break;
-        for (const row of rows) {
-          const companyName = String(row.Name ?? 'Cin7 customer').trim() || 'Cin7 customer';
-          const email = row.Email ? String(row.Email).trim() : '';
-          const phone = row.Phone ? String(row.Phone).trim() : undefined;
-          const city = row.City ? String(row.City).trim() : undefined;
-          if (email) {
-            const existing = await prisma.customer.findFirst({
-              where: { ownerUserId: scope.userId, email },
-            });
-            if (existing) {
-              await prisma.customer.update({
-                where: { id: existing.id },
-                data: { companyName, phone, city },
-              });
-            } else {
-              await prisma.customer.create({
-                data: { ownerUserId: scope.userId, companyName, email, phone, city },
-              });
-            }
-          } else {
-            await prisma.customer.create({
-              data: { ownerUserId: scope.userId, companyName, phone, city },
-            });
-          }
-          recordsProcessed += 1;
-        }
-        if (!shouldContinueCin7SyncPage(page, CIN7_PAGE_SIZE, rows.length, total, MAX_PAGES)) break;
+        recordsProcessed += await batchUpsertCustomers(scope.userId, mapCoreCustomerRows(rows));
+        if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, MAX_PAGES)) break;
       }
     } else if (useOmni && omniCreds) {
-      const pageSize = CIN7_PAGE_SIZE;
+      type OmniContactPage = Awaited<ReturnType<typeof fetchOmniContactsPage>>;
+      let nextFetch: Promise<OmniContactPage> = fetchOmniContactsPage(omniCreds, 1, pageSize);
+
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total, sourceRowCount } = await fetchOmniContactsPage(omniCreds, page, pageSize);
+        const { rows, total, sourceRowCount } = await nextFetch;
         if (sourceRowCount === 0) break;
-        for (const row of rows) {
-          const companyName = row.companyName;
-          const email = row.email;
-          const phone = row.phone;
-          const city = row.city;
-          if (email) {
-            const existing = await prisma.customer.findFirst({
-              where: { ownerUserId: scope.userId, email },
-            });
-            if (existing) {
-              await prisma.customer.update({
-                where: { id: existing.id },
-                data: { companyName, phone, city },
-              });
-            } else {
-              await prisma.customer.create({
-                data: { ownerUserId: scope.userId, companyName, email, phone, city },
-              });
-            }
-          } else {
-            await prisma.customer.create({
-              data: { ownerUserId: scope.userId, companyName, phone, city },
-            });
-          }
-          recordsProcessed += 1;
-        }
+
+        const nextPage = page + 1;
+        nextFetch =
+          nextPage <= MAX_PAGES
+            ? fetchOmniContactsPage(omniCreds, nextPage, pageSize)
+            : Promise.resolve({ rows: [], total: null, sourceRowCount: 0 });
+
+        recordsProcessed += await batchUpsertCustomers(scope.userId, mapOmniCustomerRows(rows));
         if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
       }
     }
@@ -225,5 +139,7 @@ export async function POST(
   return NextResponse.json({
     status: 'ok',
     records_processed: recordsProcessed,
+    duration_ms: Date.now() - startedAt,
+    page_size: pageSize,
   });
 }
