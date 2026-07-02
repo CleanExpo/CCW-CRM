@@ -332,12 +332,16 @@ export const apiClient = {
   /**
    * POST request
    */
-  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
-    fetchApi<T>(endpoint, {
-      ...options,
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
+  post: <T>(endpoint: string, data?: unknown, options?: RequestInit, timeout?: number) =>
+    fetchApi<T>(
+      endpoint,
+      {
+        ...options,
+        method: 'POST',
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      timeout
+    ),
 
   /**
    * PUT request
