@@ -332,6 +332,13 @@ export interface AdjustmentFormData {
  */
 export interface WarehouseOpsPayload {
   updatedAt: string;
+  /** Data provenance per feed — 'not_connected' feeds always return empty queues. */
+  sources: {
+    receiving: 'live' | 'not_connected';
+    picks: 'live' | 'not_connected';
+    returns: 'live' | 'not_connected';
+    aiGuidance: 'live' | 'not_connected';
+  };
   metrics: {
     inboundToday: number;
     inboundDocked: number;
@@ -340,7 +347,8 @@ export interface WarehouseOpsPayload {
     rushPicks: number;
     returnsOpen: number;
     returnSlaRisk: number;
-    onTimeRate: number;
+    /** null = on-time tracking not connected yet (never rendered as 0%). */
+    onTimeRate: number | null;
   };
   receivingQueue: Array<{
     id: string;

@@ -4,115 +4,14 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 
-const FALLBACK_RECEIVING = [
-  {
-    id: 'RCV-2041',
-    supplier: 'Bennett Logistics',
-    container: 'MSKU-4092',
-    eta: 'Today 2:30 PM',
-    dock: 'Dock 3',
-    items: 48,
-    status: 'scheduled',
-    priority: 'high',
-  },
-  {
-    id: 'RCV-2038',
-    supplier: 'CleanTech Supplies',
-    container: 'OOLU-8812',
-    eta: 'Tomorrow 9:10 AM',
-    dock: 'Dock 1',
-    items: 32,
-    status: 'in_progress',
-    priority: 'normal',
-  },
-  {
-    id: 'RCV-2033',
-    supplier: 'Pacific Restoration',
-    container: 'TGHU-2217',
-    eta: 'Tomorrow 1:45 PM',
-    dock: 'Dock 2',
-    items: 21,
-    status: 'scheduled',
-    priority: 'low',
-  },
-];
-
-const FALLBACK_PICKS = [
-  {
-    id: 'PICK-8412',
-    customer: 'Metro Facility Services',
-    zone: 'BNE-02',
-    lines: 12,
-    promised: 'Today 5:00 PM',
-    status: 'picking',
-    priority: 'rush',
-  },
-  {
-    id: 'PICK-8401',
-    customer: 'Aero Services Group',
-    zone: 'SYD-01',
-    lines: 6,
-    promised: 'Today 4:00 PM',
-    status: 'queued',
-    priority: 'normal',
-  },
-  {
-    id: 'PICK-8396',
-    customer: 'Harbour Hospitality',
-    zone: 'BNE-01',
-    lines: 9,
-    promised: 'Tomorrow 11:00 AM',
-    status: 'queued',
-    priority: 'normal',
-  },
-];
-
-const FALLBACK_RETURNS = [
-  {
-    id: 'RMA-4321',
-    customer: 'Sapphire Maintenance',
-    reason: 'Damaged on arrival',
-    items: 2,
-    sla: 'Due in 4h',
-    status: 'inspection',
-  },
-  {
-    id: 'RMA-4316',
-    customer: 'Metro Facility Services',
-    reason: 'Warranty service',
-    items: 1,
-    sla: 'Due tomorrow',
-    status: 'awaiting_parts',
-  },
-  {
-    id: 'SRV-1198',
-    customer: 'Aero Services Group',
-    reason: 'Motor replacement',
-    items: 1,
-    sla: 'Due in 2d',
-    status: 'in_progress',
-  },
-];
-
-const AI_GUIDANCE = [
-  {
-    title: 'Rebalance BNE-02 picks',
-    detail:
-      '4 priority picks share the same zone. Recommend splitting to BNE-03 for faster throughput.',
-    impact: 'ETA risk reduced by 22%',
-  },
-  {
-    title: 'Inbound ETA risk',
-    detail:
-      'RCV-2041 has a 2h dock delay trend. Notify supplier and adjust labor plan.',
-    impact: 'Prevents overtime spike',
-  },
-  {
-    title: 'Return SLA breach',
-    detail: 'RMA-4321 is 4h from SLA. Assign QA to close inspection.',
-    impact: 'SLA compliance maintained',
-  },
-];
+// Returns/service and AI guidance have no backing data source yet. They are
+// reported as not_connected with empty queues — never populated with demo data.
+const SOURCES = {
+  receiving: 'live',
+  picks: 'live',
+  returns: 'not_connected',
+  aiGuidance: 'not_connected',
+} as const;
 
 function poToReceiving(
   po: {
@@ -153,10 +52,6 @@ export async function GET(request: NextRequest) {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  let receivingQueue = FALLBACK_RECEIVING;
-  let pickQueue = FALLBACK_PICKS;
-  const returnsQueue = FALLBACK_RETURNS;
-
   try {
     const inboundToday = await prisma.purchaseOrder.count({
       where: {
@@ -179,9 +74,7 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    if (inboundPos.length > 0) {
-      receivingQueue = inboundPos.map((po, i) => poToReceiving(po, i));
-    }
+    const receivingQueue = inboundPos.map((po, i) => poToReceiving(po, i));
 
     const openOrders = await prisma.order.findMany({
       where: {
@@ -196,54 +89,41 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'asc' },
     });
 
-    if (openOrders.length > 0) {
-      pickQueue = openOrders.map((o) => ({
-        id: o.orderNumber,
-        customer: o.customer.companyName,
-        zone: 'WH-OPS',
-        lines: o.lineItems.length,
-        promised: format(o.createdAt, 'MMM d, yyyy'),
-        status: o.lineItems.length > 8 ? 'picking' : 'queued',
-        priority: o.total > 5000 ? ('rush' as const) : ('normal' as const),
-      }));
-    }
+    const pickQueue = openOrders.map((o) => ({
+      id: o.orderNumber,
+      customer: o.customer.companyName,
+      zone: 'WH-OPS',
+      lines: o.lineItems.length,
+      promised: format(o.createdAt, 'MMM d, yyyy'),
+      status: o.lineItems.length > 8 ? 'picking' : 'queued',
+      priority: o.total > 5000 ? ('rush' as const) : ('normal' as const),
+    }));
 
     const rushPicks = pickQueue.filter((p) => p.priority === 'rush').length;
 
     return NextResponse.json({
       updatedAt: new Date().toISOString(),
+      sources: SOURCES,
       metrics: {
         inboundToday,
         inboundDocked: receivingQueue.filter((r) => r.status === 'in_progress').length,
         inboundScheduled: receivingQueue.filter((r) => r.status === 'scheduled').length,
         picksDueToday: pickQueue.length,
         rushPicks,
-        returnsOpen: returnsQueue.length,
-        returnSlaRisk: returnsQueue.length > 0 ? 1 : 0,
-        onTimeRate: openOrders.length > 0 ? 93 : 96,
+        returnsOpen: 0,
+        returnSlaRisk: 0,
+        // No on-time tracking exists yet; null means "not tracked", not 0%.
+        onTimeRate: null,
       },
       receivingQueue,
       pickQueue,
-      returnsQueue,
-      aiGuidance: AI_GUIDANCE,
+      returnsQueue: [],
+      aiGuidance: [],
     });
   } catch {
-    return NextResponse.json({
-      updatedAt: new Date().toISOString(),
-      metrics: {
-        inboundToday: FALLBACK_RECEIVING.length,
-        inboundDocked: 2,
-        inboundScheduled: 1,
-        picksDueToday: FALLBACK_PICKS.length,
-        rushPicks: 1,
-        returnsOpen: FALLBACK_RETURNS.length,
-        returnSlaRisk: 1,
-        onTimeRate: 96,
-      },
-      receivingQueue: FALLBACK_RECEIVING,
-      pickQueue: FALLBACK_PICKS,
-      returnsQueue: FALLBACK_RETURNS,
-      aiGuidance: AI_GUIDANCE,
-    });
+    return NextResponse.json(
+      { detail: 'Warehouse operations data is currently unavailable.' },
+      { status: 503 },
+    );
   }
 }
