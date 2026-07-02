@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
-import { fetchShopifyShop, getConfiguredShopifyFromRequest } from '@/lib/integrations/shopify';
+import {
+  fetchShopifyShop,
+  getConfiguredShopifyFromRequest,
+  shopifyCookieName,
+} from '@/lib/integrations/shopify';
 
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -14,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: 'No workspace found for this user' }, { status: 403 });
   }
 
-  const creds = getConfiguredShopifyFromRequest(request);
+  const creds = getConfiguredShopifyFromRequest(request, workspaceId);
   if (!creds) {
     return NextResponse.json({ detail: 'Shopify credentials not configured.' }, { status: 400 });
   }
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
     shop_name: shop.name,
     message: `Connected to ${shop.name}.`,
   });
-  response.cookies.set('shopify_connected', '1', {
+  response.cookies.set(shopifyCookieName('shopify_connected', workspaceId), '1', {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

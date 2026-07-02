@@ -7,6 +7,7 @@ import {
   getShopifyRedirectUri,
   getShopifyScopes,
   resolveMyshopifyHost,
+  shopifyCookieName,
 } from '@/lib/integrations/shopify';
 import {
   SHOPIFY_OAUTH_SHOP_COOKIE,
@@ -25,7 +26,9 @@ export async function GET(request: NextRequest) {
   }
 
   const shopParam = request.nextUrl.searchParams.get('shop')?.trim();
-  const shopFromCookie = request.cookies.get('shopify_shop_domain')?.value?.trim();
+  const shopFromCookie = request.cookies
+    .get(shopifyCookieName('shopify_shop_domain', workspaceId))
+    ?.value?.trim();
   const shopFromEnv = process.env.SHOPIFY_SHOP_DOMAIN?.trim();
   const raw = shopParam || shopFromCookie || shopFromEnv || '';
   const { adminHost } = resolveMyshopifyHost(raw);

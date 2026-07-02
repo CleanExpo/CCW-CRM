@@ -76,17 +76,48 @@ export function resolveMyshopifyHost(shopInput: string): { adminHost: string; so
   return { adminHost: primary, source: 'input' };
 }
 
-export function getConfiguredShopifyFromRequest(request: NextRequest): {
+/**
+ * Namespaces a Shopify credential cookie name to a workspace, so one workspace's stored
+ * shop/token cannot be read back for a different, authenticated workspace on a shared
+ * browser/session. Callers that genuinely have no workspace context (none of the current
+ * API routes — see below) get the legacy, unscoped name.
+ */
+export function shopifyCookieName(base: string, workspaceId?: string): string {
+  return workspaceId ? `${base}__${workspaceId}` : base;
+}
+
+/**
+ * Resolves the configured Shopify shop/token for this request.
+ *
+ * IMPORTANT (org-context scoping): Shopify has no workspace-scoped connection table
+ * (unlike WorkspaceXeroConnection) — the browser cookie set by the OAuth callback /
+ * configure route *is* the only storage. Once a `workspaceId` is known, credentials must
+ * be read from that workspace's namespaced cookies (`shopify_shop_domain__<workspaceId>`,
+ * `shopify_access_token__<workspaceId>`) only. We must NOT fall back to the legacy,
+ * unnamespaced cookies in that case — those could belong to a *different* workspace
+ * (e.g. a user who is a member of multiple workspaces, or a shared/kiosk browser that
+ * never cleared a previous org's session), mirroring the Xero cross-tenant token leak
+ * fixed in getValidXeroTokens(). The global `SHOPIFY_SHOP_DOMAIN` / `SHOPIFY_ACCESS_TOKEN`
+ * env vars remain a valid fallback in both cases — they are operator-configured
+ * single-tenant deployment config, not per-user browser state.
+ */
+export function getConfiguredShopifyFromRequest(
+  request: NextRequest,
+  workspaceId?: string
+): {
   shopDomain: string;
   accessToken: string;
   adminHost: string;
 } | null {
+  const shopCookieName = shopifyCookieName('shopify_shop_domain', workspaceId);
+  const tokenCookieName = shopifyCookieName('shopify_access_token', workspaceId);
+
   const cookieShop =
-    request.cookies.get('shopify_shop_domain')?.value?.trim() ||
+    request.cookies.get(shopCookieName)?.value?.trim() ||
     process.env.SHOPIFY_SHOP_DOMAIN?.trim() ||
     '';
   const token =
-    request.cookies.get('shopify_access_token')?.value?.trim() ||
+    request.cookies.get(tokenCookieName)?.value?.trim() ||
     process.env.SHOPIFY_ACCESS_TOKEN?.trim() ||
     '';
   const { adminHost } = resolveMyshopifyHost(cookieShop);

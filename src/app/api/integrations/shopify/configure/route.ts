@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
-import { getShopifyMode, resolveMyshopifyHost } from '@/lib/integrations/shopify';
+import { getShopifyMode, resolveMyshopifyHost, shopifyCookieName } from '@/lib/integrations/shopify';
 
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -51,11 +51,13 @@ export async function POST(request: NextRequest) {
   });
   const secure = process.env.NODE_ENV === 'production';
   const common = { httpOnly: true, sameSite: 'lax' as const, secure, path: '/', maxAge: 60 * 60 * 24 * 30 };
-  res.cookies.set('shopify_shop_domain', adminHost, common);
-  res.cookies.set('shopify_access_token', accessToken, common);
-  if (body.api_key) res.cookies.set('shopify_api_key', body.api_key, common);
-  if (body.api_secret) res.cookies.set('shopify_api_secret', body.api_secret, common);
-  if (body.webhook_secret) res.cookies.set('shopify_webhook_secret', body.webhook_secret, common);
-  res.cookies.set('shopify_connected', '0', common);
+  res.cookies.set(shopifyCookieName('shopify_shop_domain', workspaceId), adminHost, common);
+  res.cookies.set(shopifyCookieName('shopify_access_token', workspaceId), accessToken, common);
+  if (body.api_key) res.cookies.set(shopifyCookieName('shopify_api_key', workspaceId), body.api_key, common);
+  if (body.api_secret)
+    res.cookies.set(shopifyCookieName('shopify_api_secret', workspaceId), body.api_secret, common);
+  if (body.webhook_secret)
+    res.cookies.set(shopifyCookieName('shopify_webhook_secret', workspaceId), body.webhook_secret, common);
+  res.cookies.set(shopifyCookieName('shopify_connected', workspaceId), '0', common);
   return res;
 }

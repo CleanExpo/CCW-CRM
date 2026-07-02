@@ -4,6 +4,7 @@ import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
 import {
   exchangeShopifyOAuthCode,
   getShopifyClientSecret,
+  shopifyCookieName,
   verifyShopifyOAuthHmac,
 } from '@/lib/integrations/shopify';
 import {
@@ -59,9 +60,9 @@ export async function GET(request: NextRequest) {
     const res = NextResponse.redirect(`${settingsUrl}?shopify_success=1`);
     const secure = process.env.NODE_ENV === 'production';
     const common = { httpOnly: true, sameSite: 'lax' as const, secure, path: '/', maxAge: 60 * 60 * 24 * 30 };
-    res.cookies.set('shopify_shop_domain', shop, common);
-    res.cookies.set('shopify_access_token', access_token, common);
-    res.cookies.set('shopify_connected', '1', common);
+    res.cookies.set(shopifyCookieName('shopify_shop_domain', workspaceId), shop, common);
+    res.cookies.set(shopifyCookieName('shopify_access_token', workspaceId), access_token, common);
+    res.cookies.set(shopifyCookieName('shopify_connected', workspaceId), '1', common);
     clearShopifyOAuthStateCookies(res);
     return res;
   } catch (e) {
