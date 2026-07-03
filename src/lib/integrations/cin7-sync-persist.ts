@@ -46,6 +46,53 @@ export type Cin7CustomerSyncRow = {
 /** A source row dropped during mapping, with why and a best-effort identifier for the logs. */
 export type SkippedRow = { reason: string; identifier: string };
 
+/**
+ * Natural key for customers that have no email (UNI-2252). Cin7 exposes no stable
+ * customer ID, so dedup keys on normalized companyName|phone|city. Two genuinely
+ * distinct customers sharing all three fields would merge — accepted trade-off.
+ */
+export function customerNaturalKey(
+  companyName: string,
+  phone?: string | null,
+  city?: string | null
+): string {
+  const norm = (v?: string | null) => (v ?? '').trim().toLowerCase();
+  return `${norm(companyName)}|${norm(phone)}|${norm(city)}`;
+}
+
+/**
+ * Pure planning step for the no-email customer branch: given incoming rows and the
+ * existing no-email rows already in the DB, decide which rows are genuinely new.
+ * First match wins against existing (tolerates pre-existing duplicates in the DB);
+ * repeats of the same key within one batch are collapsed to a single create.
+ */
+export function planNoEmailCustomerBatch(
+  rows: Cin7CustomerSyncRow[],
+  existing: Array<{ companyName: string; phone?: string | null; city?: string | null }>
+): { toCreate: Cin7CustomerSyncRow[]; matchedExisting: number; duplicatesInBatch: number } {
+  const existingKeys = new Set(
+    existing.map((e) => customerNaturalKey(e.companyName, e.phone, e.city))
+  );
+  const toCreate: Cin7CustomerSyncRow[] = [];
+  const seenInBatch = new Set<string>();
+  let matchedExisting = 0;
+  let duplicatesInBatch = 0;
+
+  for (const row of rows) {
+    const key = customerNaturalKey(row.companyName, row.phone, row.city);
+    if (existingKeys.has(key)) {
+      matchedExisting += 1;
+    } else if (seenInBatch.has(key)) {
+      duplicatesInBatch += 1;
+    } else {
+      seenInBatch.add(key);
+      toCreate.push(row);
+    }
+  }
+
+  return { toCreate, matchedExisting, duplicatesInBatch };
+}
+
 /** Result of mapping product source rows: the rows that will be imported plus the ones skipped. */
 export type ProductMapResult = { rows: Cin7ProductSyncRow[]; skipped: SkippedRow[] };
 
@@ -143,14 +190,36 @@ export async function batchUpsertCustomers(
     }
 
     if (withoutEmail.length > 0) {
-      await prisma.customer.createMany({
-        data: withoutEmail.map((r) => ({
+      // UNI-2252: previously an unconditional createMany that re-inserted every
+      // no-email customer on every sync run. Cin7 has no stable customer ID, so
+      // dedup on the normalized companyName|phone|city natural key instead.
+      const names = [...new Set(withoutEmail.map((r) => r.companyName.trim()))];
+      const existing = await prisma.customer.findMany({
+        where: {
           ownerUserId,
-          companyName: r.companyName,
-          phone: r.phone,
-          city: r.city,
-        })),
+          companyName: { in: names },
+          OR: [{ email: null }, { email: '' }],
+        },
+        select: { companyName: true, phone: true, city: true },
       });
+
+      const plan = planNoEmailCustomerBatch(withoutEmail, existing);
+      if (plan.matchedExisting > 0 || plan.duplicatesInBatch > 0) {
+        console.log(
+          `[Cin7 sync] customers(no-email): ${plan.toCreate.length} new, ${plan.matchedExisting} already present, ${plan.duplicatesInBatch} duplicate in batch`
+        );
+      }
+
+      if (plan.toCreate.length > 0) {
+        await prisma.customer.createMany({
+          data: plan.toCreate.map((r) => ({
+            ownerUserId,
+            companyName: r.companyName.trim(),
+            phone: r.phone?.trim(),
+            city: r.city?.trim(),
+          })),
+        });
+      }
     }
 
     processed += chunk.length;

@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mapCoreProductRows, mapOmniProductRows } from './cin7-sync-persist';
+import {
+  customerNaturalKey,
+  mapCoreProductRows,
+  mapOmniProductRows,
+  planNoEmailCustomerBatch,
+} from './cin7-sync-persist';
 
 describe('mapCoreProductRows — skip reporting (UNI-2253)', () => {
   beforeEach(() => vi.spyOn(console, 'warn').mockImplementation(() => {}));
@@ -42,6 +47,89 @@ describe('mapCoreProductRows — skip reporting (UNI-2253)', () => {
   it('uses "(unnamed)" as the identifier when both SKU and Name are missing', () => {
     const result = mapCoreProductRows([{ Price: 5 }]);
     expect(result.skipped).toEqual([{ reason: 'missing_sku', identifier: '(unnamed)' }]);
+  });
+});
+
+describe('customerNaturalKey (UNI-2252)', () => {
+  it('normalizes case, whitespace, and missing fields', () => {
+    expect(customerNaturalKey(' Acme Pty Ltd ', ' 0400 111 222 ', ' Brisbane ')).toBe(
+      customerNaturalKey('acme pty ltd', '0400 111 222', 'brisbane')
+    );
+    expect(customerNaturalKey('Acme', null, undefined)).toBe('acme||');
+  });
+
+  it('distinguishes customers that differ in any component', () => {
+    expect(customerNaturalKey('Acme', '111', 'Brisbane')).not.toBe(
+      customerNaturalKey('Acme', '222', 'Brisbane')
+    );
+    expect(customerNaturalKey('Acme', '111', 'Brisbane')).not.toBe(
+      customerNaturalKey('Acme', '111', 'Sydney')
+    );
+  });
+});
+
+describe('planNoEmailCustomerBatch (UNI-2252)', () => {
+  const row = (companyName: string, phone?: string, city?: string) => ({
+    companyName,
+    email: '',
+    phone,
+    city,
+  });
+
+  it('creates rows whose key is not in the DB and skips ones that are', () => {
+    const plan = planNoEmailCustomerBatch(
+      [row('Acme', '111', 'Brisbane'), row('NewCo', '333', 'Perth')],
+      [{ companyName: 'Acme', phone: '111', city: 'Brisbane' }]
+    );
+    expect(plan.toCreate.map((r) => r.companyName)).toEqual(['NewCo']);
+    expect(plan.matchedExisting).toBe(1);
+    expect(plan.duplicatesInBatch).toBe(0);
+  });
+
+  it('is idempotent: re-running the same batch against its own output creates nothing', () => {
+    const batch = [row('Acme', '111', 'Brisbane'), row('Beta', '222', 'Sydney')];
+    const first = planNoEmailCustomerBatch(batch, []);
+    expect(first.toCreate).toHaveLength(2);
+    const second = planNoEmailCustomerBatch(
+      batch,
+      first.toCreate.map((r) => ({ companyName: r.companyName, phone: r.phone, city: r.city }))
+    );
+    expect(second.toCreate).toHaveLength(0);
+    expect(second.matchedExisting).toBe(2);
+  });
+
+  it('matches case/whitespace variants of existing rows', () => {
+    const plan = planNoEmailCustomerBatch(
+      [row('  ACME  ', '111', 'BRISBANE')],
+      [{ companyName: 'Acme', phone: '111', city: 'Brisbane' }]
+    );
+    expect(plan.toCreate).toHaveLength(0);
+    expect(plan.matchedExisting).toBe(1);
+  });
+
+  it('collapses repeated keys within one batch to a single create', () => {
+    const plan = planNoEmailCustomerBatch(
+      [row('Acme', '111', 'Brisbane'), row('Acme', '111', 'Brisbane')],
+      []
+    );
+    expect(plan.toCreate).toHaveLength(1);
+    expect(plan.duplicatesInBatch).toBe(1);
+  });
+
+  it('tolerates pre-existing duplicates in the DB (first match wins, still no create)', () => {
+    const dupe = { companyName: 'Acme', phone: '111', city: 'Brisbane' };
+    const plan = planNoEmailCustomerBatch([row('Acme', '111', 'Brisbane')], [dupe, dupe, dupe]);
+    expect(plan.toCreate).toHaveLength(0);
+    expect(plan.matchedExisting).toBe(1);
+  });
+
+  it('does NOT merge customers that differ in phone or city (false-merge guard)', () => {
+    const plan = planNoEmailCustomerBatch(
+      [row('Acme', '222', 'Brisbane'), row('Acme', '111', 'Sydney')],
+      [{ companyName: 'Acme', phone: '111', city: 'Brisbane' }]
+    );
+    expect(plan.toCreate).toHaveLength(2);
+    expect(plan.matchedExisting).toBe(0);
   });
 });
 
