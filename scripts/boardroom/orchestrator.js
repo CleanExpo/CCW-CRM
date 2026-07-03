@@ -16,6 +16,17 @@
  *   Step 10:  Security audit via security-audit.js (weekly comprehensive)
  *   Step 18a: QA check via qa-check.js
  *   Step 18b: Retrospective via retro.js (produces cycle_complete.json)
+ *
+ * Nexus calibration (added 2026-07-03):
+ *   Every board member and the Witness run below Fable-5 tier (Opus/Sonnet/
+ *   Haiku), so every callBoardMember() invocation is wrapped in the Nexus
+ *   Prompt — the operator doctrine that lifts sub-Fable tiers toward
+ *   Fable-5-grade discipline (act-on-enough-info, scope control, closed
+ *   verification loop, grounded reporting). The prompt is fetched fresh
+ *   every session from its single source of truth, CleanExpo/Pi-Dev-Ops
+ *   (skills/nexus/references/NEXUS_PROMPT.md) — never forked or pasted
+ *   here, per that skill's own rule. If the fetch fails, the board
+ *   proceeds on raw personas (non-fatal, matches the preflight pattern).
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -38,6 +49,12 @@ const DATA_DIR = process.env.VIDEO_OUTPUT_DIR || './data/sessions';
 const OPUS = 'claude-opus-4-6';
 const SONNET = 'claude-sonnet-4-6';
 const HAIKU = 'claude-haiku-4-5-20251001';
+
+// ─── Nexus Prompt (calibration doctrine for sub-Fable tiers) ─────────────────
+// Source of truth: CleanExpo/Pi-Dev-Ops skills/nexus/references/NEXUS_PROMPT.md
+// Do not fork this text into CCW-CRM — fetch fresh every session instead.
+const NEXUS_PROMPT_URL =
+  'https://raw.githubusercontent.com/CleanExpo/Pi-Dev-Ops/main/skills/nexus/references/NEXUS_PROMPT.md';
 
 // ─── Board member definitions ───────────────────────────────────────────────
 const BOARD_MEMBERS = [
@@ -222,17 +239,73 @@ Available Superpowers: verification-before-completion
 Apply verification-before-completion before finalising the decision log — confirm every decision is supported by at least one board member's deliberation.`,
 };
 
+// ─── Nexus Prompt helpers ──────────────────────────────────────────────────
+
+/**
+ * Fetch the Nexus Prompt fresh from its single source of truth
+ * (CleanExpo/Pi-Dev-Ops). Non-fatal on failure — board proceeds on raw
+ * personas this session (matches preflight's optional-endpoint pattern).
+ *
+ * @param {string} sessionId
+ * @returns {Promise<string|null>} Prompt template containing a {TASK} placeholder, or null
+ */
+async function fetchNexusPrompt(sessionId) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(NEXUS_PROMPT_URL, {
+      headers: { 'X-Claude-Code-Session-Id': sessionId },
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (!text.includes('{TASK}')) {
+      throw new Error('fetched body missing {TASK} placeholder — unexpected content');
+    }
+    console.log('[Boardroom] Nexus Prompt fetched fresh from Pi-Dev-Ops ✅');
+    return text;
+  } catch (err) {
+    console.warn(
+      `[Boardroom] Nexus Prompt fetch skipped: ${err.message} — board runs on raw personas this session`
+    );
+    return null;
+  }
+}
+
+/**
+ * Wrap a board member's persona system prompt in the Nexus Prompt, filling
+ * {TASK} with a role brief that carries the why + points at the persona
+ * that follows verbatim. Falls back to the raw persona if nexusPromptTemplate
+ * is unavailable.
+ *
+ * @param {string|null} nexusPromptTemplate
+ * @param {Object} member - board member or WITNESS definition
+ * @returns {string}
+ */
+function wrapWithNexus(nexusPromptTemplate, member) {
+  if (!nexusPromptTemplate) return member.system;
+  const taskBrief = `Serve as ${member.name} in today's CCW Boardroom session — a live deliberation the CEO uses to steer CCW-Online ERP. Your persona, mandate, and available superpowers follow verbatim; apply the operating rules above to how you fulfil that mandate.
+
+---
+
+${member.system}`;
+  return nexusPromptTemplate.replace('{TASK}', taskBrief);
+}
+
 // ─── Orchestrator helpers ─────────────────────────────────────────────────────
 
 /**
  * Call a single board member via Anthropic API.
  * Opus gets adaptive thinking with effort:max, Sonnet with effort:high, Haiku plain.
+ * System prompt is Nexus-wrapped when nexusPromptTemplate is available (see
+ * wrapWithNexus) — the model-calibration section of the Nexus Prompt itself
+ * matches this file's Opus/Sonnet/Haiku tiering.
  */
-async function callBoardMember(client, member, messages) {
+async function callBoardMember(client, member, messages, nexusPromptTemplate) {
   const params = {
     model: member.model,
     max_tokens: member.model === HAIKU ? 4096 : 16000,
-    system: member.system,
+    system: wrapWithNexus(nexusPromptTemplate, member),
     messages,
   };
 
@@ -346,6 +419,10 @@ export async function runBoardroomSession() {
   // ── Step 02: Pre-flight endpoint checks ──
   await preFlightCheck(sessionId);
 
+  // ── Step 02b: Fetch Nexus Prompt (calibration doctrine, fresh every session) ──
+  console.log('\n[Boardroom] Step 02b — Fetching Nexus Prompt (Pi-Dev-Ops)...');
+  const nexusPromptTemplate = await fetchNexusPrompt(sessionId);
+
   // ── Step 03: Scout Swarm — 5 parallel Perplexity queries ──
   console.log('\n[Boardroom] Step 03 — Scout Swarm dispatching...');
   const scoutResults = await runScoutSwarm();
@@ -373,12 +450,17 @@ export async function runBoardroomSession() {
 
   console.log('\n[Boardroom] Step 05 — Data Sovereign synthesising intelligence...');
   const dataSovereign = BOARD_MEMBERS.find((m) => m.id === 'data_sovereign');
-  const sovereignOutput = await callBoardMember(client, dataSovereign, [
-    {
-      role: 'user',
-      content: `Today is ${new Date().toLocaleDateString('en-AU')}. Here is this week's intelligence from the Scout Swarm:\n\n${intelligenceSummary}\n\nSynthesize exactly 3 critical findings for the boardroom.`,
-    },
-  ]);
+  const sovereignOutput = await callBoardMember(
+    client,
+    dataSovereign,
+    [
+      {
+        role: 'user',
+        content: `Today is ${new Date().toLocaleDateString('en-AU')}. Here is this week's intelligence from the Scout Swarm:\n\n${intelligenceSummary}\n\nSynthesize exactly 3 critical findings for the boardroom.`,
+      },
+    ],
+    nexusPromptTemplate
+  );
 
   // ── Step 06: Orchestrator opens boardroom ──
   console.log('\n[Boardroom] Step 06 — Orchestrator opening boardroom...');
@@ -442,7 +524,7 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
       },
     ];
 
-    const output = await callBoardMember(client, member, messages);
+    const output = await callBoardMember(client, member, messages, nexusPromptTemplate);
     boardOutputs[memberId] = output;
     conversationHistory.push({ speaker: member.name, output });
 
@@ -485,12 +567,17 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
 
   // ── Step 11: The Witness — SWOT + Decision Log ──
   console.log('\n[Boardroom] Step 11 — The Witness reviewing session...');
-  const witnessOutput = await callBoardMember(client, WITNESS, [
-    {
-      role: 'user',
-      content: `Review this boardroom session and produce your SWOT + Decision Log:\n\n${conversationHistory.map((c) => `${c.speaker}:\n${c.output}`).join('\n\n---\n\n')}`,
-    },
-  ]);
+  const witnessOutput = await callBoardMember(
+    client,
+    WITNESS,
+    [
+      {
+        role: 'user',
+        content: `Review this boardroom session and produce your SWOT + Decision Log:\n\n${conversationHistory.map((c) => `${c.speaker}:\n${c.output}`).join('\n\n---\n\n')}`,
+      },
+    ],
+    nexusPromptTemplate
+  );
   const witnessData = parseWitnessOutput(witnessOutput);
 
   // Extract BUILD_STATUS from Architect
@@ -503,6 +590,7 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
     sessionId,
     timestamp: new Date().toISOString(),
     buildStatus,
+    nexusCalibrated: Boolean(nexusPromptTemplate),
     boardOutputs,
     videoBrief,
     witness: witnessData,
@@ -604,6 +692,9 @@ The boardroom is now in session. CEO Phill McGurk presiding.`;
   }
 
   console.log(`\n✅ [Boardroom] Session ${sessionId} complete — BUILD_STATUS: ${buildStatus}`);
+  console.log(
+    `🧭 [Boardroom] Nexus calibration: ${nexusPromptTemplate ? 'applied' : 'skipped (fetch failed — raw personas used)'}`
+  );
   if (qaReport) {
     console.log(
       `🧪 [Boardroom] QA: ${qaReport.qaStatus} — ${qaReport.summary?.passRate}% pass rate`
