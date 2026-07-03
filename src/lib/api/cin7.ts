@@ -127,12 +127,15 @@ export async function disconnectCin7(): Promise<{ status: string }> {
  * Trigger manual sync for a specific entity type
  */
 export async function triggerCin7Sync(
-  entityType: 'products' | 'customers' | 'orders' | 'inventory'
+  entityType: 'products' | 'customers' | 'orders' | 'inventory' | 'suppliers'
 ): Promise<{
   status: string;
   records_processed?: number;
+  records_skipped?: number;
   duration_ms?: number;
   page_size?: number;
+  /** Present only when CIN7_PRODUCT_VISIBILITY_FIELD is configured (UNI-2259). */
+  visibility_counts?: { secure_internal: number; show_public: number; unknown: number };
 }> {
   return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
 }

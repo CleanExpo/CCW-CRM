@@ -21,6 +21,12 @@ import {
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
 import {
+  addVisibilityCounts,
+  getCin7VisibilityConfig,
+  tallyProductVisibility,
+  type Cin7VisibilityCounts,
+} from '@/lib/integrations/cin7-visibility';
+import {
   batchUpsertCustomers,
   batchUpsertProducts,
   batchUpsertSuppliers,
@@ -78,6 +84,14 @@ export async function POST(
   const pageSize = getCin7PageSize();
   let recordsProcessed = 0;
   let recordsSkipped = 0;
+  // UNI-2259 groundwork: env-gated visibility tally (null = feature off, response unchanged).
+  // Only armed where a tally can actually run — Core products/inventory — so other entity
+  // types and the Omni path never return misleading all-zero counts.
+  const visibilityConfig = getCin7VisibilityConfig();
+  const visibilityCounts: Cin7VisibilityCounts | null =
+    visibilityConfig && useCore && (entityType === 'products' || entityType === 'inventory')
+      ? { secure_internal: 0, show_public: 0, unknown: 0 }
+      : null;
   const startedAt = Date.now();
 
   if (entityType === 'products' || entityType === 'inventory') {
@@ -85,6 +99,10 @@ export async function POST(
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
         if (rows.length === 0) break;
+        if (visibilityConfig && visibilityCounts) {
+          // Tally on the raw rows — the mapper drops the arbitrary Cin7 fields.
+          addVisibilityCounts(visibilityCounts, tallyProductVisibility(rows, visibilityConfig));
+        }
         const mapped = mapCoreProductRows(rows);
         recordsSkipped += mapped.skipped.length;
         recordsProcessed += await batchUpsertProducts(scope.userId, mapped.rows);
@@ -163,8 +181,11 @@ export async function POST(
   }
 
   const durationMs = Date.now() - startedAt;
+  const visibilitySummary = visibilityCounts
+    ? ` | visibility: ${visibilityCounts.secure_internal} secure, ${visibilityCounts.show_public} public, ${visibilityCounts.unknown} unknown`
+    : '';
   console.log(
-    `[Cin7 sync] ${entityType}: ${recordsProcessed} records, ${recordsSkipped} skipped in ${durationMs}ms (${useCore ? 'core' : 'omni'})`
+    `[Cin7 sync] ${entityType}: ${recordsProcessed} records, ${recordsSkipped} skipped in ${durationMs}ms (${useCore ? 'core' : 'omni'})${visibilitySummary}`
   );
 
   return NextResponse.json({
@@ -173,5 +194,7 @@ export async function POST(
     records_skipped: recordsSkipped,
     duration_ms: durationMs,
     page_size: pageSize,
+    // Present only when CIN7_PRODUCT_VISIBILITY_FIELD is configured (UNI-2259).
+    ...(visibilityCounts ? { visibility_counts: visibilityCounts } : {}),
   });
 }
