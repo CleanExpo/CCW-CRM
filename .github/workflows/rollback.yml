@@ -338,52 +338,8 @@ jobs:
             echo "- :x: Verification: ${{ needs.verify.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Send Slack notification
-        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v3.0.1
-        with:
-          payload: |
-            {
-              "attachments": [
-                {
-                  "color": "${{ steps.status.outputs.color }}",
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": ":warning: *Emergency Rollback - ${{ needs.validate.outputs.environment }}*"
-                      }
-                    },
-                    {
-                      "type": "section",
-                      "fields": [
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Environment:*\n${{ needs.validate.outputs.environment }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Rollback Type:*\n${{ needs.validate.outputs.rollback_type }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Rolled back to:*\n${{ needs.validate.outputs.short_sha }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Initiated by:*\n${{ github.actor }}"
-                        },
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Status:*\n${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      # Slack notification removed - same fix as deploy-production.yml and
+      # deploy-staging.yml: `if: secrets.X != ''` is invalid (GitHub disallows
+      # `secrets.*` in if-conditions, so this workflow failed validation on every
+      # push and showed a red X in 0s) and no-Slack is portfolio standard. Status
+      # surfaces in the GITHUB_STEP_SUMMARY block above.
