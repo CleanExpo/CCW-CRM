@@ -166,6 +166,31 @@ export async function fetchCin7CustomerPage(
   return { rows, total };
 }
 
+export type Cin7SupplierRow = {
+  /** Cin7 Core (DEAR) supplier GUID — stable, used as the dedup key. */
+  ID?: string;
+  Name?: string;
+  Contact?: string;
+  Phone?: string;
+  Email?: string;
+  [key: string]: unknown;
+};
+
+export async function fetchCin7SupplierPage(
+  creds: { accountId: string; applicationKey: string },
+  page: number,
+  limit: number
+): Promise<{ rows: Cin7SupplierRow[]; total: number; error?: string }> {
+  const { ok, data, error } = await cin7CoreGet<{
+    SupplierList?: Cin7SupplierRow[];
+    Total?: number;
+  }>(`/Supplier?Page=${page}&Limit=${limit}`, creds);
+  if (!ok) return { rows: [], total: 0, error };
+  const rows = Array.isArray(data.SupplierList) ? data.SupplierList : [];
+  const total = typeof data.Total === 'number' ? data.Total : rows.length;
+  return { rows, total };
+}
+
 export async function fetchCin7SaleTotal(
   creds: { accountId: string; applicationKey: string }
 ): Promise<number> {
