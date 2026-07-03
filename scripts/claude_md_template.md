@@ -1,6 +1,6 @@
 # CLAUDE.md — CCW Boardroom Autonomous CRON System
 
-**Version:** 3.0 | **Updated:** 29 March 2026 | **Author:** Phill McGurk (CEO)
+**Version:** 3.1 | **Updated:** 3 July 2026 | **Author:** Phill McGurk (CEO)
 **Source docs:** https://platform.claude.com/docs/en/home
 
 ---
@@ -21,6 +21,32 @@ The CEO is the singular authority. The CEO does not deliberate — the CEO **dis
 4. Every CRON cycle must produce a tangible output (debrief JSON minimum)
 5. The CEO is the only human in the room
 6. CLAUDE.md is read first, always
+
+---
+
+## 🧭 Nexus Prompt — Operating Doctrine (added 3 July 2026)
+
+Every session in this system — the API-driven board (Layer 1/orchestrator.js)
+*and* the 4 Cowork sessions below (Layer 2) — runs sub-Fable-5 Claude tiers
+(Opus/Sonnet/Haiku). All of them should operate under the **Nexus Prompt**:
+the calibration doctrine that lifts those tiers toward Fable-5-grade
+discipline (act-on-enough-info, scope control, a closed verification loop,
+grounded progress claims, and outcome-first communication).
+
+**Source of truth (do not fork or paste the body here):**
+`CleanExpo/Pi-Dev-Ops` → `skills/nexus/references/NEXUS_PROMPT.md`
+Raw: `https://raw.githubusercontent.com/CleanExpo/Pi-Dev-Ops/main/skills/nexus/references/NEXUS_PROMPT.md`
+
+- **Layer 1 (API board):** `scripts/boardroom/orchestrator.js` fetches this
+  fresh every session and wraps every board member's system prompt in it.
+  See `nexusCalibrated` in each session's `debrief.json`.
+- **Layer 2 (Cowork sessions S1–S4):** at the start of each session, fetch
+  the URL above and treat its body as standing operating doctrine for the
+  session — same pattern as reading this CLAUDE.md first. Replace `{TASK}`
+  with that session's brief (Data Connection Crucible / UI-UX Sandbox /
+  Anti-Bloat Scope Control / Code Integrity Cloud) plus the why.
+- It is recalibrated monthly via PR against that skill — always fetch live,
+  never quote it verbatim into this file or into session output.
 
 ---
 
@@ -132,6 +158,7 @@ Quality control. Detects contradictions. Produces SWOT + Decision Log. Validates
 00. READ CLAUDE.md
 01. bootstrap.js → validate env vars (HALT if missing)
 02. preflight.js → validate all endpoints (HALT if fail)
+02b. Fetch Nexus Prompt (Pi-Dev-Ops) → calibration doctrine for this session
 03. Scout Swarm → 5x parallel Perplexity queries (7-day recency)
 04. apify.js → competitor + forum scraping
 05. Data Sovereign → 3 key findings
@@ -151,6 +178,7 @@ Quality control. Detects contradictions. Produces SWOT + Decision Log. Validates
 ```
 
 HALT rule: Steps 01-02 fail → alert CEO via Slack. Do not proceed.
+Step 02b is non-fatal: Nexus fetch failure logs a warning and the board runs on raw personas.
 
 ---
 
@@ -202,6 +230,7 @@ UNI-1673 → UNI-1666 + UNI-1667 (parallel) → UNI-1668 → UNI-1669 → UNI-16
 - Adaptive Thinking: https://platform.claude.com/docs/en/docs/build-with-claude/adaptive-thinking
 - Multi-Agent Research: https://www.anthropic.com/engineering/multi-agent-research-system
 - Anthropic Docs: https://platform.claude.com/docs/en/home
+- Nexus Prompt (operating doctrine): https://github.com/CleanExpo/Pi-Dev-Ops/blob/main/skills/nexus/references/NEXUS_PROMPT.md
 
 ---
 
@@ -212,4 +241,4 @@ Boardroom Video Series = radical transparency as brand strategy.
 Success = YouTube Partner Program (1,000 subs + 4,000 watch hours).
 
 _"My work is GOD." — Phill McGurk, CEO_
-_v3.0 | 29 March 2026 | Auto-updated each session_
+_v3.1 | 3 July 2026 | Auto-updated each session_
