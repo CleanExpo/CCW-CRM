@@ -96,6 +96,17 @@ export function planNoEmailCustomerBatch(
 /** Result of mapping product source rows: the rows that will be imported plus the ones skipped. */
 export type ProductMapResult = { rows: Cin7ProductSyncRow[]; skipped: SkippedRow[] };
 
+export type Cin7SupplierSyncRow = {
+  supplierCode: string;
+  companyName: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+};
+
+/** Result of mapping supplier source rows: the rows that will be imported plus the ones skipped. */
+export type SupplierMapResult = { rows: Cin7SupplierSyncRow[]; skipped: SkippedRow[] };
+
 /** Batch upsert products by owner+sku — concurrent upserts, no multi-statement transaction. */
 export async function batchUpsertProducts(
   ownerUserId: string,
@@ -125,6 +136,45 @@ export async function batchUpsertProducts(
           name: row.name,
           price: row.price,
           stock: row.stock,
+        },
+      })
+    );
+    processed += chunk.length;
+  }
+
+  return processed;
+}
+
+/** Batch upsert suppliers by owner+supplierCode — concurrent upserts, idempotent on re-run. */
+export async function batchUpsertSuppliers(
+  ownerUserId: string,
+  rows: Cin7SupplierSyncRow[]
+): Promise<number> {
+  if (rows.length === 0) return 0;
+
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.supplier.upsert({
+        where: { ownerUserId_supplierCode: { ownerUserId, supplierCode: row.supplierCode } },
+        create: {
+          ownerUserId,
+          supplierCode: row.supplierCode,
+          companyName: row.companyName,
+          contactName: row.contactName,
+          email: row.email,
+          phone: row.phone,
+          isActive: true,
+        },
+        update: {
+          companyName: row.companyName,
+          contactName: row.contactName,
+          email: row.email,
+          phone: row.phone,
         },
       })
     );
@@ -259,6 +309,42 @@ export function mapCoreProductRows(
   if (skipped.length > 0) {
     console.warn(
       `[Cin7 sync] mapCoreProductRows: skipped ${skipped.length} product row(s) with missing SKU`
+    );
+  }
+  return { rows: out, skipped };
+}
+
+export function mapCoreSupplierRows(
+  rows: Array<{ ID?: string; Name?: string; Contact?: string; Phone?: string; Email?: string }>
+): SupplierMapResult {
+  const out: Cin7SupplierSyncRow[] = [];
+  const skipped: SkippedRow[] = [];
+  for (const row of rows) {
+    // Cin7 Core exposes a stable supplier GUID (ID). Without it we can't dedup, so skip
+    // rather than risk the duplicate-on-every-run bug (cf. UNI-2252).
+    const supplierCode = String(row.ID ?? '').trim();
+    if (!supplierCode) {
+      skipped.push({
+        reason: 'missing_id',
+        identifier: String(row.Name ?? '').trim() || '(unnamed)',
+      });
+      continue;
+    }
+    const clean = (v?: string) => {
+      const s = v == null ? '' : String(v).trim();
+      return s || undefined;
+    };
+    out.push({
+      supplierCode,
+      companyName: String(row.Name ?? supplierCode).trim() || supplierCode,
+      contactName: clean(row.Contact),
+      email: clean(row.Email),
+      phone: clean(row.Phone),
+    });
+  }
+  if (skipped.length > 0) {
+    console.warn(
+      `[Cin7 sync] mapCoreSupplierRows: skipped ${skipped.length} supplier row(s) with missing ID`
     );
   }
   return { rows: out, skipped };

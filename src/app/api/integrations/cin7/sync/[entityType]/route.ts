@@ -4,6 +4,7 @@ import {
   fetchCin7CustomerPage,
   fetchCin7ProductPage,
   fetchCin7SaleTotal,
+  fetchCin7SupplierPage,
   getCin7CoreCredentials,
   pingCin7Core,
 } from '@/lib/integrations/cin7-core';
@@ -22,8 +23,10 @@ import {
 import {
   batchUpsertCustomers,
   batchUpsertProducts,
+  batchUpsertSuppliers,
   mapCoreCustomerRows,
   mapCoreProductRows,
+  mapCoreSupplierRows,
   mapOmniCustomerRows,
   mapOmniProductRows,
 } from '@/lib/integrations/cin7-sync-persist';
@@ -48,7 +51,7 @@ export async function POST(
   }
 
   const { entityType } = await context.params;
-  const allowed = ['products', 'customers', 'orders', 'inventory'] as const;
+  const allowed = ['products', 'customers', 'orders', 'inventory', 'suppliers'] as const;
   if (!allowed.includes(entityType as (typeof allowed)[number])) {
     return NextResponse.json({ detail: 'Unsupported entity type' }, { status: 400 });
   }
@@ -138,6 +141,24 @@ export async function POST(
       recordsProcessed = await fetchCin7SaleTotal(coreCreds);
     } else if (useOmni && omniCreds) {
       recordsProcessed = await fetchOmniSalesOrderCount(omniCreds);
+    }
+  } else if (entityType === 'suppliers') {
+    if (useCore && coreCreds) {
+      for (let page = 1; page <= MAX_PAGES; page += 1) {
+        const { rows, total } = await fetchCin7SupplierPage(coreCreds, page, pageSize);
+        if (rows.length === 0) break;
+        const mapped = mapCoreSupplierRows(rows);
+        recordsSkipped += mapped.skipped.length;
+        recordsProcessed += await batchUpsertSuppliers(scope.userId, mapped.rows);
+        if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, MAX_PAGES)) break;
+      }
+    } else if (useOmni && omniCreds) {
+      // Supplier sync via Cin7 Omni is not implemented yet — Omni exposes suppliers as
+      // supplier-type Contacts, which needs a distinct filter/mapping. Core is the
+      // supported path (UNI-2256). Follow-up: add Omni supplier support if needed.
+      console.warn(
+        '[Cin7 sync] suppliers: Omni supplier sync not implemented; connect Cin7 Core to sync suppliers'
+      );
     }
   }
 

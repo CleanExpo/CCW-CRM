@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   customerNaturalKey,
   mapCoreProductRows,
+  mapCoreSupplierRows,
   mapOmniProductRows,
   planNoEmailCustomerBatch,
 } from './cin7-sync-persist';
@@ -130,6 +131,55 @@ describe('planNoEmailCustomerBatch (UNI-2252)', () => {
     );
     expect(plan.toCreate).toHaveLength(2);
     expect(plan.matchedExisting).toBe(0);
+  });
+});
+
+describe('mapCoreSupplierRows (UNI-2256)', () => {
+  beforeEach(() => vi.spyOn(console, 'warn').mockImplementation(() => {}));
+  afterEach(() => vi.restoreAllMocks());
+
+  it('maps suppliers using Cin7 ID as supplierCode', () => {
+    const result = mapCoreSupplierRows([
+      { ID: 'sup-guid-1', Name: 'Acme Supplies', Contact: 'Jane', Phone: '07 1234', Email: 'j@acme.com' },
+    ]);
+    expect(result.skipped).toHaveLength(0);
+    expect(result.rows[0]).toEqual({
+      supplierCode: 'sup-guid-1',
+      companyName: 'Acme Supplies',
+      contactName: 'Jane',
+      phone: '07 1234',
+      email: 'j@acme.com',
+    });
+  });
+
+  it('skips suppliers with a missing ID (would otherwise duplicate every run) with a reason', () => {
+    const result = mapCoreSupplierRows([
+      { ID: 'sup-1', Name: 'Kept' },
+      { Name: 'No Id Supplier' },
+      { ID: '   ', Name: 'Whitespace Id' },
+    ]);
+    expect(result.rows.map((r) => r.supplierCode)).toEqual(['sup-1']);
+    expect(result.skipped).toEqual([
+      { reason: 'missing_id', identifier: 'No Id Supplier' },
+      { reason: 'missing_id', identifier: 'Whitespace Id' },
+    ]);
+  });
+
+  it('normalizes blank optional fields to undefined and falls back companyName to the code', () => {
+    const result = mapCoreSupplierRows([{ ID: 'sup-2', Name: '  ', Contact: '', Phone: '  ' }]);
+    expect(result.rows[0]).toEqual({
+      supplierCode: 'sup-2',
+      companyName: 'sup-2',
+      contactName: undefined,
+      email: undefined,
+      phone: undefined,
+    });
+  });
+
+  it('logs a summary when suppliers are skipped', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mapCoreSupplierRows([{ Name: 'No Id' }]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('skipped 1 supplier row'));
   });
 });
 
