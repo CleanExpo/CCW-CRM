@@ -1,12 +1,9 @@
 name: Deploy to Staging
 
 on:
-  # Only deploy after CI has passed — prevents broken code reaching staging (UNI-664 SUB-5)
-  workflow_run:
-    workflows: ['CI']
-    branches: [main]
-    types:
-      - completed
+  # Auto-trigger (workflow_run after CI) removed - it fired on every push to main
+  # and failed at the SSH step because STAGING_SSH_HOST/USER are unset, marking a
+  # red X on every commit. Manual-only until a staging VPS exists. See UNI-2251.
   workflow_dispatch:
     inputs:
       version:
