@@ -43,6 +43,12 @@ export type Cin7CustomerSyncRow = {
   city?: string;
 };
 
+/** A source row dropped during mapping, with why and a best-effort identifier for the logs. */
+export type SkippedRow = { reason: string; identifier: string };
+
+/** Result of mapping product source rows: the rows that will be imported plus the ones skipped. */
+export type ProductMapResult = { rows: Cin7ProductSyncRow[]; skipped: SkippedRow[] };
+
 /** Batch upsert products by owner+sku — concurrent upserts, no multi-statement transaction. */
 export async function batchUpsertProducts(
   ownerUserId: string,
@@ -161,11 +167,18 @@ export function mapCoreProductRows(
     SellPrice?: number;
     Available?: number;
   }>
-): Cin7ProductSyncRow[] {
+): ProductMapResult {
   const out: Cin7ProductSyncRow[] = [];
+  const skipped: SkippedRow[] = [];
   for (const row of rows) {
     const sku = String(row.Sku ?? '').trim();
-    if (!sku) continue;
+    if (!sku) {
+      skipped.push({
+        reason: 'missing_sku',
+        identifier: String(row.Name ?? '').trim() || '(unnamed)',
+      });
+      continue;
+    }
     out.push({
       sku,
       name: String(row.Name ?? sku).trim() || sku,
@@ -174,7 +187,12 @@ export function mapCoreProductRows(
       category: 'Cin7',
     });
   }
-  return out;
+  if (skipped.length > 0) {
+    console.warn(
+      `[Cin7 sync] mapCoreProductRows: skipped ${skipped.length} product row(s) with missing SKU`
+    );
+  }
+  return { rows: out, skipped };
 }
 
 export function mapCoreCustomerRows(
@@ -190,16 +208,29 @@ export function mapCoreCustomerRows(
 
 export function mapOmniProductRows(
   rows: Array<{ sku: string; name: string; price: number; stock: number }>
-): Cin7ProductSyncRow[] {
-  return rows
-    .map((row) => ({
-      sku: row.sku.trim(),
-      name: row.name.trim() || row.sku.trim(),
+): ProductMapResult {
+  const out: Cin7ProductSyncRow[] = [];
+  const skipped: SkippedRow[] = [];
+  for (const row of rows) {
+    const sku = row.sku.trim();
+    if (!sku) {
+      skipped.push({ reason: 'missing_sku', identifier: row.name?.trim() || '(unnamed)' });
+      continue;
+    }
+    out.push({
+      sku,
+      name: row.name.trim() || sku,
       price: row.price,
       stock: row.stock,
       category: 'Cin7 Omni',
-    }))
-    .filter((row) => row.sku);
+    });
+  }
+  if (skipped.length > 0) {
+    console.warn(
+      `[Cin7 sync] mapOmniProductRows: skipped ${skipped.length} product row(s) with missing SKU`
+    );
+  }
+  return { rows: out, skipped };
 }
 
 export function mapOmniCustomerRows(

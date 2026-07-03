@@ -74,6 +74,7 @@ export async function POST(
 
   const pageSize = getCin7PageSize();
   let recordsProcessed = 0;
+  let recordsSkipped = 0;
   const startedAt = Date.now();
 
   if (entityType === 'products' || entityType === 'inventory') {
@@ -81,7 +82,9 @@ export async function POST(
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
         if (rows.length === 0) break;
-        recordsProcessed += await batchUpsertProducts(scope.userId, mapCoreProductRows(rows));
+        const mapped = mapCoreProductRows(rows);
+        recordsSkipped += mapped.skipped.length;
+        recordsProcessed += await batchUpsertProducts(scope.userId, mapped.rows);
         if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, MAX_PAGES)) break;
       }
     } else if (useOmni && omniCreds) {
@@ -98,7 +101,9 @@ export async function POST(
             ? fetchOmniProductPage(omniCreds, nextPage, pageSize)
             : Promise.resolve({ rows: [], total: null, sourceRowCount: 0 });
 
-        recordsProcessed += await batchUpsertProducts(scope.userId, mapOmniProductRows(rows));
+        const mapped = mapOmniProductRows(rows);
+        recordsSkipped += mapped.skipped.length;
+        recordsProcessed += await batchUpsertProducts(scope.userId, mapped.rows);
         if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
       }
     }
@@ -138,12 +143,13 @@ export async function POST(
 
   const durationMs = Date.now() - startedAt;
   console.log(
-    `[Cin7 sync] ${entityType}: ${recordsProcessed} records in ${durationMs}ms (${useCore ? 'core' : 'omni'})`
+    `[Cin7 sync] ${entityType}: ${recordsProcessed} records, ${recordsSkipped} skipped in ${durationMs}ms (${useCore ? 'core' : 'omni'})`
   );
 
   return NextResponse.json({
     status: 'ok',
     records_processed: recordsProcessed,
+    records_skipped: recordsSkipped,
     duration_ms: durationMs,
     page_size: pageSize,
   });
