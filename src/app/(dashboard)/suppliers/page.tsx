@@ -33,6 +33,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Search, Edit, Trash2, Download } from 'lucide-react';
+import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
+import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 import { exportSuppliersToCSV } from '@/lib/utils/csv-export';
 import { SupplierForm } from './components/SupplierForm';
 
@@ -146,6 +148,9 @@ export default function SuppliersPage() {
           </Dialog>
         </div>
       </div>
+
+      <Cin7MasterDataNav active="suppliers" />
+      <Cin7PageSyncToolbar entity="suppliers" onSynced={fetchSuppliers} />
 
       {/* Search */}
       <div className="flex items-center gap-4">
