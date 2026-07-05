@@ -125,6 +125,8 @@ function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number |
       'products',
       'Contacts',
       'contacts',
+      'Branches',
+      'branches',
       'SalesOrders',
       'salesOrders',
       'Data',
@@ -162,21 +164,37 @@ function pick<T extends Record<string, unknown>>(row: T, ...keys: string[]): unk
 }
 
 /** Flatten Omni products into SKU-level rows for ERP import. */
-export function flattenOmniProducts(rawList: unknown[]): Array<{
+export function flattenOmniProducts(
+  rawList: unknown[],
+  options?: { excludeInactive?: boolean }
+): Array<{
   sku: string;
   name: string;
   price: number;
   stock: number;
+  visibility: string;
+  isActive: boolean;
 }> {
-  const out: Array<{ sku: string; name: string; price: number; stock: number }> = [];
+  const excludeInactive = options?.excludeInactive !== false;
+  const out: Array<{
+    sku: string;
+    name: string;
+    price: number;
+    stock: number;
+    visibility: string;
+    isActive: boolean;
+  }> = [];
   for (const raw of rawList) {
     if (!raw || typeof raw !== 'object') continue;
     const p = raw as Record<string, unknown>;
+    const styleStatus = String(pick(p, 'Status', 'status') ?? 'Public').trim() || 'Public';
+    if (excludeInactive && styleStatus === 'Inactive') continue;
+
     const styleCode = String(pick(p, 'StyleCode', 'styleCode') ?? '').trim();
     const productName = String(pick(p, 'Name', 'name') ?? styleCode).trim() || 'Product';
-    const options = p.ProductOptions ?? p.productOptions;
-    if (Array.isArray(options) && options.length > 0) {
-      for (const opt of options) {
+    const optionsList = p.ProductOptions ?? p.productOptions;
+    if (Array.isArray(optionsList) && optionsList.length > 0) {
+      for (const opt of optionsList) {
         if (!opt || typeof opt !== 'object') continue;
         const o = opt as Record<string, unknown>;
         const sku = String(
@@ -193,7 +211,14 @@ export function flattenOmniProducts(rawList: unknown[]): Array<{
           0,
           Math.floor(Number(pick(o, 'StockAvailable', 'stockAvailable') ?? 0))
         );
-        out.push({ sku, name, price, stock });
+        out.push({
+          sku,
+          name,
+          price,
+          stock,
+          visibility: styleStatus,
+          isActive: styleStatus !== 'Inactive',
+        });
       }
     } else if (styleCode) {
       out.push({
@@ -201,6 +226,8 @@ export function flattenOmniProducts(rawList: unknown[]): Array<{
         name: productName,
         price: 0,
         stock: 0,
+        visibility: styleStatus,
+        isActive: styleStatus !== 'Inactive',
       });
     }
   }
@@ -210,12 +237,14 @@ export function flattenOmniProducts(rawList: unknown[]): Array<{
 export async function fetchOmniProductPage(
   creds: Cin7OmniCredentials,
   page: number,
-  rows: number
+  rows: number,
+  options?: { excludeInactive?: boolean }
 ): Promise<{
   rows: ReturnType<typeof flattenOmniProducts>;
   total: number | null;
   /** Raw product records from this page (before SKU flattening). */
   sourceRowCount: number;
+  skippedInactive: number;
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
@@ -223,29 +252,76 @@ export async function fetchOmniProductPage(
     `/v1/Products?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  if (!ok) {
+    return { rows: [], total: null, sourceRowCount: 0, skippedInactive: 0, error };
+  }
   const { rows: rawRows, total } = parseOmniListEnvelope(data);
-  const flat = flattenOmniProducts(rawRows);
+  const excludeInactive = options?.excludeInactive !== false;
+  let skippedInactive = 0;
+  if (excludeInactive) {
+    for (const raw of rawRows) {
+      if (!raw || typeof raw !== 'object') continue;
+      const status = String(
+        pick(raw as Record<string, unknown>, 'Status', 'status') ?? ''
+      ).trim();
+      if (status === 'Inactive') skippedInactive += 1;
+    }
+  }
+  const flat = flattenOmniProducts(rawRows, { excludeInactive });
   return {
     rows: flat,
     total,
     sourceRowCount: rawRows.length,
+    skippedInactive,
+  };
+}
+
+export type Cin7OmniContactRow = {
+  cin7ContactId: string;
+  contactType: string;
+  companyName: string;
+  email: string;
+  phone?: string;
+  city?: string;
+};
+
+function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const c = raw as Record<string, unknown>;
+  const cin7ContactId = String(pick(c, 'ID', 'id') ?? '').trim();
+  if (!cin7ContactId) return null;
+  const contactType = String(pick(c, 'Type', 'type') ?? '').trim() || 'Unknown';
+  const company = String(
+    pick(c, 'Company', 'company', 'Name', 'name') ?? 'Cin7 contact'
+  ).trim();
+  const email = String(pick(c, 'Email', 'email') ?? '').trim();
+  const phone =
+    String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
+  const city =
+    String(
+      pick(c, 'DeliveryCity', 'deliveryCity', 'BillingCity', 'billingCity', 'City', 'city') ?? ''
+    ).trim() || undefined;
+  return {
+    cin7ContactId,
+    contactType,
+    companyName: company || 'Cin7 contact',
+    email,
+    phone,
+    city,
   };
 }
 
 export async function fetchOmniContactsPage(
   creds: Cin7OmniCredentials,
   page: number,
-  rows: number
+  rows: number,
+  options?: { allowedTypes?: string[] }
 ): Promise<{
-  rows: Array<{
-    companyName: string;
-    email: string;
-    phone?: string;
-    city?: string;
-  }>;
+  rows: Cin7OmniContactRow[];
   total: number | null;
   sourceRowCount: number;
+  skippedWrongType: number;
+  skippedMissingId: number;
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
@@ -253,24 +329,115 @@ export async function fetchOmniContactsPage(
     `/v1/Contacts?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  if (!ok) {
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      skippedWrongType: 0,
+      skippedMissingId: 0,
+      error,
+    };
+  }
   const { rows: list, total } = parseOmniListEnvelope(data);
-  const mapped = list
-    .map((raw) => {
-      if (!raw || typeof raw !== 'object') return null;
-      const c = raw as Record<string, unknown>;
-      const company = String(
-        pick(c, 'Company', 'company', 'Name', 'name') ?? 'Cin7 contact'
-      ).trim();
-      const email = String(pick(c, 'Email', 'email') ?? '').trim();
-      const phone = String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
-      const city = String(
-        pick(c, 'DeliveryCity', 'deliveryCity', 'BillingCity', 'billingCity', 'City', 'city') ?? ''
-      ).trim() || undefined;
-      return { companyName: company || 'Cin7 contact', email, phone, city };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
-  return { rows: mapped, total, sourceRowCount: list.length };
+  const allowedTypes = options?.allowedTypes?.map((t) => t.toLowerCase());
+  let skippedWrongType = 0;
+  let skippedMissingId = 0;
+  const mapped: Cin7OmniContactRow[] = [];
+
+  for (const raw of list) {
+    const row = mapOmniContactRaw(raw);
+    if (!row) {
+      skippedMissingId += 1;
+      continue;
+    }
+    if (
+      allowedTypes &&
+      allowedTypes.length > 0 &&
+      !allowedTypes.includes(row.contactType.toLowerCase())
+    ) {
+      skippedWrongType += 1;
+      continue;
+    }
+    mapped.push(row);
+  }
+
+  return {
+    rows: mapped,
+    total,
+    sourceRowCount: list.length,
+    skippedWrongType,
+    skippedMissingId,
+  };
+}
+
+export type Cin7OmniBranchRow = {
+  cin7BranchId: string;
+  name: string;
+  branchType?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  postCode?: string;
+  isActive: boolean;
+};
+
+function mapOmniBranchRaw(raw: unknown): Cin7OmniBranchRow | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const b = raw as Record<string, unknown>;
+  const cin7BranchId = String(pick(b, 'ID', 'id') ?? '').trim();
+  if (!cin7BranchId) return null;
+  const name = String(pick(b, 'Company', 'company') ?? `Branch ${cin7BranchId}`).trim();
+  return {
+    cin7BranchId,
+    name,
+    branchType: String(pick(b, 'BranchType', 'branchType') ?? '').trim() || undefined,
+    email: String(pick(b, 'Email', 'email') ?? '').trim() || undefined,
+    phone: String(pick(b, 'Phone', 'phone') ?? '').trim() || undefined,
+    city: String(pick(b, 'City', 'city') ?? '').trim() || undefined,
+    state: String(pick(b, 'State', 'state') ?? '').trim() || undefined,
+    postCode: String(pick(b, 'PostCode', 'postCode') ?? '').trim() || undefined,
+    isActive: pick(b, 'IsActive', 'isActive') !== false,
+  };
+}
+
+export async function fetchOmniBranchesPage(
+  creds: Cin7OmniCredentials,
+  page: number,
+  rows: number
+): Promise<{
+  rows: Cin7OmniBranchRow[];
+  total: number | null;
+  sourceRowCount: number;
+  skippedMissingId: number;
+  error?: string;
+}> {
+  const safeRows = Math.max(1, Math.min(250, rows));
+  const { ok, data, error } = await cin7OmniGet<unknown>(
+    `/v1/Branches?page=${page}&rows=${safeRows}`,
+    creds
+  );
+  if (!ok) {
+    return { rows: [], total: null, sourceRowCount: 0, skippedMissingId: 0, error };
+  }
+  const { rows: list, total } = parseOmniListEnvelope(data);
+  let skippedMissingId = 0;
+  const mapped: Cin7OmniBranchRow[] = [];
+  for (const raw of list) {
+    const row = mapOmniBranchRaw(raw);
+    if (!row) {
+      skippedMissingId += 1;
+      continue;
+    }
+    mapped.push(row);
+  }
+  return {
+    rows: mapped,
+    total,
+    sourceRowCount: list.length,
+    skippedMissingId,
+  };
 }
 
 /** Best-effort sales order total (uses API Total when present). */
