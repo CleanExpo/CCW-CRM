@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { RefreshCw, Package, Users, ShoppingCart, Boxes } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  RefreshCw,
+  Package,
+  Users,
+  ShoppingCart,
+  Boxes,
+  Truck,
+  Building2,
+  MapPin,
+  History,
+} from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,25 +22,81 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { triggerCin7Sync, triggerCin7Poll } from "@/lib/api/cin7";
+import {
+  getCin7SyncLogs,
+  triggerCin7Sync,
+  triggerCin7Poll,
+  type Cin7SyncLog,
+} from "@/lib/api/cin7";
 
 interface Cin7SyncControlsProps {
   isConnected: boolean;
 }
 
-const SYNC_ENTITIES = [
-  { key: "products" as const, label: "Products", icon: Package, color: "text-blue-600" },
-  { key: "customers" as const, label: "Customers", icon: Users, color: "text-green-600" },
-  { key: "orders" as const, label: "Orders", icon: ShoppingCart, color: "text-purple-600" },
-  { key: "inventory" as const, label: "Inventory", icon: Boxes, color: "text-orange-600" },
+type Cin7SyncEntityKey =
+  | "products"
+  | "customers"
+  | "internal-customers"
+  | "suppliers"
+  | "branches"
+  | "orders"
+  | "inventory";
+
+const SYNC_ENTITIES: {
+  key: Cin7SyncEntityKey;
+  label: string;
+  icon: typeof Package;
+  color: string;
+}[] = [
+  { key: "products", label: "Products", icon: Package, color: "text-blue-600" },
+  { key: "customers", label: "Customers", icon: Users, color: "text-green-600" },
+  {
+    key: "internal-customers",
+    label: "Internal",
+    icon: Building2,
+    color: "text-teal-600",
+  },
+  { key: "suppliers", label: "Suppliers", icon: Truck, color: "text-amber-600" },
+  { key: "branches", label: "Branches", icon: MapPin, color: "text-indigo-600" },
+  { key: "orders", label: "Orders", icon: ShoppingCart, color: "text-purple-600" },
+  { key: "inventory", label: "Inventory", icon: Boxes, color: "text-orange-600" },
 ];
+
+function formatLogTime(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   const { toast } = useToast();
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [polling, setPolling] = useState(false);
+  const [logs, setLogs] = useState<Cin7SyncLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
-  const handleSync = async (entityType: "products" | "customers" | "orders" | "inventory") => {
+  const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      const { logs: recent } = await getCin7SyncLogs(8);
+      setLogs(recent);
+    } catch {
+      // Non-blocking — sync controls still work without history
+    } finally {
+      setLogsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isConnected) {
+      void loadLogs();
+    }
+  }, [isConnected, loadLogs]);
+
+  const handleSync = async (entityType: Cin7SyncEntityKey) => {
     setSyncing((prev) => ({ ...prev, [entityType]: true }));
     try {
       const result = await triggerCin7Sync(entityType);
@@ -41,6 +106,7 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
         title: "Sync Complete",
         description: `${entityType} sync completed. ${result.records_processed ?? 0} records in ${durationSec ?? "—"}s.`,
       });
+      await loadLogs();
     } catch (error: unknown) {
       toast({
         variant: "destructive",
@@ -94,21 +160,18 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               <RefreshCw className="h-5 w-5" />
               Cin7 Sync Controls
             </CardTitle>
-            <CardDescription>Manually trigger sync for each entity type (full Cin7 pull — all pages)</CardDescription>
+            <CardDescription>
+              Manually trigger sync for each entity type (full Cin7 pull — all pages)
+            </CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePoll}
-            disabled={polling}
-          >
+          <Button variant="outline" size="sm" onClick={handlePoll} disabled={polling}>
             <RefreshCw className={`mr-2 h-4 w-4 ${polling ? "animate-spin" : ""}`} />
             {polling ? "Polling..." : "Poll Changes"}
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {SYNC_ENTITIES.map(({ key, label, icon: Icon, color }) => {
             const isSyncing = syncing[key] ?? false;
             return (
@@ -126,6 +189,43 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               </Button>
             );
           })}
+        </div>
+
+        <div className="border-border/60 rounded-lg border bg-muted/20 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+              <History className="h-3.5 w-3.5" />
+              Recent sync runs
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              disabled={logsLoading}
+              onClick={() => void loadLogs()}
+            >
+              {logsLoading ? "Loading…" : "Refresh"}
+            </Button>
+          </div>
+          {logs.length === 0 ? (
+            <p className="text-muted-foreground text-xs">No sync history yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {logs.map((log) => (
+                <li
+                  key={log.id}
+                  className="flex items-center justify-between text-xs tabular-nums"
+                >
+                  <span className="text-muted-foreground capitalize">
+                    {log.entity_type.replace(/-/g, " ")}
+                  </span>
+                  <span>
+                    {log.records_processed.toLocaleString()} · {formatLogTime(log.synced_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </CardContent>
     </Card>
