@@ -61,6 +61,7 @@ export interface CustomerListParams {
   page_size?: number;
   search?: string;
   is_active?: boolean;
+  cin7_contact_type?: string;
   sort_by?: string;
   sort_order?: "asc" | "desc";
 }
@@ -89,6 +90,7 @@ export const customersApi = {
     if (params.page_size) queryParams.append("page_size", params.page_size.toString());
     if (params.search) queryParams.append("search", params.search);
     if (params.is_active !== undefined) queryParams.append("is_active", params.is_active.toString());
+    if (params.cin7_contact_type) queryParams.append("cin7_contact_type", params.cin7_contact_type);
     if (params.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params.sort_order) queryParams.append("sort_order", params.sort_order);
 
