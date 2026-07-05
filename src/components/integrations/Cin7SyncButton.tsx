@@ -1,16 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, CheckCircle2, RefreshCw, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { triggerCin7Sync } from '@/lib/api/cin7';
+import {
+  CIN7_INTEGRATIONS_ANCHOR,
+  getCin7VerifyPage,
+} from '@/lib/integrations/cin7-master-data-routes';
 
-export type Cin7SyncEntity = 'products' | 'customers' | 'orders' | 'inventory';
+export type Cin7SyncEntity =
+  | 'products'
+  | 'customers'
+  | 'internal-customers'
+  | 'suppliers'
+  | 'branches'
+  | 'orders'
+  | 'inventory';
 
 const ENTITY_LABELS: Record<Cin7SyncEntity, string> = {
   products: 'Products',
   customers: 'Customers',
+  'internal-customers': 'Internal customers',
+  suppliers: 'Suppliers',
+  branches: 'Branches',
   orders: 'Orders',
   inventory: 'Inventory',
 };
@@ -32,9 +49,11 @@ export function Cin7SyncButton({
 }: Cin7SyncButtonProps) {
   const { toast } = useToast();
   const [syncing, setSyncing] = useState(false);
+  const [justSynced, setJustSynced] = useState(false);
 
   const handleSync = async () => {
     setSyncing(true);
+    setJustSynced(false);
     try {
       const result = await triggerCin7Sync(entity);
       const count = result.records_processed ?? 0;
@@ -44,9 +63,11 @@ export function Cin7SyncButton({
         title: `${ENTITY_LABELS[entity]} synced from Cin7`,
         description:
           count > 0
-            ? `${count.toLocaleString()} record(s) in ${durationSec ?? '—'}s. Refresh the list to see updates.`
+            ? `${count.toLocaleString()} record(s) in ${durationSec ?? '—'}s. List refreshed below.`
             : 'Sync completed. No new records were returned from Cin7.',
       });
+      setJustSynced(true);
+      window.setTimeout(() => setJustSynced(false), 2400);
       onSynced?.();
     } catch (error: unknown) {
       toast({
@@ -61,32 +82,89 @@ export function Cin7SyncButton({
 
   return (
     <Button type="button" variant={variant} size={size} onClick={handleSync} disabled={syncing}>
-      <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+      <AnimatePresence mode="wait" initial={false}>
+        {justSynced ? (
+          <motion.span
+            key="done"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="mr-2 inline-flex"
+          >
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          </motion.span>
+        ) : (
+          <motion.span
+            key="sync"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mr-2 inline-flex"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+          </motion.span>
+        )}
+      </AnimatePresence>
       {syncing ? 'Syncing…' : (label ?? 'Sync from Cin7')}
     </Button>
-  );
-}
-
-export function Cin7AutoSyncNote() {
-  return (
-    <p className="text-muted-foreground text-xs leading-relaxed">
-      Cin7 auto-sync runs daily at <strong>9:00 PM AEST</strong> (Brisbane). Use{' '}
-      <strong>Sync from Cin7</strong> anytime for a manual full pull. Settings → Integrations keeps
-      the same controls.
-    </p>
   );
 }
 
 type Cin7PageSyncToolbarProps = {
   entity: Cin7SyncEntity;
   onSynced?: () => void;
+  showNav?: boolean;
 };
 
 export function Cin7PageSyncToolbar({ entity, onSynced }: Cin7PageSyncToolbarProps) {
+  const page = getCin7VerifyPage(entity);
+
   return (
-    <div className="border-border/60 bg-muted/30 flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <Cin7AutoSyncNote />
-      <Cin7SyncButton entity={entity} onSynced={onSynced} />
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="border-border/60 from-muted/40 via-muted/20 relative overflow-hidden rounded-xl border bg-gradient-to-r to-transparent px-4 py-3"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_120%_at_100%_0%,hsl(var(--primary)/0.08),transparent_55%)]"
+        aria-hidden
+      />
+      <div className="relative flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-xs">
+              Cin7 master data
+            </Badge>
+            <span className="text-muted-foreground text-xs">
+              Nightly auto-sync · 9:00 PM AEST
+            </span>
+          </div>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            {page?.description ?? 'Pull the latest records from Cin7 Omni.'} Manage credentials and
+            reconciliation in{' '}
+            <Link href={CIN7_INTEGRATIONS_ANCHOR} className="text-primary font-medium hover:underline">
+              Integrations
+            </Link>
+            .
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
+            <Link href="/dashboard/inventory/cin7">
+              All modules
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="text-muted-foreground">
+            <Link href={CIN7_INTEGRATIONS_ANCHOR}>
+              <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+              Settings
+            </Link>
+          </Button>
+          <Cin7SyncButton entity={entity} onSynced={onSynced} />
+        </div>
+      </div>
+    </motion.div>
   );
 }
