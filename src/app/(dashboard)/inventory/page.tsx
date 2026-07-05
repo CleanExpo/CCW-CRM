@@ -30,6 +30,7 @@ import {
 } from '@/components/operations/OperationsPageHeader';
 import { opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
+import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 
 interface StockLocation {
@@ -323,6 +324,7 @@ export default function InventoryPage() {
           icon={Package}
         />
 
+        <Cin7MasterDataNav active="inventory" />
         <Cin7PageSyncToolbar entity="inventory" onSynced={() => {
           void loadSummary();
           void loadStockHealth();
