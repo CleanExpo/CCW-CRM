@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -36,8 +36,13 @@ export interface LoginFormProps {
 
 export function LoginForm({ variant = 'default' }: LoginFormProps) {
   const isMarketing = variant === 'marketing';
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+
+  function safeRedirectPath(raw: string | null): string {
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/dashboard';
+    return raw;
+  }
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,9 +65,8 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
 
       toast.success(`Signed in — welcome back, ${response.user.email}`);
 
-      // Force full page reload to trigger middleware authentication check
-      // This ensures the auth cookie is properly validated server-side
-      window.location.replace('/dashboard');
+      const redirectTo = safeRedirectPath(searchParams.get('redirect'));
+      window.location.replace(redirectTo);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid email or password';
       toast.error(errorMessage, { id: 'login-error' });
