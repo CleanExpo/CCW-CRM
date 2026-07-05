@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  serverExternalPackages: ['pg'],
+  serverExternalPackages: ['pg', '@prisma/client', '@prisma/adapter-pg'],
   typedRoutes: false,
   productionBrowserSourceMaps: false,
   // Prevents Webpack from mis-resolving CJS/ESM interop for these packages
@@ -49,6 +49,24 @@ const nextConfig: NextConfig = {
       { source: '/submissions/:path*', destination: '/dashboard/operations/submissions/:path*', permanent: false },
       { source: '/products', destination: '/dashboard/inventory/products', permanent: false },
       { source: '/products/:path*', destination: '/dashboard/inventory/products/:path*', permanent: false },
+      { source: '/suppliers', destination: '/dashboard/inventory/suppliers', permanent: false },
+      { source: '/suppliers/:path*', destination: '/dashboard/inventory/suppliers/:path*', permanent: false },
+      { source: '/branches', destination: '/dashboard/inventory/branches', permanent: false },
+      { source: '/branches/:path*', destination: '/dashboard/inventory/branches/:path*', permanent: false },
+      {
+        source: '/internal-customers',
+        destination: '/dashboard/crm/internal-customers',
+        permanent: false,
+      },
+      {
+        source: '/internal-customers/:path*',
+        destination: '/dashboard/crm/internal-customers/:path*',
+        permanent: false,
+      },
+      { source: '/approvals', destination: '/dashboard/approvals', permanent: false },
+      { source: '/approvals/:path*', destination: '/dashboard/approvals/:path*', permanent: false },
+      { source: '/alerts', destination: '/dashboard/alerts', permanent: false },
+      { source: '/alerts/:path*', destination: '/dashboard/alerts/:path*', permanent: false },
       { source: '/inventory', destination: '/dashboard/inventory', permanent: false },
       { source: '/inventory/:path*', destination: '/dashboard/inventory/:path*', permanent: false },
       { source: '/warehouse', destination: '/dashboard/inventory/warehouse', permanent: false },
