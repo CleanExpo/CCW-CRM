@@ -28,11 +28,13 @@ export async function GET(request: Request) {
       Authorization: `Bearer ${process.env.CRON_SECRET}`,
     };
 
-    // 1. Cin7 full sync (products → customers → orders → inventory)
-    // Entity path must match `cin7/sync/[entityType]` (use `orders`, not `sales`).
+    // 1. Cin7 full sync — entity paths must match `cin7/sync/[entityType]`.
     const cin7Endpoints = [
       "/api/integrations/cin7/sync/products",
       "/api/integrations/cin7/sync/customers",
+      "/api/integrations/cin7/sync/internal-customers",
+      "/api/integrations/cin7/sync/suppliers",
+      "/api/integrations/cin7/sync/branches",
       "/api/integrations/cin7/sync/orders",
       "/api/integrations/cin7/sync/inventory",
     ];
