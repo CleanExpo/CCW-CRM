@@ -1,6 +1,6 @@
 import { getDatabaseConnectionString, getPgSslConfig } from '@/lib/db/database-env';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
@@ -8,7 +8,34 @@ const globalForPrisma = globalThis as unknown as {
   pgPool: Pool | undefined;
 };
 
+/** Bump when a schema change requires discarding the dev global PrismaClient cache. */
+const PRISMA_CLIENT_SCHEMA_VERSION = 4;
+
+function customerModelHasCin7ContactId(): boolean {
+  return (
+    Prisma.dmmf.datamodel.models
+      .find((model) => model.name === 'Customer')
+      ?.fields.some((field) => field.name === 'cin7ContactId') ?? false
+  );
+}
+
+function prismaModelsIncludeCin7SyncRun(): boolean {
+  return Prisma.dmmf.datamodel.models.some((model) => model.name === 'Cin7SyncRun');
+}
+
 function createPrismaClient(): PrismaClient {
+  if (!customerModelHasCin7ContactId()) {
+    throw new Error(
+      'Prisma Client is out of date (missing Customer.cin7ContactId). Run `npx prisma generate`, delete `.next`, and restart the dev server.'
+    );
+  }
+
+  if (!prismaModelsIncludeCin7SyncRun()) {
+    throw new Error(
+      'Prisma Client is out of date (missing Cin7SyncRun). Run `npx prisma migrate deploy`, `npx prisma generate`, delete `.next`, and restart the dev server.'
+    );
+  }
+
   const connectionString = getDatabaseConnectionString();
   if (!connectionString) {
     throw new Error('DATABASE_URL is not configured');
@@ -36,18 +63,43 @@ function createPrismaClient(): PrismaClient {
 
   const adapter = new PrismaPg(pool);
 
-  return new PrismaClient({
+  const client = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
+  (client as PrismaClient & { __ccwSchemaVersion?: number }).__ccwSchemaVersion =
+    PRISMA_CLIENT_SCHEMA_VERSION;
+  return client;
 }
 
-/** Dev hot-reload can keep an old PrismaClient missing models added after the server started. */
+/** Dev hot-reload can keep an old PrismaClient missing models/fields added after the server started. */
 function isPrismaClientStale(client: PrismaClient): boolean {
-  return (
-    typeof (client as PrismaClient & { workspaceXeroConnection?: unknown })
-      .workspaceXeroConnection === 'undefined'
-  );
+  if (!customerModelHasCin7ContactId() || !prismaModelsIncludeCin7SyncRun()) {
+    return true;
+  }
+
+  const versioned = client as PrismaClient & { __ccwSchemaVersion?: number };
+  if (versioned.__ccwSchemaVersion !== PRISMA_CLIENT_SCHEMA_VERSION) {
+    return true;
+  }
+
+  if (
+    typeof (client as PrismaClient & { workspaceXeroConnection?: unknown }).workspaceXeroConnection ===
+    'undefined'
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+async function disposePrismaClient(client: PrismaClient | undefined): Promise<void> {
+  if (!client) return;
+  try {
+    await client.$disconnect();
+  } catch {
+    // ignore disconnect errors during hot reload
+  }
 }
 
 function getPrismaClient(): PrismaClient {
@@ -55,6 +107,12 @@ function getPrismaClient(): PrismaClient {
   if (existing && !isPrismaClientStale(existing)) {
     return existing;
   }
+
+  if (existing) {
+    void disposePrismaClient(existing);
+    globalForPrisma.prisma = undefined;
+  }
+
   const client = createPrismaClient();
   globalForPrisma.prisma = client;
   return client;
