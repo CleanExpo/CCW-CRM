@@ -13,6 +13,8 @@ import {
   ShoppingCart,
   FileText,
   Settings,
+  Truck,
+  Link2,
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,8 +24,10 @@ import { logoutAndRedirectToLogin } from '@/lib/api/auth';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
+  { href: '/dashboard/inventory/cin7', icon: Link2, label: 'Cin7 data' },
   { href: '/dashboard/inventory/products', icon: Package, label: 'Products' },
   { href: '/dashboard/crm/customers', icon: Users, label: 'Customers' },
+  { href: '/dashboard/inventory/suppliers', icon: Truck, label: 'Suppliers' },
   { href: '/dashboard/operations/orders', icon: ShoppingCart, label: 'Sales orders' },
   { href: '/dashboard/operations/quotes', icon: FileText, label: 'Quotes' },
   { href: '/dashboard/settings/integrations', icon: Settings, label: 'Integrations' },
