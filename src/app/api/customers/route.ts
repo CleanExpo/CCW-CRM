@@ -16,11 +16,15 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('page_size') || '50');
     const search = searchParams.get('search');
+    const cin7ContactType = searchParams.get('cin7_contact_type');
 
     const where: Prisma.CustomerWhereInput = {
       isActive: true,
       ownerUserId: { in: workspaceUserIds },
     };
+    if (cin7ContactType) {
+      where.cin7ContactType = { equals: cin7ContactType, mode: 'insensitive' };
+    }
     if (search) {
       where.OR = [
         { companyName: { contains: search, mode: 'insensitive' } },
