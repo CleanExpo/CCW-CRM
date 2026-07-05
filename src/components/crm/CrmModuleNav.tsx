@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   Users,
   HeartPulse,
+  Building2,
   GitBranch,
   Tag,
   UserCircle,
@@ -23,6 +24,7 @@ const LINKS: Array<{
 }> = [
   { href: '/dashboard/crm', label: 'Overview', icon: LayoutGrid, exact: true },
   { href: '/dashboard/crm/customers', label: 'Customers', icon: Users },
+  { href: '/dashboard/crm/internal-customers', label: 'Internal customers', icon: Building2 },
   { href: '/dashboard/crm/client-health', label: 'Client Health', icon: HeartPulse },
   { href: '/dashboard/crm/onboarding', label: 'Onboarding', icon: GitBranch },
   { href: '/dashboard/crm/personas', label: 'Personas', icon: Tag },
