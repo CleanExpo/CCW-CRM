@@ -12,6 +12,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Cin7ConnectionCard } from './components/Cin7ConnectionCard';
+import { Cin7ReconciliationCard } from './components/Cin7ReconciliationCard';
 import { Cin7ShadowSyncCard } from './components/Cin7ShadowSyncCard';
 import { Cin7SyncControls } from './components/Cin7SyncControls';
 import { Cin7WebhookSubscriptionsCard } from './components/Cin7WebhookSubscriptionsCard';
@@ -274,6 +275,7 @@ function IntegrationsContent() {
               />
               <Cin7SyncControls isConnected={cin7Status?.connected ?? false} />
             </div>
+            <Cin7ReconciliationCard isConnected={cin7Status?.connected ?? false} />
             <details className="border-border/60 bg-muted/20 group mt-4 rounded-lg border">
               <summary className="text-muted-foreground cursor-pointer list-none px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
                 <span className="inline-flex items-center gap-2">
