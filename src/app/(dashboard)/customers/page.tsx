@@ -22,6 +22,7 @@ import { exportCustomersToCSV } from '@/lib/utils/csv-export';
 // PHASE 4: Last updated timestamps
 import { formatDistanceToNow } from 'date-fns';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 
 interface Customer {
@@ -204,6 +205,7 @@ export default function CustomersPage() {
           </div>
         </div>
 
+        <Cin7MasterDataNav active="customers" />
         <Cin7PageSyncToolbar entity="customers" onSynced={loadCustomers} />
 
         <Card>
