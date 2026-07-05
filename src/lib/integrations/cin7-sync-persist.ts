@@ -34,14 +34,41 @@ export type Cin7ProductSyncRow = {
   price: number;
   stock: number;
   category: string;
+  isActive: boolean;
 };
 
 export type Cin7CustomerSyncRow = {
+  cin7ContactId: string;
+  cin7ContactType?: string;
   companyName: string;
   email: string;
   phone?: string;
   city?: string;
 };
+
+export type Cin7BranchSyncRow = {
+  cin7BranchId: string;
+  name: string;
+  branchType?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  postCode?: string;
+  isActive: boolean;
+};
+
+export type Cin7SupplierSyncRow = {
+  cin7ContactId: string;
+  supplierCode: string;
+  companyName: string;
+  email?: string;
+  phone?: string;
+};
+
+export function cin7SupplierCode(cin7ContactId: string): string {
+  return `cin7:${cin7ContactId}`;
+}
 
 /** Batch upsert products by owner+sku — concurrent upserts, no multi-statement transaction. */
 export async function batchUpsertProducts(
@@ -66,12 +93,14 @@ export async function batchUpsertProducts(
           price: row.price,
           stock: row.stock,
           category: row.category,
-          isActive: true,
+          isActive: row.isActive,
         },
         update: {
           name: row.name,
           price: row.price,
           stock: row.stock,
+          category: row.category,
+          isActive: row.isActive,
         },
       })
     );
@@ -81,7 +110,10 @@ export async function batchUpsertProducts(
   return processed;
 }
 
-/** Batch upsert customers — one lookup per page chunk, then createMany + concurrent updates. */
+/**
+ * Upsert customers by Cin7 contact id (primary) or email (legacy match).
+ * Never bulk-creates duplicate rows for contacts without email.
+ */
 export async function batchUpsertCustomers(
   ownerUserId: string,
   rows: Cin7CustomerSyncRow[]
@@ -94,59 +126,170 @@ export async function batchUpsertCustomers(
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const chunk = rows.slice(i, i + batchSize);
-    const withEmail = chunk.filter((r) => r.email.trim());
-    const withoutEmail = chunk.filter((r) => !r.email.trim());
+    const cin7Ids = chunk.map((r) => r.cin7ContactId);
+    const emails = chunk
+      .map((r) => r.email.trim().toLowerCase())
+      .filter((email) => email.length > 0);
 
-    if (withEmail.length > 0) {
-      const emails = withEmail.map((r) => r.email.trim());
-      const existing = await prisma.customer.findMany({
-        where: { ownerUserId, email: { in: emails } },
-        select: { id: true, email: true },
-      });
-      const byEmail = new Map(
-        existing.filter((e) => e.email).map((e) => [e.email!.toLowerCase(), e.id])
-      );
-
-      const toCreate = withEmail.filter((r) => !byEmail.has(r.email.trim().toLowerCase()));
-      const toUpdate = withEmail.filter((r) => byEmail.has(r.email.trim().toLowerCase()));
-
-      if (toCreate.length > 0) {
-        await prisma.customer.createMany({
-          data: toCreate.map((r) => ({
-            ownerUserId,
-            companyName: r.companyName,
-            email: r.email.trim(),
-            phone: r.phone,
-            city: r.city,
-          })),
-        });
-      }
-
-      if (toUpdate.length > 0) {
-        await runInConcurrency(toUpdate, concurrency, (r) =>
-          prisma.customer.update({
-            where: { id: byEmail.get(r.email.trim().toLowerCase())! },
-            data: {
-              companyName: r.companyName,
-              phone: r.phone,
-              city: r.city,
+    const [byCin7Rows, byEmailRows] = await Promise.all([
+      prisma.customer.findMany({
+        where: { ownerUserId, cin7ContactId: { in: cin7Ids } },
+        select: { id: true, cin7ContactId: true },
+      }),
+      emails.length
+        ? prisma.customer.findMany({
+            where: {
+              ownerUserId,
+              OR: emails.map((email) => ({ email: { equals: email, mode: 'insensitive' as const } })),
             },
+            select: { id: true, email: true, cin7ContactId: true },
           })
-        );
+        : Promise.resolve([]),
+    ]);
+
+    const idByCin7 = new Map(
+      byCin7Rows.filter((r) => r.cin7ContactId).map((r) => [r.cin7ContactId!, r.id])
+    );
+    const idByEmail = new Map(
+      byEmailRows
+        .filter((r) => r.email)
+        .map((r) => [r.email!.trim().toLowerCase(), r.id])
+    );
+
+    await runInConcurrency(chunk, concurrency, async (row) => {
+      const email = row.email.trim() || null;
+      const data = {
+        companyName: row.companyName,
+        email,
+        phone: row.phone,
+        city: row.city,
+        cin7ContactId: row.cin7ContactId,
+        cin7ContactType: row.cin7ContactType,
+      };
+
+      const existingId =
+        idByCin7.get(row.cin7ContactId) ??
+        (email ? idByEmail.get(email.toLowerCase()) : undefined);
+
+      if (existingId) {
+        await prisma.customer.update({ where: { id: existingId }, data });
+      } else {
+        await prisma.customer.create({ data: { ownerUserId, ...data } });
       }
-    }
+    });
 
-    if (withoutEmail.length > 0) {
-      await prisma.customer.createMany({
-        data: withoutEmail.map((r) => ({
+    processed += chunk.length;
+  }
+
+  return processed;
+}
+
+/** Upsert Cin7 Omni branches by stable branch id. */
+export async function batchUpsertBranches(
+  ownerUserId: string,
+  rows: Cin7BranchSyncRow[]
+): Promise<number> {
+  if (rows.length === 0) return 0;
+
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.cin7Branch.upsert({
+        where: {
+          ownerUserId_cin7BranchId: {
+            ownerUserId,
+            cin7BranchId: row.cin7BranchId,
+          },
+        },
+        create: {
           ownerUserId,
-          companyName: r.companyName,
-          phone: r.phone,
-          city: r.city,
-        })),
-      });
-    }
+          cin7BranchId: row.cin7BranchId,
+          name: row.name,
+          branchType: row.branchType,
+          email: row.email,
+          phone: row.phone,
+          city: row.city,
+          state: row.state,
+          postCode: row.postCode,
+          isActive: row.isActive,
+        },
+        update: {
+          name: row.name,
+          branchType: row.branchType,
+          email: row.email,
+          phone: row.phone,
+          city: row.city,
+          state: row.state,
+          postCode: row.postCode,
+          isActive: row.isActive,
+        },
+      })
+    );
+    processed += chunk.length;
+  }
 
+  return processed;
+}
+
+export async function recordCin7SyncRun(input: {
+  ownerUserId: string;
+  entityType: string;
+  recordsProcessed: number;
+  skipped?: Record<string, number>;
+  durationMs: number;
+  source?: string;
+}): Promise<void> {
+  await prisma.cin7SyncRun.create({
+    data: {
+      ownerUserId: input.ownerUserId,
+      entityType: input.entityType,
+      recordsProcessed: input.recordsProcessed,
+      skipped: input.skipped ?? undefined,
+      durationMs: input.durationMs,
+      source: input.source,
+    },
+  });
+}
+export async function batchUpsertSuppliers(
+  ownerUserId: string,
+  rows: Cin7SupplierSyncRow[]
+): Promise<number> {
+  if (rows.length === 0) return 0;
+
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.supplier.upsert({
+        where: {
+          ownerUserId_supplierCode: {
+            ownerUserId,
+            supplierCode: row.supplierCode,
+          },
+        },
+        create: {
+          ownerUserId,
+          supplierCode: row.supplierCode,
+          companyName: row.companyName,
+          email: row.email,
+          phone: row.phone,
+          isActive: true,
+        },
+        update: {
+          companyName: row.companyName,
+          email: row.email,
+          phone: row.phone,
+          isActive: true,
+        },
+      })
+    );
     processed += chunk.length;
   }
 
@@ -172,24 +315,40 @@ export function mapCoreProductRows(
       price: Number(row.Price ?? row.SellPrice ?? 0) || 0,
       stock: Math.max(0, Math.floor(Number(row.Available ?? 0))),
       category: 'Cin7',
+      isActive: true,
     });
   }
   return out;
 }
 
 export function mapCoreCustomerRows(
-  rows: Array<{ Name?: string; Email?: string; Phone?: string; City?: string }>
+  rows: Array<{ ID?: string; Name?: string; Email?: string; Phone?: string; City?: string }>
 ): Cin7CustomerSyncRow[] {
-  return rows.map((row) => ({
-    companyName: String(row.Name ?? 'Cin7 customer').trim() || 'Cin7 customer',
-    email: row.Email ? String(row.Email).trim() : '',
-    phone: row.Phone ? String(row.Phone).trim() : undefined,
-    city: row.City ? String(row.City).trim() : undefined,
-  }));
+  const out: Cin7CustomerSyncRow[] = [];
+  for (const row of rows) {
+    const cin7ContactId = String(row.ID ?? '').trim();
+    if (!cin7ContactId) continue;
+    out.push({
+      cin7ContactId,
+      cin7ContactType: 'Cin7',
+      companyName: String(row.Name ?? 'Cin7 customer').trim() || 'Cin7 customer',
+      email: row.Email ? String(row.Email).trim() : '',
+      phone: row.Phone ? String(row.Phone).trim() : undefined,
+      city: row.City ? String(row.City).trim() : undefined,
+    });
+  }
+  return out;
 }
 
 export function mapOmniProductRows(
-  rows: Array<{ sku: string; name: string; price: number; stock: number }>
+  rows: Array<{
+    sku: string;
+    name: string;
+    price: number;
+    stock: number;
+    visibility: string;
+    isActive: boolean;
+  }>
 ): Cin7ProductSyncRow[] {
   return rows
     .map((row) => ({
@@ -197,18 +356,71 @@ export function mapOmniProductRows(
       name: row.name.trim() || row.sku.trim(),
       price: row.price,
       stock: row.stock,
-      category: 'Cin7 Omni',
+      category: `Cin7 Omni · ${row.visibility}`,
+      isActive: row.isActive,
     }))
     .filter((row) => row.sku);
 }
 
 export function mapOmniCustomerRows(
-  rows: Array<{ companyName: string; email: string; phone?: string; city?: string }>
+  rows: Array<{
+    cin7ContactId: string;
+    contactType: string;
+    companyName: string;
+    email: string;
+    phone?: string;
+    city?: string;
+  }>
 ): Cin7CustomerSyncRow[] {
   return rows.map((row) => ({
+    cin7ContactId: row.cin7ContactId,
+    cin7ContactType: row.contactType,
     companyName: row.companyName,
     email: row.email?.trim() ?? '',
     phone: row.phone,
     city: row.city,
+  }));
+}
+
+export function mapOmniBranchRows(
+  rows: Array<{
+    cin7BranchId: string;
+    name: string;
+    branchType?: string;
+    email?: string;
+    phone?: string;
+    city?: string;
+    state?: string;
+    postCode?: string;
+    isActive: boolean;
+  }>
+): Cin7BranchSyncRow[] {
+  return rows.map((row) => ({
+    cin7BranchId: row.cin7BranchId,
+    name: row.name,
+    branchType: row.branchType,
+    email: row.email,
+    phone: row.phone,
+    city: row.city,
+    state: row.state,
+    postCode: row.postCode,
+    isActive: row.isActive,
+  }));
+}
+
+export function mapOmniSupplierRows(
+  rows: Array<{
+    cin7ContactId: string;
+    companyName: string;
+    email: string;
+    phone?: string;
+  }>
+): Cin7SupplierSyncRow[] {
+  return rows.map((row) => ({
+    cin7ContactId: row.cin7ContactId,
+    supplierCode: cin7SupplierCode(row.cin7ContactId),
+    companyName: row.companyName,
+    email: row.email?.trim() || undefined,
+    phone: row.phone,
   }));
 }
