@@ -23,6 +23,8 @@ import {
   UserPlus,
   Building2,
   Search,
+  MapPin,
+  RefreshCw,
 } from 'lucide-react';
 
 interface Command {
@@ -104,8 +106,40 @@ export function CommandPalette() {
       label: 'Suppliers',
       description: 'Manage supplier relationships',
       icon: Truck,
-      action: () => navigate('/suppliers'),
-      keywords: ['vendors'],
+      action: () => navigate('/dashboard/inventory/suppliers'),
+      keywords: ['vendors', 'cin7'],
+    },
+    {
+      id: 'cin7-hub',
+      label: 'Cin7 master data',
+      description: 'Verify all synced Cin7 modules',
+      icon: RefreshCw,
+      action: () => navigate('/dashboard/inventory/cin7'),
+      keywords: ['cin7', 'sync', 'integrations', 'master data'],
+    },
+    {
+      id: 'branches',
+      label: 'Cin7 branches',
+      description: 'Warehouse and branch locations',
+      icon: MapPin,
+      action: () => navigate('/dashboard/inventory/branches'),
+      keywords: ['cin7', 'warehouse', 'locations'],
+    },
+    {
+      id: 'internal-customers',
+      label: 'Internal customers',
+      description: 'Inter-branch Cin7 accounts',
+      icon: Building2,
+      action: () => navigate('/dashboard/crm/internal-customers'),
+      keywords: ['cin7', 'internal'],
+    },
+    {
+      id: 'inventory',
+      label: 'Inventory overview',
+      description: 'Stock levels and health',
+      icon: Package,
+      action: () => navigate('/dashboard/inventory'),
+      keywords: ['stock', 'warehouse', 'cin7'],
     },
 
     // Quick Actions
@@ -135,6 +169,14 @@ export function CommandPalette() {
     },
 
     // Settings
+    {
+      id: 'settings-integrations',
+      label: 'Integrations',
+      description: 'Connect Cin7, Xero, Shopify, and more',
+      icon: Settings,
+      action: () => navigate('/dashboard/settings/integrations'),
+      keywords: ['cin7', 'xero', 'connect'],
+    },
     {
       id: 'settings-account',
       label: 'Account Settings',
@@ -171,7 +213,18 @@ export function CommandPalette() {
   ];
 
   const navigationCommands = commands.filter((cmd) =>
-    ['dashboard', 'products', 'customers', 'orders', 'quotes', 'suppliers'].includes(cmd.id)
+    [
+      'dashboard',
+      'products',
+      'customers',
+      'orders',
+      'quotes',
+      'suppliers',
+      'cin7-hub',
+      'branches',
+      'internal-customers',
+      'inventory',
+    ].includes(cmd.id)
   );
 
   const actionCommands = commands.filter((cmd) =>
