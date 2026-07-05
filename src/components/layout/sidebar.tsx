@@ -12,6 +12,7 @@ import {
   Bot,
   Calendar,
   CalendarDays,
+  Building2,
   CheckCircle,
   ChevronDown,
   ChevronRight,
@@ -30,10 +31,12 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  MapPin,
   Package,
   PackageCheck,
   PackagePlus,
   PackageSearch,
+  RefreshCw,
   Receipt,
   Scale,
   Settings,
@@ -104,6 +107,11 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Overview', href: '/dashboard/crm', icon: LayoutDashboard },
       { name: 'Customers', href: '/dashboard/crm/customers', icon: Users },
+      {
+        name: 'Internal customers',
+        href: '/dashboard/crm/internal-customers',
+        icon: Building2,
+      },
       { name: 'Client Health', href: '/dashboard/crm/client-health', icon: HeartPulse },
       { name: 'Onboarding', href: '/dashboard/crm/onboarding', icon: GitBranch },
       { name: 'Personas', href: '/dashboard/crm/personas', icon: Tag },
@@ -129,7 +137,14 @@ const navGroups: NavGroup[] = [
     label: 'Inventory',
     items: [
       { name: 'Overview', href: '/dashboard/inventory', icon: Warehouse },
+      {
+        name: 'Cin7 master data',
+        href: '/dashboard/inventory/cin7',
+        icon: RefreshCw,
+      },
       { name: 'Products', href: '/dashboard/inventory/products', icon: Package },
+      { name: 'Suppliers', href: '/dashboard/inventory/suppliers', icon: Truck },
+      { name: 'Branches', href: '/dashboard/inventory/branches', icon: MapPin },
       { name: 'Bill of Materials', href: '/dashboard/inventory/bom', icon: Layers },
       { name: 'Stock List', href: '/dashboard/inventory/stock', icon: PackageSearch },
       { name: 'Stock Transfers', href: '/dashboard/inventory/transfers', icon: PackageCheck },
@@ -163,8 +178,8 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Overview', href: '/dashboard/workspace', icon: LayoutDashboard },
       { name: 'Workflows', href: '/dashboard/workflows', icon: GitMerge, comingSoon: true },
-      { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle, comingSoon: true },
-      { name: 'Alerts', href: '/dashboard/alerts', icon: Bell, comingSoon: true },
+      { name: 'Approvals', href: '/dashboard/approvals', icon: CheckCircle },
+      { name: 'Alerts', href: '/dashboard/alerts', icon: Bell },
       {
         name: 'AI Assistant',
         href: '/dashboard/ai-reports/ai-assistant',
