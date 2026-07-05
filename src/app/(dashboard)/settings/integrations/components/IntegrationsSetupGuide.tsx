@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Circle, ExternalLink, Loader2, RefreshCw, Users } from 'lucide-react';
+import { CheckCircle2, Circle, ExternalLink, Loader2, Package, RefreshCw, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api/client';
 import type { Cin7ConnectionStatus } from '@/lib/api/cin7';
@@ -11,6 +11,10 @@ import type { XeroConnectionStatus } from '@/lib/api/xero';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { ShadowOnboardingFlow } from './ShadowOnboardingFlow';
+import {
+  CIN7_MASTER_DATA_HUB_URL,
+  CIN7_VERIFY_PAGES,
+} from '@/lib/integrations/cin7-master-data-routes';
 
 type Props = {
   xeroStatus: XeroConnectionStatus | null;
@@ -163,6 +167,41 @@ export function IntegrationsSetupGuide({
           </li>
         ))}
       </ul>
+
+      {cin7Status?.connected ? (
+        <div className="rounded-xl border border-border/70 bg-card/60 p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-medium">Verify Cin7 data in your modules</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                After syncing, open each area to confirm counts and records match Cin7.
+              </p>
+            </div>
+            <Button size="sm" asChild>
+              <Link href={CIN7_MASTER_DATA_HUB_URL}>
+                <Package className="mr-1.5 h-3.5 w-3.5" />
+                Cin7 data hub
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {CIN7_VERIFY_PAGES.map((page) => {
+              const Icon = page.icon;
+              return (
+                <Link
+                  key={page.key}
+                  href={page.href}
+                  className="hover:bg-muted/60 flex items-center gap-3 rounded-lg border border-border/60 px-3 py-2.5 text-sm transition-colors"
+                >
+                  <Icon className="text-primary h-4 w-4 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{page.label}</span>
+                  <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0 opacity-60" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
         <div className="flex items-center gap-2 font-medium">
