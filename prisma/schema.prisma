@@ -33,14 +33,18 @@ model AppUser {
 }
 
 model Customer {
-  id          String   @id @default(uuid()) @db.Uuid
-  ownerUserId String   @map("owner_user_id") @db.Uuid
-  companyName String   @map("company_name")
-  contactName String?  @map("contact_name")
-  email       String?
-  phone       String?
-  city        String?
-  isActive    Boolean  @default(true) @map("is_active")
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerUserId   String   @map("owner_user_id") @db.Uuid
+  /// Stable Cin7 Omni/Core contact identifier for idempotent sync (no duplicate imports).
+  cin7ContactId String?  @map("cin7_contact_id")
+  /// Cin7 contact type label (Customer, Internal, etc.).
+  cin7ContactType String? @map("cin7_contact_type")
+  companyName   String   @map("company_name")
+  contactName   String?  @map("contact_name")
+  email         String?
+  phone         String?
+  city          String?
+  isActive      Boolean  @default(true) @map("is_active")
   /// Maximum outstanding balance allowed before new orders are blocked (AUD, null = no limit)
   creditLimitAUD  Decimal? @map("credit_limit_aud") @db.Decimal(12, 2)
   /// Days from due-date anchor until invoice is due
@@ -62,7 +66,9 @@ model Customer {
   operationalEvents        OperationalEvent[]
   priceTier                CustomerPriceTier?
 
+  @@unique([ownerUserId, cin7ContactId])
   @@index([ownerUserId])
+  @@index([ownerUserId, cin7ContactId])
   @@map("customers")
 }
 
@@ -547,6 +553,42 @@ model Supplier {
   @@unique([ownerUserId, supplierCode])
   @@index([ownerUserId])
   @@map("suppliers")
+}
+
+/// Cin7 Omni branch / location master data (warehouse sites).
+model Cin7Branch {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  cin7BranchId String   @map("cin7_branch_id")
+  name         String
+  branchType   String?  @map("branch_type")
+  email        String?
+  phone        String?
+  city         String?
+  state        String?
+  postCode     String?  @map("post_code")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, cin7BranchId])
+  @@index([ownerUserId])
+  @@map("cin7_branches")
+}
+
+/// Audit trail for manual and scheduled Cin7 sync runs.
+model Cin7SyncRun {
+  id               String   @id @default(uuid()) @db.Uuid
+  ownerUserId      String   @map("owner_user_id") @db.Uuid
+  entityType       String   @map("entity_type")
+  recordsProcessed Int      @map("records_processed")
+  skipped          Json?
+  durationMs       Int      @map("duration_ms")
+  source           String?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([ownerUserId, createdAt(sort: Desc)])
+  @@map("cin7_sync_runs")
 }
 
 model PurchaseOrder {
