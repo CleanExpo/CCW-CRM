@@ -127,14 +127,43 @@ export async function disconnectCin7(): Promise<{ status: string }> {
  * Trigger manual sync for a specific entity type
  */
 export async function triggerCin7Sync(
-  entityType: 'products' | 'customers' | 'orders' | 'inventory'
+  entityType:
+    | 'products'
+    | 'customers'
+    | 'internal-customers'
+    | 'suppliers'
+    | 'branches'
+    | 'orders'
+    | 'inventory'
 ): Promise<{
   status: string;
   records_processed?: number;
   duration_ms?: number;
   page_size?: number;
+  cin7_source_styles?: number;
+  skipped?: Record<string, number>;
 }> {
   return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
+}
+
+export type { Cin7ReconciliationSnapshot } from '@/lib/integrations/cin7-reconciliation';
+
+/**
+ * Compare Cin7 live counts with Optix imported master data.
+ */
+export async function getCin7Reconciliation(): Promise<
+  import('@/lib/integrations/cin7-reconciliation').Cin7ReconciliationSnapshot
+> {
+  return apiClient.get('/api/integrations/cin7/reconciliation');
+}
+
+export async function cleanupCin7DuplicateCustomers(): Promise<{
+  status: string;
+  email_duplicates_removed: number;
+  orphan_no_id_removed: number;
+  kept: number;
+}> {
+  return apiClient.post('/api/integrations/cin7/cleanup-duplicates');
 }
 
 /**
