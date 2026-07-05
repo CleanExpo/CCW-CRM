@@ -34,6 +34,7 @@ import {
 } from '@/components/operations/OperationsPageHeader';
 import { opCardClass, opHeroSurfaceClass } from '@/lib/operations/ui';
 import { cn } from '@/lib/utils';
+import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 
 interface StockByLocation {
@@ -286,6 +287,7 @@ export default function ProductsPage() {
           }
         />
 
+        <Cin7MasterDataNav active="products" />
         <Cin7PageSyncToolbar entity="products" onSynced={loadProducts} />
 
         <div className="flex items-center justify-between">
