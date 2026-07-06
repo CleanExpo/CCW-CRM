@@ -2,7 +2,7 @@
 type: grill
 component: margot-ccw
 sketch: ../Sketches/07-margot-ccw.md
-status: resolved
+status: resolved (rounds 1+2, 2026-07-06)
 created: 2026-07-06
 ---
 
@@ -77,3 +77,67 @@ Resolving the 8 open questions from the R&D report, dependency-first.
 **Appetite (Shape Up time budget):** 6w — voice-live at Brisbane pilot: P0 foundations + knowledge core + SDS delivery + draft orders. Email/booking/marketing are the next bet.
 
 **Next step:** promote to `Pitches/07-margot-ccw.md`; file the ticket pack to the CCW Linear board once Linear auth is restored.
+
+---
+
+# Round 2 — execution leaves (2026-07-06)
+
+## Q9: Ownership split for finalisation between Rana and Toby?
+**My recommendation:** Rana owns engineering, Toby owns CCW business acceptance, Phill arbitrates deadlocks.
+**Phill's answer:** "We build, Rana Pollishes, and then help Toby with any final Walkthrough Connections required for handover."
+**Resolution:** DECIDED — Unite-Group (Phill + Claude) builds; Rana polishes (QA/refinement pass on our PRs); Toby receives handover (final walkthrough + CCW-side connections: accounts, numbers, rosters).
+
+## Q10: Who supplies the real recorded CCW calls for the STT accent bake-off?
+**My recommendation:** Toby arranges 20–30 real Brisbane calls recorded in P0 (with the consent announcement active); fallback is staff-simulated calls if recording isn't practical pre-launch — because the gate is only meaningful on real caller audio.
+**Phill's answer:** Toby arranges real calls (took recommendation).
+**Resolution:** DECIDED — 20–30 real Brisbane calls recorded in P0 with consent announcement live.
+
+## Q11: Which call types does Margot CONTAIN on day 1 at the Brisbane pilot, vs immediately transfer?
+**My recommendation:** Contain: product/parts questions, stock & price, branch hours/pickup, SDS delivery, service-booking requests, draft orders. Always transfer: trade-account/credit issues, complaints, complex multi-line quotes, anything safety-ambiguous — start narrow on money-and-anger, wide on information.
+**Phill's answer:** Info wide, money narrow (took recommendation).
+**Resolution:** DECIDED
+
+## Q12: Hard caps on a Margot draft order before forced transfer?
+**My recommendation:** ≤$2,000 order value and ≤15 line items; over either limit Margot warm-transfers to sales — big orders are exactly the calls the sales team WANTS, and the cap is one config value we can raise as trust builds.
+**Phill's answer:** $2,000 / 15 lines (took recommendation).
+**Resolution:** DECIDED — config values, raisable post-pilot.
+
+## Q13: Monthly spend ceiling for CCW's pilot Twilio + ElevenLabs accounts?
+**My recommendation:** $500/mo combined alert threshold with hard review at $750 — at ~$0.10–0.15/min all-in that covers roughly 3,000–5,000 minutes, well above a single-branch pilot's volume, and it keeps the whole pilot under the $1k escalation line.
+**Phill's answer:** $500 alert / $750 review (took recommendation).
+**Resolution:** DECIDED
+
+## Q14: Who works the draft-order finalisation queue each morning, and to what SLA?
+**My recommendation:** The Brisbane named escalation contact owns the queue with a "cleared by 9:30am, nothing older than 24h" SLA — overnight capture only pays if a human converts it before the customer cools off; Toby confirms the person at handover.
+**Phill's answer:** Branch contact, 9:30am SLA (took recommendation).
+**Resolution:** DECIDED
+
+## Q15: Margot's greeting — lock the wording now?
+**My recommendation:** Lock this draft as the working version, subject only to counsel edits: "Hi, you've called Carpet Cleaners Warehouse Brisbane. I'm Margot, CCW's AI assistant — this call is recorded, and our privacy info is at ccwonline.com.au/privacy. How can I help?" — it hits all three legal requirements (recording consent, AI identity, APP 5 pointer) in under 9 seconds.
+**Phill's answer:** Lock the draft (took recommendation).
+**Resolution:** DECIDED — counsel gets final edit only.
+
+---
+
+## Final state — round 2
+
+**Decided:**
+- Delivery model: Unite-Group (Phill + Claude) builds; Rana polishes our PRs; Toby receives
+  handover (walkthrough + CCW-side connections: accounts, numbers, rosters).
+- Toby arranges 20–30 real recorded Brisbane calls (consent live) for the STT bake-off.
+- Day-1 scope: info wide, money narrow — contain product/stock/price/hours/SDS/bookings/draft
+  orders; always transfer trade-account/credit, complaints, complex quotes, safety-ambiguous.
+- Draft-order caps: $2,000 / 15 lines (config, raisable post-pilot).
+- Pilot spend: $500/mo combined alert, $750 hard review (Twilio + ElevenLabs).
+- Queue: Brisbane named contact clears draft orders by 9:30am daily, nothing older than 24h.
+- Greeting locked (counsel edit only): "Hi, you've called Carpet Cleaners Warehouse Brisbane.
+  I'm Margot, CCW's AI assistant — this call is recorded, and our privacy info is at
+  ccwonline.com.au/privacy. How can I help?"
+- KPI baseline method (operational call, mine): 1-week manual call tally at Brisbane during P0
+  (volume, type, duration, admin minutes) — feeds the 14-day success signals.
+
+**Rabbit holes:** unchanged (per-site PBX discovery; porting decision).
+**No-gos:** unchanged.
+**Appetite:** unchanged — 6w Brisbane voice-live pilot.
+
+**Next step:** decisions sync'd to CCW-CRM PR #239 docs; file tickets on Linear auth restore.
