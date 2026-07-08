@@ -79,6 +79,10 @@ export async function cin7OmniGet<T>(
       });
       const data = (await res.json().catch(() => ({}))) as T;
       clearTimeout(timeout);
+      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
+        await sleep(2_000 * (attempt + 1));
+        continue;
+      }
       return { ok: res.ok, status: res.status, data };
     } catch (error) {
       clearTimeout(timeout);
@@ -173,15 +177,17 @@ export function flattenOmniProducts(
   price: number;
   stock: number;
   visibility: string;
+  styleCode: string;
   isActive: boolean;
 }> {
-  const excludeInactive = options?.excludeInactive !== false;
+  const excludeInactive = options?.excludeInactive === true;
   const out: Array<{
     sku: string;
     name: string;
     price: number;
     stock: number;
     visibility: string;
+    styleCode: string;
     isActive: boolean;
   }> = [];
   for (const raw of rawList) {
@@ -217,6 +223,7 @@ export function flattenOmniProducts(
           price,
           stock,
           visibility: styleStatus,
+          styleCode: styleCode || sku,
           isActive: styleStatus !== 'Inactive',
         });
       }
@@ -227,6 +234,7 @@ export function flattenOmniProducts(
         price: 0,
         stock: 0,
         visibility: styleStatus,
+        styleCode,
         isActive: styleStatus !== 'Inactive',
       });
     }
@@ -256,7 +264,7 @@ export async function fetchOmniProductPage(
     return { rows: [], total: null, sourceRowCount: 0, skippedInactive: 0, error };
   }
   const { rows: rawRows, total } = parseOmniListEnvelope(data);
-  const excludeInactive = options?.excludeInactive !== false;
+  const excludeInactive = options?.excludeInactive === true;
   let skippedInactive = 0;
   if (excludeInactive) {
     for (const raw of rawRows) {
@@ -290,10 +298,17 @@ function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
   const c = raw as Record<string, unknown>;
   const cin7ContactId = String(pick(c, 'ID', 'id') ?? '').trim();
   if (!cin7ContactId) return null;
-  const contactType = String(pick(c, 'Type', 'type') ?? '').trim() || 'Unknown';
+  const contactType =
+    String(pick(c, 'Type', 'type', 'ContactType', 'contactType') ?? '').trim() || 'Unknown';
   const company = String(
-    pick(c, 'Company', 'company', 'Name', 'name') ?? 'Cin7 contact'
+    pick(c, 'Company', 'company', 'Name', 'name', 'FirstName', 'firstName') ?? ''
   ).trim();
+  const lastName = String(pick(c, 'LastName', 'lastName') ?? '').trim();
+  const displayName =
+    [company, lastName].filter(Boolean).join(' ').trim() ||
+    company ||
+    lastName ||
+    'Cin7 contact';
   const email = String(pick(c, 'Email', 'email') ?? '').trim();
   const phone =
     String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
@@ -304,29 +319,48 @@ function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
   return {
     cin7ContactId,
     contactType,
-    companyName: company || 'Cin7 contact',
+    companyName: displayName,
     email,
     phone,
     city,
   };
 }
 
+export type Cin7OmniContactSkip = {
+  cin7Id?: string;
+  label?: string;
+  reason: 'missing_cin7_id' | 'wrong_contact_type';
+};
+
+function buildOmniContactsPath(page: number, rows: number, whereType?: string): string {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  params.set('rows', String(rows));
+  params.set('order', 'id asc');
+  if (whereType) {
+    params.set('where', `type='${whereType}'`);
+  }
+  return `/v1/Contacts?${params.toString()}`;
+}
+
 export async function fetchOmniContactsPage(
   creds: Cin7OmniCredentials,
   page: number,
   rows: number,
-  options?: { allowedTypes?: string[] }
+  options?: { allowedTypes?: string[]; whereType?: string }
 ): Promise<{
   rows: Cin7OmniContactRow[];
   total: number | null;
   sourceRowCount: number;
   skippedWrongType: number;
   skippedMissingId: number;
+  skippedRecords: Cin7OmniContactSkip[];
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
+  const whereType = options?.whereType ?? options?.allowedTypes?.[0];
   const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Contacts?page=${page}&rows=${safeRows}`,
+    buildOmniContactsPath(page, safeRows, whereType),
     creds
   );
   if (!ok) {
@@ -336,19 +370,30 @@ export async function fetchOmniContactsPage(
       sourceRowCount: 0,
       skippedWrongType: 0,
       skippedMissingId: 0,
+      skippedRecords: [],
       error,
     };
   }
   const { rows: list, total } = parseOmniListEnvelope(data);
-  const allowedTypes = options?.allowedTypes?.map((t) => t.toLowerCase());
+  const allowedTypes = whereType
+    ? [whereType.toLowerCase()]
+    : options?.allowedTypes?.map((t) => t.toLowerCase());
   let skippedWrongType = 0;
   let skippedMissingId = 0;
+  const skippedRecords: Cin7OmniContactSkip[] = [];
   const mapped: Cin7OmniContactRow[] = [];
 
   for (const raw of list) {
     const row = mapOmniContactRaw(raw);
     if (!row) {
       skippedMissingId += 1;
+      const label =
+        raw && typeof raw === 'object'
+          ? String(
+              pick(raw as Record<string, unknown>, 'Company', 'company', 'Name', 'name') ?? ''
+            ).trim() || undefined
+          : undefined;
+      skippedRecords.push({ label, reason: 'missing_cin7_id' });
       continue;
     }
     if (
@@ -357,6 +402,11 @@ export async function fetchOmniContactsPage(
       !allowedTypes.includes(row.contactType.toLowerCase())
     ) {
       skippedWrongType += 1;
+      skippedRecords.push({
+        cin7Id: row.cin7ContactId,
+        label: row.companyName,
+        reason: 'wrong_contact_type',
+      });
       continue;
     }
     mapped.push(row);
@@ -368,6 +418,7 @@ export async function fetchOmniContactsPage(
     sourceRowCount: list.length,
     skippedWrongType,
     skippedMissingId,
+    skippedRecords,
   };
 }
 
