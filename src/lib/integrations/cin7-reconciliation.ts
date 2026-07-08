@@ -6,13 +6,18 @@ import {
   pingCin7Core,
 } from '@/lib/integrations/cin7-core';
 import {
-  fetchOmniBranchesPage,
-  fetchOmniContactsPage,
-  fetchOmniProductPage,
-  getCin7OmniCredentials,
-  pingCin7Omni,
-} from '@/lib/integrations/cin7-omni';
-import { getCin7SyncMaxPages, getCin7PageSize, shouldContinueCin7SyncPage } from '@/lib/integrations/cin7-sync-config';
+  fetchAllOmniMasterCatalogsSequential,
+  fetchFullOmniBranchCatalog,
+  fetchFullOmniContactsByType,
+  fetchFullOmniProductCatalog,
+  resolveCin7SyncSource,
+} from '@/lib/integrations/cin7-catalog-fetch';
+import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
+import {
+  getCin7PageSize,
+  getCin7SyncMaxPages,
+  shouldContinueCin7SyncPage,
+} from '@/lib/integrations/cin7-sync-config';
 
 const CIN7_PRODUCT_CATEGORY_PREFIX = 'Cin7';
 
@@ -20,7 +25,11 @@ export type Cin7ReconciliationSnapshot = {
   source: 'core' | 'omni' | 'none';
   checked_at: string;
   cin7: {
-    products: { styles: number; skus: number; by_visibility: Record<string, number> };
+    products: {
+      styles: number;
+      skus: number;
+      by_visibility: Record<string, number>;
+    };
     customers: number;
     internal_customers: number;
     suppliers: number;
@@ -28,158 +37,433 @@ export type Cin7ReconciliationSnapshot = {
   };
   optix: {
     products: {
-      total: number;
-      cin7_sourced: number;
-      active_cin7_sourced: number;
+      total_cin7_sourced: number;
+      skus: number;
+      styles: number;
       by_visibility: Record<string, number>;
     };
-    customers: { total: number; cin7_linked: number; unlinked_orphans: number };
+    customers: {
+      total: number;
+      cin7_linked: number;
+      extra_without_cin7_id: number;
+    };
     internal_customers: number;
-    suppliers: { total: number; cin7_linked: number };
+    suppliers: { total: number; cin7_linked: number; extra_without_cin7_id: number };
     branches: { total: number };
+  };
+  exceptions_summary: {
+    products_missing_in_optix: number;
+    products_extra_in_optix: number;
+    products_field_mismatches: number;
+    customers_missing_in_optix: number;
+    customers_extra_in_optix: number;
+    customers_field_mismatches: number;
+    suppliers_missing_in_optix: number;
+    suppliers_extra_in_optix: number;
+    suppliers_field_mismatches: number;
+    branches_missing_in_optix: number;
+    branches_extra_in_optix: number;
+    branches_field_mismatches: number;
+    internal_customers_missing_in_optix: number;
+    internal_customers_extra_in_optix: number;
+    internal_customers_field_mismatches: number;
+  };
+  fetch_meta: {
+    products_pages?: number;
+    customers_pages?: number;
+    suppliers_pages?: number;
+    branches_pages?: number;
+    errors: string[];
   };
   notes: string[];
 };
 
-function productVisibilityFromCategory(category: string | null): string {
-  if (!category) return 'Unknown';
-  const parts = category.split('·').map((p) => p.trim());
-  return parts.length > 1 ? parts[parts.length - 1] : 'Cin7 Core';
+export type Cin7ExceptionEntity =
+  | 'products'
+  | 'customers'
+  | 'suppliers'
+  | 'branches'
+  | 'internal-customers';
+
+export type Cin7ExceptionRecord = {
+  cin7_id: string;
+  label: string;
+  reason: 'missing_in_optix' | 'extra_in_optix' | 'field_mismatch' | 'skipped_on_sync';
+  fields?: Array<{ field: string; cin7_value: string; optix_value: string }>;
+  skipped_reason?: string;
+};
+
+function uniqueNotes(notes: string[]): string[] {
+  return [...new Set(notes)];
+}
+
+function normalize(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase();
 }
 
 export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7ReconciliationSnapshot> {
   const notes: string[] = [];
+  const fetchErrors: string[] = [];
   const coreCreds = getCin7CoreCredentials();
   const omniCreds = getCin7OmniCredentials();
   const coreLive = coreCreds ? await pingCin7Core(coreCreds) : false;
   const omniLive = omniCreds ? await pingCin7Omni(omniCreds) : false;
-  const useCore = coreLive;
-  const useOmni = !coreLive && omniLive;
-  const pageSize = getCin7PageSize();
-  const maxPages = getCin7SyncMaxPages();
+  const source = resolveCin7SyncSource(coreLive, omniLive);
 
-  let source: Cin7ReconciliationSnapshot['source'] = 'none';
   const cin7Products = { styles: 0, skus: 0, by_visibility: {} as Record<string, number> };
   let cin7Customers = 0;
   let cin7InternalCustomers = 0;
   let cin7Suppliers = 0;
   let cin7Branches = 0;
 
-  if (useCore && coreCreds) {
-    source = 'core';
+  const cin7ProductBySku = new Map<
+    string,
+    { name: string; price: number; stock: number; visibility: string; isActive: boolean }
+  >();
+  const cin7CustomerById = new Map<
+    string,
+    { companyName: string; email: string; phone?: string; city?: string }
+  >();
+  const cin7InternalCustomerById = new Map<
+    string,
+    { companyName: string; email: string; phone?: string; city?: string }
+  >();
+  const cin7SupplierById = new Map<string, { companyName: string; email?: string; phone?: string }>();
+  const cin7BranchById = new Map<
+    string,
+    { name: string; city?: string; state?: string; postCode?: string; isActive: boolean }
+  >();
+
+  const fetchMeta: Cin7ReconciliationSnapshot['fetch_meta'] = { errors: [] };
+
+  if (source === 'omni' && omniCreds) {
+    const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    const { products: productCatalog, customers, internalCustomers, suppliers, branches } =
+      catalogs;
+
+    fetchMeta.products_pages = productCatalog.pages_fetched;
+    fetchMeta.customers_pages = customers.pages_fetched;
+    fetchMeta.suppliers_pages = suppliers.pages_fetched;
+    fetchMeta.branches_pages = branches.pages_fetched;
+    fetchErrors.push(
+      ...productCatalog.errors,
+      ...customers.errors,
+      ...internalCustomers.errors,
+      ...suppliers.errors,
+      ...branches.errors
+    );
+
+    cin7Products.styles = productCatalog.styles;
+    cin7Products.skus = productCatalog.skus.length;
+    cin7Products.by_visibility = productCatalog.by_visibility;
+    for (const sku of productCatalog.skus) {
+      cin7ProductBySku.set(sku.sku, sku);
+    }
+
+    cin7Customers = customers.contacts.length;
+    for (const c of customers.contacts) {
+      cin7CustomerById.set(c.cin7ContactId, {
+        companyName: c.companyName,
+        email: c.email,
+        phone: c.phone,
+        city: c.city,
+      });
+    }
+
+    cin7InternalCustomers = internalCustomers.contacts.length;
+    for (const c of internalCustomers.contacts) {
+      cin7InternalCustomerById.set(c.cin7ContactId, {
+        companyName: c.companyName,
+        email: c.email,
+        phone: c.phone,
+        city: c.city,
+      });
+    }
+
+    cin7Suppliers = suppliers.contacts.length;
+    for (const s of suppliers.contacts) {
+      cin7SupplierById.set(s.cin7ContactId, {
+        companyName: s.companyName,
+        email: s.email,
+        phone: s.phone,
+      });
+    }
+
+    cin7Branches = branches.branches.length;
+    for (const b of branches.branches) {
+      cin7BranchById.set(b.cin7BranchId, {
+        name: b.name,
+        city: b.city,
+        state: b.state,
+        postCode: b.postCode,
+        isActive: b.isActive,
+      });
+    }
+
+    notes.push(
+      'Cin7 is the source of truth — inactive products and all visibility types are included.'
+    );
+    notes.push('Style count = distinct StyleCode values; SKU count includes all variants.');
+  } else if (source === 'core' && coreCreds) {
+    const pageSize = getCin7PageSize();
+    const maxPages = getCin7SyncMaxPages();
     for (let page = 1; page <= maxPages; page += 1) {
-      const { rows } = await fetchCin7ProductPage(coreCreds, page, pageSize);
+      const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
       if (rows.length === 0) break;
       cin7Products.styles += rows.length;
-      cin7Products.skus += rows.length;
-      cin7Products.by_visibility.Cin7 = (cin7Products.by_visibility.Cin7 ?? 0) + rows.length;
-      if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, rows.length, maxPages)) break;
+      for (const row of rows) {
+        const sku = String(row.Sku ?? '').trim();
+        if (!sku) continue;
+        cin7Products.skus += 1;
+        cin7ProductBySku.set(sku, {
+          name: String(row.Name ?? sku),
+          price: Number(row.Price ?? row.SellPrice ?? 0) || 0,
+          stock: Math.max(0, Math.floor(Number(row.Available ?? 0))),
+          visibility: 'Cin7 Core',
+          isActive: true,
+        });
+        cin7Products.by_visibility['Cin7 Core'] = (cin7Products.by_visibility['Cin7 Core'] ?? 0) + 1;
+      }
+      if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, maxPages)) break;
     }
     for (let page = 1; page <= maxPages; page += 1) {
       const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, pageSize);
-      cin7Customers += rows.length;
       if (rows.length === 0) break;
+      for (const row of rows) {
+        const id = String(row.ID ?? '').trim();
+        if (!id) continue;
+        cin7Customers += 1;
+        cin7CustomerById.set(id, {
+          companyName: String(row.Name ?? 'Cin7 customer'),
+          email: String(row.Email ?? ''),
+          phone: row.Phone ? String(row.Phone) : undefined,
+          city: row.City ? String(row.City) : undefined,
+        });
+      }
       if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, maxPages)) break;
     }
-    notes.push('Cin7 Core: supplier, branch, and internal customer paths use Omni when available.');
-  } else if (useOmni && omniCreds) {
-    source = 'omni';
-    for (let page = 1; page <= maxPages; page += 1) {
-      const { rows, sourceRowCount, skippedInactive } = await fetchOmniProductPage(
-        omniCreds,
-        page,
-        pageSize,
-        { excludeInactive: true }
-      );
-      if (sourceRowCount === 0) break;
-      cin7Products.styles += sourceRowCount;
-      cin7Products.skus += rows.length;
-      for (const row of rows) {
-        cin7Products.by_visibility[row.visibility] =
-          (cin7Products.by_visibility[row.visibility] ?? 0) + 1;
-      }
-      if (skippedInactive > 0) {
-        notes.push('Inactive Cin7 styles are excluded from product sync counts.');
-      }
-      if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, null, maxPages)) break;
-    }
-    for (let page = 1; page <= maxPages; page += 1) {
-      const { rows, sourceRowCount } = await fetchOmniContactsPage(omniCreds, page, pageSize, {
-        allowedTypes: ['Customer'],
-      });
-      cin7Customers += rows.length;
-      if (sourceRowCount === 0) break;
-      if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, null, maxPages)) break;
-    }
-    for (let page = 1; page <= maxPages; page += 1) {
-      const { rows, sourceRowCount } = await fetchOmniContactsPage(omniCreds, page, pageSize, {
-        allowedTypes: ['Internal'],
-      });
-      cin7InternalCustomers += rows.length;
-      if (sourceRowCount === 0) break;
-      if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, null, maxPages)) break;
-    }
-    for (let page = 1; page <= maxPages; page += 1) {
-      const { rows, sourceRowCount } = await fetchOmniContactsPage(omniCreds, page, pageSize, {
-        allowedTypes: ['Supplier'],
-      });
-      cin7Suppliers += rows.length;
-      if (sourceRowCount === 0) break;
-      if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, null, maxPages)) break;
-    }
-    for (let page = 1; page <= maxPages; page += 1) {
-      const { rows, sourceRowCount } = await fetchOmniBranchesPage(omniCreds, page, pageSize);
-      cin7Branches += rows.length;
-      if (sourceRowCount === 0) break;
-      if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, null, maxPages)) break;
-    }
-    notes.push(
-      'Optix product SKU totals align with Cin7 when each style has one variant; multi-variant styles may show more SKUs in Optix.'
-    );
+    notes.push('Supplier, branch, and internal customer reconciliation require Cin7 Omni.');
   } else {
-    notes.push('Cin7 is not connected — counts reflect Optix data only.');
+    notes.push('Cin7 is not connected — Optix counts only.');
   }
 
   const [
     productRows,
+    customerRows,
+    internalCustomerRows,
+    internalCustomerCount,
+    supplierRows,
+    branchRows,
     customerTotal,
-    customerLinked,
-    customerOrphans,
-    internalCustomers,
     supplierTotal,
-    supplierLinked,
-    branchTotal,
   ] = await Promise.all([
     prisma.product.findMany({
       where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
-      select: { category: true, isActive: true },
+      select: {
+        sku: true,
+        name: true,
+        price: true,
+        stock: true,
+        isActive: true,
+        cin7StyleCode: true,
+        cin7Visibility: true,
+        category: true,
+      },
     }),
-    prisma.customer.count({ where: { ownerUserId } }),
-    prisma.customer.count({ where: { ownerUserId, cin7ContactId: { not: null } } }),
-    prisma.customer.count({
+    prisma.customer.findMany({
       where: {
         ownerUserId,
-        cin7ContactId: null,
-        OR: [{ email: null }, { email: '' }],
+        cin7ContactId: { not: null },
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
+      select: {
+        cin7ContactId: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        city: true,
+      },
+    }),
+    prisma.customer.findMany({
+      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
+      select: {
+        cin7ContactId: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        city: true,
       },
     }),
     prisma.customer.count({
       where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
     }),
-    prisma.supplier.count({ where: { ownerUserId } }),
-    prisma.supplier.count({
+    prisma.supplier.findMany({
       where: { ownerUserId, supplierCode: { startsWith: 'cin7:' } },
+      select: { supplierCode: true, companyName: true, email: true, phone: true },
     }),
-    prisma.cin7Branch.count({ where: { ownerUserId } }),
+    prisma.cin7Branch.findMany({
+      where: { ownerUserId },
+      select: {
+        cin7BranchId: true,
+        name: true,
+        city: true,
+        state: true,
+        postCode: true,
+        isActive: true,
+      },
+    }),
+    prisma.customer.count({ where: { ownerUserId } }),
+    prisma.supplier.count({ where: { ownerUserId } }),
   ]);
 
   const optixByVisibility: Record<string, number> = {};
-  let activeCin7Sourced = 0;
+  const optixStyleCodes = new Set<string>();
+  const optixProductBySku = new Map<
+    string,
+    { name: string; price: number; stock: number; visibility: string; isActive: boolean }
+  >();
+
   for (const row of productRows) {
-    const visibility = productVisibilityFromCategory(row.category);
+    const visibility =
+      row.cin7Visibility ??
+      (row.category?.includes('·') ? row.category.split('·').pop()?.trim() : 'Unknown') ??
+      'Unknown';
     optixByVisibility[visibility] = (optixByVisibility[visibility] ?? 0) + 1;
-    if (row.isActive) activeCin7Sourced += 1;
+    if (row.cin7StyleCode) optixStyleCodes.add(row.cin7StyleCode);
+    optixProductBySku.set(row.sku, {
+      name: row.name,
+      price: row.price,
+      stock: row.stock,
+      visibility,
+      isActive: row.isActive,
+    });
   }
+
+  const optixCustomerById = new Map(
+    customerRows
+      .filter((r) => r.cin7ContactId)
+      .map((r) => [
+        r.cin7ContactId!,
+        { companyName: r.companyName, email: r.email ?? '', phone: r.phone, city: r.city },
+      ])
+  );
+
+  const optixInternalCustomerById = new Map(
+    internalCustomerRows
+      .filter((r) => r.cin7ContactId)
+      .map((r) => [
+        r.cin7ContactId!,
+        { companyName: r.companyName, email: r.email ?? '', phone: r.phone, city: r.city },
+      ])
+  );
+
+  const optixSupplierById = new Map(
+    supplierRows.map((r) => {
+      const id = r.supplierCode.replace(/^cin7:/, '');
+      return [id, { companyName: r.companyName, email: r.email, phone: r.phone }] as const;
+    })
+  );
+
+  const optixBranchById = new Map(
+    branchRows.map((r) => [
+      r.cin7BranchId,
+      { name: r.name, city: r.city, state: r.state, postCode: r.postCode, isActive: r.isActive },
+    ])
+  );
+
+  const countExceptions = <TCin7 extends string, TOptix extends string>(
+    cin7Map: Map<TCin7, unknown>,
+    optixMap: Map<TOptix, unknown>,
+    fieldCompare?: (cin7Key: TCin7, optixKey: TOptix) => boolean
+  ) => {
+    let missing = 0;
+    let extra = 0;
+    let fieldMismatch = 0;
+    for (const key of cin7Map.keys()) {
+      if (!optixMap.has(key as unknown as TOptix)) {
+        missing += 1;
+      } else if (fieldCompare && !fieldCompare(key, key as unknown as TOptix)) {
+        fieldMismatch += 1;
+      }
+    }
+    for (const key of optixMap.keys()) {
+      if (!cin7Map.has(key as unknown as TCin7)) extra += 1;
+    }
+    return { missing, extra, fieldMismatch };
+  };
+
+  const productExceptions = countExceptions(cin7ProductBySku, optixProductBySku, (sku) => {
+    const cin7 = cin7ProductBySku.get(sku)!;
+    const optix = optixProductBySku.get(sku)!;
+    return (
+      normalize(optix.name) === normalize(cin7.name) &&
+      Math.abs(optix.price - cin7.price) <= 0.01 &&
+      optix.stock === cin7.stock &&
+      optix.isActive === cin7.isActive &&
+      normalize(optix.visibility) === normalize(cin7.visibility)
+    );
+  });
+
+  const customerExceptions = countExceptions(cin7CustomerById, optixCustomerById, (id) => {
+    const cin7 = cin7CustomerById.get(id)!;
+    const optix = optixCustomerById.get(id)!;
+    return (
+      normalize(optix.companyName) === normalize(cin7.companyName) &&
+      normalize(optix.email) === normalize(cin7.email) &&
+      normalize(optix.phone) === normalize(cin7.phone) &&
+      normalize(optix.city) === normalize(cin7.city)
+    );
+  });
+
+  const supplierExceptions = countExceptions(cin7SupplierById, optixSupplierById, (id) => {
+    const cin7 = cin7SupplierById.get(id)!;
+    const optix = optixSupplierById.get(id)!;
+    return (
+      normalize(optix.companyName) === normalize(cin7.companyName) &&
+      normalize(optix.email) === normalize(cin7.email) &&
+      normalize(optix.phone) === normalize(cin7.phone)
+    );
+  });
+
+  const internalCustomerExceptions = countExceptions(
+    cin7InternalCustomerById,
+    optixInternalCustomerById,
+    (id) => {
+      const cin7 = cin7InternalCustomerById.get(id)!;
+      const optix = optixInternalCustomerById.get(id)!;
+      return (
+        normalize(optix.companyName) === normalize(cin7.companyName) &&
+        normalize(optix.email) === normalize(cin7.email)
+      );
+    }
+  );
+
+  const branchExceptions = countExceptions(cin7BranchById, optixBranchById, (id) => {
+    const cin7 = cin7BranchById.get(id)!;
+    const optix = optixBranchById.get(id)!;
+    return (
+      normalize(optix.name) === normalize(cin7.name) &&
+      normalize(optix.city) === normalize(cin7.city) &&
+      normalize(optix.state) === normalize(cin7.state) &&
+      normalize(optix.postCode) === normalize(cin7.postCode) &&
+      optix.isActive === cin7.isActive
+    );
+  });
+
+  const customerLinked = customerRows.length;
+  const supplierLinked = supplierRows.length;
+  const customerExtraWithoutId = customerTotal - customerLinked;
+  const supplierExtraWithoutId = supplierTotal - supplierLinked;
+
+  if (fetchErrors.length > 0) {
+    notes.push(`Cin7 fetch warnings: ${fetchErrors.slice(0, 3).join('; ')}`);
+  }
+  notes.push('Use the exception report to review individual records — no data is deleted during sync.');
+
+  fetchMeta.errors = fetchErrors;
 
   return {
     source,
@@ -193,20 +477,362 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
     },
     optix: {
       products: {
-        total: productRows.length,
-        cin7_sourced: productRows.length,
-        active_cin7_sourced: activeCin7Sourced,
+        total_cin7_sourced: productRows.length,
+        skus: productRows.length,
+        styles: optixStyleCodes.size || productRows.length,
         by_visibility: optixByVisibility,
       },
       customers: {
         total: customerTotal,
         cin7_linked: customerLinked,
-        unlinked_orphans: customerOrphans,
+        extra_without_cin7_id: customerExtraWithoutId,
       },
-      internal_customers: internalCustomers,
-      suppliers: { total: supplierTotal, cin7_linked: supplierLinked },
-      branches: { total: branchTotal },
+      internal_customers: internalCustomerCount,
+      suppliers: {
+        total: supplierTotal,
+        cin7_linked: supplierLinked,
+        extra_without_cin7_id: supplierExtraWithoutId,
+      },
+      branches: { total: branchRows.length },
     },
-    notes,
+    exceptions_summary: {
+      products_missing_in_optix: productExceptions.missing,
+      products_extra_in_optix: productExceptions.extra,
+      products_field_mismatches: productExceptions.fieldMismatch,
+      customers_missing_in_optix: customerExceptions.missing,
+      customers_extra_in_optix: customerExceptions.extra,
+      customers_field_mismatches: customerExceptions.fieldMismatch,
+      suppliers_missing_in_optix: supplierExceptions.missing,
+      suppliers_extra_in_optix: supplierExceptions.extra,
+      suppliers_field_mismatches: supplierExceptions.fieldMismatch,
+      branches_missing_in_optix: branchExceptions.missing,
+      branches_extra_in_optix: branchExceptions.extra,
+      branches_field_mismatches: branchExceptions.fieldMismatch,
+      internal_customers_missing_in_optix: internalCustomerExceptions.missing,
+      internal_customers_extra_in_optix: internalCustomerExceptions.extra,
+      internal_customers_field_mismatches: internalCustomerExceptions.fieldMismatch,
+    },
+    fetch_meta: fetchMeta,
+    notes: uniqueNotes(notes),
+  };
+}
+
+export async function buildCin7ExceptionReport(
+  ownerUserId: string,
+  entity: Cin7ExceptionEntity,
+  limit = 100,
+  offset = 0
+): Promise<{
+  entity: Cin7ExceptionEntity;
+  total: number;
+  offset: number;
+  limit: number;
+  items: Cin7ExceptionRecord[];
+}> {
+  const items: Cin7ExceptionRecord[] = [];
+  const omniCreds = getCin7OmniCredentials();
+  const omniLive = omniCreds ? await pingCin7Omni(omniCreds) : false;
+  const coreCreds = getCin7CoreCredentials();
+  const coreLive = coreCreds ? await pingCin7Core(coreCreds) : false;
+  const source = resolveCin7SyncSource(coreLive, omniLive);
+
+  if (entity === 'products' && source === 'omni' && omniCreds) {
+    const catalog = await fetchFullOmniProductCatalog(omniCreds);
+    const optixRows = await prisma.product.findMany({
+      where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
+      select: { sku: true, name: true, price: true, stock: true, isActive: true, cin7Visibility: true },
+    });
+    const optixBySku = new Map(optixRows.map((r) => [r.sku, r]));
+
+    for (const cin7 of catalog.skus) {
+      const optix = optixBySku.get(cin7.sku);
+      if (!optix) {
+        items.push({ cin7_id: cin7.sku, label: cin7.name, reason: 'missing_in_optix' });
+        continue;
+      }
+      const fields: Cin7ExceptionRecord['fields'] = [];
+      if (normalize(optix.name) !== normalize(cin7.name)) {
+        fields.push({ field: 'name', cin7_value: cin7.name, optix_value: optix.name });
+      }
+      if (Math.abs(optix.price - cin7.price) > 0.01) {
+        fields.push({ field: 'price', cin7_value: String(cin7.price), optix_value: String(optix.price) });
+      }
+      if (optix.stock !== cin7.stock) {
+        fields.push({ field: 'stock', cin7_value: String(cin7.stock), optix_value: String(optix.stock) });
+      }
+      if (optix.isActive !== cin7.isActive) {
+        fields.push({
+          field: 'is_active',
+          cin7_value: String(cin7.isActive),
+          optix_value: String(optix.isActive),
+        });
+      }
+      const optixVis = optix.cin7Visibility ?? '';
+      if (normalize(optixVis) !== normalize(cin7.visibility)) {
+        fields.push({ field: 'visibility', cin7_value: cin7.visibility, optix_value: optixVis });
+      }
+      if (fields.length > 0) {
+        items.push({ cin7_id: cin7.sku, label: cin7.name, reason: 'field_mismatch', fields });
+      }
+    }
+    for (const optix of optixRows) {
+      if (!catalog.skus.some((c) => c.sku === optix.sku)) {
+        items.push({ cin7_id: optix.sku, label: optix.name, reason: 'extra_in_optix' });
+      }
+    }
+  }
+
+  if (entity === 'customers' && source === 'omni' && omniCreds) {
+    const { contacts } = await fetchFullOmniContactsByType(omniCreds, ['Customer']);
+    const optixRows = await prisma.customer.findMany({
+      where: { ownerUserId, cin7ContactId: { not: null } },
+      select: { cin7ContactId: true, companyName: true, email: true, phone: true, city: true },
+    });
+    const optixById = new Map(
+      optixRows.filter((r) => r.cin7ContactId).map((r) => [r.cin7ContactId!, r])
+    );
+
+    for (const cin7 of contacts) {
+      const optix = optixById.get(cin7.cin7ContactId);
+      if (!optix) {
+        items.push({
+          cin7_id: cin7.cin7ContactId,
+          label: cin7.companyName,
+          reason: 'missing_in_optix',
+        });
+        continue;
+      }
+      const fields: Cin7ExceptionRecord['fields'] = [];
+      if (normalize(optix.companyName) !== normalize(cin7.companyName)) {
+        fields.push({
+          field: 'company_name',
+          cin7_value: cin7.companyName,
+          optix_value: optix.companyName,
+        });
+      }
+      if (normalize(optix.email ?? '') !== normalize(cin7.email)) {
+        fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
+      }
+      if (normalize(optix.phone ?? '') !== normalize(cin7.phone ?? '')) {
+        fields.push({ field: 'phone', cin7_value: cin7.phone ?? '', optix_value: optix.phone ?? '' });
+      }
+      if (normalize(optix.city ?? '') !== normalize(cin7.city ?? '')) {
+        fields.push({ field: 'city', cin7_value: cin7.city ?? '', optix_value: optix.city ?? '' });
+      }
+      if (fields.length > 0) {
+        items.push({
+          cin7_id: cin7.cin7ContactId,
+          label: cin7.companyName,
+          reason: 'field_mismatch',
+          fields,
+        });
+      }
+    }
+    for (const optix of optixRows) {
+      if (!optix.cin7ContactId) continue;
+      if (!contacts.some((c) => c.cin7ContactId === optix.cin7ContactId)) {
+        items.push({
+          cin7_id: optix.cin7ContactId,
+          label: optix.companyName,
+          reason: 'extra_in_optix',
+        });
+      }
+    }
+  }
+
+  if (entity === 'suppliers' && source === 'omni' && omniCreds) {
+    const { contacts } = await fetchFullOmniContactsByType(omniCreds, ['Supplier']);
+    const optixRows = await prisma.supplier.findMany({
+      where: { ownerUserId, supplierCode: { startsWith: 'cin7:' } },
+      select: { supplierCode: true, companyName: true, email: true, phone: true },
+    });
+    const optixById = new Map(optixRows.map((r) => [r.supplierCode.replace(/^cin7:/, ''), r]));
+
+    for (const cin7 of contacts) {
+      const optix = optixById.get(cin7.cin7ContactId);
+      if (!optix) {
+        items.push({
+          cin7_id: cin7.cin7ContactId,
+          label: cin7.companyName,
+          reason: 'missing_in_optix',
+        });
+        continue;
+      }
+      const fields: Cin7ExceptionRecord['fields'] = [];
+      if (normalize(optix.companyName) !== normalize(cin7.companyName)) {
+        fields.push({
+          field: 'company_name',
+          cin7_value: cin7.companyName,
+          optix_value: optix.companyName,
+        });
+      }
+      if (normalize(optix.email ?? '') !== normalize(cin7.email)) {
+        fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
+      }
+      if (normalize(optix.phone ?? '') !== normalize(cin7.phone ?? '')) {
+        fields.push({ field: 'phone', cin7_value: cin7.phone ?? '', optix_value: optix.phone ?? '' });
+      }
+      if (fields.length > 0) {
+        items.push({
+          cin7_id: cin7.cin7ContactId,
+          label: cin7.companyName,
+          reason: 'field_mismatch',
+          fields,
+        });
+      }
+    }
+    for (const [id, optix] of optixById) {
+      if (!contacts.some((c) => c.cin7ContactId === id)) {
+        items.push({ cin7_id: id, label: optix.companyName, reason: 'extra_in_optix' });
+      }
+    }
+  }
+
+  if (entity === 'branches' && source === 'omni' && omniCreds) {
+    const { branches } = await fetchFullOmniBranchCatalog(omniCreds);
+    const optixRows = await prisma.cin7Branch.findMany({ where: { ownerUserId } });
+    const optixById = new Map(optixRows.map((r) => [r.cin7BranchId, r]));
+
+    for (const cin7 of branches) {
+      const optix = optixById.get(cin7.cin7BranchId);
+      if (!optix) {
+        items.push({ cin7_id: cin7.cin7BranchId, label: cin7.name, reason: 'missing_in_optix' });
+        continue;
+      }
+      const fields: Cin7ExceptionRecord['fields'] = [];
+      if (normalize(optix.name) !== normalize(cin7.name)) {
+        fields.push({ field: 'name', cin7_value: cin7.name, optix_value: optix.name });
+      }
+      if (normalize(optix.city ?? '') !== normalize(cin7.city ?? '')) {
+        fields.push({ field: 'city', cin7_value: cin7.city ?? '', optix_value: optix.city ?? '' });
+      }
+      if (normalize(optix.state ?? '') !== normalize(cin7.state ?? '')) {
+        fields.push({ field: 'state', cin7_value: cin7.state ?? '', optix_value: optix.state ?? '' });
+      }
+      if (normalize(optix.postCode ?? '') !== normalize(cin7.postCode ?? '')) {
+        fields.push({
+          field: 'post_code',
+          cin7_value: cin7.postCode ?? '',
+          optix_value: optix.postCode ?? '',
+        });
+      }
+      if (optix.isActive !== cin7.isActive) {
+        fields.push({
+          field: 'is_active',
+          cin7_value: String(cin7.isActive),
+          optix_value: String(optix.isActive),
+        });
+      }
+      if (fields.length > 0) {
+        items.push({
+          cin7_id: cin7.cin7BranchId,
+          label: cin7.name,
+          reason: 'field_mismatch',
+          fields,
+        });
+      }
+    }
+    for (const optix of optixRows) {
+      if (!branches.some((b) => b.cin7BranchId === optix.cin7BranchId)) {
+        items.push({ cin7_id: optix.cin7BranchId, label: optix.name, reason: 'extra_in_optix' });
+      }
+    }
+  }
+
+  if (entity === 'internal-customers' && source === 'omni' && omniCreds) {
+    const { contacts } = await fetchFullOmniContactsByType(omniCreds, ['Internal']);
+    const optixRows = await prisma.customer.findMany({
+      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
+      select: { cin7ContactId: true, companyName: true, email: true, phone: true, city: true },
+    });
+    const optixById = new Map(
+      optixRows.filter((r) => r.cin7ContactId).map((r) => [r.cin7ContactId!, r])
+    );
+
+    for (const cin7 of contacts) {
+      const optix = optixById.get(cin7.cin7ContactId);
+      if (!optix) {
+        items.push({
+          cin7_id: cin7.cin7ContactId,
+          label: cin7.companyName,
+          reason: 'missing_in_optix',
+        });
+        continue;
+      }
+      const fields: Cin7ExceptionRecord['fields'] = [];
+      if (normalize(optix.companyName) !== normalize(cin7.companyName)) {
+        fields.push({
+          field: 'company_name',
+          cin7_value: cin7.companyName,
+          optix_value: optix.companyName,
+        });
+      }
+      if (normalize(optix.email ?? '') !== normalize(cin7.email)) {
+        fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
+      }
+      if (fields.length > 0) {
+        items.push({
+          cin7_id: cin7.cin7ContactId,
+          label: cin7.companyName,
+          reason: 'field_mismatch',
+          fields,
+        });
+      }
+    }
+    for (const optix of optixRows) {
+      if (!optix.cin7ContactId) continue;
+      if (!contacts.some((c) => c.cin7ContactId === optix.cin7ContactId)) {
+        items.push({
+          cin7_id: optix.cin7ContactId,
+          label: optix.companyName,
+          reason: 'extra_in_optix',
+        });
+      }
+    }
+  }
+
+  const entityType = entity === 'internal-customers' ? 'internal-customers' : entity;
+
+  const skipRows = await prisma.cin7SyncSkipRecord.findMany({
+    where: { ownerUserId, entityType },
+    orderBy: { createdAt: 'desc' },
+    take: 500,
+    select: { cin7Id: true, label: true, reason: true },
+  });
+  for (const row of skipRows) {
+    items.push({
+      cin7_id: row.cin7Id,
+      label: row.label ?? row.cin7Id,
+      reason: 'skipped_on_sync',
+      skipped_reason: row.reason.replace(/_/g, ' '),
+    });
+  }
+
+  const lastRun = await prisma.cin7SyncRun.findFirst({
+    where: { ownerUserId, entityType },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (lastRun?.skipped && typeof lastRun.skipped === 'object' && skipRows.length === 0) {
+    const skipped = lastRun.skipped as Record<string, number>;
+    for (const [key, count] of Object.entries(skipped)) {
+      if (count > 0) {
+        items.push({
+          cin7_id: '—',
+          label: `Last sync skipped ${count} record(s)`,
+          reason: 'skipped_on_sync',
+          skipped_reason: key.replace(/_/g, ' '),
+        });
+      }
+    }
+  }
+
+  const safeOffset = Math.max(0, offset);
+  const safeLimit = Math.max(1, limit);
+  return {
+    entity,
+    total: items.length,
+    offset: safeOffset,
+    limit: safeLimit,
+    items: items.slice(safeOffset, safeOffset + safeLimit),
   };
 }
