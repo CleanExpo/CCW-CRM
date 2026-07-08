@@ -58,7 +58,45 @@ per vehicle — never assume.
 
 ---
 
-## 2. Regulatory map by domain
+## 2. Brands, models and heat-source architecture
+
+CCW's truck-mount range is built around two primary manufacturer families — **HydraMaster**
+and **Sapphire Scientific**. Getting the certificate right starts with identifying the
+unit's **power and heat architecture**, because that decides which compliance domains
+actually bite.
+
+### 2a. Corporate note (state accurately)
+
+- **Sapphire Scientific** and **Dri-Eaz** are **Legend Brands** companies — the same parent
+  as the Dri-Eaz dehumidifier referenced in Module 01. (Confirmed: Legend Brands' portfolio
+  includes Dri-Eaz, Sapphire Scientific, Prochem, Chemspec, ODORx, Unsmoke.)
+- **HydraMaster** operates under **Universal Cleaning Concepts LLC** per its own current
+  corporate/copyright statements. It shares deep industry lineage with the Legend Brands
+  cleaning line but should **not** be described as a current Legend Brands company on a
+  formal certificate. State the manufacturer entity as it appears on the unit.
+
+### 2b. The compliance-critical distinction: how the unit makes heat and power
+
+Verified across the current HydraMaster and Sapphire Scientific ranges, mainstream units
+fall into two architectures — **and neither is a gas-fired appliance**:
+
+| Architecture | Example models | Power | Heat | What this means for compliance |
+|---|---|---|---|---|
+| **Direct-drive / engine-heat** (host-vehicle powered) | HydraMaster **CDS xDrive** (Thermal Accumulation Heating System) | Runs off the **host vehicle engine** — no separate engine | Recovered from the **vehicle engine** (thermal exchange), no burner | Vehicle-modification and WHS dominate; **no gas appliance**; no separate fuel store beyond the vehicle's own tank |
+| **Onboard-engine slide-in** | HydraMaster **Boxxer 318HP** (18 HP air-cooled), **Boxxer XL** (31 HP Briggs & Stratton), **TMTG4000** (23 HP Vanguard); Sapphire Scientific **370SS** (23 HP Kohler, 3000 RPM in the AU spec), **370EFI** (liquid-cooled Kubota 4-cyl) | Own **petrol** engine (EFI models are fuel-injected) | Recovered from the **engine exhaust** via a **stainless finned-tube heat exchanger** | Adds **petrol fuel storage** (flammable liquid) and **engine exhaust / CO in the enclosed van** as the salient hazards; heat exchanger assessed under pressure rules (AS 4343), **not** gas rules |
+
+Typical operating envelope for these units: solution pressure to ~**1,500 psi**, single- or
+multi-stage **finned-tube (stainless) heat exchanger**, high heat (93 °C+ / 200 °F+).
+
+> **Key correction to the generic framework:** because standard HydraMaster and Sapphire
+> Scientific units take heat from the **engine exhaust**, not a **fuel-gas burner**, the
+> **gas domain (AS/NZS 5601 / 1596 / appliance certification) generally does NOT apply**.
+> It applies **only** if a specific unit is fitted with a **gas-fired auxiliary heater**
+> (uncommon in this range). For the mainstream engine-heat units the salient hazards are
+> **petrol fuel handling, engine exhaust / CO extraction from an enclosed vehicle, the
+> finned-tube heat exchanger (pressure), noise, and the vehicle modification.**
+
+## 3. Regulatory map by domain
 
 Each row: what governs a truck-mount, the issuing body, and an official source. Standard
 editions current as at the 2026 research pass; always work to the current published
@@ -88,7 +126,11 @@ edition.
 > mounted equipment module and its mass effect is a **signatory determination** — the
 > certifying signatory nominates the applicable code(s). Do not pre-print a code.
 
-### Domain B — Gas (LPG-fired units)
+### Domain B — Gas (⚠ ONLY if a gas-fired auxiliary heater is fitted)
+
+> **Applies only to gas-fired configurations.** Mainstream HydraMaster / Sapphire
+> Scientific units are **engine-heat** (see §2b) and this whole domain is **N/A** for them.
+> Complete it only where a gas-fired auxiliary heater is actually installed.
 
 | Reference | Governs | Source |
 |---|---|---|
@@ -136,10 +178,11 @@ engine, belts) must be **guarded** per WHS plant duties.
 | **AS/NZS 1269 series** + Managing Noise Code of Practice | Blower/engine noise; exposure standard 85 dB(A) L_Aeq,8h / 140 dB(C) peak | safeworkaustralia.gov.au |
 | **Workplace Exposure Standards — carbon monoxide** | **Exhaust/CO in an enclosed van** is a real design hazard: prevent CO accumulation in the operator/cabin space (exhaust routing, ventilation, CO alarm as a control) | safeworkaustralia.gov.au |
 
-### Domain F — Dangerous goods / chemicals carried onboard
+### Domain F — Fuel, dangerous goods & chemicals carried onboard
 
 | Reference | Governs | Source |
 |---|---|---|
+| **Petrol / flammable-liquid fuel storage** (onboard-engine models) | Onboard-engine HydraMaster/Sapphire units carry **petrol** — the fuel tank/lines must be safely mounted, vented and protected from ignition and impact; combined with the engine-exhaust/CO control in Domain E this is the dominant hazard on engine-heat units | AS 1940 (storage & handling of flammable & combustible liquids) — **⚠ CONFIRM applicability of onboard quantities**; safeworkaustralia.gov.au |
 | **ADG Code (Edition 7.9)** | If onboard cleaning chemicals are dangerous goods **above placard/exemption quantities**: packaging, segregation, marking, documentation. Most small onboard loads fall **under** DG thresholds (limited-quantity exemptions) — **assess against the actual products** | ntc.gov.au |
 | **SDS obligations (WHS Regs, GHS)** | Current Safety Data Sheet held for every hazardous chemical; GHS labelling — applies regardless of DG transport threshold | safeworkaustralia.gov.au |
 
@@ -152,7 +195,7 @@ vehicle/gas/electrical safety — that is why this certificate binds the statuto
 
 ---
 
-## 3. Why the certificate is structured as a compliance dossier
+## 4. Why the certificate is structured as a compliance dossier
 
 No single body certifies the whole unit, so a credible certificate **binds together the
 separate licensed sign-offs** into one dossier. Each section is signed by whoever is
@@ -162,7 +205,7 @@ and matches how Australian law actually allocates the duties.
 
 ---
 
-## 4. Certificate template (complete one per unit)
+## 5. Certificate template (complete one per unit)
 
 > Copy this block into the issued certificate. Delete rows that do not apply (e.g. gas
 > rows for a non-gas unit). Do not issue until every **⚠ CONFIRM** item is resolved and
@@ -176,7 +219,9 @@ and matches how Australian law actually allocates the duties.
 **Certificate no.:** __________  **Date of issue:** __________
 
 **Section 1 — Unit & vehicle identification**
-- Truck-mount make / model / serial: __________
+- Truck-mount make / model / serial: __________ (e.g. HydraMaster Boxxer 318HP / CDS xDrive; Sapphire Scientific 370SS / 370EFI)
+- Manufacturer entity as marked on unit: __________ (e.g. Universal Cleaning Concepts LLC for HydraMaster; Legend Brands for Sapphire Scientific)
+- **Power/heat architecture:** ☐ Direct-drive / engine-heat (host vehicle) ☐ Onboard petrol engine + finned-tube exchanger ☐ Gas-fired auxiliary heat fitted
 - Host vehicle make / model / VIN: __________
 - Vehicle **GVM**: ______ t  → **Band:** ☐ Light (≤4.5 t) ☐ Heavy (>4.5 t)
 - Tare / kerb mass: ______  Loaded mass (unit + full water + fuel + occupants): ______
@@ -194,7 +239,8 @@ and matches how Australian law actually allocates the duties.
 - Modification plate no.: __________
 - *Licensed vehicle signatory (name / licence no. / signature):* __________
 
-**Section 4 — Gas installation & appliance** *(gas/LPG units only)*
+**Section 4 — Gas installation & appliance** *(⚠ ONLY if gas-fired auxiliary heat fitted — N/A for standard engine-heat HydraMaster/Sapphire units)*
+- ☐ N/A — unit is engine-heat, no gas appliance
 - Gas installation to **AS/NZS 5601.1** (or .2 if determined): ☐ Confirmed
 - Fired appliance certification / GTRC listing ref: __________
 - LPG cylinder mounting to **AS/NZS 1596**: ☐ Confirmed
@@ -219,7 +265,8 @@ and matches how Australian law actually allocates the duties.
 - Operating & safety manual supplied to operator: ☐ Confirmed
 - *Manufacturer signature:* __________
 
-**Section 8 — Dangerous goods / chemicals**
+**Section 8 — Fuel, dangerous goods & chemicals**
+- Petrol fuel tank/lines safely mounted, vented, impact/ignition protected (onboard-engine units): ☐ N/A ☐ Confirmed
 - Onboard chemical DG threshold assessed (ADG 7.9): ☐ Under threshold ☐ ADG controls applied
 - Current SDS register + GHS labelling: ☐ Confirmed
 - *Signed (manufacturer / operator):* __________
@@ -232,14 +279,15 @@ and matches how Australian law actually allocates the duties.
 
 ---
 
-## 5. Before issuing — confirmation checklist
+## 6. Before issuing — confirmation checklist
 
 Resolve every **⚠ CONFIRM** item with the named primary authority or licensed
 practitioner first:
 
 - [ ] Exact VSB14 / QRVM modification code(s) — nominated by the vehicle signatory
 - [ ] AS/NZS 3001 vehicle-electrical current designation — confirmed with the electrician
-- [ ] AS/NZS 5601.1 vs 5601.2 applicability — determined by the gasfitter
+- [ ] AS/NZS 5601.1 vs 5601.2 applicability — determined by the gasfitter (**only if a gas-fired heater is fitted**)
+- [ ] AS 1940 flammable-liquid applicability to onboard petrol quantities — confirmed for engine-heat units
 - [ ] Model WHS Act section numbers for manufacturer/supplier duties — confirmed against the model Act text
 - [ ] Specific AS/NZS 5263 appliance-standard part + certification pathway — confirmed with a Conformity Assessment Body
 - [ ] Per-state modification schemes beyond QLD/NSW/VIC — confirmed with each authority
