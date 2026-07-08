@@ -146,7 +146,11 @@ export async function triggerCin7Sync(
   return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
 }
 
-export type { Cin7ReconciliationSnapshot } from '@/lib/integrations/cin7-reconciliation';
+export type {
+  Cin7ReconciliationSnapshot,
+  Cin7ExceptionEntity,
+  Cin7ExceptionRecord,
+} from '@/lib/integrations/cin7-reconciliation';
 
 /**
  * Compare Cin7 live counts with Optix imported master data.
@@ -154,7 +158,39 @@ export type { Cin7ReconciliationSnapshot } from '@/lib/integrations/cin7-reconci
 export async function getCin7Reconciliation(): Promise<
   import('@/lib/integrations/cin7-reconciliation').Cin7ReconciliationSnapshot
 > {
-  return apiClient.get('/api/integrations/cin7/reconciliation');
+  return apiClient.get('/api/integrations/cin7/reconciliation', undefined, 300_000);
+}
+
+export async function getCin7ExceptionReport(
+  entity: import('@/lib/integrations/cin7-reconciliation').Cin7ExceptionEntity,
+  limit = 100,
+  offset = 0
+): Promise<{
+  entity: string;
+  total: number;
+  offset: number;
+  limit: number;
+  items: import('@/lib/integrations/cin7-reconciliation').Cin7ExceptionRecord[];
+}> {
+  return apiClient.get(
+    `/api/integrations/cin7/reconciliation/exceptions?entity=${entity}&limit=${limit}&offset=${offset}`,
+    undefined,
+    300_000
+  );
+}
+
+export function getCin7ExceptionReportExportUrl(
+  entity: import('@/lib/integrations/cin7-reconciliation').Cin7ExceptionEntity,
+  offset = 0,
+  limit = 2000
+): string {
+  const params = new URLSearchParams({
+    entity,
+    offset: String(offset),
+    limit: String(limit),
+    format: 'csv',
+  });
+  return `/api/integrations/cin7/reconciliation/exceptions?${params.toString()}`;
 }
 
 export async function cleanupCin7DuplicateCustomers(): Promise<{
