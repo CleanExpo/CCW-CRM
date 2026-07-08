@@ -143,7 +143,13 @@ edition.
 appliance must hold current certification. **The manufacturer cannot self-certify the gas
 installation.**
 
-### Domain C — Electrical (onboard generator / 230 V system)
+### Domain C — Electrical (⚠ only where a 230 V onboard generator/inverter is fitted)
+
+> **Applies only to generator-equipped units.** Mainstream HydraMaster (Boxxer/TITAN/TMTG)
+> and Sapphire (370/570/870) units are **petrol-engine slide-ins with 12 V DC controls — no
+> 230 V mains installation** (see Course Unit 3.1). This domain and the licensed-electrician
+> sign-off apply **only** to units with an onboard 230 V generator/inverter (e.g. the
+> electric-drive CDS xDrive). For 12 V-only units, mark Section 5 of the certificate N/A.
 
 | Reference | Governs | Source |
 |---|---|---|
@@ -246,7 +252,8 @@ and matches how Australian law actually allocates the duties.
 - LPG cylinder mounting to **AS/NZS 1596**: ☐ Confirmed
 - *Licensed gasfitter (name / licence no. / signature):* __________
 
-**Section 5 — Electrical installation** *(onboard 230 V units)*
+**Section 5 — Electrical installation** *(⚠ ONLY units with a 230 V onboard generator/inverter — N/A for standard 12 V DC petrol slide-ins)*
+- ☐ N/A — unit is 12 V DC only, no 230 V installation
 - Fixed installation to **AS/NZS 3000** (and **AS/NZS 3001** vehicle installation): ☐ Confirmed
 - 30 mA RCD protection on socket-outlets: ☐ Confirmed
 - Certificate of Electrical Safety no.: __________
