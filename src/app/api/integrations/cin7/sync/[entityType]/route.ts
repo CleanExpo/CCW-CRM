@@ -20,6 +20,7 @@ import {
   getCin7SyncMaxPages,
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
+import { resolveCin7SyncSource } from '@/lib/integrations/cin7-catalog-fetch';
 import {
   batchUpsertBranches,
   batchUpsertCustomers,
@@ -32,7 +33,9 @@ import {
   mapOmniProductRows,
   mapOmniSupplierRows,
   recordCin7SyncRun,
+  type Cin7SyncSkipInput,
 } from '@/lib/integrations/cin7-sync-persist';
+import { getCatalogPageGapMs } from '@/lib/integrations/cin7-catalog-fetch';
 
 export const maxDuration = 300;
 
@@ -80,8 +83,9 @@ export async function POST(
   const coreLive = coreCreds ? await pingCin7Core(coreCreds) : false;
   const omniLive = omniCreds ? await pingCin7Omni(omniCreds) : false;
 
-  const useCore = coreLive;
-  const useOmni = !coreLive && omniLive;
+  const sourceKind = resolveCin7SyncSource(coreLive, omniLive);
+  const useCore = sourceKind === 'core';
+  const useOmni = sourceKind === 'omni';
 
   if (!useCore && !useOmni) {
     return NextResponse.json(
@@ -102,6 +106,8 @@ export async function POST(
     inactive_products: 0,
     missing_core_id: 0,
   };
+  const skipRecords: Cin7SyncSkipInput[] = [];
+  const pageGapMs = getCatalogPageGapMs();
   const startedAt = Date.now();
 
   if (entityType === 'products' || entityType === 'inventory') {
@@ -116,7 +122,7 @@ export async function POST(
     } else if (useOmni && omniCreds) {
       type OmniProductPage = Awaited<ReturnType<typeof fetchOmniProductPage>>;
       let nextFetch: Promise<OmniProductPage> = fetchOmniProductPage(omniCreds, 1, pageSize, {
-        excludeInactive: true,
+        excludeInactive: false,
       });
 
       for (let page = 1; page <= MAX_PAGES; page += 1) {
@@ -129,7 +135,7 @@ export async function POST(
         const nextPage = page + 1;
         nextFetch =
           nextPage <= MAX_PAGES
-            ? fetchOmniProductPage(omniCreds, nextPage, pageSize, { excludeInactive: true })
+            ? fetchOmniProductPage(omniCreds, nextPage, pageSize, { excludeInactive: false })
             : Promise.resolve({
                 rows: [],
                 total: null,
@@ -138,12 +144,12 @@ export async function POST(
               });
 
         recordsProcessed += await batchUpsertProducts(scope.userId, mapOmniProductRows(rows));
-        if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
+        if (sourceRowCount < pageSize) break;
+        if (page >= MAX_PAGES) break;
       }
     }
   } else if (entityType === 'customers' || entityType === 'internal-customers') {
-    const contactTypes =
-      entityType === 'internal-customers' ? (['Internal'] as const) : (['Customer'] as const);
+    const contactType = entityType === 'internal-customers' ? 'Internal' : 'Customer';
     if (useCore && coreCreds && entityType === 'customers') {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, pageSize);
@@ -156,33 +162,44 @@ export async function POST(
     } else if (useOmni && omniCreds) {
       type OmniContactPage = Awaited<ReturnType<typeof fetchOmniContactsPage>>;
       let nextFetch: Promise<OmniContactPage> = fetchOmniContactsPage(omniCreds, 1, pageSize, {
-        allowedTypes: [...contactTypes],
+        whereType: contactType,
       });
 
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total, sourceRowCount, skippedMissingId, skippedWrongType } =
+        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords } =
           await nextFetch;
         if (sourceRowCount === 0) break;
 
         skipped.missing_cin7_id += skippedMissingId;
         skipped.wrong_contact_type += skippedWrongType;
+        for (const record of skippedRecords) {
+          skipRecords.push({
+            cin7Id: record.cin7Id ?? `page-${page}-missing-id`,
+            label: record.label,
+            reason: record.reason,
+          });
+        }
 
         const nextPage = page + 1;
         nextFetch =
           nextPage <= MAX_PAGES
-            ? fetchOmniContactsPage(omniCreds, nextPage, pageSize, {
-                allowedTypes: [...contactTypes],
-              })
+            ? (pageGapMs > 0
+                ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
+                    fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType })
+                  )
+                : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType }))
             : Promise.resolve({
                 rows: [],
                 total: null,
                 sourceRowCount: 0,
                 skippedWrongType: 0,
                 skippedMissingId: 0,
+                skippedRecords: [],
               });
 
         recordsProcessed += await batchUpsertCustomers(scope.userId, mapOmniCustomerRows(rows));
-        if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
+        if (sourceRowCount < pageSize) break;
+        if (page >= MAX_PAGES) break;
       }
     } else if (entityType === 'internal-customers') {
       return NextResponse.json(
@@ -201,7 +218,8 @@ export async function POST(
         if (sourceRowCount === 0) break;
         skipped.missing_cin7_id += skippedMissingId;
         recordsProcessed += await batchUpsertBranches(scope.userId, mapOmniBranchRows(rows));
-        if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
+        if (sourceRowCount < pageSize) break;
+        if (page >= MAX_PAGES) break;
       }
     } else {
       return NextResponse.json(
@@ -213,33 +231,44 @@ export async function POST(
     if (useOmni && omniCreds) {
       type OmniContactPage = Awaited<ReturnType<typeof fetchOmniContactsPage>>;
       let nextFetch: Promise<OmniContactPage> = fetchOmniContactsPage(omniCreds, 1, pageSize, {
-        allowedTypes: ['Supplier'],
+        whereType: 'Supplier',
       });
 
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total, sourceRowCount, skippedMissingId, skippedWrongType } =
+        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords } =
           await nextFetch;
         if (sourceRowCount === 0) break;
 
         skipped.missing_cin7_id += skippedMissingId;
         skipped.wrong_contact_type += skippedWrongType;
+        for (const record of skippedRecords) {
+          skipRecords.push({
+            cin7Id: record.cin7Id ?? `page-${page}-missing-id`,
+            label: record.label,
+            reason: record.reason,
+          });
+        }
 
         const nextPage = page + 1;
         nextFetch =
           nextPage <= MAX_PAGES
-            ? fetchOmniContactsPage(omniCreds, nextPage, pageSize, {
-                allowedTypes: ['Supplier'],
-              })
+            ? (pageGapMs > 0
+                ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
+                    fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' })
+                  )
+                : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' }))
             : Promise.resolve({
                 rows: [],
                 total: null,
                 sourceRowCount: 0,
                 skippedWrongType: 0,
                 skippedMissingId: 0,
+                skippedRecords: [],
               });
 
         recordsProcessed += await batchUpsertSuppliers(scope.userId, mapOmniSupplierRows(rows));
-        if (!shouldContinueCin7SyncPage(page, pageSize, sourceRowCount, total, MAX_PAGES)) break;
+        if (sourceRowCount < pageSize) break;
+        if (page >= MAX_PAGES) break;
       }
     } else {
       return NextResponse.json(
@@ -256,7 +285,7 @@ export async function POST(
   }
 
   const durationMs = Date.now() - startedAt;
-  const source = useCore ? 'core' : 'omni';
+  const source = sourceKind;
   console.log(
     `[Cin7 sync] ${entityType}: ${recordsProcessed} records in ${durationMs}ms (${source})`
   );
@@ -266,6 +295,7 @@ export async function POST(
     entityType,
     recordsProcessed,
     skipped,
+    skipRecords,
     durationMs,
     source,
   }).catch(() => undefined);
