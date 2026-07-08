@@ -35,6 +35,8 @@ export type Cin7ProductSyncRow = {
   stock: number;
   category: string;
   isActive: boolean;
+  cin7StyleCode?: string;
+  cin7Visibility?: string;
 };
 
 export type Cin7CustomerSyncRow = {
@@ -94,6 +96,8 @@ export async function batchUpsertProducts(
           stock: row.stock,
           category: row.category,
           isActive: row.isActive,
+          cin7StyleCode: row.cin7StyleCode,
+          cin7Visibility: row.cin7Visibility,
         },
         update: {
           name: row.name,
@@ -101,6 +105,8 @@ export async function batchUpsertProducts(
           stock: row.stock,
           category: row.category,
           isActive: row.isActive,
+          cin7StyleCode: row.cin7StyleCode,
+          cin7Visibility: row.cin7Visibility,
         },
       })
     );
@@ -127,33 +133,14 @@ export async function batchUpsertCustomers(
   for (let i = 0; i < rows.length; i += batchSize) {
     const chunk = rows.slice(i, i + batchSize);
     const cin7Ids = chunk.map((r) => r.cin7ContactId);
-    const emails = chunk
-      .map((r) => r.email.trim().toLowerCase())
-      .filter((email) => email.length > 0);
 
-    const [byCin7Rows, byEmailRows] = await Promise.all([
-      prisma.customer.findMany({
-        where: { ownerUserId, cin7ContactId: { in: cin7Ids } },
-        select: { id: true, cin7ContactId: true },
-      }),
-      emails.length
-        ? prisma.customer.findMany({
-            where: {
-              ownerUserId,
-              OR: emails.map((email) => ({ email: { equals: email, mode: 'insensitive' as const } })),
-            },
-            select: { id: true, email: true, cin7ContactId: true },
-          })
-        : Promise.resolve([]),
-    ]);
+    const byCin7Rows = await prisma.customer.findMany({
+      where: { ownerUserId, cin7ContactId: { in: cin7Ids } },
+      select: { id: true, cin7ContactId: true },
+    });
 
     const idByCin7 = new Map(
       byCin7Rows.filter((r) => r.cin7ContactId).map((r) => [r.cin7ContactId!, r.id])
-    );
-    const idByEmail = new Map(
-      byEmailRows
-        .filter((r) => r.email)
-        .map((r) => [r.email!.trim().toLowerCase(), r.id])
     );
 
     await runInConcurrency(chunk, concurrency, async (row) => {
@@ -167,9 +154,7 @@ export async function batchUpsertCustomers(
         cin7ContactType: row.cin7ContactType,
       };
 
-      const existingId =
-        idByCin7.get(row.cin7ContactId) ??
-        (email ? idByEmail.get(email.toLowerCase()) : undefined);
+      const existingId = idByCin7.get(row.cin7ContactId);
 
       if (existingId) {
         await prisma.customer.update({ where: { id: existingId }, data });
@@ -235,15 +220,22 @@ export async function batchUpsertBranches(
   return processed;
 }
 
+export type Cin7SyncSkipInput = {
+  cin7Id: string;
+  label?: string;
+  reason: string;
+};
+
 export async function recordCin7SyncRun(input: {
   ownerUserId: string;
   entityType: string;
   recordsProcessed: number;
   skipped?: Record<string, number>;
+  skipRecords?: Cin7SyncSkipInput[];
   durationMs: number;
   source?: string;
-}): Promise<void> {
-  await prisma.cin7SyncRun.create({
+}): Promise<string | null> {
+  const run = await prisma.cin7SyncRun.create({
     data: {
       ownerUserId: input.ownerUserId,
       entityType: input.entityType,
@@ -253,6 +245,26 @@ export async function recordCin7SyncRun(input: {
       source: input.source,
     },
   });
+
+  const skipRecords = input.skipRecords ?? [];
+  if (skipRecords.length > 0) {
+    const batchSize = 500;
+    for (let i = 0; i < skipRecords.length; i += batchSize) {
+      const chunk = skipRecords.slice(i, i + batchSize);
+      await prisma.cin7SyncSkipRecord.createMany({
+        data: chunk.map((row) => ({
+          ownerUserId: input.ownerUserId,
+          syncRunId: run.id,
+          entityType: input.entityType,
+          cin7Id: row.cin7Id,
+          label: row.label,
+          reason: row.reason,
+        })),
+      });
+    }
+  }
+
+  return run.id;
 }
 export async function batchUpsertSuppliers(
   ownerUserId: string,
@@ -347,6 +359,7 @@ export function mapOmniProductRows(
     price: number;
     stock: number;
     visibility: string;
+    styleCode?: string;
     isActive: boolean;
   }>
 ): Cin7ProductSyncRow[] {
@@ -358,6 +371,8 @@ export function mapOmniProductRows(
       stock: row.stock,
       category: `Cin7 Omni · ${row.visibility}`,
       isActive: row.isActive,
+      cin7StyleCode: row.styleCode?.trim() || row.sku.trim(),
+      cin7Visibility: row.visibility,
     }))
     .filter((row) => row.sku);
 }
