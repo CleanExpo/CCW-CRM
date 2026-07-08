@@ -1,9 +1,9 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { Sparkles } from 'lucide-react';
 
 export const DASHBOARD_PRESENTATION_LS_KEY = 'ccw-dashboard-presentation';
 
@@ -23,7 +23,7 @@ export function DashboardPresentationToggle({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] via-zinc-950/40 to-black/40 p-4 shadow-lg shadow-black/20 ring-1 ring-white/[0.06] sm:flex-row sm:items-center sm:justify-between sm:gap-4',
+        'flex flex-col gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] via-zinc-950/40 to-black/40 p-4 shadow-lg ring-1 shadow-black/20 ring-white/[0.06] sm:flex-row sm:items-center sm:justify-between sm:gap-4',
         className
       )}
     >
