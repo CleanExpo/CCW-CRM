@@ -153,6 +153,8 @@ model Product {
   price             Float    @default(0)
   stock             Int      @default(0)
   isActive          Boolean  @default(true) @map("is_active")
+  cin7StyleCode     String?  @map("cin7_style_code")
+  cin7Visibility    String?  @map("cin7_visibility")
   warehouseLocation String?  @map("warehouse_location")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
@@ -173,6 +175,7 @@ model Product {
 
   @@unique([ownerUserId, sku])
   @@index([ownerUserId])
+  @@index([ownerUserId, cin7StyleCode])
   @@map("products")
 }
 
@@ -587,8 +590,28 @@ model Cin7SyncRun {
   source           String?
   createdAt        DateTime @default(now()) @map("created_at")
 
+  skipRecords Cin7SyncSkipRecord[]
+
   @@index([ownerUserId, createdAt(sort: Desc)])
   @@map("cin7_sync_runs")
+}
+
+/// Per-record skip log for Cin7 sync runs (record id + reason).
+model Cin7SyncSkipRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  syncRunId   String?  @map("sync_run_id") @db.Uuid
+  entityType  String   @map("entity_type")
+  cin7Id      String   @map("cin7_id")
+  label       String?
+  reason      String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  syncRun Cin7SyncRun? @relation(fields: [syncRunId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId, entityType, createdAt(sort: Desc)])
+  @@index([syncRunId])
+  @@map("cin7_sync_skip_records")
 }
 
 model PurchaseOrder {
