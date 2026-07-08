@@ -21,6 +21,12 @@ systems in Australia.
 | [3.3](03.3-storage-transport-road-safety.md) | Storage, Transport & Road Safety | Load restraint (GVM/axle), fuel & chemical carriage, driving, the rego/insurance modification trap, storage, trade-waste disposal |
 | [3.4](03.4-maintenance-and-servicing.md) | Maintenance & Servicing | Daily→annual run-hour schedule, hard-water descaling (AU thresholds), fault diagnostics, service network, consumables |
 | [3.5](03.5-image-catalogue.md) | Image Catalogue | Verified real image source URLs by topic, with copyright/licensing notes |
+| [3.6](03.6-assessment-and-signoff.md) | Assessment & Operator Competency Sign-Off | Trainer pre-flight gate (verify ⚠ CONFIRM items against the unit before delivery) + operator competency assessment and sign-off sheet |
+
+> **Delivery gate:** this course is Australianised and sourced, but is **training reference,
+> not fact for a specific machine, until Unit 3.6 Gate A is completed** for the actual unit
+> and the operator's State. Safety-critical setpoints are model-specific — no operator is
+> signed off unproven.
 
 ## How the course was built
 Each unit is synthesised from a dedicated research pass against **primary sources**:
