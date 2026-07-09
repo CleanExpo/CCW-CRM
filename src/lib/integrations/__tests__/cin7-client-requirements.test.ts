@@ -74,9 +74,10 @@ describe('flattenOmniProducts — client requires inactive included by default',
 });
 
 describe('client requirement checklist (static)', () => {
+  const REPO_ROOT = process.cwd();
   it('exception report route accepts all master data entities', async () => {
     const fs = await import('node:fs/promises');
-    const path = '/Users/rana/Projects/CCW-CRM/src/app/api/integrations/cin7/reconciliation/exceptions/route.ts';
+    const path = `${REPO_ROOT}/src/app/api/integrations/cin7/reconciliation/exceptions/route.ts`;
     const src = await fs.readFile(path, 'utf8');
     for (const entity of ['products', 'customers', 'suppliers', 'branches', 'internal-customers']) {
       expect(src).toContain(`'${entity}'`);
@@ -86,7 +87,7 @@ describe('client requirement checklist (static)', () => {
   it('reconciliation UI does not promote duplicate cleanup', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/app/(dashboard)/settings/integrations/components/Cin7ReconciliationCard.tsx',
+      `${REPO_ROOT}/src/app/(dashboard)/settings/integrations/components/Cin7ReconciliationCard.tsx`,
       'utf8'
     );
     expect(src).not.toContain('cleanupCin7DuplicateCustomers');
@@ -97,7 +98,7 @@ describe('client requirement checklist (static)', () => {
   it('sync route imports full-catalog source resolver', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/app/api/integrations/cin7/sync/[entityType]/route.ts',
+      `${REPO_ROOT}/src/app/api/integrations/cin7/sync/[entityType]/route.ts`,
       'utf8'
     );
     expect(src).toContain('resolveCin7SyncSource');
@@ -107,7 +108,7 @@ describe('client requirement checklist (static)', () => {
   it('reconciliation implements internal-customers exception block', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/lib/integrations/cin7-reconciliation.ts',
+      `${REPO_ROOT}/src/lib/integrations/cin7-reconciliation.ts`,
       'utf8'
     );
     expect(src).toContain("entity === 'internal-customers'");
@@ -117,7 +118,7 @@ describe('client requirement checklist (static)', () => {
   it('customer upsert does not merge by email', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/lib/integrations/cin7-sync-persist.ts',
+      `${REPO_ROOT}/src/lib/integrations/cin7-sync-persist.ts`,
       'utf8'
     );
     expect(src).not.toContain('idByEmail');
@@ -126,7 +127,7 @@ describe('client requirement checklist (static)', () => {
   it('contacts fetch uses server-side where filter', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/lib/integrations/cin7-omni.ts',
+      `${REPO_ROOT}/src/lib/integrations/cin7-omni.ts`,
       'utf8'
     );
     expect(src).toContain("params.set('where',");
@@ -136,7 +137,7 @@ describe('client requirement checklist (static)', () => {
   it('reconciliation fetches catalogs sequentially', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/lib/integrations/cin7-reconciliation.ts',
+      `${REPO_ROOT}/src/lib/integrations/cin7-reconciliation.ts`,
       'utf8'
     );
     expect(src).toContain('fetchAllOmniMasterCatalogsSequential');
@@ -145,7 +146,7 @@ describe('client requirement checklist (static)', () => {
   it('reconciliation includes internal-customer exception summary', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/lib/integrations/cin7-reconciliation.ts',
+      `${REPO_ROOT}/src/lib/integrations/cin7-reconciliation.ts`,
       'utf8'
     );
     expect(src).toContain('internal_customers_missing_in_optix');
@@ -154,7 +155,7 @@ describe('client requirement checklist (static)', () => {
   it('exception report API supports offset pagination', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/app/api/integrations/cin7/reconciliation/exceptions/route.ts',
+      `${REPO_ROOT}/src/app/api/integrations/cin7/reconciliation/exceptions/route.ts`,
       'utf8'
     );
     expect(src).toContain('offset');
@@ -164,7 +165,7 @@ describe('client requirement checklist (static)', () => {
   it('sync route persists per-record skip log', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
-      '/Users/rana/Projects/CCW-CRM/src/app/api/integrations/cin7/sync/[entityType]/route.ts',
+      `${REPO_ROOT}/src/app/api/integrations/cin7/sync/[entityType]/route.ts`,
       'utf8'
     );
     expect(src).toContain('skipRecords');
