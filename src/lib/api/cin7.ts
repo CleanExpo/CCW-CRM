@@ -133,6 +133,13 @@ export async function triggerCin7Sync(
     | 'internal-customers'
     | 'suppliers'
     | 'branches'
+    | 'warehouses'
+    | 'product-categories'
+    | 'brands'
+    | 'price-lists'
+    | 'tax-codes'
+    | 'units-of-measure'
+    | 'stock-levels'
     | 'orders'
     | 'inventory'
 ): Promise<{
