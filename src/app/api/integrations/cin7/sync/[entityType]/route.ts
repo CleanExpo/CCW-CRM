@@ -20,22 +20,42 @@ import {
   getCin7SyncMaxPages,
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
-import { resolveCin7SyncSource } from '@/lib/integrations/cin7-catalog-fetch';
+import {
+  fetchDerivedReferenceCatalog,
+  fetchFullOmniProductCategoryCatalog,
+  fetchFullOmniProductsRawCatalog,
+  fetchFullOmniStockCatalog,
+  mapPriceColumnLabels,
+  resolveCin7SyncSource,
+} from '@/lib/integrations/cin7-catalog-fetch';
 import {
   batchUpsertBranches,
+  batchUpsertBrands,
   batchUpsertCustomers,
+  batchUpsertPriceLists,
+  batchUpsertProductCategories,
   batchUpsertProducts,
+  batchUpsertStockLevels,
   batchUpsertSuppliers,
+  batchUpsertTaxCodes,
+  batchUpsertUnitsOfMeasure,
   mapCoreCustomerRows,
   mapCoreProductRows,
   mapOmniBranchRows,
   mapOmniCustomerRows,
   mapOmniProductRows,
+  mapOmniStockLevelRows,
   mapOmniSupplierRows,
   recordCin7SyncRun,
   type Cin7SyncSkipInput,
 } from '@/lib/integrations/cin7-sync-persist';
 import { getCatalogPageGapMs } from '@/lib/integrations/cin7-catalog-fetch';
+import {
+  extractReferenceDataFromProducts,
+  fetchOmniProductCategoriesPage,
+  fetchOmniStockPage,
+} from '@/lib/integrations/cin7-omni';
+import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
 
 export const maxDuration = 300;
 
@@ -63,17 +83,25 @@ export async function POST(
     );
   }
 
-  const { entityType } = await context.params;
+  const { entityType: rawEntityType } = await context.params;
+  const entityType = resolveCin7SyncEntityAlias(rawEntityType);
   const allowed = [
     'products',
     'customers',
     'internal-customers',
     'suppliers',
     'branches',
+    'warehouses',
+    'product-categories',
+    'brands',
+    'price-lists',
+    'tax-codes',
+    'units-of-measure',
+    'stock-levels',
     'orders',
     'inventory',
   ] as const;
-  if (!allowed.includes(entityType as (typeof allowed)[number])) {
+  if (!allowed.includes(rawEntityType as (typeof allowed)[number])) {
     return NextResponse.json({ detail: 'Unsupported entity type' }, { status: 400 });
   }
 
@@ -110,7 +138,7 @@ export async function POST(
   const pageGapMs = getCatalogPageGapMs();
   const startedAt = Date.now();
 
-  if (entityType === 'products' || entityType === 'inventory') {
+  if (entityType === 'products') {
     if (useCore && coreCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
@@ -207,7 +235,7 @@ export async function POST(
         { status: 400 }
       );
     }
-  } else if (entityType === 'branches') {
+  } else if (entityType === 'branches' || entityType === 'warehouses') {
     if (useOmni && omniCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const { rows, total, sourceRowCount, skippedMissingId } = await fetchOmniBranchesPage(
@@ -276,6 +304,67 @@ export async function POST(
         { status: 400 }
       );
     }
+  } else if (entityType === 'product-categories') {
+    if (!useOmni || !omniCreds) {
+      return NextResponse.json(
+        { detail: 'Product category sync requires Cin7 Omni (/v1/ProductCategories).' },
+        { status: 400 }
+      );
+    }
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      const { rows, sourceRowCount } = await fetchOmniProductCategoriesPage(
+        omniCreds,
+        page,
+        pageSize
+      );
+      if (sourceRowCount === 0) break;
+      recordsProcessed += await batchUpsertProductCategories(scope.userId, rows);
+      if (sourceRowCount < pageSize) break;
+      if (page >= MAX_PAGES) break;
+    }
+  } else if (entityType === 'brands') {
+    if (!useOmni || !omniCreds) {
+      return NextResponse.json({ detail: 'Brand sync requires Cin7 Omni.' }, { status: 400 });
+    }
+    const raw = await fetchFullOmniProductsRawCatalog(omniCreds);
+    const { brands } = extractReferenceDataFromProducts(raw.styles);
+    recordsProcessed = await batchUpsertBrands(scope.userId, brands);
+  } else if (entityType === 'price-lists') {
+    if (!useOmni || !omniCreds) {
+      return NextResponse.json({ detail: 'Price list sync requires Cin7 Omni.' }, { status: 400 });
+    }
+    const derived = await fetchDerivedReferenceCatalog(omniCreds);
+    recordsProcessed = await batchUpsertPriceLists(
+      scope.userId,
+      mapPriceColumnLabels(derived.priceColumns)
+    );
+  } else if (entityType === 'tax-codes') {
+    if (!useOmni || !omniCreds) {
+      return NextResponse.json({ detail: 'Tax code sync requires Cin7 Omni.' }, { status: 400 });
+    }
+    const derived = await fetchDerivedReferenceCatalog(omniCreds);
+    recordsProcessed = await batchUpsertTaxCodes(scope.userId, derived.taxCodes);
+  } else if (entityType === 'units-of-measure') {
+    if (!useOmni || !omniCreds) {
+      return NextResponse.json({ detail: 'Unit of measure sync requires Cin7 Omni.' }, { status: 400 });
+    }
+    const raw = await fetchFullOmniProductsRawCatalog(omniCreds);
+    const { unitsOfMeasure } = extractReferenceDataFromProducts(raw.styles);
+    recordsProcessed = await batchUpsertUnitsOfMeasure(scope.userId, unitsOfMeasure);
+  } else if (entityType === 'stock-levels') {
+    if (!useOmni || !omniCreds) {
+      return NextResponse.json({ detail: 'Stock level sync requires Cin7 Omni (/v1/Stock).' }, { status: 400 });
+    }
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      const { rows, sourceRowCount } = await fetchOmniStockPage(omniCreds, page, pageSize);
+      if (sourceRowCount === 0) break;
+      recordsProcessed += await batchUpsertStockLevels(
+        scope.userId,
+        mapOmniStockLevelRows(rows)
+      );
+      if (sourceRowCount < pageSize) break;
+      if (page >= MAX_PAGES) break;
+    }
   } else if (entityType === 'orders') {
     if (useCore && coreCreds) {
       recordsProcessed = await fetchCin7SaleTotal(coreCreds);
@@ -292,7 +381,7 @@ export async function POST(
 
   await recordCin7SyncRun({
     ownerUserId: scope.userId,
-    entityType,
+    entityType: rawEntityType,
     recordsProcessed,
     skipped,
     skipRecords,
