@@ -56,6 +56,7 @@ import {
   fetchOmniStockPage,
 } from '@/lib/integrations/cin7-omni';
 import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
+import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
 
 export const maxDuration = 300;
 
@@ -388,6 +389,8 @@ export async function POST(
     durationMs,
     source,
   }).catch(() => undefined);
+
+  clearCachedReconciliation(scope.userId);
 
   return NextResponse.json({
     status: 'ok',
