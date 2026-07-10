@@ -32,7 +32,7 @@ export function Cin7MasterDataNav({ active, className }: Cin7MasterDataNavProps)
   return (
     <nav
       className={cn(
-        'flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-black/25 p-1 backdrop-blur-sm',
+        'flex flex-wrap items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-black/25 p-1 backdrop-blur-sm',
         className
       )}
       aria-label="Cin7 master data"
