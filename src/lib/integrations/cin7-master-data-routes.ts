@@ -1,14 +1,20 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  BadgePercent,
   Boxes,
   Building2,
+  FolderTree,
   Link2,
   MapPin,
   Package,
+  Receipt,
   RefreshCw,
+  Ruler,
   ShoppingCart,
+  Tags,
   Truck,
   Users,
+  Warehouse,
 } from 'lucide-react';
 
 import type { Cin7SyncEntity } from '@/components/integrations/Cin7SyncButton';
@@ -27,8 +33,7 @@ export type Cin7VerifyPage = {
   module: 'inventory' | 'crm' | 'operations';
 };
 
-/** Pages where synced Cin7 master data can be reviewed and manually re-synced. */
-export const CIN7_VERIFY_PAGES: Cin7VerifyPage[] = [
+const CORE_VERIFY_PAGES: Cin7VerifyPage[] = [
   {
     key: 'products',
     label: 'Products',
@@ -64,15 +69,77 @@ export const CIN7_VERIFY_PAGES: Cin7VerifyPage[] = [
   {
     key: 'branches',
     label: 'Branches',
-    description: 'Warehouse and branch locations',
+    description: 'Branch locations from Cin7',
     href: '/dashboard/inventory/branches',
     icon: MapPin,
     module: 'inventory',
   },
+];
+
+const REFERENCE_VERIFY_PAGES: Cin7VerifyPage[] = [
+  {
+    key: 'warehouses',
+    label: 'Warehouses',
+    description: 'Warehouse sites from Cin7 (stored as branches)',
+    href: '/dashboard/inventory/warehouses',
+    icon: Warehouse,
+    module: 'inventory',
+  },
+  {
+    key: 'product-categories',
+    label: 'Categories',
+    description: 'Product category tree from Cin7',
+    href: '/dashboard/inventory/product-categories',
+    icon: FolderTree,
+    module: 'inventory',
+  },
+  {
+    key: 'brands',
+    label: 'Brands',
+    description: 'Product brands from Cin7',
+    href: '/dashboard/inventory/brands',
+    icon: Tags,
+    module: 'inventory',
+  },
+  {
+    key: 'price-lists',
+    label: 'Price lists',
+    description: 'Cin7 price columns and price lists',
+    href: '/dashboard/inventory/price-lists',
+    icon: BadgePercent,
+    module: 'inventory',
+  },
+  {
+    key: 'tax-codes',
+    label: 'Tax codes',
+    description: 'Tax status codes from Cin7',
+    href: '/dashboard/inventory/tax-codes',
+    icon: Receipt,
+    module: 'inventory',
+  },
+  {
+    key: 'units-of-measure',
+    label: 'UOM',
+    description: 'Units of measure from Cin7 products',
+    href: '/dashboard/inventory/units-of-measure',
+    icon: Ruler,
+    module: 'inventory',
+  },
+  {
+    key: 'stock-levels',
+    label: 'Stock',
+    description: 'Per-branch SKU stock from Cin7',
+    href: '/dashboard/inventory/stock-levels',
+    icon: Boxes,
+    module: 'inventory',
+  },
+];
+
+const TAIL_VERIFY_PAGES: Cin7VerifyPage[] = [
   {
     key: 'inventory',
-    label: 'Stock levels',
-    description: 'Warehouse quantities and health',
+    label: 'Inventory',
+    description: 'Local inventory overview and health',
     href: '/dashboard/inventory',
     icon: Boxes,
     module: 'inventory',
@@ -85,6 +152,13 @@ export const CIN7_VERIFY_PAGES: Cin7VerifyPage[] = [
     icon: ShoppingCart,
     module: 'operations',
   },
+];
+
+/** Pages where synced Cin7 master data can be reviewed and manually re-synced. */
+export const CIN7_VERIFY_PAGES: Cin7VerifyPage[] = [
+  ...CORE_VERIFY_PAGES,
+  ...REFERENCE_VERIFY_PAGES,
+  ...TAIL_VERIFY_PAGES,
 ];
 
 export const CIN7_FLOW_STEPS = [
