@@ -19,6 +19,13 @@ export type Cin7SyncEntity =
   | 'internal-customers'
   | 'suppliers'
   | 'branches'
+  | 'warehouses'
+  | 'product-categories'
+  | 'brands'
+  | 'price-lists'
+  | 'tax-codes'
+  | 'units-of-measure'
+  | 'stock-levels'
   | 'orders'
   | 'inventory';
 
@@ -28,6 +35,13 @@ const ENTITY_LABELS: Record<Cin7SyncEntity, string> = {
   'internal-customers': 'Internal customers',
   suppliers: 'Suppliers',
   branches: 'Branches',
+  warehouses: 'Warehouses',
+  'product-categories': 'Product categories',
+  brands: 'Brands',
+  'price-lists': 'Price lists',
+  'tax-codes': 'Tax codes',
+  'units-of-measure': 'Units of measure',
+  'stock-levels': 'Stock levels',
   orders: 'Orders',
   inventory: 'Inventory',
 };
