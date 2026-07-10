@@ -78,7 +78,20 @@ describe('client requirement checklist (static)', () => {
     const fs = await import('node:fs/promises');
     const path = '/Users/rana/Projects/CCW-CRM/src/app/api/integrations/cin7/reconciliation/exceptions/route.ts';
     const src = await fs.readFile(path, 'utf8');
-    for (const entity of ['products', 'customers', 'suppliers', 'branches', 'internal-customers']) {
+    for (const entity of [
+      'products',
+      'customers',
+      'suppliers',
+      'branches',
+      'internal-customers',
+      'product-categories',
+      'brands',
+      'price-lists',
+      'tax-codes',
+      'units-of-measure',
+      'stock-levels',
+      'warehouses',
+    ]) {
       expect(src).toContain(`'${entity}'`);
     }
   });
@@ -161,13 +174,28 @@ describe('client requirement checklist (static)', () => {
     expect(src).toContain("format === 'csv'");
   });
 
-  it('sync route persists per-record skip log', async () => {
+  it('sync route supports Phase 1 reference master data entities', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(
       '/Users/rana/Projects/CCW-CRM/src/app/api/integrations/cin7/sync/[entityType]/route.ts',
       'utf8'
     );
-    expect(src).toContain('skipRecords');
-    expect(src).toContain('whereType');
+    for (const entity of [
+      'product-categories',
+      'brands',
+      'price-lists',
+      'tax-codes',
+      'units-of-measure',
+      'stock-levels',
+      'warehouses',
+    ]) {
+      expect(src).toContain(`'${entity}'`);
+    }
+  });
+
+  it('master entity registry resolves warehouses and inventory aliases', async () => {
+    const { resolveCin7SyncEntityAlias } = await import('@/lib/integrations/cin7-master-entities');
+    expect(resolveCin7SyncEntityAlias('warehouses')).toBe('branches');
+    expect(resolveCin7SyncEntityAlias('inventory')).toBe('stock-levels');
   });
 });
