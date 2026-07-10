@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { buildCin7Reconciliation } from '@/lib/integrations/cin7-reconciliation';
+import {
+  getOrBuildReconciliation,
+  getReconciliationCacheTtlMs,
+} from '@/lib/integrations/cin7-reconciliation-cache';
 
 export const maxDuration = 300;
 
@@ -10,6 +14,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
 
-  const snapshot = await buildCin7Reconciliation(scope.userId);
-  return NextResponse.json(snapshot);
+  const force = request.nextUrl.searchParams.get('force') === 'true';
+
+  try {
+    const result = await getOrBuildReconciliation(
+      scope.userId,
+      () => buildCin7Reconciliation(scope.userId),
+      { force }
+    );
+
+    return NextResponse.json({
+      ...result.snapshot,
+      cache_meta: {
+        from_cache: result.from_cache,
+        cached_at: result.cached_at,
+        ttl_ms: getReconciliationCacheTtlMs(),
+        force_requested: force,
+      },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Reconciliation failed';
+    return NextResponse.json({ detail: message }, { status: 500 });
+  }
 }
