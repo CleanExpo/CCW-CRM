@@ -11,8 +11,18 @@ import {
   fetchFullOmniContactsByType,
   fetchFullOmniProductCatalog,
   resolveCin7SyncSource,
+  type Cin7OmniMasterCatalogs,
 } from '@/lib/integrations/cin7-catalog-fetch';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
+import {
+  buildReferenceExceptionItems,
+  buildReferenceExceptionSummary,
+  getCin7ReferenceCounts,
+  getOptixReferenceCounts,
+  type Cin7ReferenceCounts,
+  type Cin7ReferenceExceptionEntity,
+  type Cin7ReferenceExceptionSummary,
+} from '@/lib/integrations/cin7-reconciliation-reference';
 import {
   getCin7PageSize,
   getCin7SyncMaxPages,
@@ -34,6 +44,7 @@ export type Cin7ReconciliationSnapshot = {
     internal_customers: number;
     suppliers: number;
     branches: number;
+    reference: Cin7ReferenceCounts | null;
   };
   optix: {
     products: {
@@ -50,6 +61,7 @@ export type Cin7ReconciliationSnapshot = {
     internal_customers: number;
     suppliers: { total: number; cin7_linked: number; extra_without_cin7_id: number };
     branches: { total: number };
+    reference: Cin7ReferenceCounts | null;
   };
   exceptions_summary: {
     products_missing_in_optix: number;
@@ -67,7 +79,7 @@ export type Cin7ReconciliationSnapshot = {
     internal_customers_missing_in_optix: number;
     internal_customers_extra_in_optix: number;
     internal_customers_field_mismatches: number;
-  };
+  } & Cin7ReferenceExceptionSummary;
   fetch_meta: {
     products_pages?: number;
     customers_pages?: number;
@@ -83,7 +95,8 @@ export type Cin7ExceptionEntity =
   | 'customers'
   | 'suppliers'
   | 'branches'
-  | 'internal-customers';
+  | 'internal-customers'
+  | Cin7ReferenceExceptionEntity;
 
 export type Cin7ExceptionRecord = {
   cin7_id: string;
@@ -135,9 +148,11 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
   >();
 
   const fetchMeta: Cin7ReconciliationSnapshot['fetch_meta'] = { errors: [] };
+  let omniCatalogs: Cin7OmniMasterCatalogs | null = null;
 
   if (source === 'omni' && omniCreds) {
     const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    omniCatalogs = catalogs;
     const { products: productCatalog, customers, internalCustomers, suppliers, branches } =
       catalogs;
 
@@ -465,6 +480,38 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
 
   fetchMeta.errors = fetchErrors;
 
+  const emptyReferenceExceptions: Cin7ReferenceExceptionSummary = {
+    product_categories_missing_in_optix: 0,
+    product_categories_extra_in_optix: 0,
+    brands_missing_in_optix: 0,
+    brands_extra_in_optix: 0,
+    price_lists_missing_in_optix: 0,
+    price_lists_extra_in_optix: 0,
+    tax_codes_missing_in_optix: 0,
+    tax_codes_extra_in_optix: 0,
+    units_of_measure_missing_in_optix: 0,
+    units_of_measure_extra_in_optix: 0,
+    stock_levels_missing_in_optix: 0,
+    stock_levels_extra_in_optix: 0,
+    stock_levels_field_mismatches: 0,
+  };
+
+  let referenceCin7: Cin7ReferenceCounts | null = null;
+  let referenceOptix: Cin7ReferenceCounts | null = null;
+  let referenceExceptions = emptyReferenceExceptions;
+
+  if (omniCatalogs) {
+    referenceCin7 = getCin7ReferenceCounts(omniCatalogs);
+    referenceOptix = await getOptixReferenceCounts(ownerUserId);
+    referenceExceptions = await buildReferenceExceptionSummary(ownerUserId, omniCatalogs);
+    notes.push(
+      'Warehouses in Cin7 Omni map to Branches; stock levels are per branch from /v1/Stock.'
+    );
+    notes.push(
+      'Brands, price lists, units of measure, and tax codes are derived from product and contact data.'
+    );
+  }
+
   return {
     source,
     checked_at: new Date().toISOString(),
@@ -474,6 +521,7 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
       internal_customers: cin7InternalCustomers,
       suppliers: cin7Suppliers,
       branches: cin7Branches,
+      reference: referenceCin7,
     },
     optix: {
       products: {
@@ -494,6 +542,7 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
         extra_without_cin7_id: supplierExtraWithoutId,
       },
       branches: { total: branchRows.length },
+      reference: referenceOptix,
     },
     exceptions_summary: {
       products_missing_in_optix: productExceptions.missing,
@@ -511,6 +560,7 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
       internal_customers_missing_in_optix: internalCustomerExceptions.missing,
       internal_customers_extra_in_optix: internalCustomerExceptions.extra,
       internal_customers_field_mismatches: internalCustomerExceptions.fieldMismatch,
+      ...referenceExceptions,
     },
     fetch_meta: fetchMeta,
     notes: uniqueNotes(notes),
@@ -789,6 +839,29 @@ export async function buildCin7ExceptionReport(
         });
       }
     }
+  }
+
+  const referenceEntities: Cin7ReferenceExceptionEntity[] = [
+    'product-categories',
+    'brands',
+    'price-lists',
+    'tax-codes',
+    'units-of-measure',
+    'stock-levels',
+    'warehouses',
+  ];
+  if (
+    referenceEntities.includes(entity as Cin7ReferenceExceptionEntity) &&
+    source === 'omni' &&
+    omniCreds
+  ) {
+    const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    const refItems = await buildReferenceExceptionItems(
+      ownerUserId,
+      entity as Cin7ReferenceExceptionEntity,
+      catalogs
+    );
+    items.push(...refItems);
   }
 
   const entityType = entity === 'internal-customers' ? 'internal-customers' : entity;
