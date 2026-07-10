@@ -131,6 +131,10 @@ function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number |
       'contacts',
       'Branches',
       'branches',
+      'ProductCategories',
+      'productCategories',
+      'Stock',
+      'stock',
       'SalesOrders',
       'salesOrders',
       'Data',
@@ -284,6 +288,22 @@ export async function fetchOmniProductPage(
   };
 }
 
+/** Raw Cin7 product styles (for reference data extraction). */
+export async function fetchOmniProductsRawPage(
+  creds: Cin7OmniCredentials,
+  page: number,
+  rows: number
+): Promise<{ rows: unknown[]; total: number | null; sourceRowCount: number; error?: string }> {
+  const safeRows = Math.max(1, Math.min(250, rows));
+  const { ok, data, error } = await cin7OmniGet<unknown>(
+    `/v1/Products?page=${page}&rows=${safeRows}`,
+    creds
+  );
+  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  const { rows: rawRows, total } = parseOmniListEnvelope(data);
+  return { rows: rawRows, total, sourceRowCount: rawRows.length, error };
+}
+
 export type Cin7OmniContactRow = {
   cin7ContactId: string;
   contactType: string;
@@ -291,6 +311,8 @@ export type Cin7OmniContactRow = {
   email: string;
   phone?: string;
   city?: string;
+  taxStatus?: string;
+  priceColumn?: string;
 };
 
 function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
@@ -316,6 +338,8 @@ function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
     String(
       pick(c, 'DeliveryCity', 'deliveryCity', 'BillingCity', 'billingCity', 'City', 'city') ?? ''
     ).trim() || undefined;
+  const taxStatus = String(pick(c, 'TaxStatus', 'taxStatus') ?? '').trim() || undefined;
+  const priceColumn = String(pick(c, 'PriceColumn', 'priceColumn') ?? '').trim() || undefined;
   return {
     cin7ContactId,
     contactType,
@@ -323,6 +347,8 @@ function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
     email,
     phone,
     city,
+    taxStatus,
+    priceColumn,
   };
 }
 
@@ -432,6 +458,7 @@ export type Cin7OmniBranchRow = {
   state?: string;
   postCode?: string;
   isActive: boolean;
+  taxStatus?: string;
 };
 
 function mapOmniBranchRaw(raw: unknown): Cin7OmniBranchRow | null {
@@ -450,6 +477,7 @@ function mapOmniBranchRaw(raw: unknown): Cin7OmniBranchRow | null {
     state: String(pick(b, 'State', 'state') ?? '').trim() || undefined,
     postCode: String(pick(b, 'PostCode', 'postCode') ?? '').trim() || undefined,
     isActive: pick(b, 'IsActive', 'isActive') !== false,
+    taxStatus: String(pick(b, 'TaxStatus', 'taxStatus') ?? '').trim() || undefined,
   };
 }
 
@@ -498,4 +526,162 @@ export async function fetchOmniSalesOrderCount(creds: Cin7OmniCredentials): Prom
   const { total, rows } = parseOmniListEnvelope(data);
   if (total != null && total > 0) return total;
   return rows.length;
+}
+
+export type Cin7OmniProductCategoryRow = {
+  cin7CategoryId: string;
+  parentCin7CategoryId?: string;
+  name: string;
+  description?: string;
+  sort: number;
+  isActive: boolean;
+};
+
+function mapOmniProductCategoryRaw(raw: unknown): Cin7OmniProductCategoryRow | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const c = raw as Record<string, unknown>;
+  const cin7CategoryId = String(pick(c, 'ID', 'id') ?? '').trim();
+  if (!cin7CategoryId) return null;
+  const parentRaw = pick(c, 'ParentId', 'parentId');
+  const parentCin7CategoryId =
+    parentRaw != null && String(parentRaw).trim() !== '' && String(parentRaw) !== '0'
+      ? String(parentRaw).trim()
+      : undefined;
+  return {
+    cin7CategoryId,
+    parentCin7CategoryId,
+    name: String(pick(c, 'Name', 'name') ?? 'Category').trim() || 'Category',
+    description: String(pick(c, 'Description', 'description') ?? '').trim() || undefined,
+    sort: Math.floor(Number(pick(c, 'Sort', 'sort') ?? 0)) || 0,
+    isActive: pick(c, 'IsActive', 'isActive') !== false,
+  };
+}
+
+export async function fetchOmniProductCategoriesPage(
+  creds: Cin7OmniCredentials,
+  page: number,
+  rows: number
+): Promise<{
+  rows: Cin7OmniProductCategoryRow[];
+  total: number | null;
+  sourceRowCount: number;
+  error?: string;
+}> {
+  const safeRows = Math.max(1, Math.min(250, rows));
+  const { ok, data, error } = await cin7OmniGet<unknown>(
+    `/v1/ProductCategories?page=${page}&rows=${safeRows}&order=id asc`,
+    creds
+  );
+  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  const { rows: list, total } = parseOmniListEnvelope(data);
+  const mapped = list
+    .map(mapOmniProductCategoryRaw)
+    .filter((row): row is Cin7OmniProductCategoryRow => row != null);
+  return { rows: mapped, total, sourceRowCount: list.length };
+}
+
+export type Cin7OmniStockLevelRow = {
+  cin7BranchId: string;
+  sku: string;
+  branchName?: string;
+  available: number;
+  stockOnHand: number;
+  incoming: number;
+  openSales: number;
+};
+
+function mapOmniStockRaw(raw: unknown): Cin7OmniStockLevelRow | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+  const cin7BranchId = String(pick(s, 'BranchId', 'branchId') ?? '').trim();
+  const sku = String(pick(s, 'Code', 'code', 'ProductOptionCode', 'productOptionCode') ?? '').trim();
+  if (!cin7BranchId || !sku) return null;
+  return {
+    cin7BranchId,
+    sku,
+    branchName: String(pick(s, 'BranchName', 'branchName') ?? '').trim() || undefined,
+    available: Math.max(0, Math.floor(Number(pick(s, 'Available', 'available') ?? 0))),
+    stockOnHand: Math.max(0, Math.floor(Number(pick(s, 'StockOnHand', 'stockOnHand') ?? 0))),
+    incoming: Math.max(0, Math.floor(Number(pick(s, 'Incoming', 'incoming') ?? 0))),
+    openSales: Math.max(0, Math.floor(Number(pick(s, 'OpenSales', 'openSales') ?? 0))),
+  };
+}
+
+export async function fetchOmniStockPage(
+  creds: Cin7OmniCredentials,
+  page: number,
+  rows: number
+): Promise<{
+  rows: Cin7OmniStockLevelRow[];
+  total: number | null;
+  sourceRowCount: number;
+  error?: string;
+}> {
+  const safeRows = Math.max(1, Math.min(250, rows));
+  const { ok, data, error } = await cin7OmniGet<unknown>(
+    `/v1/Stock?page=${page}&rows=${safeRows}&order=modifiedDate asc`,
+    creds
+  );
+  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  const { rows: list, total } = parseOmniListEnvelope(data);
+  const mapped = list.map(mapOmniStockRaw).filter((row): row is Cin7OmniStockLevelRow => row != null);
+  return { rows: mapped, total, sourceRowCount: list.length };
+}
+
+/** Extract reference master data from a full product catalog scan. */
+export function extractReferenceDataFromProducts(
+  rawStyles: unknown[]
+): {
+  brands: string[];
+  priceColumns: string[];
+  unitsOfMeasure: string[];
+} {
+  const brands = new Set<string>();
+  const priceColumns = new Set<string>();
+  const unitsOfMeasure = new Set<string>();
+
+  for (const raw of rawStyles) {
+    if (!raw || typeof raw !== 'object') continue;
+    const p = raw as Record<string, unknown>;
+    const brand = String(pick(p, 'Brand', 'brand') ?? '').trim();
+    if (brand) brands.add(brand);
+
+    const optionsList = p.ProductOptions ?? p.productOptions;
+    if (!Array.isArray(optionsList)) continue;
+    for (const opt of optionsList) {
+      if (!opt || typeof opt !== 'object') continue;
+      const o = opt as Record<string, unknown>;
+      const uom = String(pick(o, 'Option1', 'option1') ?? '').trim();
+      if (uom) unitsOfMeasure.add(uom);
+      const cols = o.PriceColumns ?? o.priceColumns;
+      if (cols && typeof cols === 'object') {
+        for (const key of Object.keys(cols as Record<string, unknown>)) {
+          if (key) priceColumns.add(key);
+        }
+      }
+    }
+  }
+
+  return {
+    brands: [...brands].sort(),
+    priceColumns: [...priceColumns].sort(),
+    unitsOfMeasure: [...unitsOfMeasure].sort(),
+  };
+}
+
+/** Extract tax codes from contacts and branches. */
+export function extractTaxCodesFromContactsAndBranches(input: {
+  contacts: Array<{ taxStatus?: string }>;
+  branches: Array<{ taxStatus?: string }>;
+}): string[] {
+  const codes = new Set<string>();
+  for (const row of input.contacts) {
+    const code = row.taxStatus?.trim();
+    if (code) codes.add(code);
+  }
+  for (const row of input.branches) {
+    const code = row.taxStatus?.trim();
+    if (code) codes.add(code);
+  }
+  return [...codes].sort();
 }
