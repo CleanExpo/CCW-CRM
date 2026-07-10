@@ -50,8 +50,8 @@ export default function Cin7MasterDataHubPage() {
           <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Verify synced data</h1>
           <p className="text-muted-foreground leading-relaxed">
             After connecting Cin7 under Integrations, open each module below to confirm products,
-            customers, suppliers, branches, and orders landed correctly. Manual sync is available on
-            every page.
+            customers, suppliers, branches, categories, brands, price lists, tax codes, stock, and
+            orders landed correctly. Manual sync is available on every page.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <Button asChild>
