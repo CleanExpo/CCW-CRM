@@ -159,13 +159,31 @@ export type {
   Cin7ExceptionRecord,
 } from '@/lib/integrations/cin7-reconciliation';
 
+export type Cin7ReconciliationResponse =
+  import('@/lib/integrations/cin7-reconciliation').Cin7ReconciliationSnapshot & {
+    cache_meta?: {
+      from_cache: boolean;
+      cached_at: string | null;
+      ttl_ms: number;
+      force_requested?: boolean;
+    };
+  };
+
 /**
  * Compare Cin7 live counts with Optix imported master data.
+ * Uses a server-side cache by default; pass force=true to pull fresh data from Cin7.
  */
-export async function getCin7Reconciliation(): Promise<
-  import('@/lib/integrations/cin7-reconciliation').Cin7ReconciliationSnapshot
-> {
-  return apiClient.get('/api/integrations/cin7/reconciliation', undefined, 300_000);
+export async function getCin7Reconciliation(options?: {
+  force?: boolean;
+}): Promise<Cin7ReconciliationResponse> {
+  const params = new URLSearchParams();
+  if (options?.force) params.set('force', 'true');
+  const qs = params.toString();
+  return apiClient.get(
+    `/api/integrations/cin7/reconciliation${qs ? `?${qs}` : ''}`,
+    undefined,
+    300_000
+  );
 }
 
 export async function getCin7ExceptionReport(
