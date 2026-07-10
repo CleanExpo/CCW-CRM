@@ -4,12 +4,20 @@ import {
 } from '@/lib/integrations/cin7-sync-config';
 import type { Cin7OmniCredentials } from '@/lib/integrations/cin7-omni';
 import {
+  extractReferenceDataFromProducts,
+  extractTaxCodesFromContactsAndBranches,
   fetchOmniBranchesPage,
   fetchOmniContactsPage,
+  fetchOmniProductCategoriesPage,
   fetchOmniProductPage,
+  fetchOmniProductsRawPage,
+  fetchOmniStockPage,
   type Cin7OmniBranchRow,
   type Cin7OmniContactRow,
+  type Cin7OmniProductCategoryRow,
+  type Cin7OmniStockLevelRow,
 } from '@/lib/integrations/cin7-omni';
+import { formatCin7PriceColumnLabel } from '@/lib/integrations/cin7-master-entities';
 
 export type Cin7CatalogFetchMeta = {
   pages_fetched: number;
@@ -187,12 +195,123 @@ export async function fetchFullOmniBranchCatalog(
   return { branches: items, pages_fetched, errors };
 }
 
+export async function fetchFullOmniProductCategoryCatalog(
+  creds: Cin7OmniCredentials,
+  maxPages?: number
+): Promise<Cin7CatalogFetchMeta & { categories: Cin7OmniProductCategoryRow[] }> {
+  const { items, pages_fetched, errors } = await paginateUntilDone({
+    maxPages,
+    fetchPage: async (page) => {
+      const result = await fetchOmniProductCategoriesPage(creds, page, getCin7PageSize());
+      return {
+        items: result.rows,
+        sourceRowCount: result.sourceRowCount,
+        total: result.total,
+        error: result.error,
+      };
+    },
+  });
+  return { categories: items, pages_fetched, errors };
+}
+
+export async function fetchFullOmniStockCatalog(
+  creds: Cin7OmniCredentials,
+  maxPages?: number
+): Promise<Cin7CatalogFetchMeta & { stockLevels: Cin7OmniStockLevelRow[] }> {
+  const { items, pages_fetched, errors } = await paginateUntilDone({
+    maxPages,
+    fetchPage: async (page) => {
+      const result = await fetchOmniStockPage(creds, page, getCin7PageSize());
+      return {
+        items: result.rows,
+        sourceRowCount: result.sourceRowCount,
+        total: result.total,
+        error: result.error,
+      };
+    },
+  });
+  return { stockLevels: items, pages_fetched, errors };
+}
+
+export async function fetchFullOmniProductsRawCatalog(
+  creds: Cin7OmniCredentials,
+  maxPages?: number
+): Promise<Cin7CatalogFetchMeta & { styles: unknown[] }> {
+  const { items, pages_fetched, errors } = await paginateUntilDone({
+    maxPages,
+    fetchPage: async (page) => {
+      const result = await fetchOmniProductsRawPage(creds, page, getCin7PageSize());
+      return {
+        items: result.rows,
+        sourceRowCount: result.sourceRowCount,
+        total: result.total,
+        error: result.error,
+      };
+    },
+  });
+  return { styles: items, pages_fetched, errors };
+}
+
+export type Cin7DerivedReferenceCatalog = {
+  brands: string[];
+  priceColumns: string[];
+  unitsOfMeasure: string[];
+  taxCodes: string[];
+};
+
+export async function fetchDerivedReferenceCatalog(
+  creds: Cin7OmniCredentials
+): Promise<Cin7DerivedReferenceCatalog & Cin7CatalogFetchMeta> {
+  const entityGapMs = getCatalogEntityGapMs();
+  const rawProducts = await fetchFullOmniProductsRawCatalog(creds);
+  if (entityGapMs > 0) await sleep(entityGapMs);
+  const customers = await fetchFullOmniContactsByType(creds, ['Customer']);
+  if (entityGapMs > 0) await sleep(entityGapMs);
+  const branches = await fetchFullOmniBranchCatalog(creds);
+
+  const extracted = extractReferenceDataFromProducts(rawProducts.styles);
+  const contactPriceColumns = customers.contacts
+    .map((c) => c.priceColumn?.trim())
+    .filter((v): v is string => Boolean(v));
+  const taxCodes = extractTaxCodesFromContactsAndBranches({
+    contacts: customers.contacts,
+    branches: branches.branches,
+  });
+
+  const priceColumns = new Set([...extracted.priceColumns, ...contactPriceColumns]);
+  for (const col of contactPriceColumns) {
+    if (col) priceColumns.add(col);
+  }
+
+  return {
+    brands: extracted.brands,
+    priceColumns: [...priceColumns].sort(),
+    unitsOfMeasure: extracted.unitsOfMeasure,
+    taxCodes,
+    pages_fetched:
+      rawProducts.pages_fetched + customers.pages_fetched + branches.pages_fetched,
+    errors: [...rawProducts.errors, ...customers.errors, ...branches.errors],
+  };
+}
+
+export function mapPriceColumnLabels(
+  columns: string[]
+): Array<{ cin7PriceColumn: string; name: string }> {
+  return columns.map((cin7PriceColumn) => ({
+    cin7PriceColumn,
+    name: formatCin7PriceColumnLabel(cin7PriceColumn),
+  }));
+}
+
 export type Cin7OmniMasterCatalogs = {
   products: Cin7CatalogProducts;
   customers: Cin7CatalogFetchMeta & { contacts: Cin7OmniContactRow[] };
   internalCustomers: Cin7CatalogFetchMeta & { contacts: Cin7OmniContactRow[] };
   suppliers: Cin7CatalogFetchMeta & { contacts: Cin7OmniContactRow[] };
   branches: Cin7CatalogFetchMeta & { branches: Cin7OmniBranchRow[] };
+  productCategories: Cin7CatalogFetchMeta & { categories: Cin7OmniProductCategoryRow[] };
+  stockLevels: Cin7CatalogFetchMeta & { stockLevels: Cin7OmniStockLevelRow[] };
+  derived: Cin7DerivedReferenceCatalog;
 };
 
 /** Fetch all master catalogs sequentially to avoid Cin7 API rate limits. */
@@ -209,7 +328,22 @@ export async function fetchAllOmniMasterCatalogsSequential(
   const suppliers = await fetchFullOmniContactsByType(creds, ['Supplier']);
   if (entityGapMs > 0) await sleep(entityGapMs);
   const branches = await fetchFullOmniBranchCatalog(creds);
-  return { products, customers, internalCustomers, suppliers, branches };
+  if (entityGapMs > 0) await sleep(entityGapMs);
+  const productCategories = await fetchFullOmniProductCategoryCatalog(creds);
+  if (entityGapMs > 0) await sleep(entityGapMs);
+  const stockLevels = await fetchFullOmniStockCatalog(creds);
+  if (entityGapMs > 0) await sleep(entityGapMs);
+  const derived = await fetchDerivedReferenceCatalog(creds);
+  return {
+    products,
+    customers,
+    internalCustomers,
+    suppliers,
+    branches,
+    productCategories,
+    stockLevels,
+    derived,
+  };
 }
 
 export function resolveCin7SyncSource(coreLive: boolean, omniLive: boolean): 'core' | 'omni' | 'none' {
