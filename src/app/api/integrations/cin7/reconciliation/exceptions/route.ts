@@ -12,6 +12,13 @@ const ENTITIES: Cin7ExceptionEntity[] = [
   'suppliers',
   'branches',
   'internal-customers',
+  'product-categories',
+  'brands',
+  'price-lists',
+  'tax-codes',
+  'units-of-measure',
+  'stock-levels',
+  'warehouses',
 ];
 
 export const maxDuration = 300;
