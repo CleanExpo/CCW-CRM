@@ -308,6 +308,192 @@ export async function batchUpsertSuppliers(
   return processed;
 }
 
+export type Cin7ProductCategorySyncRow = {
+  cin7CategoryId: string;
+  parentCin7CategoryId?: string;
+  name: string;
+  description?: string;
+  sort: number;
+  isActive: boolean;
+};
+
+export async function batchUpsertProductCategories(
+  ownerUserId: string,
+  rows: Cin7ProductCategorySyncRow[]
+): Promise<number> {
+  if (rows.length === 0) return 0;
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.cin7ProductCategory.upsert({
+        where: {
+          ownerUserId_cin7CategoryId: { ownerUserId, cin7CategoryId: row.cin7CategoryId },
+        },
+        create: { ownerUserId, ...row },
+        update: { ...row },
+      })
+    );
+    processed += chunk.length;
+  }
+  return processed;
+}
+
+export async function batchUpsertBrands(ownerUserId: string, names: string[]): Promise<number> {
+  if (names.length === 0) return 0;
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+  for (let i = 0; i < names.length; i += batchSize) {
+    const chunk = names.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (name) =>
+      prisma.cin7Brand.upsert({
+        where: { ownerUserId_name: { ownerUserId, name } },
+        create: { ownerUserId, name, isActive: true },
+        update: { isActive: true },
+      })
+    );
+    processed += chunk.length;
+  }
+  return processed;
+}
+
+export async function batchUpsertPriceLists(
+  ownerUserId: string,
+  rows: Array<{ cin7PriceColumn: string; name: string }>
+): Promise<number> {
+  if (rows.length === 0) return 0;
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.cin7PriceList.upsert({
+        where: {
+          ownerUserId_cin7PriceColumn: { ownerUserId, cin7PriceColumn: row.cin7PriceColumn },
+        },
+        create: { ownerUserId, cin7PriceColumn: row.cin7PriceColumn, name: row.name, isActive: true },
+        update: { name: row.name, isActive: true },
+      })
+    );
+    processed += chunk.length;
+  }
+  return processed;
+}
+
+export async function batchUpsertTaxCodes(
+  ownerUserId: string,
+  codes: string[]
+): Promise<number> {
+  if (codes.length === 0) return 0;
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+  for (let i = 0; i < codes.length; i += batchSize) {
+    const chunk = codes.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (code) =>
+      prisma.cin7TaxCode.upsert({
+        where: { ownerUserId_code: { ownerUserId, code } },
+        create: { ownerUserId, code, name: code, isActive: true },
+        update: { name: code, isActive: true },
+      })
+    );
+    processed += chunk.length;
+  }
+  return processed;
+}
+
+export async function batchUpsertUnitsOfMeasure(
+  ownerUserId: string,
+  codes: string[]
+): Promise<number> {
+  if (codes.length === 0) return 0;
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+  for (let i = 0; i < codes.length; i += batchSize) {
+    const chunk = codes.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (code) =>
+      prisma.cin7UnitOfMeasure.upsert({
+        where: { ownerUserId_code: { ownerUserId, code } },
+        create: { ownerUserId, code, name: code, isActive: true },
+        update: { name: code, isActive: true },
+      })
+    );
+    processed += chunk.length;
+  }
+  return processed;
+}
+
+export type Cin7StockLevelSyncRow = {
+  cin7BranchId: string;
+  sku: string;
+  branchName?: string;
+  available: number;
+  stockOnHand: number;
+  incoming: number;
+  openSales: number;
+};
+
+export async function batchUpsertStockLevels(
+  ownerUserId: string,
+  rows: Cin7StockLevelSyncRow[]
+): Promise<number> {
+  if (rows.length === 0) return 0;
+  const batchSize = getCin7DbBatchSize();
+  const concurrency = getCin7DbConcurrency();
+  let processed = 0;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    await runInConcurrency(chunk, concurrency, (row) =>
+      prisma.cin7StockLevel.upsert({
+        where: {
+          ownerUserId_cin7BranchId_sku: {
+            ownerUserId,
+            cin7BranchId: row.cin7BranchId,
+            sku: row.sku,
+          },
+        },
+        create: { ownerUserId, ...row },
+        update: { ...row },
+      })
+    );
+    processed += chunk.length;
+  }
+  return processed;
+}
+
+export function mapOmniProductCategoryRows(
+  rows: Cin7ProductCategorySyncRow[]
+): Cin7ProductCategorySyncRow[] {
+  return rows;
+}
+
+export function mapOmniStockLevelRows(
+  rows: Array<{
+    cin7BranchId: string;
+    sku: string;
+    branchName?: string;
+    available: number;
+    stockOnHand: number;
+    incoming: number;
+    openSales: number;
+  }>
+): Cin7StockLevelSyncRow[] {
+  return rows.map((row) => ({
+    cin7BranchId: row.cin7BranchId,
+    sku: row.sku,
+    branchName: row.branchName,
+    available: row.available,
+    stockOnHand: row.stockOnHand,
+    incoming: row.incoming,
+    openSales: row.openSales,
+  }));
+}
+
 export function mapCoreProductRows(
   rows: Array<{
     Sku?: string;
