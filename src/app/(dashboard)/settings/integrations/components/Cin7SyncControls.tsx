@@ -11,6 +11,12 @@ import {
   Building2,
   MapPin,
   History,
+  Tags,
+  BadgePercent,
+  Receipt,
+  Ruler,
+  Warehouse,
+  FolderTree,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +45,13 @@ type Cin7SyncEntityKey =
   | "internal-customers"
   | "suppliers"
   | "branches"
+  | "warehouses"
+  | "product-categories"
+  | "brands"
+  | "price-lists"
+  | "tax-codes"
+  | "units-of-measure"
+  | "stock-levels"
   | "orders"
   | "inventory";
 
@@ -58,8 +71,15 @@ const SYNC_ENTITIES: {
   },
   { key: "suppliers", label: "Suppliers", icon: Truck, color: "text-amber-600" },
   { key: "branches", label: "Branches", icon: MapPin, color: "text-indigo-600" },
+  { key: "warehouses", label: "Warehouses", icon: Warehouse, color: "text-indigo-500" },
+  { key: "product-categories", label: "Categories", icon: FolderTree, color: "text-cyan-600" },
+  { key: "brands", label: "Brands", icon: Tags, color: "text-pink-600" },
+  { key: "price-lists", label: "Price lists", icon: BadgePercent, color: "text-violet-600" },
+  { key: "tax-codes", label: "Tax codes", icon: Receipt, color: "text-rose-600" },
+  { key: "units-of-measure", label: "UOM", icon: Ruler, color: "text-lime-600" },
+  { key: "stock-levels", label: "Stock", icon: Boxes, color: "text-orange-600" },
   { key: "orders", label: "Orders", icon: ShoppingCart, color: "text-purple-600" },
-  { key: "inventory", label: "Inventory", icon: Boxes, color: "text-orange-600" },
+  { key: "inventory", label: "Inventory", icon: Boxes, color: "text-orange-500" },
 ];
 
 function formatLogTime(iso: string): string {
