@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
   getCin7Reconciliation,
   type Cin7ExceptionEntity,
   type Cin7ExceptionRecord,
-  type Cin7ReconciliationSnapshot,
+  type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
 
 type Cin7ReconciliationCardProps = {
@@ -79,32 +79,76 @@ function reasonLabel(reason: Cin7ExceptionRecord['reason']): string {
   }
 }
 
+function formatCacheAge(cachedAt: string | null | undefined): string {
+  if (!cachedAt) return 'just now';
+  const ageMs = Date.now() - new Date(cachedAt).getTime();
+  if (ageMs < 60_000) return 'less than a minute ago';
+  const minutes = Math.floor(ageMs / 60_000);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+}
+
 export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [snapshot, setSnapshot] = useState<Cin7ReconciliationSnapshot | null>(null);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [snapshot, setSnapshot] = useState<Cin7ReconciliationResponse | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [exceptionEntity, setExceptionEntity] = useState<Cin7ExceptionEntity>('products');
   const [exceptions, setExceptions] = useState<Cin7ExceptionRecord[]>([]);
   const [exceptionsLoading, setExceptionsLoading] = useState(false);
   const [exceptionTotal, setExceptionTotal] = useState(0);
   const [exceptionOffset, setExceptionOffset] = useState(0);
+  const loadRequestId = useRef(0);
   const EXCEPTION_PAGE = 100;
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const data = await getCin7Reconciliation();
-      setSnapshot(data);
-    } catch (error: unknown) {
-      toast({
-        variant: 'destructive',
-        title: 'Reconciliation failed',
-        description: error instanceof Error ? error.message : 'Could not load counts',
-      });
-    } finally {
-      setLoading(false);
+  const load = useCallback(
+    async (options?: { force?: boolean; silent?: boolean }) => {
+      const requestId = ++loadRequestId.current;
+      const force = options?.force ?? false;
+      if (force) setLiveLoading(true);
+      else setLoading(true);
+      setLoadError(null);
+
+      try {
+        const data = await getCin7Reconciliation({ force });
+        if (requestId !== loadRequestId.current) return;
+        setSnapshot(data);
+        if (!options?.silent) {
+          toast({
+            title: force ? 'Live Cin7 reconciliation complete' : 'Reconciliation refreshed',
+            description: data.cache_meta?.from_cache
+              ? `Showing cached counts from ${formatCacheAge(data.cache_meta.cached_at)}. Use live refresh for a fresh Cin7 pull.`
+              : 'Counts updated from Cin7 and Optix.',
+          });
+        }
+      } catch (error: unknown) {
+        if (requestId !== loadRequestId.current) return;
+        const message = error instanceof Error ? error.message : 'Could not load counts';
+        setLoadError(message);
+        toast({
+          variant: 'destructive',
+          title: 'Reconciliation failed',
+          description: snapshot
+            ? `${message} Showing your last successful counts below.`
+            : message,
+        });
+      } finally {
+        if (requestId === loadRequestId.current) {
+          setLoading(false);
+          setLiveLoading(false);
+        }
+      }
+    },
+    [snapshot, toast]
+  );
+
+  useEffect(() => {
+    if (isConnected) {
+      void load({ silent: true });
     }
-  };
+  }, [isConnected]); // eslint-disable-line react-hooks/exhaustive-deps -- load once when connected
 
   const loadExceptions = async (entity: Cin7ExceptionEntity, offset = 0, append = false) => {
     setExceptionsLoading(true);
@@ -120,15 +164,19 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         title: 'Exception report failed',
         description: error instanceof Error ? error.message : 'Could not load exceptions',
       });
-      setExceptions([]);
-      setExceptionTotal(0);
-      setExceptionOffset(0);
+      if (!append) {
+        setExceptions([]);
+        setExceptionTotal(0);
+        setExceptionOffset(0);
+      }
     } finally {
       setExceptionsLoading(false);
     }
   };
 
   const ex = snapshot?.exceptions_summary;
+  const isRefreshing = loading || liveLoading;
+  const fromCache = snapshot?.cache_meta?.from_cache;
 
   return (
     <Card>
@@ -147,7 +195,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           <Button
             size="sm"
             variant="outline"
-            disabled={!isConnected || loading}
+            disabled={!isConnected || isRefreshing}
             onClick={() => void load()}
           >
             {loading ? (
@@ -156,6 +204,19 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               <RefreshCw className="mr-2 h-4 w-4" />
             )}
             Refresh counts
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isConnected || isRefreshing}
+            onClick={() => void load({ force: true })}
+          >
+            {liveLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Refresh from live Cin7
           </Button>
           <Button
             size="sm"
@@ -172,13 +233,36 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           </Button>
         </div>
 
+        {loadError ? (
+          <p className="flex items-start gap-1.5 text-amber-600 text-sm dark:text-amber-400">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            {loadError}
+            {snapshot ? ' Your last successful reconciliation is shown below.' : null}
+          </p>
+        ) : null}
+
         {snapshot ? (
           <div className="space-y-4">
-            <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline">Source: {snapshot.source}</Badge>
+            <div
+              className={`space-y-3 rounded-lg border bg-muted/30 p-4 ${isRefreshing ? 'opacity-70' : ''}`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">Source: {snapshot.source}</Badge>
+                  {fromCache ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Cached · {formatCacheAge(snapshot.cache_meta?.cached_at)}
+                    </Badge>
+                  ) : null}
+                  {isRefreshing ? (
+                    <Badge variant="outline" className="text-xs">
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      Updating…
+                    </Badge>
+                  ) : null}
+                </div>
                 <span className="text-muted-foreground text-xs">
-                  {new Date(snapshot.checked_at).toLocaleString()}
+                  Checked {new Date(snapshot.checked_at).toLocaleString()}
                 </span>
               </div>
               <CountRow
@@ -346,9 +430,14 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
 
             <Tabs
               value={exceptionEntity}
-              onValueChange={(v) => void loadExceptions(v as Cin7ExceptionEntity, 0, false)}
+              onValueChange={(v) => {
+                setExceptionEntity(v as Cin7ExceptionEntity);
+                setExceptions([]);
+                setExceptionTotal(0);
+                setExceptionOffset(0);
+              }}
             >
-              <TabsList className="flex h-auto flex-wrap gap-1">
+              <TabsList className="flex h-auto max-h-32 flex-wrap gap-1 overflow-y-auto">
                 {EXCEPTION_ENTITIES.map(({ key, label }) => (
                   <TabsTrigger key={key} value={key} className="text-xs">
                     {label}
@@ -357,15 +446,15 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               </TabsList>
               {EXCEPTION_ENTITIES.map(({ key }) => (
                 <TabsContent key={key} value={key} className="mt-3">
-                  {exceptionsLoading ? (
+                  {exceptionsLoading && exceptionEntity === key ? (
                     <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Building exception report from live Cin7…
                     </div>
-                  ) : exceptions.length === 0 ? (
+                  ) : exceptions.length === 0 || exceptionEntity !== key ? (
                     <p className="text-muted-foreground py-4 text-sm">
                       Click &quot;Load exception report&quot; to list records that differ between
-                      Cin7 and Optix.
+                      Cin7 and Optix for {key.replace(/-/g, ' ')}.
                     </p>
                   ) : (
                     <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border p-3">
@@ -422,6 +511,11 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 </TabsContent>
               ))}
             </Tabs>
+          </div>
+        ) : isRefreshing ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading reconciliation from Cin7… this can take a few minutes on first run.
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
