@@ -579,6 +579,103 @@ model Cin7Branch {
   @@map("cin7_branches")
 }
 
+/// Cin7 Omni product category tree.
+model Cin7ProductCategory {
+  id                   String   @id @default(uuid()) @db.Uuid
+  ownerUserId          String   @map("owner_user_id") @db.Uuid
+  cin7CategoryId       String   @map("cin7_category_id")
+  parentCin7CategoryId String?  @map("parent_cin7_category_id")
+  name                 String
+  description          String?
+  sort                 Int      @default(0)
+  isActive             Boolean  @default(true) @map("is_active")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, cin7CategoryId])
+  @@index([ownerUserId])
+  @@map("cin7_product_categories")
+}
+
+/// Distinct product brands from Cin7 product catalog.
+model Cin7Brand {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  name        String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, name])
+  @@index([ownerUserId])
+  @@map("cin7_brands")
+}
+
+/// Cin7 price column / price list (e.g. tradeAUD, shopifyIncAUD).
+model Cin7PriceList {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerUserId     String   @map("owner_user_id") @db.Uuid
+  cin7PriceColumn String   @map("cin7_price_column")
+  name            String
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, cin7PriceColumn])
+  @@index([ownerUserId])
+  @@map("cin7_price_lists")
+}
+
+/// Tax status / tax code strings from Cin7 contacts and branches.
+model Cin7TaxCode {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  code        String
+  name        String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, code])
+  @@index([ownerUserId])
+  @@map("cin7_tax_codes")
+}
+
+/// Unit of measure codes from Cin7 product options (e.g. EACH).
+model Cin7UnitOfMeasure {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  code        String
+  name        String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, code])
+  @@index([ownerUserId])
+  @@map("cin7_units_of_measure")
+}
+
+/// Per-branch stock levels from Cin7 /v1/Stock (warehouse quantities).
+model Cin7StockLevel {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  cin7BranchId String   @map("cin7_branch_id")
+  sku          String
+  branchName   String?  @map("branch_name")
+  available    Int      @default(0)
+  stockOnHand  Int      @default(0) @map("stock_on_hand")
+  incoming     Int      @default(0)
+  openSales    Int      @default(0) @map("open_sales")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, cin7BranchId, sku])
+  @@index([ownerUserId, sku])
+  @@index([ownerUserId, cin7BranchId])
+  @@map("cin7_stock_levels")
+}
+
 /// Audit trail for manual and scheduled Cin7 sync runs.
 model Cin7SyncRun {
   id               String   @id @default(uuid()) @db.Uuid
