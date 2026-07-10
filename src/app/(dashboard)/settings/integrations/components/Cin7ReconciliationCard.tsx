@@ -32,6 +32,13 @@ const EXCEPTION_ENTITIES: { key: Cin7ExceptionEntity; label: string }[] = [
   { key: 'suppliers', label: 'Suppliers' },
   { key: 'branches', label: 'Branches' },
   { key: 'internal-customers', label: 'Internal' },
+  { key: 'product-categories', label: 'Categories' },
+  { key: 'brands', label: 'Brands' },
+  { key: 'price-lists', label: 'Price lists' },
+  { key: 'tax-codes', label: 'Tax codes' },
+  { key: 'units-of-measure', label: 'UOM' },
+  { key: 'stock-levels', label: 'Stock' },
+  { key: 'warehouses', label: 'Warehouses' },
 ];
 
 function CountRow({
@@ -210,6 +217,67 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 mismatch={snapshot.cin7.branches !== snapshot.optix.branches.total}
               />
 
+              {snapshot.cin7.reference && snapshot.optix.reference ? (
+                <>
+                  <CountRow
+                    label="Product categories"
+                    cin7={snapshot.cin7.reference.product_categories}
+                    optix={snapshot.optix.reference.product_categories}
+                    mismatch={
+                      snapshot.cin7.reference.product_categories !==
+                      snapshot.optix.reference.product_categories
+                    }
+                  />
+                  <CountRow
+                    label="Brands"
+                    cin7={snapshot.cin7.reference.brands}
+                    optix={snapshot.optix.reference.brands}
+                    mismatch={snapshot.cin7.reference.brands !== snapshot.optix.reference.brands}
+                  />
+                  <CountRow
+                    label="Price lists"
+                    cin7={snapshot.cin7.reference.price_lists}
+                    optix={snapshot.optix.reference.price_lists}
+                    mismatch={
+                      snapshot.cin7.reference.price_lists !== snapshot.optix.reference.price_lists
+                    }
+                  />
+                  <CountRow
+                    label="Tax codes"
+                    cin7={snapshot.cin7.reference.tax_codes}
+                    optix={snapshot.optix.reference.tax_codes}
+                    mismatch={
+                      snapshot.cin7.reference.tax_codes !== snapshot.optix.reference.tax_codes
+                    }
+                  />
+                  <CountRow
+                    label="Units of measure"
+                    cin7={snapshot.cin7.reference.units_of_measure}
+                    optix={snapshot.optix.reference.units_of_measure}
+                    mismatch={
+                      snapshot.cin7.reference.units_of_measure !==
+                      snapshot.optix.reference.units_of_measure
+                    }
+                  />
+                  <CountRow
+                    label="Stock levels (branch × SKU)"
+                    cin7={snapshot.cin7.reference.stock_levels}
+                    optix={snapshot.optix.reference.stock_levels}
+                    mismatch={
+                      snapshot.cin7.reference.stock_levels !== snapshot.optix.reference.stock_levels
+                    }
+                  />
+                  <CountRow
+                    label="Warehouses (Cin7 branches)"
+                    cin7={snapshot.cin7.reference.warehouses}
+                    optix={snapshot.optix.reference.warehouses}
+                    mismatch={
+                      snapshot.cin7.reference.warehouses !== snapshot.optix.reference.warehouses
+                    }
+                  />
+                </>
+              ) : null}
+
               {ex ? (
                 <div className="border-border/50 mt-2 space-y-1 border-t pt-2 text-xs">
                   <p className="text-muted-foreground font-medium">Exception summary</p>
@@ -233,6 +301,30 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                     Internal: {ex.internal_customers_missing_in_optix} missing ·{' '}
                     {ex.internal_customers_extra_in_optix} extra ·{' '}
                     {ex.internal_customers_field_mismatches} field diffs
+                  </p>
+                  <p>
+                    Categories: {ex.product_categories_missing_in_optix} missing ·{' '}
+                    {ex.product_categories_extra_in_optix} extra
+                  </p>
+                  <p>
+                    Brands: {ex.brands_missing_in_optix} missing · {ex.brands_extra_in_optix} extra
+                  </p>
+                  <p>
+                    Price lists: {ex.price_lists_missing_in_optix} missing ·{' '}
+                    {ex.price_lists_extra_in_optix} extra
+                  </p>
+                  <p>
+                    Tax codes: {ex.tax_codes_missing_in_optix} missing ·{' '}
+                    {ex.tax_codes_extra_in_optix} extra
+                  </p>
+                  <p>
+                    UOM: {ex.units_of_measure_missing_in_optix} missing ·{' '}
+                    {ex.units_of_measure_extra_in_optix} extra
+                  </p>
+                  <p>
+                    Stock: {ex.stock_levels_missing_in_optix} missing ·{' '}
+                    {ex.stock_levels_extra_in_optix} extra · {ex.stock_levels_field_mismatches}{' '}
+                    field diffs
                   </p>
                 </div>
               ) : null}
