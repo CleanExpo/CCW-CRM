@@ -35,8 +35,13 @@ export async function GET(request: Request) {
       "/api/integrations/cin7/sync/internal-customers",
       "/api/integrations/cin7/sync/suppliers",
       "/api/integrations/cin7/sync/branches",
+      "/api/integrations/cin7/sync/product-categories",
+      "/api/integrations/cin7/sync/brands",
+      "/api/integrations/cin7/sync/price-lists",
+      "/api/integrations/cin7/sync/tax-codes",
+      "/api/integrations/cin7/sync/units-of-measure",
+      "/api/integrations/cin7/sync/stock-levels",
       "/api/integrations/cin7/sync/orders",
-      "/api/integrations/cin7/sync/inventory",
     ];
 
     for (const endpoint of cin7Endpoints) {
