@@ -3,7 +3,7 @@
  *
  * Domain APIs call this Next.js app (`getAppOrigin()`). Optional `API_UPSTREAM_URL` is not used here.
  * Auth under `/api/auth/*` resolves same-origin to Next.js Route Handlers.
- * Sends JWT from storage as `Authorization` plus optional `X-User-Id` from claims.
+ * Sends JWT from storage as `Authorization`.
  *
  * Enhancements (NODEJS-Updates):
  * - X-Request-ID header for distributed tracing
@@ -79,31 +79,6 @@ function getAuthToken(): string | null {
   if (!tokenCookie) return null;
 
   return tokenCookie.split('=')[1];
-}
-
-/**
- * Decode JWT token to get payload (without verification)
- */
-interface JWTPayload {
-  sub?: string;
-  user_id?: string;
-  [key: string]: unknown;
-}
-
-function decodeJWT(token: string): JWTPayload | null {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload) as JWTPayload;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -196,17 +171,6 @@ async function fetchApi<T>(
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-
-      const payload = decodeJWT(token);
-      const uid =
-        typeof payload?.sub === 'string'
-          ? payload.sub
-          : typeof payload?.user_id === 'string'
-            ? payload.user_id
-            : null;
-      if (uid) {
-        headers['X-User-Id'] = uid;
-      }
     }
 
     return headers;
