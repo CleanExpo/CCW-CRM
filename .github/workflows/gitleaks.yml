@@ -1,0 +1,21 @@
+name: Secret Scan (gitleaks)
+
+# Report-only to start (continue-on-error) — becomes a hard gate once the
+# historical secrets are purged from git history. Added 2026-07-12 after a
+# public-repo credential exposure (scripts/*.json auth captures) shipped
+# because no CI secret scan existed. See also .githooks/pre-commit.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
