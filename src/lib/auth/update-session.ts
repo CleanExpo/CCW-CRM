@@ -84,27 +84,25 @@ export async function updateSession(request: NextRequest) {
     '/api/integrations/xero/auth',
     '/api/integrations/shopify/callback',
     '/api/integrations/shopify/authorize',
-    // Top-level dashboard routes that must redirect to login when not authenticated
-    '/playground',
-    '/dashboard-analytics',
   ];
-  
-  // Exact path matching for API public paths to prevent security issues
-  const exactPublicPathMatch = (path: string) => {
-    return path === '/api/cron' || path === '/api/public';
-  };
-  
-  // Prefix matching for frontend public paths only
-  const prefixPublicPathMatch = (path: string) => {
-    return publicPaths.some(
-      (publicPath) => 
-        publicPath === path || 
-        (publicPath.endsWith('/') && path.startsWith(publicPath)) ||
-        (!publicPath.endsWith('/') && path.startsWith(publicPath + '/'))
+
+  // Match only the intended API roots and their descendants.
+  const apiPublicPathMatch = (path: string) => {
+    return ['/api/cron', '/api/public'].some(
+      (publicPath) => path === publicPath || path.startsWith(publicPath + '/')
     );
   };
 
-  const isPublicPath = exactPublicPathMatch(request.nextUrl.pathname) || prefixPublicPathMatch(request.nextUrl.pathname);
+  // Match public pages exactly or below their path, without treating '/' as a global prefix.
+  const prefixPublicPathMatch = (path: string) => {
+    return publicPaths.some(
+      (publicPath) =>
+        publicPath === path || (publicPath !== '/' && path.startsWith(publicPath + '/'))
+    );
+  };
+
+  const isPublicPath =
+    apiPublicPathMatch(request.nextUrl.pathname) || prefixPublicPathMatch(request.nextUrl.pathname);
 
   if (!isPublicPath && !user) {
     const url = request.nextUrl.clone();

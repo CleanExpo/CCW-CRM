@@ -20,6 +20,7 @@ class DashboardCache {
         }
       }
     }, 10_000);
+    this.cleanupInterval.unref?.();
   }
 
   /**
