@@ -305,3 +305,11 @@ jobs:
       # `if: secrets.X != ''` is invalid (GitHub disallows `secrets.*` in
       # if-conditions) and no-Slack is portfolio standard. Status surfaces
       # in the GITHUB_STEP_SUMMARY block above.
+
+      # notify runs with if: always() so it must re-fail the run — otherwise a
+      # skipped/failed deploy still reports the workflow green (UNI-2337).
+      - name: Propagate deploy outcome
+        if: ${{ steps.status.outputs.status != 'success' }}
+        run: |
+          echo "::error::Deploy job result: ${{ needs.deploy.result }}, smoke tests: ${{ needs.smoke-tests.result }} — failing the run so staging reds are visible"
+          exit 1
