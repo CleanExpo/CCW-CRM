@@ -207,3 +207,11 @@ video/remotion/public/audio/
 .claude/skills/gstack/node_modules/
 .claude/skills/gstack/.cache/
 .env*.local
+
+# Captured auth/session API responses — NEVER commit (secret-exposure risk, RA-sec 2026-07-12)
+scripts/new-auth.json
+scripts/login-test-response.json
+scripts/auth-response.json
+scripts/token.json
+scripts/*auth*.json
+scripts/*-response.json
