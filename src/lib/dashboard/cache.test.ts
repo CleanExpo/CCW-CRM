@@ -17,4 +17,13 @@ describe('dashboard cache timer lifecycle', () => {
     expect(unref).toHaveBeenCalledOnce();
     dashboardCache.destroy();
   });
+
+  it('supports timer handles that do not expose unref', async () => {
+    vi.spyOn(globalThis, 'setInterval').mockReturnValue(1 as unknown as NodeJS.Timeout);
+    vi.spyOn(globalThis, 'clearInterval').mockImplementation(() => undefined);
+
+    const { dashboardCache } = await import('@/lib/dashboard/cache');
+
+    dashboardCache.destroy();
+  });
 });

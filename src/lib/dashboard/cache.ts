@@ -1,6 +1,6 @@
 /**
  * In-memory LRU cache for dashboard data
- * 
+ *
  * Provides a simple caching mechanism for expensive dashboard queries
  * with automatic cleanup to prevent memory leaks.
  */
@@ -31,12 +31,12 @@ class DashboardCache {
     if (!entry) {
       return null;
     }
-    
+
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry.data;
   }
 
