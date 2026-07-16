@@ -6,7 +6,7 @@
  */
 
 class DashboardCache {
-  private cache = new Map<string, { data: any; expiresAt: number }>();
+  private cache = new Map<string, { data: unknown; expiresAt: number }>();
   private cleanupInterval: NodeJS.Timeout | null = null;
   private readonly defaultTTL = 60_000; // 60 seconds
 
@@ -37,7 +37,7 @@ class DashboardCache {
       return null;
     }
 
-    return entry.data;
+    return entry.data as T;
   }
 
   /**

@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
     const cacheKey = `dashboard:aggregated:${uid}`;
     
     // Check if we have cached data
-    const cached = dashboardCache.get<{ 
-      metrics: any;
-      revenue_chart: any;
-      category_sales: any;
-      top_products: any;
-      inventory_status: any;
-      recent_activity: any;
+    const cached = dashboardCache.get<{
+      metrics: unknown;
+      revenue_chart: unknown;
+      category_sales: unknown;
+      top_products: unknown;
+      inventory_status: unknown;
+      recent_activity: unknown;
       rollup: string;
     }>(cacheKey);
     
