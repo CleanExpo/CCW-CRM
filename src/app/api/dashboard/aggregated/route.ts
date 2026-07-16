@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { dashboardCache } from '@/lib/dashboard/cache';
 
 function buildLastSixMonthBuckets(reference: Date) {
   const months: { start: Date; label: string }[] = [];
@@ -22,6 +23,23 @@ export async function GET(request: NextRequest) {
     }
 
     const uid = scope.userId;
+    const cacheKey = `dashboard:aggregated:${uid}`;
+    
+    // Check if we have cached data
+    const cached = dashboardCache.get<{
+      metrics: unknown;
+      revenue_chart: unknown;
+      category_sales: unknown;
+      top_products: unknown;
+      inventory_status: unknown;
+      recent_activity: unknown;
+      rollup: string;
+    }>(cacheKey);
+    
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -273,7 +291,7 @@ export async function GET(request: NextRequest) {
         ? 'allocated'
         : 'inventory';
 
-    return NextResponse.json({
+    const result = {
       metrics: {
         total_revenue_this_month: totalRevenue.toFixed(2),
         active_orders: activeOrders,
@@ -288,7 +306,12 @@ export async function GET(request: NextRequest) {
       inventory_status: [],
       recent_activity: recentActivity,
       rollup,
-    });
+    };
+
+    // Cache the result
+    dashboardCache.set(cacheKey, result, 60_000); // 60 seconds TTL
+    
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ detail: 'Failed to load dashboard data' }, { status: 500 });
   }

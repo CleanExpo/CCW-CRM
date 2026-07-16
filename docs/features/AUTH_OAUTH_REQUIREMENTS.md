@@ -42,7 +42,7 @@ As a **user**, I want to **sign in with my Google account** so that **I can acce
 ## 3. Technical Design
 
 ### Architecture
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                      Frontend (Next.js)                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -63,6 +63,7 @@ As a **user**, I want to **sign in with my Google account** so that **I can acce
 ### Components to Create/Modify
 
 #### New Components
+
 | Component | Path | Purpose |
 |-----------|------|---------|
 | OAuthButton | `components/auth/oauth-button.tsx` | Reusable OAuth sign-in button |
@@ -70,6 +71,7 @@ As a **user**, I want to **sign in with my Google account** so that **I can acce
 | AuthCallback | `app/auth/callback/route.ts` | Handle OAuth callback |
 
 #### Modified Components
+
 | Component | Path | Changes |
 |-----------|------|---------|
 | LoginForm | `components/auth/login-form.tsx` | Add OAuth providers section |

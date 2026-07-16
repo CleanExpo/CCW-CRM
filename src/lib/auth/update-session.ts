@@ -78,18 +78,42 @@ export async function updateSession(request: NextRequest) {
     '/contact',
     '/privacy',
     '/terms',
-    '/api/cron',
     '/api/auth',
-    '/api/public',
     // OAuth redirects must load without a prior session (provider sends user back to callback).
     '/api/integrations/xero/callback',
     '/api/integrations/xero/auth',
     '/api/integrations/shopify/callback',
     '/api/integrations/shopify/authorize',
   ];
-  const isPublicPath = publicPaths.some(
-    (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
-  );
+
+  const pathMatchesRoot = (path: string, root: string) =>
+    path === root || path.startsWith(root + '/');
+  const pathname = request.nextUrl.pathname;
+  const isCronPath = pathMatchesRoot(pathname, '/api/cron');
+
+  if (isCronPath) {
+    const cronSecret = process.env.CRON_SECRET;
+    const authorization = request.headers.get('authorization');
+    if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+  }
+
+  // Match only the intended API roots and their descendants.
+  const apiPublicPathMatch = (path: string) => {
+    return ['/api/cron', '/api/public'].some((publicPath) => pathMatchesRoot(path, publicPath));
+  };
+
+  // Match public pages exactly or below their path, without treating '/' as a global prefix.
+  const prefixPublicPathMatch = (path: string) => {
+    return publicPaths.some(
+      (publicPath) =>
+        publicPath === path || (publicPath !== '/' && path.startsWith(publicPath + '/'))
+    );
+  };
+
+  const isPublicPath =
+    apiPublicPathMatch(request.nextUrl.pathname) || prefixPublicPathMatch(request.nextUrl.pathname);
 
   if (!isPublicPath && !user) {
     const url = request.nextUrl.clone();
@@ -112,7 +136,8 @@ export async function updateSession(request: NextRequest) {
   if (user && !request.nextUrl.pathname.startsWith('/api/')) {
     if (user.role === 'billing') {
       const canAccess = billingAllowedPrefixes.some(
-        (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) =>
+          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
       );
       if (!canAccess) {
         const url = request.nextUrl.clone();
@@ -122,7 +147,8 @@ export async function updateSession(request: NextRequest) {
     }
     if (user.role === 'member') {
       const blocked = memberBlockedPrefixes.some(
-        (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) =>
+          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
       );
       if (blocked) {
         const url = request.nextUrl.clone();
