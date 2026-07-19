@@ -64,7 +64,6 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = [
     '/',
     '/login',
-    '/register',
     // PWA / install metadata must load without a session (browser requests it independently).
     '/manifest.json',
     '/forgot-password',
