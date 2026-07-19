@@ -39,6 +39,10 @@ describe('middleware public-path matching', () => {
     }
   });
 
+  it('redirects unauthenticated registration visits to login', async () => {
+    expectLoginRedirect(await runUnauthenticatedRequest('/register'), '/register');
+  });
+
   it.each([
     '/playground',
     '/playground/example',
