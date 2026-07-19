@@ -1,56 +1,9 @@
-import { countAppUsers, findAppUserByEmail, insertAppUser } from '@/lib/auth/app-user-repo';
-import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
-import { signTokenPair } from '@/lib/auth/jwt-tokens';
-import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
-import { hashPassword } from '@/lib/auth/password';
-import { registerBodySchema } from '@/lib/auth/schemas';
-import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
+import { jsonDetail } from '@/lib/auth/http';
 import { NextRequest } from 'next/server';
 
-function isPrismaUniqueViolation(e: unknown): boolean {
-  return (
-    typeof e === 'object' && e !== null && 'code' in e && (e as { code: string }).code === 'P2002'
+export async function POST(_request: NextRequest) {
+  return jsonDetail(
+    'Public registration is disabled. Ask an owner or admin for an invitation.',
+    403
   );
-}
-
-export async function POST(request: NextRequest) {
-  const parsedBody = await readJsonBody(request);
-  if (!parsedBody.ok) return parsedBody.response;
-
-  const parsed = registerBodySchema.safeParse(parsedBody.body);
-  if (!parsed.success) return jsonValidationError(parsed.error);
-
-  try {
-    const existing = await findAppUserByEmail(parsed.data.email);
-    if (existing) {
-      return jsonDetail('An account with this email already exists', 409);
-    }
-
-    const password_hash = await hashPassword(parsed.data.password);
-    const isFirst = (await countAppUsers()) === 0;
-    const defaultRole = isFirst ? 'owner' : 'admin';
-    const row = await insertAppUser({
-      email: parsed.data.email,
-      password_hash,
-      full_name: parsed.data.full_name ?? null,
-      is_admin: defaultRole === 'owner' || defaultRole === 'admin',
-      role: defaultRole,
-    });
-
-    const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
-    const response = jsonOk({
-      user: mapAppUserRowToPublic(row),
-      message: 'User registered successfully',
-      access_token: tokens.access_token,
-      token_type: 'bearer',
-    });
-    setAuthSessionCookies(response, tokens);
-    return response;
-  } catch (e: unknown) {
-    if (isPrismaUniqueViolation(e)) {
-      return jsonDetail('An account with this email already exists', 409);
-    }
-    console.error('[auth/register]', e);
-    return jsonDetail('Registration service unavailable', 503);
-  }
 }
