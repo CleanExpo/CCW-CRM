@@ -197,14 +197,14 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
         >
           <p className={isMarketing ? 'text-zinc-400' : undefined}>
             <Link
-              href="/register"
+              href="/contact"
               className={
                 isMarketing
                   ? 'font-medium text-sky-300 underline-offset-4 transition-colors hover:text-sky-200 hover:underline'
                   : 'font-medium text-primary hover:underline'
               }
             >
-              Create an account
+              Request access
             </Link>
             <span className={isMarketing ? 'text-zinc-600' : 'text-muted-foreground'}> · </span>
             <Link
