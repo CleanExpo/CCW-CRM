@@ -61,15 +61,6 @@ export function MarketingHeader() {
 
         <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 md:justify-end">
           <Link
-            href="/register"
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'sm' }),
-              'min-h-9 rounded-full border-white/15 bg-white/[0.03] px-4 text-sm font-semibold text-zinc-200 hover:border-white/25 hover:bg-white/[0.07] hover:text-white'
-            )}
-          >
-            Sign up
-          </Link>
-          <Link
             href="/login"
             className={cn(
               buttonVariants({ variant: 'gradient', size: 'sm' }),
