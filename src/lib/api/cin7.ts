@@ -124,8 +124,24 @@ export async function disconnectCin7(): Promise<{ status: string }> {
 }
 
 /**
- * Trigger manual sync for a specific entity type
+ * Trigger manual sync for a specific entity type.
+ * Pass `autoResume: true` to continue from `next_page` until the entity sync completes or stalls.
  */
+export type Cin7SyncResult = {
+  status: string;
+  records_processed?: number;
+  duration_ms?: number;
+  page_size?: number;
+  cin7_source_styles?: number;
+  skipped?: Record<string, number>;
+  complete?: boolean;
+  timed_out?: boolean;
+  next_page?: number | null;
+  start_page?: number;
+  pages_fetched?: number;
+  sync_errors?: string[];
+};
+
 export async function triggerCin7Sync(
   entityType:
     | 'products'
@@ -141,22 +157,44 @@ export async function triggerCin7Sync(
     | 'units-of-measure'
     | 'stock-levels'
     | 'orders'
-    | 'inventory'
-): Promise<{
-  status: string;
-  records_processed?: number;
-  duration_ms?: number;
-  page_size?: number;
-  cin7_source_styles?: number;
-  skipped?: Record<string, number>;
-}> {
-  return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
+    | 'inventory',
+  options?: { startPage?: number; autoResume?: boolean }
+): Promise<Cin7SyncResult> {
+  const autoResume = options?.autoResume ?? false;
+  let startPage = Math.max(options?.startPage ?? 1, 1);
+  let totalRecords = 0;
+  let totalDuration = 0;
+  let lastResult: Cin7SyncResult = { status: 'ok' };
+
+  for (;;) {
+    const qs = startPage > 1 ? `?start_page=${startPage}` : '';
+    const result = await apiClient.post<Cin7SyncResult>(
+      `/api/integrations/cin7/sync/${entityType}${qs}`,
+      undefined,
+      undefined,
+      300_000
+    );
+    totalRecords += result.records_processed ?? 0;
+    totalDuration += result.duration_ms ?? 0;
+    lastResult = result;
+
+    if (!autoResume || result.complete !== false || result.next_page == null) {
+      break;
+    }
+    startPage = result.next_page;
+  }
+
+  return {
+    ...lastResult,
+    records_processed: totalRecords,
+    duration_ms: totalDuration,
+  };
 }
 
 export type {
-  Cin7ReconciliationSnapshot,
   Cin7ExceptionEntity,
   Cin7ExceptionRecord,
+  Cin7ReconciliationSnapshot,
 } from '@/lib/integrations/cin7-reconciliation';
 
 export type Cin7ReconciliationResponse =
@@ -231,7 +269,7 @@ export async function cleanupCin7DuplicateCustomers(): Promise<{
  * Get recent sync logs
  */
 export async function getCin7SyncLogs(limit: number = 20): Promise<{ logs: Cin7SyncLog[] }> {
-  return apiClient.get(`/api/integrations/cin7/sync/logs?limit=${limit}`);
+  return apiClient.get(`/api/integrations/cin7/sync-history?limit=${limit}`);
 }
 
 /**
