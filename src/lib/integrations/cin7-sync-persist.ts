@@ -375,7 +375,12 @@ export async function batchUpsertPriceLists(
         where: {
           ownerUserId_cin7PriceColumn: { ownerUserId, cin7PriceColumn: row.cin7PriceColumn },
         },
-        create: { ownerUserId, cin7PriceColumn: row.cin7PriceColumn, name: row.name, isActive: true },
+        create: {
+          ownerUserId,
+          cin7PriceColumn: row.cin7PriceColumn,
+          name: row.name,
+          isActive: true,
+        },
         update: { name: row.name, isActive: true },
       })
     );
@@ -384,10 +389,7 @@ export async function batchUpsertPriceLists(
   return processed;
 }
 
-export async function batchUpsertTaxCodes(
-  ownerUserId: string,
-  codes: string[]
-): Promise<number> {
+export async function batchUpsertTaxCodes(ownerUserId: string, codes: string[]): Promise<number> {
   if (codes.length === 0) return 0;
   const batchSize = getCin7DbBatchSize();
   const concurrency = getCin7DbConcurrency();
@@ -528,7 +530,7 @@ export function mapCoreCustomerRows(
     if (!cin7ContactId) continue;
     out.push({
       cin7ContactId,
-      cin7ContactType: 'Cin7',
+      cin7ContactType: 'Customer',
       companyName: String(row.Name ?? 'Cin7 customer').trim() || 'Cin7 customer',
       email: row.Email ? String(row.Email).trim() : '',
       phone: row.Phone ? String(row.Phone).trim() : undefined,
