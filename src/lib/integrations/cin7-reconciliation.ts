@@ -1,11 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
 import {
-  fetchCin7CustomerPage,
-  fetchCin7ProductPage,
-  getCin7CoreCredentials,
-  pingCin7Core,
-} from '@/lib/integrations/cin7-core';
-import {
   fetchAllOmniMasterCatalogsSequential,
   fetchFullOmniBranchCatalog,
   fetchFullOmniContactsByType,
@@ -13,6 +7,12 @@ import {
   resolveCin7SyncSource,
   type Cin7OmniMasterCatalogs,
 } from '@/lib/integrations/cin7-catalog-fetch';
+import {
+  fetchCin7CustomerPage,
+  fetchCin7ProductPage,
+  getCin7CoreCredentials,
+  pingCin7Core,
+} from '@/lib/integrations/cin7-core';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import {
   buildReferenceExceptionItems,
@@ -23,6 +23,10 @@ import {
   type Cin7ReferenceExceptionEntity,
   type Cin7ReferenceExceptionSummary,
 } from '@/lib/integrations/cin7-reconciliation-reference';
+import {
+  buildSyncCompletenessSummary,
+  type Cin7SyncCompletenessRow,
+} from '@/lib/integrations/cin7-sync-completeness';
 import {
   getCin7PageSize,
   getCin7SyncMaxPages,
@@ -88,6 +92,7 @@ export type Cin7ReconciliationSnapshot = {
     errors: string[];
   };
   notes: string[];
+  sync_completeness?: Cin7SyncCompletenessRow[];
 };
 
 export type Cin7ExceptionEntity =
@@ -114,7 +119,9 @@ function normalize(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
 }
 
-export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7ReconciliationSnapshot> {
+export async function buildCin7Reconciliation(
+  ownerUserId: string
+): Promise<Cin7ReconciliationSnapshot> {
   const notes: string[] = [];
   const fetchErrors: string[] = [];
   const coreCreds = getCin7CoreCredentials();
@@ -141,7 +148,10 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
     string,
     { companyName: string; email: string; phone?: string; city?: string }
   >();
-  const cin7SupplierById = new Map<string, { companyName: string; email?: string; phone?: string }>();
+  const cin7SupplierById = new Map<
+    string,
+    { companyName: string; email?: string; phone?: string }
+  >();
   const cin7BranchById = new Map<
     string,
     { name: string; city?: string; state?: string; postCode?: string; isActive: boolean }
@@ -153,8 +163,13 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
   if (source === 'omni' && omniCreds) {
     const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
     omniCatalogs = catalogs;
-    const { products: productCatalog, customers, internalCustomers, suppliers, branches } =
-      catalogs;
+    const {
+      products: productCatalog,
+      customers,
+      internalCustomers,
+      suppliers,
+      branches,
+    } = catalogs;
 
     fetchMeta.products_pages = productCatalog.pages_fetched;
     fetchMeta.customers_pages = customers.pages_fetched;
@@ -237,7 +252,8 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
           visibility: 'Cin7 Core',
           isActive: true,
         });
-        cin7Products.by_visibility['Cin7 Core'] = (cin7Products.by_visibility['Cin7 Core'] ?? 0) + 1;
+        cin7Products.by_visibility['Cin7 Core'] =
+          (cin7Products.by_visibility['Cin7 Core'] ?? 0) + 1;
       }
       if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, maxPages)) break;
     }
@@ -270,7 +286,9 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
     supplierRows,
     branchRows,
     customerTotal,
+    customerExtraWithoutId,
     supplierTotal,
+    supplierExtraWithoutId,
   ] = await Promise.all([
     prisma.product.findMany({
       where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
@@ -331,7 +349,20 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
       },
     }),
     prisma.customer.count({ where: { ownerUserId } }),
+    prisma.customer.count({
+      where: {
+        ownerUserId,
+        cin7ContactId: null,
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
+    }),
     prisma.supplier.count({ where: { ownerUserId } }),
+    prisma.supplier.count({
+      where: { ownerUserId, NOT: { supplierCode: { startsWith: 'cin7:' } } },
+    }),
   ]);
 
   const optixByVisibility: Record<string, number> = {};
@@ -470,13 +501,21 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
 
   const customerLinked = customerRows.length;
   const supplierLinked = supplierRows.length;
-  const customerExtraWithoutId = customerTotal - customerLinked;
-  const supplierExtraWithoutId = supplierTotal - supplierLinked;
 
+  if (source === 'none') {
+    notes.push(
+      'Cin7 is unreachable — exception counts below are not valid for acceptance. Reconnect and refresh from live Cin7.'
+    );
+  }
   if (fetchErrors.length > 0) {
+    notes.push(
+      `Cin7 fetch was incomplete (${fetchErrors.length} warning(s)) — do not use this snapshot for sign-off until a clean live refresh succeeds.`
+    );
     notes.push(`Cin7 fetch warnings: ${fetchErrors.slice(0, 3).join('; ')}`);
   }
-  notes.push('Use the exception report to review individual records — no data is deleted during sync.');
+  notes.push(
+    'Use the exception report to review individual records — no data is deleted during sync.'
+  );
 
   fetchMeta.errors = fetchErrors;
 
@@ -510,9 +549,12 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
     notes.push(
       'Brands, price lists, units of measure, and tax codes are derived from product and contact data.'
     );
+    notes.push(
+      'Optix customers without a Cin7 ID are legacy CRM records — sync adds Cin7-linked rows; it does not retroactively attach IDs to existing Optix-only customers (Phase 1: no merge/delete).'
+    );
   }
 
-  return {
+  const snapshotWithoutCompleteness = {
     source,
     checked_at: new Date().toISOString(),
     cin7: {
@@ -545,25 +587,47 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
       reference: referenceOptix,
     },
     exceptions_summary: {
-      products_missing_in_optix: productExceptions.missing,
-      products_extra_in_optix: productExceptions.extra,
-      products_field_mismatches: productExceptions.fieldMismatch,
-      customers_missing_in_optix: customerExceptions.missing,
-      customers_extra_in_optix: customerExceptions.extra,
-      customers_field_mismatches: customerExceptions.fieldMismatch,
-      suppliers_missing_in_optix: supplierExceptions.missing,
-      suppliers_extra_in_optix: supplierExceptions.extra,
-      suppliers_field_mismatches: supplierExceptions.fieldMismatch,
-      branches_missing_in_optix: branchExceptions.missing,
-      branches_extra_in_optix: branchExceptions.extra,
-      branches_field_mismatches: branchExceptions.fieldMismatch,
-      internal_customers_missing_in_optix: internalCustomerExceptions.missing,
-      internal_customers_extra_in_optix: internalCustomerExceptions.extra,
-      internal_customers_field_mismatches: internalCustomerExceptions.fieldMismatch,
-      ...referenceExceptions,
+      products_missing_in_optix: source === 'none' ? 0 : productExceptions.missing,
+      products_extra_in_optix: source === 'none' ? 0 : productExceptions.extra,
+      products_field_mismatches: source === 'none' ? 0 : productExceptions.fieldMismatch,
+      customers_missing_in_optix: source === 'none' ? 0 : customerExceptions.missing,
+      customers_extra_in_optix: source === 'none' ? 0 : customerExceptions.extra,
+      customers_field_mismatches: source === 'none' ? 0 : customerExceptions.fieldMismatch,
+      suppliers_missing_in_optix: source === 'none' ? 0 : supplierExceptions.missing,
+      suppliers_extra_in_optix: source === 'none' ? 0 : supplierExceptions.extra,
+      suppliers_field_mismatches: source === 'none' ? 0 : supplierExceptions.fieldMismatch,
+      branches_missing_in_optix: source === 'none' ? 0 : branchExceptions.missing,
+      branches_extra_in_optix: source === 'none' ? 0 : branchExceptions.extra,
+      branches_field_mismatches: source === 'none' ? 0 : branchExceptions.fieldMismatch,
+      internal_customers_missing_in_optix:
+        source === 'none' ? 0 : internalCustomerExceptions.missing,
+      internal_customers_extra_in_optix: source === 'none' ? 0 : internalCustomerExceptions.extra,
+      internal_customers_field_mismatches:
+        source === 'none' ? 0 : internalCustomerExceptions.fieldMismatch,
+      ...(source === 'none' ? emptyReferenceExceptions : referenceExceptions),
     },
     fetch_meta: fetchMeta,
     notes: uniqueNotes(notes),
+  };
+
+  const syncCompleteness =
+    source === 'omni'
+      ? await buildSyncCompletenessSummary(ownerUserId, snapshotWithoutCompleteness)
+      : undefined;
+
+  if (syncCompleteness?.some((row) => row.likely_incomplete)) {
+    notes.push(
+      'One or more entities show fewer Optix records than Cin7 — re-run sync (resume if timed out) before signing off.'
+    );
+  }
+
+  return {
+    ...snapshotWithoutCompleteness,
+    notes: uniqueNotes([
+      ...snapshotWithoutCompleteness.notes,
+      ...notes.filter((n) => !snapshotWithoutCompleteness.notes.includes(n)),
+    ]),
+    sync_completeness: syncCompleteness,
   };
 }
 
@@ -586,11 +650,25 @@ export async function buildCin7ExceptionReport(
   const coreLive = coreCreds ? await pingCin7Core(coreCreds) : false;
   const source = resolveCin7SyncSource(coreLive, omniLive);
 
+  if (source === 'none') {
+    throw new Error(
+      'Cin7 is not reachable. Reconnect Cin7 and refresh before reviewing the exception report.'
+    );
+  }
+
   if (entity === 'products' && source === 'omni' && omniCreds) {
     const catalog = await fetchFullOmniProductCatalog(omniCreds);
     const optixRows = await prisma.product.findMany({
       where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
-      select: { sku: true, name: true, price: true, stock: true, isActive: true, cin7Visibility: true },
+      select: {
+        sku: true,
+        name: true,
+        price: true,
+        stock: true,
+        isActive: true,
+        cin7Visibility: true,
+        category: true,
+      },
     });
     const optixBySku = new Map(optixRows.map((r) => [r.sku, r]));
 
@@ -605,10 +683,18 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'name', cin7_value: cin7.name, optix_value: optix.name });
       }
       if (Math.abs(optix.price - cin7.price) > 0.01) {
-        fields.push({ field: 'price', cin7_value: String(cin7.price), optix_value: String(optix.price) });
+        fields.push({
+          field: 'price',
+          cin7_value: String(cin7.price),
+          optix_value: String(optix.price),
+        });
       }
       if (optix.stock !== cin7.stock) {
-        fields.push({ field: 'stock', cin7_value: String(cin7.stock), optix_value: String(optix.stock) });
+        fields.push({
+          field: 'stock',
+          cin7_value: String(cin7.stock),
+          optix_value: String(optix.stock),
+        });
       }
       if (optix.isActive !== cin7.isActive) {
         fields.push({
@@ -617,7 +703,10 @@ export async function buildCin7ExceptionReport(
           optix_value: String(optix.isActive),
         });
       }
-      const optixVis = optix.cin7Visibility ?? '';
+      const optixVis =
+        optix.cin7Visibility ??
+        (optix.category?.includes('·') ? optix.category.split('·').pop()?.trim() : '') ??
+        '';
       if (normalize(optixVis) !== normalize(cin7.visibility)) {
         fields.push({ field: 'visibility', cin7_value: cin7.visibility, optix_value: optixVis });
       }
@@ -635,7 +724,14 @@ export async function buildCin7ExceptionReport(
   if (entity === 'customers' && source === 'omni' && omniCreds) {
     const { contacts } = await fetchFullOmniContactsByType(omniCreds, ['Customer']);
     const optixRows = await prisma.customer.findMany({
-      where: { ownerUserId, cin7ContactId: { not: null } },
+      where: {
+        ownerUserId,
+        cin7ContactId: { not: null },
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
       select: { cin7ContactId: true, companyName: true, email: true, phone: true, city: true },
     });
     const optixById = new Map(
@@ -664,7 +760,11 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
       }
       if (normalize(optix.phone ?? '') !== normalize(cin7.phone ?? '')) {
-        fields.push({ field: 'phone', cin7_value: cin7.phone ?? '', optix_value: optix.phone ?? '' });
+        fields.push({
+          field: 'phone',
+          cin7_value: cin7.phone ?? '',
+          optix_value: optix.phone ?? '',
+        });
       }
       if (normalize(optix.city ?? '') !== normalize(cin7.city ?? '')) {
         fields.push({ field: 'city', cin7_value: cin7.city ?? '', optix_value: optix.city ?? '' });
@@ -720,7 +820,11 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
       }
       if (normalize(optix.phone ?? '') !== normalize(cin7.phone ?? '')) {
-        fields.push({ field: 'phone', cin7_value: cin7.phone ?? '', optix_value: optix.phone ?? '' });
+        fields.push({
+          field: 'phone',
+          cin7_value: cin7.phone ?? '',
+          optix_value: optix.phone ?? '',
+        });
       }
       if (fields.length > 0) {
         items.push({
@@ -757,7 +861,11 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'city', cin7_value: cin7.city ?? '', optix_value: optix.city ?? '' });
       }
       if (normalize(optix.state ?? '') !== normalize(cin7.state ?? '')) {
-        fields.push({ field: 'state', cin7_value: cin7.state ?? '', optix_value: optix.state ?? '' });
+        fields.push({
+          field: 'state',
+          cin7_value: cin7.state ?? '',
+          optix_value: optix.state ?? '',
+        });
       }
       if (normalize(optix.postCode ?? '') !== normalize(cin7.postCode ?? '')) {
         fields.push({
@@ -864,10 +972,15 @@ export async function buildCin7ExceptionReport(
     items.push(...refItems);
   }
 
-  const entityType = entity === 'internal-customers' ? 'internal-customers' : entity;
+  const entityTypesForSkips =
+    entity === 'warehouses' || entity === 'branches'
+      ? ['warehouses', 'branches']
+      : entity === 'stock-levels'
+        ? ['stock-levels', 'inventory']
+        : [entity === 'internal-customers' ? 'internal-customers' : entity];
 
   const skipRows = await prisma.cin7SyncSkipRecord.findMany({
-    where: { ownerUserId, entityType },
+    where: { ownerUserId, entityType: { in: entityTypesForSkips } },
     orderBy: { createdAt: 'desc' },
     take: 500,
     select: { cin7Id: true, label: true, reason: true },
@@ -882,7 +995,7 @@ export async function buildCin7ExceptionReport(
   }
 
   const lastRun = await prisma.cin7SyncRun.findFirst({
-    where: { ownerUserId, entityType },
+    where: { ownerUserId, entityType: { in: entityTypesForSkips } },
     orderBy: { createdAt: 'desc' },
   });
   if (lastRun?.skipped && typeof lastRun.skipped === 'object' && skipRows.length === 0) {
