@@ -1,7 +1,4 @@
-import {
-  CIN7_SYNC_SAFETY_MAX_PAGES,
-  getCin7PageSize,
-} from '@/lib/integrations/cin7-sync-config';
+import { formatCin7PriceColumnLabel } from '@/lib/integrations/cin7-master-entities';
 import type { Cin7OmniCredentials } from '@/lib/integrations/cin7-omni';
 import {
   extractReferenceDataFromProducts,
@@ -17,7 +14,7 @@ import {
   type Cin7OmniProductCategoryRow,
   type Cin7OmniStockLevelRow,
 } from '@/lib/integrations/cin7-omni';
-import { formatCin7PriceColumnLabel } from '@/lib/integrations/cin7-master-entities';
+import { CIN7_SYNC_SAFETY_MAX_PAGES, getCin7PageSize } from '@/lib/integrations/cin7-sync-config';
 
 export type Cin7CatalogFetchMeta = {
   pages_fetched: number;
@@ -71,6 +68,7 @@ async function paginateUntilDone<T>(input: {
   let pagesFetched = 0;
   let emptyRetries = 0;
   const maxEmptyRetries = 4;
+  let emptyAfterFetchError = false;
 
   for (let page = 1; page <= maxPages; page += 1) {
     if (page > 1 && pageGapMs > 0) {
@@ -80,6 +78,9 @@ async function paginateUntilDone<T>(input: {
     pagesFetched = page;
     if (result.error) {
       errors.push(`Page ${page}: ${result.error}`);
+      emptyAfterFetchError = true;
+    } else {
+      emptyAfterFetchError = false;
     }
     if (result.sourceRowCount === 0) {
       if (emptyRetries < maxEmptyRetries) {
@@ -89,9 +90,15 @@ async function paginateUntilDone<T>(input: {
         page -= 1;
         continue;
       }
+      if (emptyAfterFetchError) {
+        errors.push(
+          `Stopped at page ${page}: empty responses after fetch errors — catalog may be incomplete`
+        );
+      }
       break;
     }
     emptyRetries = 0;
+    emptyAfterFetchError = false;
     items.push(...result.items);
     if (result.sourceRowCount < pageSize) break;
   }
@@ -288,8 +295,7 @@ export async function fetchDerivedReferenceCatalog(
     priceColumns: [...priceColumns].sort(),
     unitsOfMeasure: extracted.unitsOfMeasure,
     taxCodes,
-    pages_fetched:
-      rawProducts.pages_fetched + customers.pages_fetched + branches.pages_fetched,
+    pages_fetched: rawProducts.pages_fetched + customers.pages_fetched + branches.pages_fetched,
     errors: [...rawProducts.errors, ...customers.errors, ...branches.errors],
   };
 }
@@ -346,7 +352,10 @@ export async function fetchAllOmniMasterCatalogsSequential(
   };
 }
 
-export function resolveCin7SyncSource(coreLive: boolean, omniLive: boolean): 'core' | 'omni' | 'none' {
+export function resolveCin7SyncSource(
+  coreLive: boolean,
+  omniLive: boolean
+): 'core' | 'omni' | 'none' {
   const prefer = process.env.CIN7_SYNC_PREFER?.trim().toLowerCase();
   if (prefer === 'core' && coreLive) return 'core';
   if (prefer === 'omni' && omniLive) return 'omni';
