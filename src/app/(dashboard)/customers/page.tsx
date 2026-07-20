@@ -1,29 +1,29 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 // PHASE 4: Search state persistence
-import { useSearchState } from '@/hooks/use-search-state';
-import { Input } from '@/components/ui/input';
+import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { apiClient } from '@/lib/api/client';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSearchState } from '@/hooks/use-search-state';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { exportCustomersToCSV } from '@/lib/utils/csv-export';
+import { Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BulkDeleteCustomersDialog } from './components/BulkDeleteCustomersDialog';
 import { CustomerForm } from './components/CustomerForm';
 import { DeleteCustomerDialog } from './components/DeleteCustomerDialog';
-import { BulkDeleteCustomersDialog } from './components/BulkDeleteCustomersDialog';
-import { Pencil, Trash2, Plus, Eye, Download } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
-import { PaginationControls } from '@/components/ui/pagination-controls';
-import { exportCustomersToCSV } from '@/lib/utils/csv-export';
 // PHASE 4: Last updated timestamps
-import { formatDistanceToNow } from 'date-fns';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Customer {
   id: string;
