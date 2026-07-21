@@ -10,88 +10,131 @@ const WORKFLOW_PATH = path.resolve(
   '.github/workflows/deepsec-weekly.yml',
 );
 
-function requireMatch(content, pattern, message, failures) {
-  if (!pattern.test(content)) failures.push(message);
+function isMapping(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function requireExactStep(content, name, expected, failures) {
-  const marker = `      - name: ${name}\n`;
-  const parts = content.split(marker);
-  if (parts.length !== 2) {
-    failures.push(`${name} step must appear exactly once`);
-    return;
+function hasExactKeys(value, expected) {
+  return isMapping(value)
+    && Object.keys(value).sort().join('\n') === [...expected].sort().join('\n');
+}
+
+function parseWorkflow(content, failures) {
+  let yaml;
+  try {
+    yaml = require('yaml');
+  } catch (error) {
+    failures.push(`YAML parser is unavailable: ${error.message}`);
+    return null;
   }
-  const body = parts[1].split('\n      - name:')[0];
-  if (`${marker}${body}` !== expected) failures.push(`${name} step must match the fail-closed contract`);
+
+  const document = yaml.parseDocument(content, { merge: false, uniqueKeys: true });
+  for (const error of [...document.errors, ...document.warnings]) {
+    failures.push(`workflow YAML is invalid: ${error.message.split('\n')[0]}`);
+  }
+  if (failures.length > 0) return null;
+
+  let usesIndirection = false;
+  yaml.visit(document, {
+    Node(_key, node) {
+      if (yaml.isAlias(node) || node?.anchor) usesIndirection = true;
+    },
+  });
+  if (usesIndirection) {
+    failures.push('workflow YAML anchors and aliases are not allowed');
+    return null;
+  }
+
+  try {
+    const parsed = document.toJS({ maxAliasCount: 0 });
+    if (!isMapping(parsed)) failures.push('workflow root must be a mapping');
+    return parsed;
+  } catch (error) {
+    failures.push(`workflow YAML could not be resolved safely: ${error.message}`);
+    return null;
+  }
+}
+
+function requireNamedStep(steps, name, failures) {
+  const matches = steps.filter((step) => isMapping(step) && step.name === name);
+  if (matches.length !== 1) {
+    failures.push(`${name} step must appear exactly once in jobs.deepsec.steps`);
+    return null;
+  }
+  return matches[0];
 }
 
 function validateWorkflow(content) {
-  const active = content
-    .split('\n')
-    .filter((line) => !/^\s*#/.test(line))
-    .join('\n');
   const failures = [];
-  requireExactStep(
-    active,
-    'Setup Node.js',
-    "      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: '22'",
-    failures,
-  );
-  requireExactStep(
-    active,
-    'Install dependencies',
-    '      - name: Install dependencies\n        run: |\n          cd .deepsec\n          npm install',
-    failures,
-  );
-  requireExactStep(
-    active,
-    'Run Deepsec',
-    '      - name: Run Deepsec\n        run: |\n          cd .deepsec\n          result_root="$PWD/data/CCW-CRM"\n          result_dir="$result_root/runs"\n          rm -rf "$result_root"\n          trap \'rm -rf "$result_root"\' EXIT\n          scan_started_at=$(date +%s)\n          npx deepsec scan --project-id CCW-CRM\n          node ../scripts/ci/validate-deepsec-workflow.js --receipt "$result_dir" --started-at "$scan_started_at"',
-    failures,
-  );
-  requireMatch(active, /^  schedule:\s*$\n[\s\S]*?^    - cron:/m, 'weekly schedule is required', failures);
-  requireMatch(active, /^  workflow_dispatch:\s*$/m, 'manual trigger is required', failures);
-  requireMatch(active, /^  contents: read$/m, 'contents permission must be read-only', failures);
-  requireMatch(active, /^  issues: write$/m, 'issue permission is required', failures);
-  requireMatch(active, /^    runs-on: ubuntu-latest$/m, 'Deepsec must run on Ubuntu', failures);
-  requireMatch(active, /^      - uses: actions\/checkout@v4$/m, 'checkout step is required', failures);
-  requireMatch(active, /^        uses: actions\/setup-node@v4$/m, 'setup-node step is required', failures);
-  requireMatch(active, /^          node-version: ['"]22['"]$/m, 'Deepsec must run on Node 22', failures);
-  requireMatch(active, /^          cd \.deepsec\s*$\n^          npm install$/m, 'Deepsec workspace install is required', failures);
-  requireMatch(
-    active,
-    /^          npx deepsec scan --project-id CCW-CRM$/m,
-    'exact CCW-CRM scan command is required',
-    failures,
-  );
-  requireMatch(
-    active,
-    /result_dir="\$result_root\/runs"\s*\n\s*rm -rf "\$result_root"/,
-    'stale scan data must be removed before scanning',
-    failures,
-  );
-  requireMatch(active, /^          trap 'rm -rf "\$result_root"' EXIT$/m, 'generated scan data must be cleaned', failures);
-  requireMatch(active, /^          scan_started_at=\$\(date \+%s\)$/m, 'scan start time must be captured', failures);
-  requireMatch(
-    active,
-    /^          node \.\.\/scripts\/ci\/validate-deepsec-workflow\.js --receipt "\$result_dir" --started-at "\$scan_started_at"$/m,
-    'completed scan receipt must be validated',
-    failures,
-  );
-  requireMatch(active, /^        if: failure\(\)$/m, 'scan failures must keep the job failed', failures);
-  requireMatch(active, /actions\/runs\/\$\{\{ github\.run_id \}\}/, 'failure issue must link the exact run', failures);
+  const workflow = parseWorkflow(content, failures);
+  if (!workflow) return failures;
 
-  if (/^  pull-requests: write$/m.test(active)) {
-    failures.push('unused pull-request write permission must not be present');
+  const triggers = workflow.on;
+  if (!isMapping(triggers) || !Array.isArray(triggers.schedule)
+      || !triggers.schedule.some((entry) => isMapping(entry) && typeof entry.cron === 'string')) {
+    failures.push('weekly schedule is required');
   }
-  if (/Weekly scan findings|found new issues|Deepsec findings/i.test(active)) {
-    failures.push('generic workflow failures must not be described as findings');
+  if (!isMapping(triggers) || !Object.prototype.hasOwnProperty.call(triggers, 'workflow_dispatch')) {
+    failures.push('manual trigger is required');
   }
 
-  const scanStep = active.match(/- name: Run Deepsec([\s\S]*?)(?=\n\s*- name:|$)/)?.[1] || '';
-  if (!scanStep) failures.push('Run Deepsec step is required');
-  if (/continue-on-error:\s*true|\|\|\s*true|set \+e/.test(scanStep)) {
+  if (!hasExactKeys(workflow.permissions, ['contents', 'issues'])
+      || workflow.permissions.contents !== 'read'
+      || workflow.permissions.issues !== 'write') {
+    failures.push('root permissions must be exactly contents: read and issues: write');
+  }
+
+  const deepsec = workflow.jobs?.deepsec;
+  if (!isMapping(deepsec)) {
+    failures.push('jobs.deepsec is required');
+    return failures;
+  }
+  if (Object.prototype.hasOwnProperty.call(deepsec, 'permissions')) {
+    failures.push('jobs.deepsec must inherit the exact root permissions without an override');
+  }
+  if (deepsec['runs-on'] !== 'ubuntu-latest') failures.push('Deepsec must run on Ubuntu');
+
+  const steps = Array.isArray(deepsec.steps) ? deepsec.steps : [];
+  if (!Array.isArray(deepsec.steps)) failures.push('jobs.deepsec.steps must be a sequence');
+  const checkoutSteps = steps.filter((step) => isMapping(step) && step.uses === 'actions/checkout@v4');
+  if (checkoutSteps.length !== 1 || !hasExactKeys(checkoutSteps[0], ['uses'])) {
+    failures.push('checkout step must appear exactly once and use actions/checkout@v4');
+  }
+
+  const setupStep = requireNamedStep(steps, 'Setup Node.js', failures);
+  if (setupStep && (!hasExactKeys(setupStep, ['name', 'uses', 'with'])
+      || setupStep.uses !== 'actions/setup-node@v4'
+      || !hasExactKeys(setupStep.with, ['node-version'])
+      || setupStep.with['node-version'] !== '22')) {
+    failures.push('Setup Node.js step must use actions/setup-node@v4 with Node 22');
+  }
+
+  const installStep = requireNamedStep(steps, 'Install dependencies', failures);
+  const expectedInstall = 'cd .deepsec\nnpm install';
+  if (installStep && (!hasExactKeys(installStep, ['name', 'run'])
+      || installStep.run?.trimEnd() !== expectedInstall)) {
+    failures.push('Install dependencies step must match the Deepsec workspace contract');
+  }
+
+  const scanStep = requireNamedStep(steps, 'Run Deepsec', failures);
+  const expectedScan = 'cd .deepsec\nresult_root="$PWD/data/CCW-CRM"\nresult_dir="$result_root/runs"\nrm -rf "$result_root"\ntrap \'rm -rf "$result_root"\' EXIT\nscan_started_at=$(date +%s)\nnpx deepsec scan --project-id CCW-CRM\nnode ../scripts/ci/validate-deepsec-workflow.js --receipt "$result_dir" --started-at "$scan_started_at"';
+  if (scanStep && (!hasExactKeys(scanStep, ['name', 'run'])
+      || scanStep.run?.trimEnd() !== expectedScan)) {
+    failures.push('Run Deepsec step must match the fail-closed scan and receipt contract');
+  }
+  if (typeof scanStep?.run === 'string'
+      && /continue-on-error:\s*true|\|\|\s*true|set \+e/.test(scanStep.run)) {
     failures.push('Deepsec scan or receipt failure must not be masked');
+  }
+
+  const issueStep = requireNamedStep(steps, 'Open issue on scan failure', failures);
+  const expectedIssueRun = '# Ensure labels exist\ngh label create "security" --color "d73a4a" --description "Security related" 2>/dev/null || true\ngh label create "deepsec" --color "7057ff" --description "Deepsec scan" 2>/dev/null || true\ngh label create "weekly-scan" --color "008672" --description "Weekly automated scan" 2>/dev/null || true\ngh issue create \\\n  --title "[deepsec] Weekly scan failed $(date +%Y-%m-%d)" \\\n  --label "security,deepsec,weekly-scan" \\\n  --body "The weekly Deepsec scan failed to complete or produce a valid receipt. See the exact run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"';
+  if (issueStep && (!hasExactKeys(issueStep, ['name', 'if', 'run', 'env'])
+      || issueStep.if !== 'failure()'
+      || issueStep.run?.trimEnd() !== expectedIssueRun
+      || !hasExactKeys(issueStep.env, ['GH_TOKEN'])
+      || issueStep.env.GH_TOKEN !== '${{ secrets.GITHUB_TOKEN }}')) {
+    failures.push('Open issue on scan failure step must match the guarded reporting contract');
   }
 
   return failures;
@@ -228,6 +271,64 @@ function runSelfTests(workflow) {
     if (failures.length === 0) throw new Error(`self-test did not reject: ${name}`);
   }
 
+  const workflowCases = [
+    ['permission decoy in root env', 'root permissions must be exactly', workflow
+      .replace(
+        'permissions:\n  contents: read\n  issues: write',
+        'permissions:\n  contents: write\n  issues: read\n\nenv:\n  contents: read\n  issues: write',
+      )],
+    ['failure gate on unrelated step', 'guarded reporting contract', workflow
+      .replace('        if: failure()\n        run: |', '        if: success()\n        run: |')
+      .replace(
+        '      - name: Open issue on scan failure',
+        '      - name: Failure-gate decoy\n        if: failure()\n        run: echo decoy\n      - name: Open issue on scan failure',
+      )],
+    ['permission decoy in wrong job', 'root permissions must be exactly', workflow
+      .replace('  contents: read\n  issues: write', '  contents: write\n  issues: read')
+      .replace(
+        'jobs:\n',
+        'jobs:\n  permission-decoy:\n    permissions:\n      contents: read\n      issues: write\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo decoy\n',
+      )],
+    ['permission decoy in scalar context', 'root permissions must be exactly', workflow.replace(
+      'permissions:\n  contents: read\n  issues: write',
+      'permissions:\n  contents: write\n  issues: read\n\nenv:\n  PERMISSION_DECOY: |\n    contents: read\n    issues: write',
+    )],
+    ['issue command outside guarded failure step', 'guarded reporting contract', workflow
+      .replace('          gh issue create \\\n', '          echo issue-disabled \\\n')
+      .replace(
+        '      - name: Open issue on scan failure',
+        '      - name: Issue-command decoy\n        run: |\n          gh issue create --body "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"\n      - name: Open issue on scan failure',
+      )],
+    ['duplicate root permissions key', 'workflow YAML is invalid', workflow.replace(
+      'permissions:\n  contents: read\n  issues: write',
+      'permissions:\n  contents: write\n  issues: read\npermissions:\n  contents: read\n  issues: write',
+    )],
+    ['permission anchor and alias', 'anchors and aliases are not allowed', workflow
+      .replace('permissions:', 'permissions: &least-privilege')
+      .replace('    runs-on: ubuntu-latest', '    permissions: *least-privilege\n    runs-on: ubuntu-latest')],
+    ['misleading permission comments', 'root permissions must be exactly', workflow.replace(
+      'permissions:\n  contents: read\n  issues: write',
+      'permissions:\n  contents: write\n  issues: read\n# contents: read\n# issues: write',
+    )],
+  ];
+
+  for (const [name, expectedFailure, mutated] of workflowCases) {
+    const failures = validateWorkflow(mutated);
+    if (failures.length === 0) throw new Error(`self-test did not reject: ${name}`);
+    if (!failures.some((failure) => failure.includes(expectedFailure))) {
+      throw new Error(`self-test ${name} failed for the wrong reason: ${failures.join('; ')}`);
+    }
+  }
+
+  const reorderedWorkflow = workflow.replace(
+    'permissions:\n  contents: read\n  issues: write\n\njobs:',
+    'jobs:',
+  ) + '\npermissions:\n  issues: write\n  contents: read\n';
+  const reorderedFailures = validateWorkflow(reorderedWorkflow);
+  if (reorderedFailures.length > 0) {
+    throw new Error(`self-test rejected reordered valid YAML:\n- ${reorderedFailures.join('\n- ')}`);
+  }
+
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'deepsec-receipt-test-'));
   const fixture = (name, setup) => {
     const dir = path.join(root, name);
@@ -291,7 +392,11 @@ function runSelfTests(workflow) {
     fs.rmSync(root, { recursive: true, force: true });
   }
 
-  return { workflowMutations: mutations.length, receiptCases: 18 };
+  return {
+    workflowMutations: mutations.length + workflowCases.length,
+    workflowPositiveCases: 2,
+    receiptCases: 18,
+  };
 }
 
 function main() {
@@ -312,7 +417,7 @@ function main() {
   const workflow = fs.readFileSync(WORKFLOW_PATH, 'utf8');
   if (args[0] === '--self-test') {
     const result = runSelfTests(workflow);
-    console.log(`Deepsec validator self-test passed: workflow_mutations=${result.workflowMutations} receipt_cases=${result.receiptCases}`);
+    console.log(`Deepsec validator self-test passed: workflow_mutations=${result.workflowMutations} workflow_positive_cases=${result.workflowPositiveCases} receipt_cases=${result.receiptCases}`);
     return;
   }
 
