@@ -442,7 +442,7 @@ export default function OrderFulfilmentPage() {
       setLoading(false);
     }
     loadAll();
-  }, []);
+  }, [toast]);
 
   // Advance a fulfilment to its next status
   async function handleAdvanceStatus(fulfilment: Cin7Fulfilment) {
