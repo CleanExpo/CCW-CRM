@@ -41,6 +41,40 @@ describe('team invite route', () => {
     expect(insertAppUser).not.toHaveBeenCalled();
   });
 
+  it('rejects a stale admin token after the inviter is demoted to member', async () => {
+    vi.mocked(getAuthClaimsFromRequest).mockResolvedValue({
+      sub: 'former-admin',
+      email: 'former-admin@example.com',
+      is_admin: true,
+      role: 'admin',
+    });
+    vi.mocked(findAppUserById).mockResolvedValue({
+      id: 'former-admin',
+      workspaceId: 'workspace-1',
+      isActive: true,
+      isAdmin: false,
+      role: 'member',
+    } as never);
+    vi.mocked(findAppUserByEmail).mockResolvedValue(null);
+    vi.mocked(insertAppUser).mockResolvedValue({
+      id: 'invitee-user',
+      email: 'invitee@example.com',
+      fullName: 'Invitee',
+      role: 'admin',
+      isAdmin: true,
+      isActive: true,
+      workspaceId: 'workspace-1',
+      createdAt: new Date(),
+      lastLoginAt: null,
+    } as never);
+
+    const res = await POST(inviteRequest('admin'));
+
+    expect(res.status).toBe(403);
+    expect(findAppUserByEmail).not.toHaveBeenCalled();
+    expect(insertAppUser).not.toHaveBeenCalled();
+  });
+
   it('keeps privileged provisioning behind an authenticated admin boundary', async () => {
     vi.mocked(getAuthClaimsFromRequest).mockResolvedValue({
       sub: 'admin-user',
@@ -52,6 +86,8 @@ describe('team invite route', () => {
       id: 'admin-user',
       workspaceId: 'workspace-1',
       isActive: true,
+      isAdmin: true,
+      role: 'admin',
     } as never);
     vi.mocked(findAppUserByEmail).mockResolvedValue(null);
     vi.mocked(insertAppUser).mockResolvedValue({
