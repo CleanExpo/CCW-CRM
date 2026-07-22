@@ -64,6 +64,18 @@ function requireNamedStep(steps, name, failures) {
   return matches[0];
 }
 
+function isWeeklyCron(value) {
+  if (typeof value !== 'string') return false;
+  const fields = value.trim().split(/\s+/);
+  if (fields.length !== 5) return false;
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = fields;
+  return /^(?:[0-9]|[1-5][0-9])$/.test(minute)
+    && /^(?:[0-9]|1[0-9]|2[0-3])$/.test(hour)
+    && dayOfMonth === '*'
+    && month === '*'
+    && /^[0-6]$/.test(dayOfWeek);
+}
+
 function validateWorkflow(content) {
   const failures = [];
   const workflow = parseWorkflow(content, failures);
@@ -71,7 +83,10 @@ function validateWorkflow(content) {
 
   const triggers = workflow.on;
   if (!isMapping(triggers) || !Array.isArray(triggers.schedule)
-      || !triggers.schedule.some((entry) => isMapping(entry) && typeof entry.cron === 'string')) {
+      || triggers.schedule.length !== 1
+      || !isMapping(triggers.schedule[0])
+      || !hasExactKeys(triggers.schedule[0], ['cron'])
+      || !isWeeklyCron(triggers.schedule[0].cron)) {
     failures.push('weekly schedule is required');
   }
   if (!isMapping(triggers) || !Object.prototype.hasOwnProperty.call(triggers, 'workflow_dispatch')) {
@@ -243,6 +258,10 @@ function runSelfTests(workflow) {
 
   const mutations = [
     ['Node 20', "node-version: '22'", "node-version: '20'"],
+    ['daily schedule', "cron: '0 13 * * 1'", "cron: '0 13 * * *'"],
+    ['monthly schedule', "cron: '0 13 * * 1'", "cron: '0 13 1 * *'"],
+    ['multiple weekdays', "cron: '0 13 * * 1'", "cron: '0 13 * * 1,3'"],
+    ['multiple weekly entries', "    - cron: '0 13 * * 1'", "    - cron: '0 13 * * 1'\n    - cron: '0 13 * * 2'"],
     ['manual trigger removed', '  workflow_dispatch:', '  disabled_dispatch:'],
     ['contents write permission', '  contents: read', '  contents: write'],
     ['write permission restored', '  issues: write', '  issues: write\n  pull-requests: write'],
