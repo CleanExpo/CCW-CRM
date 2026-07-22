@@ -196,7 +196,9 @@ describe('public registration privilege boundary', () => {
     );
 
     expect(res.status).toBe(503);
-    expect(error).toHaveBeenCalledWith('[auth/register] registration failed');
+    expect(error).toHaveBeenCalledWith('[auth/register] registration failed', {
+      errorType: 'Error',
+    });
     expect(JSON.stringify(error.mock.calls)).not.toContain('private.person@example.com');
     expect(JSON.stringify(error.mock.calls)).not.toContain('database failure');
     error.mockRestore();
