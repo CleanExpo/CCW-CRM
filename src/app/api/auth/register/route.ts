@@ -52,7 +52,9 @@ export async function POST(request: NextRequest) {
     if (isPrismaUniqueViolation(e)) {
       return jsonDetail('An account with this email already exists', 409);
     }
-    console.error('[auth/register] registration failed');
+    console.error('[auth/register] registration failed', {
+      errorType: e instanceof Error ? e.name : typeof e,
+    });
     return jsonDetail('Registration service unavailable', 503);
   }
 }
