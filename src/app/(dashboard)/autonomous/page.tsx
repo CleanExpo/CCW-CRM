@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PhaseTimeline } from '@/components/autonomous/PhaseTimeline';
@@ -34,6 +34,24 @@ export default function AutonomousPage() {
   const [showGateDialog, setShowGateDialog] = useState(false);
   const [events, setEvents] = useState<AutonomousEvent[]>([]);
 
+  const loadTaskState = useCallback(async () => {
+    if (!taskId) return;
+
+    try {
+      const response = await autonomousApi.getTaskStatus(taskId);
+      if (response.exists && response.state) {
+        setTaskState(response.state);
+        setError(null);
+      } else {
+        setError('Task not found');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load task');
+    } finally {
+      setLoading(false);
+    }
+  }, [taskId]);
+
   // Load task state
   useEffect(() => {
     if (!taskId) {
@@ -43,7 +61,7 @@ export default function AutonomousPage() {
     }
 
     loadTaskState();
-  }, [taskId]);
+  }, [taskId, loadTaskState]);
 
   // Subscribe to SSE events
   useEffect(() => {
@@ -65,7 +83,7 @@ export default function AutonomousPage() {
     return () => {
       eventSource.close();
     };
-  }, [taskId, taskState]);
+  }, [taskId, taskState, loadTaskState]);
 
   // Check for pending gates
   useEffect(() => {
@@ -76,25 +94,7 @@ export default function AutonomousPage() {
       setCurrentGate(pendingGate);
       setShowGateDialog(true);
     }
-  }, [taskState]);
-
-  const loadTaskState = async () => {
-    if (!taskId) return;
-
-    try {
-      const response = await autonomousApi.getTaskStatus(taskId);
-      if (response.exists && response.state) {
-        setTaskState(response.state);
-        setError(null);
-      } else {
-        setError('Task not found');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load task');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [taskState, currentGate?.gate_id]);
 
   const handleStatusChange = (status: TaskState['status']) => {
     if (taskState) {

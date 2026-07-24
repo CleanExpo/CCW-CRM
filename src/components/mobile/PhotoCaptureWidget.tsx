@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { Camera, RefreshCw, X, CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface PhotoCaptureWidgetProps {
@@ -187,10 +188,13 @@ export function PhotoCaptureWidget({
       {/* Captured preview */}
       {cameraState === 'captured' && capturedDataUrl && (
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-black">
-          <img
+          <Image
             src={capturedDataUrl}
             alt="Captured product photo"
-            className="h-full w-full object-cover"
+            fill
+            unoptimized
+            sizes="100vw"
+            className="object-cover"
           />
           {isProcessing ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-slate-900/60">

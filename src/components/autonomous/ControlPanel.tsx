@@ -42,10 +42,10 @@ export function ControlPanel({ taskId, status, onStatusChange }: ControlPanelPro
         description: 'Execution has been paused. You can resume later.',
       });
       onStatusChange('paused');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Pause Failed',
-        description: error.message || 'Failed to pause task',
+        description: error instanceof Error ? error.message : 'Failed to pause task',
         variant: 'destructive',
       });
     } finally {
@@ -62,10 +62,10 @@ export function ControlPanel({ taskId, status, onStatusChange }: ControlPanelPro
         description: 'Execution has resumed.',
       });
       onStatusChange('in_progress');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Resume Failed',
-        description: error.message || 'Failed to resume task',
+        description: error instanceof Error ? error.message : 'Failed to resume task',
         variant: 'destructive',
       });
     } finally {
@@ -83,10 +83,10 @@ export function ControlPanel({ taskId, status, onStatusChange }: ControlPanelPro
       });
       onStatusChange('failed');
       setShowCancelDialog(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Cancel Failed',
-        description: error.message || 'Failed to cancel task',
+        description: error instanceof Error ? error.message : 'Failed to cancel task',
         variant: 'destructive',
       });
     } finally {

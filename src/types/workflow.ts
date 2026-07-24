@@ -28,10 +28,10 @@ export interface NodeConfig {
   position: NodePosition;
   label: string;
   description?: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   inputs: Record<string, string>;
   outputs: Record<string, string>;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface WorkflowEdge {
@@ -51,7 +51,7 @@ export interface WorkflowDefinition {
   version: string;
   nodes: NodeConfig[];
   edges: WorkflowEdge[];
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
   skill_compatibility: string[];
   created_at: string;
   updated_at: string;

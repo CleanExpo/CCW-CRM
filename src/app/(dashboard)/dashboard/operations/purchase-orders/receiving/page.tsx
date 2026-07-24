@@ -187,7 +187,7 @@ export default function GoodsReceivingPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, toast]);
 
   useEffect(() => {
     loadGrns();

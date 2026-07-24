@@ -60,10 +60,10 @@ export function ApprovalGateDialog({
 
       onApproved();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Approval Failed',
-        description: error.message || 'Failed to approve gate',
+        description: error instanceof Error ? error.message : 'Failed to approve gate',
         variant: 'destructive',
       });
     } finally {
@@ -98,10 +98,10 @@ export function ApprovalGateDialog({
       onOpenChange(false);
       setShowFeedbackForm(false);
       setFeedback('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Rejection Failed',
-        description: error.message || 'Failed to reject gate',
+        description: error instanceof Error ? error.message : 'Failed to reject gate',
         variant: 'destructive',
       });
     } finally {

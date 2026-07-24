@@ -49,9 +49,9 @@ export interface MarketplaceConnection {
   status: ConnectionStatus;
   is_active: boolean;
   mode: 'demo' | 'live';
-  credentials?: Record<string, any>;
-  channel_metadata?: Record<string, any>;
-  sync_settings?: Record<string, any>;
+  credentials?: Record<string, unknown>;
+  channel_metadata?: Record<string, unknown>;
+  sync_settings?: Record<string, unknown>;
   last_product_sync?: string;
   last_inventory_sync?: string;
   last_order_sync?: string;
@@ -73,7 +73,7 @@ export interface MarketplaceProductListing {
   listed_currency: string;
   listed_quantity: number;
   status: ListingStatus;
-  channel_data?: Record<string, any>;
+  channel_data?: Record<string, unknown>;
   last_synced_at?: string;
   sync_status: string;
   sync_error?: string;
@@ -93,12 +93,12 @@ export interface MarketplaceOrder {
   customer_email?: string;
   total_amount?: number;
   currency: string;
-  shipping_address?: Record<string, any>;
-  line_items?: Record<string, any>;
+  shipping_address?: Record<string, unknown>;
+  line_items?: Record<string, unknown>;
   synced_at?: string;
   sync_status: string;
   sync_error?: string;
-  channel_data?: Record<string, any>;
+  channel_data?: Record<string, unknown>;
   ordered_at?: string;
   created_at: string;
   updated_at: string;
@@ -132,7 +132,7 @@ export interface MarketplaceSyncLog {
   items_succeeded: number;
   items_failed: number;
   error_message?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   started_at: string;
   completed_at?: string;
   created_at: string;
