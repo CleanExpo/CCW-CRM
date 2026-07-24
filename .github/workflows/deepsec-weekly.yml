@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
   issues: write
 
 jobs:
@@ -17,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install dependencies
         run: |
           cd .deepsec
@@ -25,8 +24,14 @@ jobs:
       - name: Run Deepsec
         run: |
           cd .deepsec
+          result_root="$PWD/data/CCW-CRM"
+          result_dir="$result_root/runs"
+          rm -rf "$result_root"
+          trap 'rm -rf "$result_root"' EXIT
+          scan_started_at=$(date +%s)
           npx deepsec scan --project-id CCW-CRM
-      - name: Open issue on findings
+          node ../scripts/ci/validate-deepsec-workflow.js --receipt "$result_dir" --started-at "$scan_started_at"
+      - name: Open issue on scan failure
         if: failure()
         run: |
           # Ensure labels exist
@@ -34,8 +39,8 @@ jobs:
           gh label create "deepsec" --color "7057ff" --description "Deepsec scan" 2>/dev/null || true
           gh label create "weekly-scan" --color "008672" --description "Weekly automated scan" 2>/dev/null || true
           gh issue create \
-            --title "[deepsec] Weekly scan findings $(date +%Y-%m-%d)" \
+            --title "[deepsec] Weekly scan failed $(date +%Y-%m-%d)" \
             --label "security,deepsec,weekly-scan" \
-            --body "Deepsec found new issues. See run logs for details."
+            --body "The weekly Deepsec scan failed to complete or produce a valid receipt. See the exact run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
