@@ -1,13 +1,13 @@
+import { JsonLd } from '@/components/seo/JsonLd';
+import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
+import { Toaster } from '@/components/ui/toast';
+import { defaultLocale, isValidLocale, type Locale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
-import './globals.css';
-import { Toaster } from '@/components/ui/toast';
 import { Toaster as HotToaster } from 'react-hot-toast';
-import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
-import { I18nProvider } from '@/components/providers/i18n-provider';
-import { defaultLocale, type Locale, isValidLocale } from '@/i18n/config';
-import { JsonLd } from '@/components/seo/JsonLd';
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -194,7 +194,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <I18nProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <RouteProgressBar />
           {children}
           <Toaster />
@@ -216,7 +216,7 @@ export default async function RootLayout({
               },
             }}
           />
-        </I18nProvider>
+        </NextIntlClientProvider>
         <JsonLd id="org-schema" data={[orgSchema, websiteSchema]} />
       </body>
     </html>
