@@ -1,16 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -21,6 +13,8 @@ import {
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
+import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 
 type Cin7ReconciliationCardProps = {
   isConnected: boolean;
@@ -53,7 +47,7 @@ function CountRow({
   mismatch?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-border/50 py-2 text-sm last:border-0">
+    <div className="border-border/50 flex items-center justify-between border-b py-2 text-sm last:border-0">
       <span className="text-muted-foreground">{label}</span>
       <span
         className={`font-medium tabular-nums ${mismatch ? 'text-amber-600 dark:text-amber-400' : ''}`}
@@ -130,9 +124,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         toast({
           variant: 'destructive',
           title: 'Reconciliation failed',
-          description: snapshot
-            ? `${message} Showing your last successful counts below.`
-            : message,
+          description: snapshot ? `${message} Showing your last successful counts below.` : message,
         });
       } finally {
         if (requestId === loadRequestId.current) {
@@ -144,12 +136,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     [snapshot, toast]
   );
 
-  useEffect(() => {
-    if (isConnected) {
-      void load({ silent: true });
-    }
-  }, [isConnected]); // eslint-disable-line react-hooks/exhaustive-deps -- load once when connected
-
+  // Manual refresh only — auto-loading on connect fights sync for Cin7 rate limits
+  // and looks like "reloading from scratch" every time status flips.
   const loadExceptions = async (entity: Cin7ExceptionEntity, offset = 0, append = false) => {
     setExceptionsLoading(true);
     setExceptionEntity(entity);
@@ -234,7 +222,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         </div>
 
         {loadError ? (
-          <p className="flex items-start gap-1.5 text-amber-600 text-sm dark:text-amber-400">
+          <p className="flex items-start gap-1.5 text-sm text-amber-600 dark:text-amber-400">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             {loadError}
             {snapshot ? ' Your last successful reconciliation is shown below.' : null}
@@ -244,7 +232,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         {snapshot ? (
           <div className="space-y-4">
             <div
-              className={`space-y-3 rounded-lg border bg-muted/30 p-4 ${isRefreshing ? 'opacity-70' : ''}`}
+              className={`bg-muted/30 space-y-3 rounded-lg border p-4 ${isRefreshing ? 'opacity-70' : ''}`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -371,11 +359,13 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                   </p>
                   <p>
                     Customers: {ex.customers_missing_in_optix} missing ·{' '}
-                    {ex.customers_extra_in_optix} extra · {ex.customers_field_mismatches} field diffs
+                    {ex.customers_extra_in_optix} extra · {ex.customers_field_mismatches} field
+                    diffs
                   </p>
                   <p>
-                    Suppliers: {ex.suppliers_missing_in_optix} missing · {ex.suppliers_extra_in_optix}{' '}
-                    extra · {ex.suppliers_field_mismatches} field diffs
+                    Suppliers: {ex.suppliers_missing_in_optix} missing ·{' '}
+                    {ex.suppliers_extra_in_optix} extra · {ex.suppliers_field_mismatches} field
+                    diffs
                   </p>
                   <p>
                     Branches: {ex.branches_missing_in_optix} missing · {ex.branches_extra_in_optix}{' '}
@@ -414,10 +404,10 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               ) : null}
 
               {snapshot.optix.customers.extra_without_cin7_id > 0 ? (
-                <p className="flex items-start gap-1.5 text-amber-600 text-xs dark:text-amber-400">
+                <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  {snapshot.optix.customers.extra_without_cin7_id} Optix customers have no Cin7 id
-                  — run a full customer sync to link them (records are not deleted).
+                  {snapshot.optix.customers.extra_without_cin7_id} Optix customers have no Cin7 id —
+                  run a full customer sync to link them (records are not deleted).
                 </p>
               ) : null}
 
@@ -447,7 +437,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               {EXCEPTION_ENTITIES.map(({ key }) => (
                 <TabsContent key={key} value={key} className="mt-3">
                   {exceptionsLoading && exceptionEntity === key ? (
-                    <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-2 py-6 text-sm">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Building exception report from live Cin7…
                     </div>
@@ -486,7 +476,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                       {exceptions.map((row, idx) => (
                         <div
                           key={`${row.cin7_id}-${row.reason}-${idx}`}
-                          className="rounded-md border border-border/60 bg-background/50 px-3 py-2 text-xs"
+                          className="border-border/60 bg-background/50 rounded-md border px-3 py-2 text-xs"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="font-medium">{row.label}</span>
@@ -496,7 +486,9 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                           </div>
                           <p className="text-muted-foreground mt-0.5 font-mono">{row.cin7_id}</p>
                           {row.skipped_reason ? (
-                            <p className="text-muted-foreground mt-1">Reason: {row.skipped_reason}</p>
+                            <p className="text-muted-foreground mt-1">
+                              Reason: {row.skipped_reason}
+                            </p>
                           ) : null}
                           {row.fields?.map((f) => (
                             <p key={f.field} className="text-muted-foreground mt-1">
@@ -513,7 +505,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
             </Tabs>
           </div>
         ) : isRefreshing ? (
-          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 py-6 text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading reconciliation from Cin7… this can take a few minutes on first run.
           </div>
