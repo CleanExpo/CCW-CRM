@@ -1,5 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
+import {
+  fetchDerivedReferenceCatalog,
+  fetchFullOmniProductsRawCatalog,
+  getCatalogPageGapMs,
+  mapPriceColumnLabels,
+  resolveCin7SyncSource,
+} from '@/lib/integrations/cin7-catalog-fetch';
 import {
   fetchCin7CustomerPage,
   fetchCin7ProductPage,
@@ -7,27 +13,24 @@ import {
   getCin7CoreCredentials,
   pingCin7Core,
 } from '@/lib/integrations/cin7-core';
+import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
 import {
+  extractReferenceDataFromProducts,
   fetchOmniBranchesPage,
   fetchOmniContactsPage,
+  fetchOmniProductCategoriesPage,
   fetchOmniProductPage,
   fetchOmniSalesOrderCount,
+  fetchOmniStockPage,
   getCin7OmniCredentials,
   pingCin7Omni,
 } from '@/lib/integrations/cin7-omni';
+import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
 import {
   getCin7PageSize,
   getCin7SyncMaxPages,
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
-import {
-  fetchDerivedReferenceCatalog,
-  fetchFullOmniProductCategoryCatalog,
-  fetchFullOmniProductsRawCatalog,
-  fetchFullOmniStockCatalog,
-  mapPriceColumnLabels,
-  resolveCin7SyncSource,
-} from '@/lib/integrations/cin7-catalog-fetch';
 import {
   batchUpsertBranches,
   batchUpsertBrands,
@@ -49,14 +52,7 @@ import {
   recordCin7SyncRun,
   type Cin7SyncSkipInput,
 } from '@/lib/integrations/cin7-sync-persist';
-import { getCatalogPageGapMs } from '@/lib/integrations/cin7-catalog-fetch';
-import {
-  extractReferenceDataFromProducts,
-  fetchOmniProductCategoriesPage,
-  fetchOmniStockPage,
-} from '@/lib/integrations/cin7-omni';
-import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
-import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
 
@@ -136,9 +132,32 @@ export async function POST(
     missing_core_id: 0,
   };
   const skipRecords: Cin7SyncSkipInput[] = [];
+  const syncErrors: string[] = [];
   const pageGapMs = getCatalogPageGapMs();
   const startedAt = Date.now();
+  let syncComplete = true;
 
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  /** Empty page after a fetch error is NOT end-of-catalog — retry then stop incomplete. */
+  const handleEmptyPage = async (
+    page: number,
+    error: string | undefined,
+    emptyRetries: { count: number }
+  ): Promise<'retry' | 'eof' | 'stop'> => {
+    if (error) {
+      syncErrors.push(`Page ${page}: ${error}`);
+      if (emptyRetries.count < 4) {
+        emptyRetries.count += 1;
+        syncErrors.push(`Page ${page}: empty after error — retry ${emptyRetries.count}/4`);
+        await sleep(Math.max(pageGapMs, 300) * (emptyRetries.count + 2));
+        return 'retry';
+      }
+      syncComplete = false;
+      return 'stop';
+    }
+    return 'eof';
+  };
   if (entityType === 'products') {
     if (useCore && coreCreds) {
       for (let page = 1; page <= MAX_PAGES; page += 1) {
@@ -153,10 +172,22 @@ export async function POST(
       let nextFetch: Promise<OmniProductPage> = fetchOmniProductPage(omniCreds, 1, pageSize, {
         excludeInactive: false,
       });
+      const emptyRetries = { count: 0 };
 
       for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total, sourceRowCount, skippedInactive } = await nextFetch;
-        if (sourceRowCount === 0) break;
+        const { rows, sourceRowCount, skippedInactive, error } = await nextFetch;
+        if (sourceRowCount === 0) {
+          const action = await handleEmptyPage(page, error, emptyRetries);
+          if (action === 'retry') {
+            nextFetch = fetchOmniProductPage(omniCreds, page, pageSize, {
+              excludeInactive: false,
+            });
+            page -= 1;
+            continue;
+          }
+          break;
+        }
+        emptyRetries.count = 0;
 
         skipped.inactive_products += skippedInactive;
         cin7SourceStyles += sourceRowCount;
@@ -212,11 +243,11 @@ export async function POST(
         const nextPage = page + 1;
         nextFetch =
           nextPage <= MAX_PAGES
-            ? (pageGapMs > 0
-                ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
-                    fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType })
-                  )
-                : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType }))
+            ? pageGapMs > 0
+              ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
+                  fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType })
+                )
+              : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType })
             : Promise.resolve({
                 rows: [],
                 total: null,
@@ -281,11 +312,11 @@ export async function POST(
         const nextPage = page + 1;
         nextFetch =
           nextPage <= MAX_PAGES
-            ? (pageGapMs > 0
-                ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
-                    fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' })
-                  )
-                : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' }))
+            ? pageGapMs > 0
+              ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
+                  fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' })
+                )
+              : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' })
             : Promise.resolve({
                 rows: [],
                 total: null,
@@ -347,22 +378,35 @@ export async function POST(
     recordsProcessed = await batchUpsertTaxCodes(scope.userId, derived.taxCodes);
   } else if (entityType === 'units-of-measure') {
     if (!useOmni || !omniCreds) {
-      return NextResponse.json({ detail: 'Unit of measure sync requires Cin7 Omni.' }, { status: 400 });
+      return NextResponse.json(
+        { detail: 'Unit of measure sync requires Cin7 Omni.' },
+        { status: 400 }
+      );
     }
     const raw = await fetchFullOmniProductsRawCatalog(omniCreds);
     const { unitsOfMeasure } = extractReferenceDataFromProducts(raw.styles);
     recordsProcessed = await batchUpsertUnitsOfMeasure(scope.userId, unitsOfMeasure);
   } else if (entityType === 'stock-levels') {
     if (!useOmni || !omniCreds) {
-      return NextResponse.json({ detail: 'Stock level sync requires Cin7 Omni (/v1/Stock).' }, { status: 400 });
-    }
-    for (let page = 1; page <= MAX_PAGES; page += 1) {
-      const { rows, sourceRowCount } = await fetchOmniStockPage(omniCreds, page, pageSize);
-      if (sourceRowCount === 0) break;
-      recordsProcessed += await batchUpsertStockLevels(
-        scope.userId,
-        mapOmniStockLevelRows(rows)
+      return NextResponse.json(
+        { detail: 'Stock level sync requires Cin7 Omni (/v1/Stock).' },
+        { status: 400 }
       );
+    }
+    const emptyRetries = { count: 0 };
+    for (let page = 1; page <= MAX_PAGES; page += 1) {
+      if (page > 1 && pageGapMs > 0) await sleep(pageGapMs);
+      const { rows, sourceRowCount, error } = await fetchOmniStockPage(omniCreds, page, pageSize);
+      if (sourceRowCount === 0) {
+        const action = await handleEmptyPage(page, error, emptyRetries);
+        if (action === 'retry') {
+          page -= 1;
+          continue;
+        }
+        break;
+      }
+      emptyRetries.count = 0;
+      recordsProcessed += await batchUpsertStockLevels(scope.userId, mapOmniStockLevelRows(rows));
       if (sourceRowCount < pageSize) break;
       if (page >= MAX_PAGES) break;
     }
@@ -392,12 +436,16 @@ export async function POST(
 
   clearCachedReconciliation(scope.userId);
 
+  const failedEmpty = recordsProcessed === 0 && (syncErrors.length > 0 || !syncComplete);
+
   return NextResponse.json({
-    status: 'ok',
+    status: failedEmpty ? 'error' : syncComplete ? 'ok' : 'incomplete',
     records_processed: recordsProcessed,
     cin7_source_styles: cin7SourceStyles || undefined,
     skipped,
     duration_ms: durationMs,
     page_size: pageSize,
+    complete: syncComplete && !failedEmpty,
+    sync_errors: syncErrors.length > 0 ? syncErrors.slice(0, 20) : undefined,
   });
 }
