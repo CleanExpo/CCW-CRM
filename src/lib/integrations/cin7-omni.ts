@@ -58,12 +58,13 @@ function basicAuthHeader(creds: Cin7OmniCredentials): string {
 
 export async function cin7OmniGet<T>(
   pathWithQuery: string,
-  creds: Cin7OmniCredentials
+  creds: Cin7OmniCredentials,
+  options?: { retries?: number }
 ): Promise<Cin7HttpResult<T>> {
   const base = OMNI_API_BASE.replace(/\/$/, '');
   const p = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
   const url = `${base}${p}`;
-  const retries = getCin7RequestRetries();
+  const retries = options?.retries ?? getCin7RequestRetries();
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
@@ -83,7 +84,12 @@ export async function cin7OmniGet<T>(
         await sleep(2_000 * (attempt + 1));
         continue;
       }
-      return { ok: res.ok, status: res.status, data };
+      return {
+        ok: res.ok,
+        status: res.status,
+        data,
+        error: res.ok ? undefined : `Cin7 Omni HTTP ${res.status}`,
+      };
     } catch (error) {
       clearTimeout(timeout);
       const message = getErrorMessage(error);
@@ -154,7 +160,12 @@ function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number |
 
 /** Lightweight connectivity check (read-only friendly). */
 export async function pingCin7Omni(creds: Cin7OmniCredentials): Promise<boolean> {
-  const { ok, status, data } = await cin7OmniGet<unknown>('/v1/Products?page=1&rows=1', creds);
+  // One-shot: status pings must not burn retry budget / amplify 429s.
+  const { ok, status, data } = await cin7OmniGet<unknown>('/v1/Products?page=1&rows=1', creds, {
+    retries: 0,
+  });
+  // 429 means credentials were accepted but rate-limited — treat as reachable.
+  if (status === 429) return true;
   if (!ok || status !== 200) return false;
   const { rows } = parseOmniListEnvelope(data);
   return Array.isArray(rows);
@@ -260,12 +271,18 @@ export async function fetchOmniProductPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
     `/v1/Products?page=${page}&rows=${safeRows}`,
     creds
   );
   if (!ok) {
-    return { rows: [], total: null, sourceRowCount: 0, skippedInactive: 0, error };
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      skippedInactive: 0,
+      error: error ?? `Cin7 Omni Products HTTP ${status}`,
+    };
   }
   const { rows: rawRows, total } = parseOmniListEnvelope(data);
   const excludeInactive = options?.excludeInactive === true;
@@ -273,9 +290,7 @@ export async function fetchOmniProductPage(
   if (excludeInactive) {
     for (const raw of rawRows) {
       if (!raw || typeof raw !== 'object') continue;
-      const status = String(
-        pick(raw as Record<string, unknown>, 'Status', 'status') ?? ''
-      ).trim();
+      const status = String(pick(raw as Record<string, unknown>, 'Status', 'status') ?? '').trim();
       if (status === 'Inactive') skippedInactive += 1;
     }
   }
@@ -327,13 +342,9 @@ function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
   ).trim();
   const lastName = String(pick(c, 'LastName', 'lastName') ?? '').trim();
   const displayName =
-    [company, lastName].filter(Boolean).join(' ').trim() ||
-    company ||
-    lastName ||
-    'Cin7 contact';
+    [company, lastName].filter(Boolean).join(' ').trim() || company || lastName || 'Cin7 contact';
   const email = String(pick(c, 'Email', 'email') ?? '').trim();
-  const phone =
-    String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
+  const phone = String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
   const city =
     String(
       pick(c, 'DeliveryCity', 'deliveryCity', 'BillingCity', 'billingCity', 'City', 'city') ?? ''
@@ -385,7 +396,7 @@ export async function fetchOmniContactsPage(
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
   const whereType = options?.whereType ?? options?.allowedTypes?.[0];
-  const { ok, data, error } = await cin7OmniGet<unknown>(
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
     buildOmniContactsPath(page, safeRows, whereType),
     creds
   );
@@ -397,7 +408,7 @@ export async function fetchOmniContactsPage(
       skippedWrongType: 0,
       skippedMissingId: 0,
       skippedRecords: [],
-      error,
+      error: error ?? `Cin7 Omni Contacts HTTP ${status}`,
     };
   }
   const { rows: list, total } = parseOmniListEnvelope(data);
@@ -493,12 +504,18 @@ export async function fetchOmniBranchesPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
     `/v1/Branches?page=${page}&rows=${safeRows}`,
     creds
   );
   if (!ok) {
-    return { rows: [], total: null, sourceRowCount: 0, skippedMissingId: 0, error };
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      skippedMissingId: 0,
+      error: error ?? `Cin7 Omni Branches HTTP ${status}`,
+    };
   }
   const { rows: list, total } = parseOmniListEnvelope(data);
   let skippedMissingId = 0;
@@ -568,11 +585,18 @@ export async function fetchOmniProductCategoriesPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/ProductCategories?page=${page}&rows=${safeRows}&order=id asc`,
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
+    `/v1/ProductCategories?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  if (!ok) {
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      error: error ?? `Cin7 Omni ProductCategories HTTP ${status}`,
+    };
+  }
   const { rows: list, total } = parseOmniListEnvelope(data);
   const mapped = list
     .map(mapOmniProductCategoryRaw)
@@ -593,8 +617,11 @@ export type Cin7OmniStockLevelRow = {
 function mapOmniStockRaw(raw: unknown): Cin7OmniStockLevelRow | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as Record<string, unknown>;
-  const cin7BranchId = String(pick(s, 'BranchId', 'branchId') ?? '').trim();
-  const sku = String(pick(s, 'Code', 'code', 'ProductOptionCode', 'productOptionCode') ?? '').trim();
+  const cin7BranchId = String(pick(s, 'BranchId', 'branchId', 'BranchID', 'branchID') ?? '').trim();
+  const sku = String(
+    pick(s, 'Code', 'code', 'ProductOptionCode', 'productOptionCode', 'StyleCode', 'styleCode') ??
+      ''
+  ).trim();
   if (!cin7BranchId || !sku) return null;
   return {
     cin7BranchId,
@@ -618,20 +645,29 @@ export async function fetchOmniStockPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Stock?page=${page}&rows=${safeRows}&order=modifiedDate asc`,
+  // Do not pass an unencoded `order=… asc` — the space breaks the request and Cin7 returns an error
+  // that older sync loops treated as an empty catalog (0 records, status ok).
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
+    `/v1/Stock?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  if (!ok) {
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      error: error ?? `Cin7 Omni Stock HTTP ${status}`,
+    };
+  }
   const { rows: list, total } = parseOmniListEnvelope(data);
-  const mapped = list.map(mapOmniStockRaw).filter((row): row is Cin7OmniStockLevelRow => row != null);
+  const mapped = list
+    .map(mapOmniStockRaw)
+    .filter((row): row is Cin7OmniStockLevelRow => row != null);
   return { rows: mapped, total, sourceRowCount: list.length };
 }
 
 /** Extract reference master data from a full product catalog scan. */
-export function extractReferenceDataFromProducts(
-  rawStyles: unknown[]
-): {
+export function extractReferenceDataFromProducts(rawStyles: unknown[]): {
   brands: string[];
   priceColumns: string[];
   unitsOfMeasure: string[];
