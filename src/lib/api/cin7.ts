@@ -23,6 +23,8 @@ export interface Cin7ConnectionStatus {
   last_sync?: string;
   message?: string;
   connector_allowlist?: Cin7ConnectorAllowlistEntry[];
+  /** True when status included a live Cin7 ping (`verify=true`). */
+  verified?: boolean;
 }
 
 /**
@@ -96,16 +98,56 @@ export interface Cin7SyncHealth {
 }
 
 /**
- * Get Cin7 connection status
+ * Get Cin7 connection status.
+ * Default is fast (credentials + disconnect cookie only). Pass `{ verify: true }` to live-ping Cin7.
+ * Concurrent identical fast requests are deduped; short TTL cache avoids remount storms.
  */
-export async function getCin7Status(): Promise<Cin7ConnectionStatus> {
-  return apiClient.get<Cin7ConnectionStatus>('/api/integrations/cin7/status');
+let cin7StatusInFlight: Promise<Cin7ConnectionStatus> | null = null;
+let cin7StatusCache: { at: number; value: Cin7ConnectionStatus } | null = null;
+const CIN7_STATUS_TTL_MS = 4_000;
+
+export async function getCin7Status(options?: { verify?: boolean }): Promise<Cin7ConnectionStatus> {
+  const verify = options?.verify ?? false;
+  const qs = verify ? '?verify=true' : '';
+  const timeoutMs = verify ? 60_000 : 15_000;
+
+  if (!verify) {
+    if (cin7StatusCache && Date.now() - cin7StatusCache.at < CIN7_STATUS_TTL_MS) {
+      return cin7StatusCache.value;
+    }
+    if (cin7StatusInFlight) return cin7StatusInFlight;
+  }
+
+  const request = apiClient
+    .get<Cin7ConnectionStatus>(`/api/integrations/cin7/status${qs}`, undefined, timeoutMs)
+    .then((status) => {
+      if (!verify) {
+        cin7StatusCache = { at: Date.now(), value: status };
+      } else {
+        // Live verify updates the cache so UI stays consistent.
+        cin7StatusCache = { at: Date.now(), value: status };
+      }
+      return status;
+    })
+    .finally(() => {
+      if (!verify) cin7StatusInFlight = null;
+    });
+
+  if (!verify) cin7StatusInFlight = request;
+  return request;
+}
+
+/** Clear client status cache after connect/disconnect/configure. */
+export function invalidateCin7StatusCache(): void {
+  cin7StatusCache = null;
+  cin7StatusInFlight = null;
 }
 
 /**
  * Save Cin7 credentials to the database (creates or updates the connection record)
  */
 export async function configureCin7(data: Cin7ConfigureRequest): Promise<Cin7ConnectionStatus> {
+  invalidateCin7StatusCache();
   return apiClient.post<Cin7ConnectionStatus>('/api/integrations/cin7/configure', data);
 }
 
@@ -113,6 +155,7 @@ export async function configureCin7(data: Cin7ConfigureRequest): Promise<Cin7Con
  * Connect to Cin7 (demo or live mode)
  */
 export async function connectCin7(): Promise<Cin7ConnectionStatus> {
+  invalidateCin7StatusCache();
   return apiClient.post<Cin7ConnectionStatus>('/api/integrations/cin7/connect');
 }
 
@@ -120,6 +163,7 @@ export async function connectCin7(): Promise<Cin7ConnectionStatus> {
  * Disconnect from Cin7
  */
 export async function disconnectCin7(): Promise<{ status: string }> {
+  invalidateCin7StatusCache();
   return apiClient.post<{ status: string }>('/api/integrations/cin7/disconnect');
 }
 
@@ -149,14 +193,16 @@ export async function triggerCin7Sync(
   page_size?: number;
   cin7_source_styles?: number;
   skipped?: Record<string, number>;
+  complete?: boolean;
+  sync_errors?: string[];
 }> {
   return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
 }
 
 export type {
-  Cin7ReconciliationSnapshot,
   Cin7ExceptionEntity,
   Cin7ExceptionRecord,
+  Cin7ReconciliationSnapshot,
 } from '@/lib/integrations/cin7-reconciliation';
 
 export type Cin7ReconciliationResponse =
@@ -231,7 +277,8 @@ export async function cleanupCin7DuplicateCustomers(): Promise<{
  * Get recent sync logs
  */
 export async function getCin7SyncLogs(limit: number = 20): Promise<{ logs: Cin7SyncLog[] }> {
-  return apiClient.get(`/api/integrations/cin7/sync/logs?limit=${limit}`);
+  // Must use /sync-history — /sync/logs is gitignored and also collides with POST /sync/[entityType] (405).
+  return apiClient.get(`/api/integrations/cin7/sync-history?limit=${limit}`);
 }
 
 /**
