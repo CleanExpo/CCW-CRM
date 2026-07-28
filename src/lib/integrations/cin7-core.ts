@@ -110,10 +110,9 @@ export async function pingCin7Core(creds: {
   accountId: string;
   applicationKey: string;
 }): Promise<boolean> {
-  const { ok, status } = await cin7CoreGet<{ Total?: number }>(
-    '/Product?Page=1&Limit=1',
-    creds
-  );
+  const { ok, status } = await cin7CoreGet<{ Total?: number }>('/Product?Page=1&Limit=1', creds);
+  // Rate-limited but authenticated — treat as reachable.
+  if (status === 429) return true;
   return ok && status === 200;
 }
 
@@ -166,9 +165,10 @@ export async function fetchCin7CustomerPage(
   return { rows, total };
 }
 
-export async function fetchCin7SaleTotal(
-  creds: { accountId: string; applicationKey: string }
-): Promise<number> {
+export async function fetchCin7SaleTotal(creds: {
+  accountId: string;
+  applicationKey: string;
+}): Promise<number> {
   const { ok, data } = await cin7CoreGet<{ Total?: number }>(`/Sale?Page=1&Limit=1`, creds);
   if (!ok) return 0;
   return typeof data.Total === 'number' ? data.Total : 0;
