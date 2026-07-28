@@ -1,21 +1,21 @@
 /**
  * i18n Request Configuration
  *
- * Provides configuration for server components to access translations.
+ * Provides configuration for server components / NextIntlClientProvider.
+ * Locale comes from the NEXT_LOCALE cookie (no [locale] URL segment routing).
  */
 
 import { getRequestConfig } from 'next-intl/server';
-import { notFound } from 'next/navigation';
-import { locales, type Locale } from './config';
+import { cookies } from 'next/headers';
+import { defaultLocale, isValidLocale, type Locale } from './config';
 
-export default getRequestConfig(async ({ locale }) => {
-  // Validate that the incoming `locale` parameter is valid
-  if (!locales.includes(locale as Locale)) {
-    notFound();
-  }
+export default getRequestConfig(async () => {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get('NEXT_LOCALE')?.value;
+  const locale: Locale = cookieLocale && isValidLocale(cookieLocale) ? cookieLocale : defaultLocale;
 
   return {
-    locale: locale!,
+    locale,
     messages: (await import(`./messages/${locale}.json`)).default,
   };
 });
