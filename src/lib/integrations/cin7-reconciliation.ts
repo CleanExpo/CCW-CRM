@@ -1,11 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
 import {
-  fetchCin7CustomerPage,
-  fetchCin7ProductPage,
-  getCin7CoreCredentials,
-  pingCin7Core,
-} from '@/lib/integrations/cin7-core';
-import {
   fetchAllOmniMasterCatalogsSequential,
   fetchFullOmniBranchCatalog,
   fetchFullOmniContactsByType,
@@ -13,6 +7,12 @@ import {
   resolveCin7SyncSource,
   type Cin7OmniMasterCatalogs,
 } from '@/lib/integrations/cin7-catalog-fetch';
+import {
+  fetchCin7CustomerPage,
+  fetchCin7ProductPage,
+  getCin7CoreCredentials,
+  pingCin7Core,
+} from '@/lib/integrations/cin7-core';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import {
   buildReferenceExceptionItems,
@@ -114,7 +114,9 @@ function normalize(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
 }
 
-export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7ReconciliationSnapshot> {
+export async function buildCin7Reconciliation(
+  ownerUserId: string
+): Promise<Cin7ReconciliationSnapshot> {
   const notes: string[] = [];
   const fetchErrors: string[] = [];
   const coreCreds = getCin7CoreCredentials();
@@ -141,7 +143,10 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
     string,
     { companyName: string; email: string; phone?: string; city?: string }
   >();
-  const cin7SupplierById = new Map<string, { companyName: string; email?: string; phone?: string }>();
+  const cin7SupplierById = new Map<
+    string,
+    { companyName: string; email?: string; phone?: string }
+  >();
   const cin7BranchById = new Map<
     string,
     { name: string; city?: string; state?: string; postCode?: string; isActive: boolean }
@@ -153,8 +158,13 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
   if (source === 'omni' && omniCreds) {
     const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
     omniCatalogs = catalogs;
-    const { products: productCatalog, customers, internalCustomers, suppliers, branches } =
-      catalogs;
+    const {
+      products: productCatalog,
+      customers,
+      internalCustomers,
+      suppliers,
+      branches,
+    } = catalogs;
 
     fetchMeta.products_pages = productCatalog.pages_fetched;
     fetchMeta.customers_pages = customers.pages_fetched;
@@ -237,7 +247,8 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
           visibility: 'Cin7 Core',
           isActive: true,
         });
-        cin7Products.by_visibility['Cin7 Core'] = (cin7Products.by_visibility['Cin7 Core'] ?? 0) + 1;
+        cin7Products.by_visibility['Cin7 Core'] =
+          (cin7Products.by_visibility['Cin7 Core'] ?? 0) + 1;
       }
       if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, maxPages)) break;
     }
@@ -476,7 +487,9 @@ export async function buildCin7Reconciliation(ownerUserId: string): Promise<Cin7
   if (fetchErrors.length > 0) {
     notes.push(`Cin7 fetch warnings: ${fetchErrors.slice(0, 3).join('; ')}`);
   }
-  notes.push('Use the exception report to review individual records — no data is deleted during sync.');
+  notes.push(
+    'Use the exception report to review individual records — no data is deleted during sync.'
+  );
 
   fetchMeta.errors = fetchErrors;
 
@@ -590,7 +603,14 @@ export async function buildCin7ExceptionReport(
     const catalog = await fetchFullOmniProductCatalog(omniCreds);
     const optixRows = await prisma.product.findMany({
       where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
-      select: { sku: true, name: true, price: true, stock: true, isActive: true, cin7Visibility: true },
+      select: {
+        sku: true,
+        name: true,
+        price: true,
+        stock: true,
+        isActive: true,
+        cin7Visibility: true,
+      },
     });
     const optixBySku = new Map(optixRows.map((r) => [r.sku, r]));
 
@@ -605,10 +625,18 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'name', cin7_value: cin7.name, optix_value: optix.name });
       }
       if (Math.abs(optix.price - cin7.price) > 0.01) {
-        fields.push({ field: 'price', cin7_value: String(cin7.price), optix_value: String(optix.price) });
+        fields.push({
+          field: 'price',
+          cin7_value: String(cin7.price),
+          optix_value: String(optix.price),
+        });
       }
       if (optix.stock !== cin7.stock) {
-        fields.push({ field: 'stock', cin7_value: String(cin7.stock), optix_value: String(optix.stock) });
+        fields.push({
+          field: 'stock',
+          cin7_value: String(cin7.stock),
+          optix_value: String(optix.stock),
+        });
       }
       if (optix.isActive !== cin7.isActive) {
         fields.push({
@@ -664,7 +692,11 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
       }
       if (normalize(optix.phone ?? '') !== normalize(cin7.phone ?? '')) {
-        fields.push({ field: 'phone', cin7_value: cin7.phone ?? '', optix_value: optix.phone ?? '' });
+        fields.push({
+          field: 'phone',
+          cin7_value: cin7.phone ?? '',
+          optix_value: optix.phone ?? '',
+        });
       }
       if (normalize(optix.city ?? '') !== normalize(cin7.city ?? '')) {
         fields.push({ field: 'city', cin7_value: cin7.city ?? '', optix_value: optix.city ?? '' });
@@ -720,7 +752,11 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'email', cin7_value: cin7.email, optix_value: optix.email ?? '' });
       }
       if (normalize(optix.phone ?? '') !== normalize(cin7.phone ?? '')) {
-        fields.push({ field: 'phone', cin7_value: cin7.phone ?? '', optix_value: optix.phone ?? '' });
+        fields.push({
+          field: 'phone',
+          cin7_value: cin7.phone ?? '',
+          optix_value: optix.phone ?? '',
+        });
       }
       if (fields.length > 0) {
         items.push({
@@ -757,7 +793,11 @@ export async function buildCin7ExceptionReport(
         fields.push({ field: 'city', cin7_value: cin7.city ?? '', optix_value: optix.city ?? '' });
       }
       if (normalize(optix.state ?? '') !== normalize(cin7.state ?? '')) {
-        fields.push({ field: 'state', cin7_value: cin7.state ?? '', optix_value: optix.state ?? '' });
+        fields.push({
+          field: 'state',
+          cin7_value: cin7.state ?? '',
+          optix_value: optix.state ?? '',
+        });
       }
       if (normalize(optix.postCode ?? '') !== normalize(cin7.postCode ?? '')) {
         fields.push({
