@@ -1,11 +1,14 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
+import { CIN7_SYNCABLE_ENTITY_TYPES } from '@/lib/integrations/cin7-master-entities';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Recent Cin7 sync runs for the integrations UI history panel.
+ * Latest Cin7 sync status per entity for the integrations history panel.
  * Path is /sync-history (not /sync/logs) so it is not blocked by the repo `logs/` gitignore,
  * and does not collide with POST /sync/[entityType].
+ *
+ * Always returns one entry per syncable entity (never-synced entities included with null stats).
  */
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -13,13 +16,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
 
-  const limit = Math.min(Math.max(Number(request.nextUrl.searchParams.get('limit')) || 20, 1), 100);
+  // Limit is retained for API compatibility; we always cover all syncable entities.
+  void request.nextUrl.searchParams.get('limit');
 
   try {
     const runs = await prisma.cin7SyncRun.findMany({
-      where: { ownerUserId: scope.userId },
+      where: {
+        ownerUserId: scope.userId,
+        entityType: { in: [...CIN7_SYNCABLE_ENTITY_TYPES] },
+      },
       orderBy: { createdAt: 'desc' },
-      take: limit,
       select: {
         id: true,
         entityType: true,
@@ -30,15 +36,31 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const logs = runs.map((run) => ({
-      id: run.id,
-      entity_type: run.entityType,
-      direction: 'pull',
-      status: 'ok',
-      records_processed: run.recordsProcessed,
-      synced_at: run.createdAt.toISOString(),
-      error_message: undefined as string | undefined,
-    }));
+    const byEntity = new Map(runs.map((run) => [run.entityType, run]));
+
+    const logs = CIN7_SYNCABLE_ENTITY_TYPES.map((entityType) => {
+      const run = byEntity.get(entityType);
+      if (!run) {
+        return {
+          id: `pending:${entityType}`,
+          entity_type: entityType,
+          direction: 'pull',
+          status: 'never',
+          records_processed: 0,
+          synced_at: null as string | null,
+          error_message: undefined as string | undefined,
+        };
+      }
+      return {
+        id: run.id,
+        entity_type: run.entityType,
+        direction: 'pull',
+        status: 'ok',
+        records_processed: run.recordsProcessed,
+        synced_at: run.createdAt.toISOString(),
+        error_message: undefined as string | undefined,
+      };
+    });
 
     return NextResponse.json({ logs });
   } catch (error: unknown) {
