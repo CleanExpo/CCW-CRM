@@ -46,7 +46,8 @@ export interface Cin7SyncLog {
   direction: string;
   status: string;
   records_processed: number;
-  synced_at: string;
+  /** ISO timestamp of last sync; null when the entity has never been synced. */
+  synced_at: string | null;
   error_message?: string;
 }
 
@@ -274,11 +275,12 @@ export async function cleanupCin7DuplicateCustomers(): Promise<{
 }
 
 /**
- * Get recent sync logs
+ * Get latest sync status for every Cin7 syncable entity (one row each).
  */
-export async function getCin7SyncLogs(limit: number = 20): Promise<{ logs: Cin7SyncLog[] }> {
+export async function getCin7SyncLogs(_limit: number = 20): Promise<{ logs: Cin7SyncLog[] }> {
   // Must use /sync-history — /sync/logs is gitignored and also collides with POST /sync/[entityType] (405).
-  return apiClient.get(`/api/integrations/cin7/sync-history?limit=${limit}`);
+  // Server always returns the full entity set; limit is kept for call-site compatibility.
+  return apiClient.get(`/api/integrations/cin7/sync-history`);
 }
 
 /**
