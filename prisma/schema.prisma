@@ -676,7 +676,7 @@ model Cin7StockLevel {
   @@map("cin7_stock_levels")
 }
 
-/// Audit trail for manual and scheduled Cin7 sync runs.
+/// Latest sync status per entity (one row per owner + entity type).
 model Cin7SyncRun {
   id               String   @id @default(uuid()) @db.Uuid
   ownerUserId      String   @map("owner_user_id") @db.Uuid
@@ -686,10 +686,12 @@ model Cin7SyncRun {
   durationMs       Int      @map("duration_ms")
   source           String?
   createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   skipRecords Cin7SyncSkipRecord[]
 
-  @@index([ownerUserId, createdAt(sort: Desc)])
+  @@unique([ownerUserId, entityType])
+  @@index([ownerUserId, updatedAt(sort: Desc)])
   @@map("cin7_sync_runs")
 }
 
