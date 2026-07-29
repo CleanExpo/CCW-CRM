@@ -235,19 +235,45 @@ export async function recordCin7SyncRun(input: {
   durationMs: number;
   source?: string;
 }): Promise<string | null> {
-  const run = await prisma.cin7SyncRun.create({
-    data: {
+  // One persistent row per owner + entity — re-sync updates the same record.
+  // Use find+update/create (not compound upsert) so hot-reload / stale Prisma
+  // clients without ownerUserId_entityType still work after migrate.
+  const existing = await prisma.cin7SyncRun.findFirst({
+    where: {
       ownerUserId: input.ownerUserId,
       entityType: input.entityType,
-      recordsProcessed: input.recordsProcessed,
-      skipped: input.skipped ?? undefined,
-      durationMs: input.durationMs,
-      source: input.source,
     },
+    select: { id: true },
+    orderBy: { createdAt: 'desc' },
   });
+
+  const data = {
+    recordsProcessed: input.recordsProcessed,
+    skipped: input.skipped ?? undefined,
+    durationMs: input.durationMs,
+    source: input.source,
+    createdAt: new Date(),
+  };
+
+  const run = existing
+    ? await prisma.cin7SyncRun.update({
+        where: { id: existing.id },
+        data,
+      })
+    : await prisma.cin7SyncRun.create({
+        data: {
+          ownerUserId: input.ownerUserId,
+          entityType: input.entityType,
+          ...data,
+        },
+      });
 
   const skipRecords = input.skipRecords ?? [];
   if (skipRecords.length > 0) {
+    // Replace prior skip rows for this entity run so history stays bounded.
+    await prisma.cin7SyncSkipRecord.deleteMany({
+      where: { syncRunId: run.id },
+    });
     const batchSize = 500;
     for (let i = 0; i < skipRecords.length; i += batchSize) {
       const chunk = skipRecords.slice(i, i + batchSize);
@@ -375,7 +401,12 @@ export async function batchUpsertPriceLists(
         where: {
           ownerUserId_cin7PriceColumn: { ownerUserId, cin7PriceColumn: row.cin7PriceColumn },
         },
-        create: { ownerUserId, cin7PriceColumn: row.cin7PriceColumn, name: row.name, isActive: true },
+        create: {
+          ownerUserId,
+          cin7PriceColumn: row.cin7PriceColumn,
+          name: row.name,
+          isActive: true,
+        },
         update: { name: row.name, isActive: true },
       })
     );
@@ -384,10 +415,7 @@ export async function batchUpsertPriceLists(
   return processed;
 }
 
-export async function batchUpsertTaxCodes(
-  ownerUserId: string,
-  codes: string[]
-): Promise<number> {
+export async function batchUpsertTaxCodes(ownerUserId: string, codes: string[]): Promise<number> {
   if (codes.length === 0) return 0;
   const batchSize = getCin7DbBatchSize();
   const concurrency = getCin7DbConcurrency();
