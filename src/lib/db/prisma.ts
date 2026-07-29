@@ -9,7 +9,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Bump when a schema change requires discarding the dev global PrismaClient cache. */
-const PRISMA_CLIENT_SCHEMA_VERSION = 4;
+const PRISMA_CLIENT_SCHEMA_VERSION = 5;
 
 function customerModelHasCin7ContactId(): boolean {
   return (
@@ -84,8 +84,8 @@ function isPrismaClientStale(client: PrismaClient): boolean {
   }
 
   if (
-    typeof (client as PrismaClient & { workspaceXeroConnection?: unknown }).workspaceXeroConnection ===
-    'undefined'
+    typeof (client as PrismaClient & { workspaceXeroConnection?: unknown })
+      .workspaceXeroConnection === 'undefined'
   ) {
     return true;
   }
