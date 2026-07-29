@@ -76,7 +76,8 @@ const SYNC_ENTITIES: {
   { key: 'inventory', label: 'Inventory', icon: Boxes, color: 'text-orange-500' },
 ];
 
-function formatLogTime(iso: string): string {
+function formatLogTime(iso: string | null | undefined): string {
+  if (!iso) return 'Never synced';
   return new Date(iso).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -89,14 +90,21 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   const { toast } = useToast();
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [polling, setPolling] = useState(false);
-  const [logs, setLogs] = useState<Cin7SyncLog[]>([]);
+  const [logsByEntity, setLogsByEntity] = useState<Record<string, Cin7SyncLog>>({});
   const [logsLoading, setLogsLoading] = useState(false);
+
+  const anySyncing = Object.values(syncing).some(Boolean);
+  const syncActionsLocked = anySyncing || polling;
 
   const loadLogs = useCallback(async () => {
     setLogsLoading(true);
     try {
-      const { logs: recent } = await getCin7SyncLogs(8);
-      setLogs(recent);
+      const { logs: recent } = await getCin7SyncLogs();
+      const next: Record<string, Cin7SyncLog> = {};
+      for (const log of recent) {
+        next[log.entity_type] = log;
+      }
+      setLogsByEntity(next);
     } catch {
       // Non-blocking — sync controls still work without history
     } finally {
@@ -111,6 +119,7 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   }, [isConnected, loadLogs]);
 
   const handleSync = async (entityType: Cin7SyncEntityKey) => {
+    if (syncActionsLocked) return;
     setSyncing((prev) => ({ ...prev, [entityType]: true }));
     try {
       const result = await triggerCin7Sync(entityType);
@@ -151,6 +160,7 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   };
 
   const handlePoll = async () => {
+    if (syncActionsLocked) return;
     setPolling(true);
     try {
       const result = await triggerCin7Poll('core');
@@ -193,10 +203,15 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               Cin7 Sync Controls
             </CardTitle>
             <CardDescription>
-              Manually trigger sync for each entity type (full Cin7 pull — all pages)
+              Manually trigger sync for each entity type (one at a time — full Cin7 pull)
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={handlePoll} disabled={polling}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void handlePoll()}
+            disabled={syncActionsLocked}
+          >
             <RefreshCw className={`mr-2 h-4 w-4 ${polling ? 'animate-spin' : ''}`} />
             {polling ? 'Polling...' : 'Poll Changes'}
           </Button>
@@ -211,8 +226,8 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
                 key={key}
                 variant="outline"
                 className="h-auto flex-col gap-2 py-4"
-                onClick={() => handleSync(key)}
-                disabled={isSyncing}
+                onClick={() => void handleSync(key)}
+                disabled={syncActionsLocked}
               >
                 <Icon className={`h-5 w-5 ${isSyncing ? 'animate-spin' : color}`} />
                 <span className="text-xs font-medium">
@@ -227,34 +242,44 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
           <div className="mb-2 flex items-center justify-between">
             <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
               <History className="h-3.5 w-3.5" />
-              Recent sync runs
+              Recent sync
             </span>
             <Button
               variant="ghost"
               size="sm"
               className="h-7 text-xs"
-              disabled={logsLoading}
+              disabled={logsLoading || syncActionsLocked}
               onClick={() => void loadLogs()}
             >
               {logsLoading ? 'Loading…' : 'Refresh'}
             </Button>
           </div>
-          {logs.length === 0 ? (
-            <p className="text-muted-foreground text-xs">No sync history yet.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {logs.map((log) => (
-                <li key={log.id} className="flex items-center justify-between text-xs tabular-nums">
-                  <span className="text-muted-foreground capitalize">
-                    {log.entity_type.replace(/-/g, ' ')}
-                  </span>
-                  <span>
-                    {log.records_processed.toLocaleString()} · {formatLogTime(log.synced_at)}
+          <ul className="max-h-64 space-y-1.5 overflow-y-auto">
+            {SYNC_ENTITIES.map(({ key, label }) => {
+              const log = logsByEntity[key];
+              const isSyncing = syncing[key] ?? false;
+              const neverSynced = !log || log.status === 'never' || !log.synced_at;
+              return (
+                <li
+                  key={key}
+                  className="flex items-center justify-between gap-2 text-xs tabular-nums"
+                >
+                  <span className="text-muted-foreground shrink-0 font-medium">{label}</span>
+                  <span className="text-right">
+                    {isSyncing ? (
+                      <span className="text-amber-600 dark:text-amber-400">Syncing…</span>
+                    ) : neverSynced ? (
+                      <span className="text-muted-foreground">Not synced yet</span>
+                    ) : (
+                      <>
+                        {log.records_processed.toLocaleString()} · {formatLogTime(log.synced_at)}
+                      </>
+                    )}
                   </span>
                 </li>
-              ))}
-            </ul>
-          )}
+              );
+            })}
+          </ul>
         </div>
       </CardContent>
     </Card>
