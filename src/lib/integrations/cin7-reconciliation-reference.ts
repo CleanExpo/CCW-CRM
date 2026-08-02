@@ -60,69 +60,93 @@ export function getCin7ReferenceCounts(catalogs: Cin7OmniMasterCatalogs): Cin7Re
   };
 }
 
-export async function getOptixReferenceCounts(ownerUserId: string): Promise<Cin7ReferenceCounts> {
-  const [
-    productCategories,
+export type OptixReferenceSnapshot = {
+  categories: Array<{ cin7CategoryId: string }>;
+  brands: Array<{ name: string }>;
+  priceLists: Array<{ cin7PriceColumn: string }>;
+  taxCodes: Array<{ code: string }>;
+  uoms: Array<{ code: string }>;
+  stockRows: Array<{
+    cin7BranchId: string;
+    sku: string;
+    available: number;
+    stockOnHand: number;
+    incoming: number;
+  }>;
+  warehouseCount: number;
+};
+
+/** One round-trip batch for reference counts + exception keys (avoids count()+findMany). */
+export async function loadOptixReferenceSnapshot(
+  ownerUserId: string
+): Promise<OptixReferenceSnapshot> {
+  const [categories, brands, priceLists, taxCodes, uoms, stockRows, warehouseCount] =
+    await Promise.all([
+      prisma.cin7ProductCategory.findMany({
+        where: { ownerUserId },
+        select: { cin7CategoryId: true },
+      }),
+      prisma.cin7Brand.findMany({ where: { ownerUserId }, select: { name: true } }),
+      prisma.cin7PriceList.findMany({
+        where: { ownerUserId },
+        select: { cin7PriceColumn: true },
+      }),
+      prisma.cin7TaxCode.findMany({ where: { ownerUserId }, select: { code: true } }),
+      prisma.cin7UnitOfMeasure.findMany({ where: { ownerUserId }, select: { code: true } }),
+      prisma.cin7StockLevel.findMany({
+        where: { ownerUserId },
+        select: {
+          cin7BranchId: true,
+          sku: true,
+          available: true,
+          stockOnHand: true,
+          incoming: true,
+        },
+      }),
+      prisma.cin7Branch.count({ where: { ownerUserId } }),
+    ]);
+
+  return {
+    categories,
     brands,
     priceLists,
     taxCodes,
-    unitsOfMeasure,
-    stockLevels,
-    warehouses,
-  ] = await Promise.all([
-    prisma.cin7ProductCategory.count({ where: { ownerUserId } }),
-    prisma.cin7Brand.count({ where: { ownerUserId } }),
-    prisma.cin7PriceList.count({ where: { ownerUserId } }),
-    prisma.cin7TaxCode.count({ where: { ownerUserId } }),
-    prisma.cin7UnitOfMeasure.count({ where: { ownerUserId } }),
-    prisma.cin7StockLevel.count({ where: { ownerUserId } }),
-    prisma.cin7Branch.count({ where: { ownerUserId } }),
-  ]);
-  return {
-    product_categories: productCategories,
-    brands,
-    price_lists: priceLists,
-    tax_codes: taxCodes,
-    units_of_measure: unitsOfMeasure,
-    stock_levels: stockLevels,
-    warehouses,
+    uoms,
+    stockRows,
+    warehouseCount,
   };
+}
+
+export function referenceCountsFromOptixSnapshot(
+  snapshot: OptixReferenceSnapshot
+): Cin7ReferenceCounts {
+  return {
+    product_categories: snapshot.categories.length,
+    brands: snapshot.brands.length,
+    price_lists: snapshot.priceLists.length,
+    tax_codes: snapshot.taxCodes.length,
+    units_of_measure: snapshot.uoms.length,
+    stock_levels: snapshot.stockRows.length,
+    warehouses: snapshot.warehouseCount,
+  };
+}
+
+export async function getOptixReferenceCounts(ownerUserId: string): Promise<Cin7ReferenceCounts> {
+  return referenceCountsFromOptixSnapshot(await loadOptixReferenceSnapshot(ownerUserId));
 }
 
 export async function buildReferenceExceptionSummary(
   ownerUserId: string,
-  catalogs: Cin7OmniMasterCatalogs
+  catalogs: Cin7OmniMasterCatalogs,
+  preloaded?: OptixReferenceSnapshot
 ): Promise<Cin7ReferenceExceptionSummary> {
-  const [
-    optixCategories,
-    optixBrands,
-    optixPriceLists,
-    optixTaxCodes,
-    optixUoms,
-    optixStockRows,
-  ] = await Promise.all([
-    prisma.cin7ProductCategory.findMany({
-      where: { ownerUserId },
-      select: { cin7CategoryId: true },
-    }),
-    prisma.cin7Brand.findMany({ where: { ownerUserId }, select: { name: true } }),
-    prisma.cin7PriceList.findMany({
-      where: { ownerUserId },
-      select: { cin7PriceColumn: true },
-    }),
-    prisma.cin7TaxCode.findMany({ where: { ownerUserId }, select: { code: true } }),
-    prisma.cin7UnitOfMeasure.findMany({ where: { ownerUserId }, select: { code: true } }),
-    prisma.cin7StockLevel.findMany({
-      where: { ownerUserId },
-      select: {
-        cin7BranchId: true,
-        sku: true,
-        available: true,
-        stockOnHand: true,
-        incoming: true,
-      },
-    }),
-  ]);
+  const optix = preloaded ?? (await loadOptixReferenceSnapshot(ownerUserId));
+  const optixCategories = optix.categories;
+  const optixBrands = optix.brands;
+  const optixPriceLists = optix.priceLists;
+  const optixTaxCodes = optix.taxCodes;
+  const optixUoms = optix.uoms;
+  const optixStockRows = optix.stockRows;
 
   const catDiff = countSetDiff(
     new Set(catalogs.productCategories.categories.map((c) => c.cin7CategoryId)),
@@ -209,7 +233,9 @@ export async function buildReferenceExceptionItems(
       }
     }
     for (const row of optix) {
-      if (!catalogs.productCategories.categories.some((c) => c.cin7CategoryId === row.cin7CategoryId)) {
+      if (
+        !catalogs.productCategories.categories.some((c) => c.cin7CategoryId === row.cin7CategoryId)
+      ) {
         items.push({ cin7_id: row.cin7CategoryId, label: row.name, reason: 'extra_in_optix' });
       }
     }
@@ -286,18 +312,34 @@ export async function buildReferenceExceptionItems(
       const key = `${cin7.cin7BranchId}:${cin7.sku}`;
       const row = optixByKey.get(key);
       if (!row) {
-        items.push({ cin7_id: key, label: `${cin7.sku} @ ${cin7.branchName ?? cin7.cin7BranchId}`, reason: 'missing_in_optix' });
+        items.push({
+          cin7_id: key,
+          label: `${cin7.sku} @ ${cin7.branchName ?? cin7.cin7BranchId}`,
+          reason: 'missing_in_optix',
+        });
         continue;
       }
       const fields: Cin7ExceptionRecord['fields'] = [];
       if (row.available !== cin7.available) {
-        fields.push({ field: 'available', cin7_value: String(cin7.available), optix_value: String(row.available) });
+        fields.push({
+          field: 'available',
+          cin7_value: String(cin7.available),
+          optix_value: String(row.available),
+        });
       }
       if (row.stockOnHand !== cin7.stockOnHand) {
-        fields.push({ field: 'stock_on_hand', cin7_value: String(cin7.stockOnHand), optix_value: String(row.stockOnHand) });
+        fields.push({
+          field: 'stock_on_hand',
+          cin7_value: String(cin7.stockOnHand),
+          optix_value: String(row.stockOnHand),
+        });
       }
       if (row.incoming !== cin7.incoming) {
-        fields.push({ field: 'incoming', cin7_value: String(cin7.incoming), optix_value: String(row.incoming) });
+        fields.push({
+          field: 'incoming',
+          cin7_value: String(cin7.incoming),
+          optix_value: String(row.incoming),
+        });
       }
       if (fields.length > 0) {
         items.push({ cin7_id: key, label: cin7.sku, reason: 'field_mismatch', fields });
