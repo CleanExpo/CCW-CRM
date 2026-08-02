@@ -490,12 +490,14 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                               Reason: {row.skipped_reason}
                             </p>
                           ) : null}
-                          {row.fields?.map((f) => (
-                            <p key={f.field} className="text-muted-foreground mt-1">
-                              <span className="text-foreground">{f.field}:</span> Cin7 &quot;
-                              {f.cin7_value}&quot; · Optix &quot;{f.optix_value}&quot;
-                            </p>
-                          ))}
+                          {Array.isArray(row.fields)
+                            ? row.fields.map((f) => (
+                                <p key={f.field} className="text-muted-foreground mt-1">
+                                  <span className="text-foreground">{f.field}:</span> Cin7 &quot;
+                                  {f.cin7_value}&quot; · Optix &quot;{f.optix_value}&quot;
+                                </p>
+                              ))
+                            : null}
                         </div>
                       ))}
                     </div>
