@@ -1,16 +1,18 @@
-import type { NextRequest } from 'next/server';
 import {
   allowSendGridBrowserCookieOverrides,
   resolveSendGridCredentials,
   type ResolvedSendGridCredentials,
 } from '@/lib/integrations/sendgrid-config';
-import {
-  isValidEmailAddress,
-  sanitizeSendMailPayload,
-} from '@/lib/integrations/sendgrid-utils';
+import { sanitizeSendMailPayload } from '@/lib/integrations/sendgrid-utils';
+import type { NextRequest } from 'next/server';
 
 const SENDGRID_API = 'https://api.sendgrid.com/v3';
-export { isValidEmailAddress, sanitizeSendMailPayload, SENDGRID_MAX_BODY_LENGTH, SENDGRID_MAX_SUBJECT_LENGTH } from '@/lib/integrations/sendgrid-utils';
+export {
+  isValidEmailAddress,
+  sanitizeSendMailPayload,
+  SENDGRID_MAX_BODY_LENGTH,
+  SENDGRID_MAX_SUBJECT_LENGTH,
+} from '@/lib/integrations/sendgrid-utils';
 
 export function getSendGridMode(): 'demo' | 'live' {
   return process.env.SENDGRID_MODE === 'demo' ? 'demo' : 'live';
@@ -29,8 +31,13 @@ export function getSendGridApiKey(request?: NextRequest): string | null {
   return fromCookie || fromEnv || null;
 }
 
-export function getSendGridApiKeySource(request?: NextRequest): 'cookie' | 'environment' | 'workspace' {
-  if (allowSendGridBrowserCookieOverrides() && request?.cookies.get('sendgrid_api_key')?.value?.trim()) {
+export function getSendGridApiKeySource(
+  request?: NextRequest
+): 'cookie' | 'environment' | 'workspace' {
+  if (
+    allowSendGridBrowserCookieOverrides() &&
+    request?.cookies.get('sendgrid_api_key')?.value?.trim()
+  ) {
     return 'cookie';
   }
   if (process.env.SENDGRID_API_KEY?.trim()) return 'environment';
@@ -71,13 +78,18 @@ export type SendMailResult =
   | { ok: true; message_id: string; mode: 'demo' | 'live' }
   | { ok: false; status: number; detail: string };
 
-/** Validates API key against SendGrid (read-only). */
+/** Validates API key against SendGrid (read-only). Never throws — network/DNS failures return false. */
 export async function pingSendGridApi(apiKey: string): Promise<boolean> {
-  const res = await fetch(`${SENDGRID_API}/user/profile`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-    cache: 'no-store',
-  });
-  return res.ok;
+  try {
+    const res = await fetch(`${SENDGRID_API}/user/profile`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      cache: 'no-store',
+    });
+    return res.ok;
+  } catch {
+    // Offline, DNS failure (ENOTFOUND), TLS errors, etc.
+    return false;
+  }
 }
 
 export async function sendMailViaSendGrid(
@@ -193,8 +205,8 @@ function hasSendGridBrowserCookies(request?: NextRequest): boolean {
 function isWebhooksConfigured(): boolean {
   return Boolean(
     process.env.SENDGRID_WEBHOOK_SECRET?.trim() ||
-      process.env.SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY?.trim() ||
-      process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY?.trim()
+    process.env.SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY?.trim() ||
+    process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY?.trim()
   );
 }
 
@@ -212,20 +224,13 @@ export async function buildSendGridStatusPayload(
   userId?: string
 ): Promise<SendGridStatusPayload> {
   const mode = getSendGridMode();
-  const creds =
-    overrides?.creds ?? (await resolveSendGridCredentials(request, userId));
-  const apiKey =
-    overrides?.apiKey !== undefined ? overrides.apiKey?.trim() || null : creds.apiKey;
-  const fromEmail =
-    overrides?.fromEmail !== undefined ? overrides.fromEmail : creds.fromEmail;
+  const creds = overrides?.creds ?? (await resolveSendGridCredentials(request, userId));
+  const apiKey = overrides?.apiKey !== undefined ? overrides.apiKey?.trim() || null : creds.apiKey;
+  const fromEmail = overrides?.fromEmail !== undefined ? overrides.fromEmail : creds.fromEmail;
   const fromName = overrides?.fromName !== undefined ? overrides.fromName : creds.fromName;
   const envKey = hasEnvironmentSendGridApiKey();
   const keySource =
-    overrides?.apiKeySource !== undefined
-      ? overrides.apiKeySource
-      : apiKey
-        ? creds.source
-        : null;
+    overrides?.apiKeySource !== undefined ? overrides.apiKeySource : apiKey ? creds.source : null;
   const browserOverrides = hasSendGridBrowserCookies(request);
   const browserAllowed = allowSendGridBrowserCookieOverrides();
 
@@ -268,7 +273,7 @@ export async function buildSendGridStatusPayload(
             : 'SendGrid API key verified (saved in this browser).';
     } else {
       message =
-        'SendGrid rejected this API key or the profile request failed. Check the key and network access.';
+        'SendGrid is unreachable or rejected this API key. Check network/DNS access to api.sendgrid.com and the key.';
     }
   }
 
@@ -306,7 +311,13 @@ export async function buildSendGridStatusPayload(
 
 export type SendGridSendReadiness =
   | { ok: true; payload: SendGridStatusPayload; creds: ResolvedSendGridCredentials }
-  | { ok: false; status: number; detail: string; payload: SendGridStatusPayload; creds: ResolvedSendGridCredentials };
+  | {
+      ok: false;
+      status: number;
+      detail: string;
+      payload: SendGridStatusPayload;
+      creds: ResolvedSendGridCredentials;
+    };
 
 export async function getSendGridSendReadiness(
   request?: NextRequest,
