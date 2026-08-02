@@ -117,8 +117,10 @@ export async function batchUpsertProducts(
 }
 
 /**
- * Upsert customers by Cin7 contact id (primary) or email (legacy match).
- * Never bulk-creates duplicate rows for contacts without email.
+ * Upsert customers by Cin7 contact id only.
+ * Legacy Optix customers (no cin7ContactId) are NOT merged/updated by email —
+ * full sync creates/links Cin7 rows by id; pre-existing CRM rows stay until
+ * they share a Cin7 contact id. "Extra without Cin7 id" in recon = those legacy rows.
  */
 export async function batchUpsertCustomers(
   ownerUserId: string,
