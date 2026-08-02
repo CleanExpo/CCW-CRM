@@ -6,10 +6,14 @@ import { Pool } from 'pg';
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pgPool: Pool | undefined;
+  pgPoolConfigVersion?: number;
 };
 
 /** Bump when a schema change requires discarding the dev global PrismaClient cache. */
-const PRISMA_CLIENT_SCHEMA_VERSION = 5;
+const PRISMA_CLIENT_SCHEMA_VERSION = 7;
+
+/** Bump when Pool options change so hot-reload does not keep a stale pool. */
+const PG_POOL_CONFIG_VERSION = 2;
 
 function customerModelHasCin7ContactId(): boolean {
   return (
@@ -23,6 +27,14 @@ function prismaModelsIncludeCin7SyncRun(): boolean {
   return Prisma.dmmf.datamodel.models.some((model) => model.name === 'Cin7SyncRun');
 }
 
+function cin7SyncRunHasStatusField(): boolean {
+  return (
+    Prisma.dmmf.datamodel.models
+      .find((model) => model.name === 'Cin7SyncRun')
+      ?.fields.some((field) => field.name === 'status') ?? false
+  );
+}
+
 function createPrismaClient(): PrismaClient {
   if (!customerModelHasCin7ContactId()) {
     throw new Error(
@@ -30,9 +42,9 @@ function createPrismaClient(): PrismaClient {
     );
   }
 
-  if (!prismaModelsIncludeCin7SyncRun()) {
+  if (!prismaModelsIncludeCin7SyncRun() || !cin7SyncRunHasStatusField()) {
     throw new Error(
-      'Prisma Client is out of date (missing Cin7SyncRun). Run `npx prisma migrate deploy`, `npx prisma generate`, delete `.next`, and restart the dev server.'
+      'Prisma Client is out of date (missing Cin7SyncRun.status). Run `npx prisma migrate deploy`, `npx prisma generate`, delete `.next`, and restart the dev server.'
     );
   }
 
@@ -47,18 +59,26 @@ function createPrismaClient(): PrismaClient {
 
   const ssl = getPgSslConfig();
 
+  // Keep enough headroom for long Cin7 sync/recon jobs so auth/refresh is not starved.
+  const poolMax = Math.max(2, Number(process.env.PRISMA_POOL_MAX || 10) || 10);
+  if (globalForPrisma.pgPool && globalForPrisma.pgPoolConfigVersion !== PG_POOL_CONFIG_VERSION) {
+    void globalForPrisma.pgPool.end().catch(() => undefined);
+    globalForPrisma.pgPool = undefined;
+  }
   const pool =
     globalForPrisma.pgPool ??
     new Pool({
       connectionString,
       ssl,
-      max: 5,
-      idleTimeoutMillis: 20_000,
-      connectionTimeoutMillis: 10_000,
+      max: poolMax,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 30_000,
+      allowExitOnIdle: false,
     });
 
   if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.pgPool = pool;
+    globalForPrisma.pgPoolConfigVersion = PG_POOL_CONFIG_VERSION;
   }
 
   const adapter = new PrismaPg(pool);
@@ -74,7 +94,11 @@ function createPrismaClient(): PrismaClient {
 
 /** Dev hot-reload can keep an old PrismaClient missing models/fields added after the server started. */
 function isPrismaClientStale(client: PrismaClient): boolean {
-  if (!customerModelHasCin7ContactId() || !prismaModelsIncludeCin7SyncRun()) {
+  if (
+    !customerModelHasCin7ContactId() ||
+    !prismaModelsIncludeCin7SyncRun() ||
+    !cin7SyncRunHasStatusField()
+  ) {
     return true;
   }
 
