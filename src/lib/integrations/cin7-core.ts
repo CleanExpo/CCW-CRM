@@ -1,15 +1,16 @@
+import {
+  delayForRetry,
+  isRetryableHttpStatus,
+  sleepForRetry,
+  type Cin7HttpRetryResult,
+} from '@/lib/integrations/cin7-http-retry';
 import type { NextRequest } from 'next/server';
 
 const DEFAULT_BASE = 'https://inventory.dearsystems.com/ExternalApi/v2';
 const DEFAULT_TIMEOUT_MS = 45_000;
 const DEFAULT_RETRIES = 2;
 
-type Cin7HttpResult<T> = {
-  ok: boolean;
-  status: number;
-  data: T;
-  error?: string;
-};
+type Cin7HttpResult<T> = Cin7HttpRetryResult<T>;
 
 export function getCin7CoreBaseUrl(): string {
   return process.env.CIN7_CORE_API_BASE_URL?.trim() || DEFAULT_BASE;
@@ -36,10 +37,6 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function getCin7CoreCredentials(request?: NextRequest): {
   accountId: string;
   applicationKey: string;
@@ -58,12 +55,14 @@ export function getCin7CoreCredentials(request?: NextRequest): {
 
 export async function cin7CoreGet<T>(
   pathWithQuery: string,
-  creds: { accountId: string; applicationKey: string }
+  creds: { accountId: string; applicationKey: string },
+  options?: { retries?: number }
 ): Promise<Cin7HttpResult<T>> {
   const base = getCin7CoreBaseUrl().replace(/\/$/, '');
   const p = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
   const url = `${base}${p}`;
-  const retries = getCin7RequestRetries();
+  const retries = options?.retries ?? getCin7RequestRetries();
+  let lastRetryAfterMs: number | undefined;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
@@ -80,12 +79,33 @@ export async function cin7CoreGet<T>(
       });
       const data = (await res.json().catch(() => ({}))) as T;
       clearTimeout(timeout);
-      return { ok: res.ok, status: res.status, data };
+      if (isRetryableHttpStatus(res.status) && attempt < retries) {
+        const waitMs = delayForRetry({
+          status: res.status,
+          attempt,
+          retryAfterHeader: res.headers.get('retry-after'),
+        });
+        lastRetryAfterMs = waitMs;
+        await sleepForRetry(waitMs);
+        continue;
+      }
+      return {
+        ok: res.ok,
+        status: res.status,
+        data,
+        error: res.ok ? undefined : `Cin7 Core HTTP ${res.status}`,
+        retryAfterMs: res.status === 429 ? lastRetryAfterMs : undefined,
+      };
     } catch (error) {
       clearTimeout(timeout);
       const message = getErrorMessage(error);
       if (attempt < retries) {
-        await sleep(1_000 * (attempt + 1));
+        const waitMs = delayForRetry({
+          status: 503,
+          attempt,
+          retryAfterHeader: null,
+        });
+        await sleepForRetry(waitMs);
         continue;
       }
       return {
@@ -102,6 +122,7 @@ export async function cin7CoreGet<T>(
     status: 504,
     data: {} as T,
     error: 'Cin7 Core request failed after retries.',
+    retryAfterMs: lastRetryAfterMs,
   };
 }
 
@@ -110,7 +131,9 @@ export async function pingCin7Core(creds: {
   accountId: string;
   applicationKey: string;
 }): Promise<boolean> {
-  const { ok, status } = await cin7CoreGet<{ Total?: number }>('/Product?Page=1&Limit=1', creds);
+  const { ok, status } = await cin7CoreGet<{ Total?: number }>('/Product?Page=1&Limit=1', creds, {
+    retries: 0,
+  });
   // Rate-limited but authenticated — treat as reachable.
   if (status === 429) return true;
   return ok && status === 200;
