@@ -6,6 +6,11 @@ import {
 } from '@/lib/integrations/cin7-http-retry';
 import { getIncompleteSyncEntities } from '@/lib/integrations/cin7-reconciliation-job';
 import { resolveSyncStartPage, runPagedSyncEngine } from '@/lib/integrations/cin7-sync-engine';
+import {
+  buildCin7ModifiedSinceWhere,
+  decideCin7SyncMode,
+  floorSyncRecordCount,
+} from '@/lib/integrations/cin7-sync-incremental';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/db/prisma', () => {
@@ -297,6 +302,51 @@ describe('client requirement checklist (static) — sync recon engine', () => {
     );
     expect(src).toContain('consecutive_complete_count');
     expect(src).toContain('proof_ready');
+  });
+});
+
+describe('additive / incremental sync guards', () => {
+  it('floors reported counts so sync never shows fewer than Optix', () => {
+    expect(
+      floorSyncRecordCount({ optixCount: 9842, thisRunProcessed: 50, previousFloor: 9842 })
+    ).toBe(9842);
+    expect(
+      floorSyncRecordCount({ optixCount: 9900, thisRunProcessed: 100, previousFloor: 9842 })
+    ).toBe(9900);
+  });
+
+  it('uses incremental mode after a successful complete sync', () => {
+    const completedAt = new Date('2026-08-01T00:00:00Z');
+    const decided = decideCin7SyncMode({
+      forceFull: false,
+      forceRestart: true,
+      status: 'complete',
+      completedAt,
+    });
+    expect(decided.mode).toBe('incremental');
+    expect(decided.modifiedSince).not.toBeNull();
+    expect(buildCin7ModifiedSinceWhere(decided.modifiedSince!)).toContain("modifieddate>='");
+  });
+
+  it('uses full mode when full=true', () => {
+    const decided = decideCin7SyncMode({
+      forceFull: true,
+      forceRestart: true,
+      status: 'complete',
+      completedAt: new Date(),
+    });
+    expect(decided.mode).toBe('full');
+    expect(decided.modifiedSince).toBeNull();
+  });
+
+  it('resumes incomplete runs from checkpoint', () => {
+    const decided = decideCin7SyncMode({
+      forceFull: false,
+      forceRestart: false,
+      status: 'incomplete',
+      completedAt: null,
+    });
+    expect(decided.mode).toBe('resume');
   });
 });
 
