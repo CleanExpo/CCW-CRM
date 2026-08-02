@@ -1,15 +1,16 @@
+import {
+  delayForRetry,
+  isRetryableHttpStatus,
+  sleepForRetry,
+  type Cin7HttpRetryResult,
+} from '@/lib/integrations/cin7-http-retry';
 import type { NextRequest } from 'next/server';
 
 const OMNI_API_BASE = 'https://api.cin7.com/api';
 const DEFAULT_TIMEOUT_MS = 45_000;
-const DEFAULT_RETRIES = 2;
+const DEFAULT_RETRIES = 4;
 
-type Cin7HttpResult<T> = {
-  ok: boolean;
-  status: number;
-  data: T;
-  error?: string;
-};
+type Cin7HttpResult<T> = Cin7HttpRetryResult<T>;
 
 export type Cin7OmniCredentials = {
   username: string;
@@ -31,10 +32,6 @@ function getCin7RequestRetries(): number {
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return String(error);
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function getCin7OmniCredentials(request?: NextRequest): Cin7OmniCredentials | null {
@@ -65,6 +62,7 @@ export async function cin7OmniGet<T>(
   const p = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
   const url = `${base}${p}`;
   const retries = options?.retries ?? getCin7RequestRetries();
+  let lastRetryAfterMs: number | undefined;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
@@ -80,8 +78,14 @@ export async function cin7OmniGet<T>(
       });
       const data = (await res.json().catch(() => ({}))) as T;
       clearTimeout(timeout);
-      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
-        await sleep(2_000 * (attempt + 1));
+      if (isRetryableHttpStatus(res.status) && attempt < retries) {
+        const waitMs = delayForRetry({
+          status: res.status,
+          attempt,
+          retryAfterHeader: res.headers.get('retry-after'),
+        });
+        lastRetryAfterMs = waitMs;
+        await sleepForRetry(waitMs);
         continue;
       }
       return {
@@ -89,12 +93,18 @@ export async function cin7OmniGet<T>(
         status: res.status,
         data,
         error: res.ok ? undefined : `Cin7 Omni HTTP ${res.status}`,
+        retryAfterMs: res.status === 429 ? lastRetryAfterMs : undefined,
       };
     } catch (error) {
       clearTimeout(timeout);
       const message = getErrorMessage(error);
       if (attempt < retries) {
-        await sleep(1_000 * (attempt + 1));
+        const waitMs = delayForRetry({
+          status: 503,
+          attempt,
+          retryAfterHeader: null,
+        });
+        await sleepForRetry(waitMs);
         continue;
       }
       return {
@@ -111,6 +121,7 @@ export async function cin7OmniGet<T>(
     status: 504,
     data: {} as T,
     error: 'Cin7 Omni request failed after retries.',
+    retryAfterMs: lastRetryAfterMs,
   };
 }
 
@@ -370,14 +381,15 @@ export type Cin7OmniContactSkip = {
 };
 
 function buildOmniContactsPath(page: number, rows: number, whereType?: string): string {
-  const params = new URLSearchParams();
-  params.set('page', String(page));
-  params.set('rows', String(rows));
-  params.set('order', 'id asc');
+  // Build manually: URLSearchParams percent-encodes `=`/`'` inside `where`, which Cin7 Omni
+  // rejects or silently mis-filters. Do not send `order=id asc` (space → false empty pages).
+  const safeRows = Math.max(1, Math.min(250, rows));
+  let path = `/v1/Contacts?page=${page}&rows=${safeRows}`;
   if (whereType) {
-    params.set('where', `type='${whereType}'`);
+    const safeType = whereType.replace(/[^a-zA-Z]/g, '');
+    path += `&where=type='${safeType}'`;
   }
-  return `/v1/Contacts?${params.toString()}`;
+  return path;
 }
 
 export async function fetchOmniContactsPage(
