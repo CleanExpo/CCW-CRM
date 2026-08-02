@@ -137,7 +137,7 @@ describe('client requirement checklist (static)', () => {
   it('contacts fetch uses server-side where filter', async () => {
     const fs = await import('node:fs/promises');
     const src = await fs.readFile(`${REPO_ROOT}/src/lib/integrations/cin7-omni.ts`, 'utf8');
-    expect(src).toContain("params.set('where',");
+    expect(src).toContain("where=type='");
     expect(src).toContain('whereType');
   });
 
@@ -167,6 +167,7 @@ describe('client requirement checklist (static)', () => {
     );
     expect(src).toContain('offset');
     expect(src).toContain("format === 'csv'");
+    expect(src).toContain('buildCin7ExceptionReport');
   });
 
   it('sync route supports Phase 1 reference master data entities', async () => {
