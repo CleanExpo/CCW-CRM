@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import {
   buildCin7ExceptionReport,
   type Cin7ExceptionEntity,
   type Cin7ExceptionRecord,
 } from '@/lib/integrations/cin7-reconciliation';
+import { NextRequest, NextResponse } from 'next/server';
 
 const ENTITIES: Cin7ExceptionEntity[] = [
   'products',
@@ -26,7 +26,9 @@ export const maxDuration = 300;
 function toCsv(items: Cin7ExceptionRecord[]): string {
   const header = 'cin7_id,label,reason,fields,skipped_reason';
   const rows = items.map((row) => {
-    const fields = row.fields?.map((f) => `${f.field}:${f.cin7_value}->${f.optix_value}`).join('; ') ?? '';
+    const fields = Array.isArray(row.fields)
+      ? row.fields.map((f) => `${f.field}:${f.cin7_value}->${f.optix_value}`).join('; ')
+      : '';
     const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
     return [
       escape(row.cin7_id),
