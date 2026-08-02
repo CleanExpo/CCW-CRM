@@ -44,11 +44,16 @@ export interface Cin7SyncLog {
   id: string;
   entity_type: string;
   direction: string;
+  /** never | idle | running | complete | incomplete | failed */
   status: string;
   records_processed: number;
   /** ISO timestamp of last sync; null when the entity has never been synced. */
   synced_at: string | null;
   error_message?: string;
+  last_committed_page?: number;
+  failed_page?: number | null;
+  next_page?: number | null;
+  completed_at?: string | null;
 }
 
 /**
@@ -168,8 +173,24 @@ export async function disconnectCin7(): Promise<{ status: string }> {
   return apiClient.post<{ status: string }>('/api/integrations/cin7/disconnect');
 }
 
+export type Cin7SyncResult = {
+  status: string;
+  records_processed?: number;
+  duration_ms?: number;
+  page_size?: number;
+  cin7_source_styles?: number;
+  skipped?: Record<string, number>;
+  complete?: boolean;
+  next_page?: number | null;
+  failed_page?: number | null;
+  last_committed_page?: number;
+  sync_errors?: string[];
+};
+
 /**
- * Trigger manual sync for a specific entity type
+ * Trigger manual sync for a specific entity type.
+ * Auto-resumes a few chunks while incomplete (interactive default is low so one
+ * click does not run for hours; nightly cron uses its own higher chunk budget).
  */
 export async function triggerCin7Sync(
   entityType:
@@ -186,18 +207,62 @@ export async function triggerCin7Sync(
     | 'units-of-measure'
     | 'stock-levels'
     | 'orders'
-    | 'inventory'
-): Promise<{
-  status: string;
-  records_processed?: number;
-  duration_ms?: number;
-  page_size?: number;
-  cin7_source_styles?: number;
-  skipped?: Record<string, number>;
-  complete?: boolean;
-  sync_errors?: string[];
-}> {
-  return apiClient.post(`/api/integrations/cin7/sync/${entityType}`, undefined, undefined, 300_000);
+    | 'inventory',
+  options?: { restart?: boolean; maxChunks?: number; signal?: AbortSignal }
+): Promise<Cin7SyncResult> {
+  const maxChunks = options?.maxChunks ?? 4;
+  let last: Cin7SyncResult | null = null;
+  // Default resume — never wipe checkpoint unless caller asks for restart.
+  let restart = options?.restart ?? false;
+
+  for (let chunk = 0; chunk < maxChunks; chunk += 1) {
+    if (options?.signal?.aborted) {
+      throw new Error('Sync canceled');
+    }
+    const qs = restart && chunk === 0 ? '?restart=true' : '';
+    try {
+      last = await apiClient.post<Cin7SyncResult>(
+        `/api/integrations/cin7/sync/${entityType}${qs}`,
+        undefined,
+        undefined,
+        300_000
+      );
+    } catch (error: unknown) {
+      // Concurrent sync lock — surface as running, do not keep retrying.
+      if (
+        error &&
+        typeof error === 'object' &&
+        'status' in error &&
+        (error as { status: number }).status === 409
+      ) {
+        return {
+          status: 'running',
+          complete: false,
+          sync_errors: [
+            error instanceof Error ? error.message : 'Sync already in progress for this entity.',
+          ],
+        };
+      }
+      throw error;
+    }
+    restart = false;
+
+    if (last.complete === true || last.status === 'complete') {
+      return last;
+    }
+    if (last.status === 'failed' || last.failed_page != null) {
+      return last;
+    }
+    if (last.status === 'running') {
+      return last;
+    }
+    if (last.complete === false && last.next_page != null) {
+      continue;
+    }
+    return last;
+  }
+
+  return last ?? { status: 'incomplete', complete: false };
 }
 
 export type {
@@ -281,6 +346,23 @@ export async function getCin7SyncLogs(_limit: number = 20): Promise<{ logs: Cin7
   // Must use /sync-history — /sync/logs is gitignored and also collides with POST /sync/[entityType] (405).
   // Server always returns the full entity set; limit is kept for call-site compatibility.
   return apiClient.get(`/api/integrations/cin7/sync-history`);
+}
+
+/** Nightly sync proof ledger (consecutive complete runs). */
+export async function getCin7SyncProof(limit = 10): Promise<{
+  consecutive_complete_count: number;
+  proof_ready: boolean;
+  required_consecutive: number;
+  ledger: Array<{
+    id: string;
+    started_at: string;
+    finished_at: string | null;
+    overall_status: string;
+    consecutive_complete_count: number;
+    entity_results: unknown;
+  }>;
+}> {
+  return apiClient.get(`/api/integrations/cin7/sync-proof?limit=${limit}`);
 }
 
 /**
