@@ -4,6 +4,7 @@ import {
   fetchFullOmniBranchCatalog,
   fetchFullOmniContactsByType,
   fetchFullOmniProductCatalog,
+  getReconCatalogFetchOptions,
   resolveCin7SyncSource,
   type Cin7OmniMasterCatalogs,
 } from '@/lib/integrations/cin7-catalog-fetch';
@@ -18,7 +19,8 @@ import {
   buildReferenceExceptionItems,
   buildReferenceExceptionSummary,
   getCin7ReferenceCounts,
-  getOptixReferenceCounts,
+  loadOptixReferenceSnapshot,
+  referenceCountsFromOptixSnapshot,
   type Cin7ReferenceCounts,
   type Cin7ReferenceExceptionEntity,
   type Cin7ReferenceExceptionSummary,
@@ -114,15 +116,104 @@ function normalize(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
 }
 
+async function loadOptixMasterForReconciliation(ownerUserId: string) {
+  const [
+    productRows,
+    customerRows,
+    internalCustomerRows,
+    supplierRows,
+    branchRows,
+    customerTotal,
+    supplierTotal,
+    referenceSnapshot,
+  ] = await Promise.all([
+    prisma.product.findMany({
+      where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
+      select: {
+        sku: true,
+        name: true,
+        price: true,
+        stock: true,
+        isActive: true,
+        cin7StyleCode: true,
+        cin7Visibility: true,
+        category: true,
+      },
+    }),
+    prisma.customer.findMany({
+      where: {
+        ownerUserId,
+        cin7ContactId: { not: null },
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
+      select: {
+        cin7ContactId: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        city: true,
+      },
+    }),
+    prisma.customer.findMany({
+      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
+      select: {
+        cin7ContactId: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        city: true,
+      },
+    }),
+    prisma.supplier.findMany({
+      where: { ownerUserId, supplierCode: { startsWith: 'cin7:' } },
+      select: { supplierCode: true, companyName: true, email: true, phone: true },
+    }),
+    prisma.cin7Branch.findMany({
+      where: { ownerUserId },
+      select: {
+        cin7BranchId: true,
+        name: true,
+        city: true,
+        state: true,
+        postCode: true,
+        isActive: true,
+      },
+    }),
+    prisma.customer.count({ where: { ownerUserId } }),
+    prisma.supplier.count({ where: { ownerUserId } }),
+    loadOptixReferenceSnapshot(ownerUserId),
+  ]);
+
+  return {
+    productRows,
+    customerRows,
+    internalCustomerRows,
+    internalCustomerCount: internalCustomerRows.length,
+    supplierRows,
+    branchRows,
+    customerTotal,
+    supplierTotal,
+    referenceSnapshot,
+  };
+}
+
 export async function buildCin7Reconciliation(
   ownerUserId: string
 ): Promise<Cin7ReconciliationSnapshot> {
+  const wallStart = Date.now();
   const notes: string[] = [];
   const fetchErrors: string[] = [];
   const coreCreds = getCin7CoreCredentials();
   const omniCreds = getCin7OmniCredentials();
-  const coreLive = coreCreds ? await pingCin7Core(coreCreds) : false;
-  const omniLive = omniCreds ? await pingCin7Omni(omniCreds) : false;
+
+  // Ping Core/Omni in parallel — sequential pings wasted a round-trip.
+  const [coreLive, omniLive] = await Promise.all([
+    coreCreds ? pingCin7Core(coreCreds) : Promise.resolve(false),
+    omniCreds ? pingCin7Omni(omniCreds) : Promise.resolve(false),
+  ]);
   const source = resolveCin7SyncSource(coreLive, omniLive);
 
   const cin7Products = { styles: 0, skus: 0, by_visibility: {} as Record<string, number> };
@@ -155,8 +246,14 @@ export async function buildCin7Reconciliation(
   const fetchMeta: Cin7ReconciliationSnapshot['fetch_meta'] = { errors: [] };
   let omniCatalogs: Cin7OmniMasterCatalogs | null = null;
 
+  // Optix DB work runs in parallel with the Cin7 catalog pull (independent I/O).
+  const optixPromise = loadOptixMasterForReconciliation(ownerUserId);
+
   if (source === 'omni' && omniCreds) {
-    const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    const catalogs = await fetchAllOmniMasterCatalogsSequential(
+      omniCreds,
+      getReconCatalogFetchOptions()
+    );
     omniCatalogs = catalogs;
     const {
       products: productCatalog,
@@ -175,7 +272,9 @@ export async function buildCin7Reconciliation(
       ...customers.errors,
       ...internalCustomers.errors,
       ...suppliers.errors,
-      ...branches.errors
+      ...branches.errors,
+      ...catalogs.stockLevels.errors,
+      ...catalogs.productCategories.errors
     );
 
     cin7Products.styles = productCatalog.styles;
@@ -273,7 +372,8 @@ export async function buildCin7Reconciliation(
     notes.push('Cin7 is not connected — Optix counts only.');
   }
 
-  const [
+  const optixStarted = Date.now();
+  const {
     productRows,
     customerRows,
     internalCustomerRows,
@@ -282,68 +382,9 @@ export async function buildCin7Reconciliation(
     branchRows,
     customerTotal,
     supplierTotal,
-  ] = await Promise.all([
-    prisma.product.findMany({
-      where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
-      select: {
-        sku: true,
-        name: true,
-        price: true,
-        stock: true,
-        isActive: true,
-        cin7StyleCode: true,
-        cin7Visibility: true,
-        category: true,
-      },
-    }),
-    prisma.customer.findMany({
-      where: {
-        ownerUserId,
-        cin7ContactId: { not: null },
-        OR: [
-          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
-          { cin7ContactType: null },
-        ],
-      },
-      select: {
-        cin7ContactId: true,
-        companyName: true,
-        email: true,
-        phone: true,
-        city: true,
-      },
-    }),
-    prisma.customer.findMany({
-      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
-      select: {
-        cin7ContactId: true,
-        companyName: true,
-        email: true,
-        phone: true,
-        city: true,
-      },
-    }),
-    prisma.customer.count({
-      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
-    }),
-    prisma.supplier.findMany({
-      where: { ownerUserId, supplierCode: { startsWith: 'cin7:' } },
-      select: { supplierCode: true, companyName: true, email: true, phone: true },
-    }),
-    prisma.cin7Branch.findMany({
-      where: { ownerUserId },
-      select: {
-        cin7BranchId: true,
-        name: true,
-        city: true,
-        state: true,
-        postCode: true,
-        isActive: true,
-      },
-    }),
-    prisma.customer.count({ where: { ownerUserId } }),
-    prisma.supplier.count({ where: { ownerUserId } }),
-  ]);
+    referenceSnapshot,
+  } = await optixPromise;
+  const optixMs = Date.now() - optixStarted;
 
   const optixByVisibility: Record<string, number> = {};
   const optixStyleCodes = new Set<string>();
@@ -515,8 +556,12 @@ export async function buildCin7Reconciliation(
 
   if (omniCatalogs) {
     referenceCin7 = getCin7ReferenceCounts(omniCatalogs);
-    referenceOptix = await getOptixReferenceCounts(ownerUserId);
-    referenceExceptions = await buildReferenceExceptionSummary(ownerUserId, omniCatalogs);
+    referenceOptix = referenceCountsFromOptixSnapshot(referenceSnapshot);
+    referenceExceptions = await buildReferenceExceptionSummary(
+      ownerUserId,
+      omniCatalogs,
+      referenceSnapshot
+    );
     notes.push(
       'Warehouses in Cin7 Omni map to Branches; stock levels are per branch from /v1/Stock.'
     );
@@ -525,7 +570,7 @@ export async function buildCin7Reconciliation(
     );
   }
 
-  return {
+  const snapshot: Cin7ReconciliationSnapshot = {
     source,
     checked_at: new Date().toISOString(),
     cin7: {
@@ -578,6 +623,13 @@ export async function buildCin7Reconciliation(
     fetch_meta: fetchMeta,
     notes: uniqueNotes(notes),
   };
+
+  console.log(
+    `[Cin7 recon] total=${Date.now() - wallStart}ms optix_await=${optixMs}ms ` +
+      `source=${source} cin7_skus=${cin7Products.skus} cin7_customers=${cin7Customers}`
+  );
+
+  return snapshot;
 }
 
 export async function buildCin7ExceptionReport(
@@ -895,7 +947,10 @@ export async function buildCin7ExceptionReport(
     source === 'omni' &&
     omniCreds
   ) {
-    const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    const catalogs = await fetchAllOmniMasterCatalogsSequential(
+      omniCreds,
+      getReconCatalogFetchOptions()
+    );
     const refItems = await buildReferenceExceptionItems(
       ownerUserId,
       entity as Cin7ReferenceExceptionEntity,
