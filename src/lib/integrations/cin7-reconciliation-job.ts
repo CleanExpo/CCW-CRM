@@ -22,6 +22,7 @@ import {
   getOptixReferenceCounts,
   type Cin7ReferenceCounts,
 } from '@/lib/integrations/cin7-reconciliation-reference';
+import { Prisma } from '@prisma/client';
 
 /** Entities that must have Cin7SyncRun.status === 'complete' before acceptance. */
 export const CIN7_RECON_GATE_ENTITIES = [
@@ -877,7 +878,7 @@ export async function runFailClosedReconciliation(ownerUserId: string): Promise<
         ownerUserId,
         entityType,
         recordCount: built.count,
-        payload: built.payload,
+        payload: built.payload as Prisma.InputJsonValue,
         complete: built.complete,
       },
     });
