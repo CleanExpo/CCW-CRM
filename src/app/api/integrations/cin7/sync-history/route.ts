@@ -1,14 +1,12 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 import { CIN7_SYNCABLE_ENTITY_TYPES } from '@/lib/integrations/cin7-master-entities';
+import { recoverStaleCin7SyncRuns } from '@/lib/integrations/cin7-sync-engine';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Latest Cin7 sync status per entity for the integrations history panel.
- * Path is /sync-history (not /sync/logs) so it is not blocked by the repo `logs/` gitignore,
- * and does not collide with POST /sync/[entityType].
- *
- * Always returns one entry per syncable entity (never-synced entities included with null stats).
+ * Returns real status / checkpoint fields (never forced ok).
  */
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -16,23 +14,32 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
 
-  // Limit is retained for API compatibility; we always cover all syncable entities.
   void request.nextUrl.searchParams.get('limit');
 
   try {
+    // Flip abandoned "running" rows so the UI does not stick on Syncing…
+    await recoverStaleCin7SyncRuns(scope.userId);
+
     const runs = await prisma.cin7SyncRun.findMany({
       where: {
         ownerUserId: scope.userId,
         entityType: { in: [...CIN7_SYNCABLE_ENTITY_TYPES] },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
         entityType: true,
+        status: true,
         recordsProcessed: true,
         durationMs: true,
         source: true,
         createdAt: true,
+        updatedAt: true,
+        completedAt: true,
+        lastCommittedPage: true,
+        nextPage: true,
+        failedPage: true,
+        failureReason: true,
       },
     });
 
@@ -49,16 +56,27 @@ export async function GET(request: NextRequest) {
           records_processed: 0,
           synced_at: null as string | null,
           error_message: undefined as string | undefined,
+          last_committed_page: 0,
+          failed_page: null as number | null,
+          next_page: null as number | null,
+          completed_at: null as string | null,
         };
       }
+      const syncedAt =
+        run.completedAt?.toISOString() ??
+        (run.status === 'complete' ? run.updatedAt.toISOString() : run.updatedAt.toISOString());
       return {
         id: run.id,
         entity_type: run.entityType,
         direction: 'pull',
-        status: 'ok',
+        status: run.status,
         records_processed: run.recordsProcessed,
-        synced_at: run.createdAt.toISOString(),
-        error_message: undefined as string | undefined,
+        synced_at: syncedAt,
+        error_message: run.failureReason ?? undefined,
+        last_committed_page: run.lastCommittedPage,
+        failed_page: run.failedPage,
+        next_page: run.nextPage,
+        completed_at: run.completedAt?.toISOString() ?? null,
       };
     });
 
