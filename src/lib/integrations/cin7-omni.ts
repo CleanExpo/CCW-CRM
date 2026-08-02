@@ -268,11 +268,18 @@ export function flattenOmniProducts(
   return out;
 }
 
+function appendOmniWhere(path: string, where?: string): string {
+  const clause = where?.trim();
+  if (!clause) return path;
+  // Do not URL-encode `=` / `'` — Cin7 Omni rejects percent-encoded where clauses.
+  return `${path}&where=${clause}`;
+}
+
 export async function fetchOmniProductPage(
   creds: Cin7OmniCredentials,
   page: number,
   rows: number,
-  options?: { excludeInactive?: boolean }
+  options?: { excludeInactive?: boolean; where?: string }
 ): Promise<{
   rows: ReturnType<typeof flattenOmniProducts>;
   total: number | null;
@@ -283,7 +290,7 @@ export async function fetchOmniProductPage(
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
   const { ok, status, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Products?page=${page}&rows=${safeRows}`,
+    appendOmniWhere(`/v1/Products?page=${page}&rows=${safeRows}`, options?.where),
     creds
   );
   if (!ok) {
@@ -318,11 +325,12 @@ export async function fetchOmniProductPage(
 export async function fetchOmniProductsRawPage(
   creds: Cin7OmniCredentials,
   page: number,
-  rows: number
+  rows: number,
+  options?: { where?: string }
 ): Promise<{ rows: unknown[]; total: number | null; sourceRowCount: number; error?: string }> {
   const safeRows = Math.max(1, Math.min(250, rows));
   const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Products?page=${page}&rows=${safeRows}`,
+    appendOmniWhere(`/v1/Products?page=${page}&rows=${safeRows}`, options?.where),
     creds
   );
   if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
@@ -380,14 +388,26 @@ export type Cin7OmniContactSkip = {
   reason: 'missing_cin7_id' | 'wrong_contact_type';
 };
 
-function buildOmniContactsPath(page: number, rows: number, whereType?: string): string {
+function buildOmniContactsPath(
+  page: number,
+  rows: number,
+  whereType?: string,
+  extraWhere?: string
+): string {
   // Build manually: URLSearchParams percent-encodes `=`/`'` inside `where`, which Cin7 Omni
   // rejects or silently mis-filters. Do not send `order=id asc` (space → false empty pages).
   const safeRows = Math.max(1, Math.min(250, rows));
   let path = `/v1/Contacts?page=${page}&rows=${safeRows}`;
+  const clauses: string[] = [];
   if (whereType) {
     const safeType = whereType.replace(/[^a-zA-Z]/g, '');
-    path += `&where=type='${safeType}'`;
+    clauses.push(`type='${safeType}'`);
+  }
+  if (extraWhere?.trim()) {
+    clauses.push(extraWhere.trim());
+  }
+  if (clauses.length > 0) {
+    path += `&where=${clauses.join(' AND ')}`;
   }
   return path;
 }
@@ -396,7 +416,7 @@ export async function fetchOmniContactsPage(
   creds: Cin7OmniCredentials,
   page: number,
   rows: number,
-  options?: { allowedTypes?: string[]; whereType?: string }
+  options?: { allowedTypes?: string[]; whereType?: string; where?: string }
 ): Promise<{
   rows: Cin7OmniContactRow[];
   total: number | null;
@@ -409,7 +429,7 @@ export async function fetchOmniContactsPage(
   const safeRows = Math.max(1, Math.min(250, rows));
   const whereType = options?.whereType ?? options?.allowedTypes?.[0];
   const { ok, status, data, error } = await cin7OmniGet<unknown>(
-    buildOmniContactsPath(page, safeRows, whereType),
+    buildOmniContactsPath(page, safeRows, whereType, options?.where),
     creds
   );
   if (!ok) {
@@ -649,7 +669,8 @@ function mapOmniStockRaw(raw: unknown): Cin7OmniStockLevelRow | null {
 export async function fetchOmniStockPage(
   creds: Cin7OmniCredentials,
   page: number,
-  rows: number
+  rows: number,
+  options?: { where?: string }
 ): Promise<{
   rows: Cin7OmniStockLevelRow[];
   total: number | null;
@@ -660,7 +681,7 @@ export async function fetchOmniStockPage(
   // Do not pass an unencoded `order=… asc` — the space breaks the request and Cin7 returns an error
   // that older sync loops treated as an empty catalog (0 records, status ok).
   const { ok, status, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Stock?page=${page}&rows=${safeRows}`,
+    appendOmniWhere(`/v1/Stock?page=${page}&rows=${safeRows}`, options?.where),
     creds
   );
   if (!ok) {
