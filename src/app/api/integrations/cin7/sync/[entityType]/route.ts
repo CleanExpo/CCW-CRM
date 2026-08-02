@@ -41,6 +41,13 @@ import {
   runPagedSyncEngine,
 } from '@/lib/integrations/cin7-sync-engine';
 import {
+  buildCin7ModifiedSinceWhere,
+  decideCin7SyncMode,
+  entitySupportsModifiedSince,
+  floorSyncRecordCount,
+  getOptixEntityRecordCount,
+} from '@/lib/integrations/cin7-sync-incremental';
+import {
   batchUpsertBranches,
   batchUpsertBrands,
   batchUpsertCustomers,
@@ -137,6 +144,8 @@ export async function POST(
   }
 
   const forceRestart = request.nextUrl.searchParams.get('restart') === 'true';
+  // full=true forces a complete catalog walk; default re-sync after complete is incremental.
+  const forceFull = request.nextUrl.searchParams.get('full') === 'true';
   const isCron = Boolean(request.headers.get('authorization')?.startsWith('Bearer '));
   const timeBudgetMs = getCin7SyncTimeBudgetMs(isCron ? 'cron' : 'interactive');
 
@@ -211,12 +220,43 @@ export async function POST(
     run = { ...run, status: 'incomplete' };
   }
 
-  const resetCheckpoint =
-    forceRestart || run.status === 'complete' || run.status === 'failed' || run.status === 'idle';
-  const startPage = resetCheckpoint ? 1 : resolveSyncStartPage(run);
-  const priorRecords = resetCheckpoint ? 0 : run.recordsProcessed;
+  const optixFloor = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+  const { mode: syncMode, modifiedSince } = decideCin7SyncMode({
+    forceFull,
+    forceRestart,
+    status: run.status,
+    completedAt: run.completedAt,
+  });
+  const incrementalWhere =
+    syncMode === 'incremental' &&
+    modifiedSince &&
+    entitySupportsModifiedSince(entityType) &&
+    useOmni
+      ? buildCin7ModifiedSinceWhere(modifiedSince)
+      : null;
 
-  await markCin7SyncRunRunning({ runId: run.id, resetCheckpoint });
+  const resetCheckpoint =
+    syncMode === 'full' ||
+    syncMode === 'incremental' ||
+    forceRestart ||
+    run.status === 'complete' ||
+    run.status === 'failed' ||
+    run.status === 'idle';
+  const startPage = syncMode === 'resume' ? resolveSyncStartPage(run) : 1;
+  // Additive: never start the counter below Optix; resume keeps the higher of Optix/run.
+  const priorRecords =
+    syncMode === 'resume' ? Math.max(optixFloor, run.recordsProcessed) : optixFloor;
+
+  await markCin7SyncRunRunning({
+    runId: run.id,
+    resetCheckpoint,
+    recordFloor: optixFloor,
+  });
+
+  console.log(
+    `[Cin7 sync] ${rawEntityType}: mode=${syncMode}` +
+      `${incrementalWhere ? ` where=${incrementalWhere}` : ''} optix_floor=${optixFloor}`
+  );
 
   // Tax codes: one-shot from contacts + branches (not paged). The old BRANCH_BASE
   // page bridge jumped early on short Cin7 pages and left status stuck incomplete.
@@ -248,10 +288,15 @@ export async function POST(
       });
       const durationMs = Date.now() - startedAt;
       if (errors.length > 0 && taxCodes.length === 0) {
+        const floored = floorSyncRecordCount({
+          optixCount: optixFloor,
+          thisRunProcessed: 0,
+          previousFloor: optixFloor,
+        });
         await persistCin7SyncRunCheckpoint({
           runId: run.id,
           status: 'incomplete',
-          recordsProcessed: 0,
+          recordsProcessed: floored,
           pagesFetched,
           lastCommittedPage: 0,
           nextPage: 1,
@@ -262,7 +307,7 @@ export async function POST(
         });
         return jsonSyncResult({
           status: 'incomplete',
-          recordsProcessed: 0,
+          recordsProcessed: floored,
           durationMs,
           pageSize,
           complete: false,
@@ -272,7 +317,13 @@ export async function POST(
           skipped,
         });
       }
-      const recordsProcessed = await batchUpsertTaxCodes(scope.userId, taxCodes);
+      await batchUpsertTaxCodes(scope.userId, taxCodes);
+      const optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+      const recordsProcessed = floorSyncRecordCount({
+        optixCount: optixAfter,
+        thisRunProcessed: taxCodes.length,
+        previousFloor: optixFloor,
+      });
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
         status: 'complete',
@@ -304,7 +355,7 @@ export async function POST(
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
         status: 'failed',
-        recordsProcessed: 0,
+        recordsProcessed: optixFloor,
         pagesFetched: 0,
         lastCommittedPage: 0,
         nextPage: 1,
@@ -315,7 +366,7 @@ export async function POST(
       });
       return jsonSyncResult({
         status: 'failed',
-        recordsProcessed: 0,
+        recordsProcessed: optixFloor,
         durationMs,
         pageSize,
         complete: false,
@@ -327,7 +378,7 @@ export async function POST(
     }
   }
 
-  // Orders: count-only, single shot (no paging).
+  // Orders: count-only, single shot (no paging). Cin7 Total is the confirmed source count.
   if (entityType === 'orders') {
     const startedAt = Date.now();
     let recordsProcessed = 0;
@@ -425,7 +476,7 @@ export async function POST(
           omniCreds,
           page,
           pageSize,
-          { excludeInactive: false }
+          { excludeInactive: false, where: incrementalWhere ?? undefined }
         );
         return {
           sourceRowCount,
@@ -457,7 +508,10 @@ export async function POST(
     } else if (useOmni && omniCreds) {
       fetchPage = async (page) => {
         const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords, error } =
-          await fetchOmniContactsPage(omniCreds, page, pageSize, { whereType: contactType });
+          await fetchOmniContactsPage(omniCreds, page, pageSize, {
+            whereType: contactType,
+            where: incrementalWhere ?? undefined,
+          });
         return {
           sourceRowCount,
           error,
@@ -504,7 +558,10 @@ export async function POST(
     if (useOmni && omniCreds) {
       fetchPage = async (page) => {
         const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords, error } =
-          await fetchOmniContactsPage(omniCreds, page, pageSize, { whereType: 'Supplier' });
+          await fetchOmniContactsPage(omniCreds, page, pageSize, {
+            whereType: 'Supplier',
+            where: incrementalWhere ?? undefined,
+          });
         return {
           sourceRowCount,
           error,
@@ -558,7 +615,8 @@ export async function POST(
         const { rows, sourceRowCount, error } = await fetchOmniProductsRawPage(
           omniCreds,
           page,
-          pageSize
+          pageSize,
+          { where: incrementalWhere ?? undefined }
         );
         return {
           sourceRowCount,
@@ -596,7 +654,12 @@ export async function POST(
       hardError = 'Stock level sync requires Cin7 Omni (/v1/Stock).';
     } else {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, error } = await fetchOmniStockPage(omniCreds, page, pageSize);
+        const { rows, sourceRowCount, error } = await fetchOmniStockPage(
+          omniCreds,
+          page,
+          pageSize,
+          { where: incrementalWhere ?? undefined }
+        );
         return {
           sourceRowCount,
           error,
@@ -613,7 +676,7 @@ export async function POST(
     await persistCin7SyncRunCheckpoint({
       runId: run.id,
       status: 'failed',
-      recordsProcessed: 0,
+      recordsProcessed: optixFloor,
       pagesFetched: 0,
       lastCommittedPage: 0,
       nextPage: 1,
@@ -629,7 +692,7 @@ export async function POST(
     await persistCin7SyncRunCheckpoint({
       runId: run.id,
       status: 'failed',
-      recordsProcessed: 0,
+      recordsProcessed: optixFloor,
       pagesFetched: 0,
       lastCommittedPage: 0,
       nextPage: 1,
@@ -683,6 +746,8 @@ export async function POST(
     pageGapMs,
     maxPages,
     priorRecordsProcessed: priorRecords,
+    recordFloor: optixFloor,
+    refreshRecordCount: () => getOptixEntityRecordCount(scope.userId, rawEntityType),
     fetchPage,
   });
 
@@ -723,18 +788,15 @@ export async function POST(
     }
   }
 
-  // Normalize derived-entity counters to unique Optix set size (not summed page upserts).
-  if (
-    result.status === 'complete' &&
-    (entityType === 'brands' || entityType === 'price-lists' || entityType === 'units-of-measure')
-  ) {
-    const uniqueCount =
-      entityType === 'brands'
-        ? derivedAccum.brands.size
-        : entityType === 'price-lists'
-          ? derivedAccum.priceColumns.size
-          : derivedAccum.unitsOfMeasure.size;
-    result = { ...result, recordsProcessed: uniqueCount };
+  // Authoritative Optix count — never report below existing stored rows (additive sync).
+  {
+    const optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+    const floored = floorSyncRecordCount({
+      optixCount: optixAfter,
+      thisRunProcessed: result.recordsProcessed,
+      previousFloor: optixFloor,
+    });
+    result = { ...result, recordsProcessed: floored };
   }
 
   // Attach skipped + source on final checkpoint write.
