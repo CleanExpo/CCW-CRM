@@ -39,6 +39,13 @@ export type RunPagedSyncEngineInput = {
   fetchPage: (page: number) => Promise<PagedSyncPageResult>;
   /** Prior cumulative records from earlier chunks (resume). */
   priorRecordsProcessed?: number;
+  /**
+   * Optional live Optix count after each page. When set, Recent sync shows the
+   * authoritative Optix size (never dips below previous Optix data).
+   */
+  refreshRecordCount?: () => Promise<number>;
+  /** Minimum records_processed while running (additive sync floor). */
+  recordFloor?: number;
 };
 
 export type RunPagedSyncEngineResult = {
@@ -104,6 +111,7 @@ export async function loadOrCreateCin7SyncRun(input: {
   pagesFetched: number;
   attemptCount: number;
   startedAt: Date | null;
+  completedAt: Date | null;
   updatedAt: Date;
 }> {
   const existing = await prisma.cin7SyncRun.findFirst({
@@ -121,6 +129,7 @@ export async function loadOrCreateCin7SyncRun(input: {
       pagesFetched: existing.pagesFetched,
       attemptCount: existing.attemptCount,
       startedAt: existing.startedAt,
+      completedAt: existing.completedAt,
       updatedAt: existing.updatedAt,
     };
   }
@@ -147,6 +156,7 @@ export async function loadOrCreateCin7SyncRun(input: {
     pagesFetched: created.pagesFetched,
     attemptCount: created.attemptCount,
     startedAt: created.startedAt,
+    completedAt: created.completedAt,
     updatedAt: created.updatedAt,
   };
 }
@@ -204,7 +214,10 @@ export function isCin7SyncRunStaleRunning(
 export async function markCin7SyncRunRunning(input: {
   runId: string;
   resetCheckpoint: boolean;
+  /** Never drop the displayed count below Optix / prior floor (additive sync). */
+  recordFloor?: number;
 }): Promise<void> {
+  const floor = Math.max(0, input.recordFloor ?? 0);
   await prisma.cin7SyncRun.update({
     where: { id: input.runId },
     data: {
@@ -217,7 +230,8 @@ export async function markCin7SyncRunRunning(input: {
         ? {
             lastCommittedPage: 0,
             nextPage: 1,
-            recordsProcessed: 0,
+            // Keep the floor so Recent sync never flashes a lower count mid-run.
+            recordsProcessed: floor,
             pagesFetched: 0,
           }
         : {}),
@@ -274,7 +288,8 @@ export async function runPagedSyncEngine(
 
   let page = Math.max(1, input.startPage);
   let lastCommittedPage = Math.max(0, page - 1);
-  let recordsProcessed = input.priorRecordsProcessed ?? 0;
+  const recordFloor = Math.max(0, input.recordFloor ?? 0);
+  let recordsProcessed = Math.max(recordFloor, input.priorRecordsProcessed ?? 0);
   let pagesFetched = 0;
   let emptyRetries = 0;
   let emptyEofHits = 0;
@@ -461,7 +476,12 @@ export async function runPagedSyncEngine(
     try {
       const persistResult = await fetched.persist();
       const pageRecords = persistResult.recordsProcessed;
-      recordsProcessed += pageRecords;
+      if (input.refreshRecordCount) {
+        const live = await input.refreshRecordCount();
+        recordsProcessed = Math.max(recordFloor, live, recordsProcessed);
+      } else {
+        recordsProcessed = Math.max(recordFloor, recordsProcessed + pageRecords);
+      }
       lastCommittedPage = persistResult.lastCommittedPageOverride ?? page;
       const nextPageAfterCommit = persistResult.nextPageOverride ?? page + 1;
       await prisma.cin7SyncRun.update({
@@ -479,7 +499,7 @@ export async function runPagedSyncEngine(
         entityType: input.entityType,
         runId: input.runId,
         level: 'info',
-        message: `Committed page ${page} (+${pageRecords} records).`,
+        message: `Committed page ${page} (+${pageRecords} upserts; count=${recordsProcessed}).`,
         page,
       });
       // Multi-feed jump (e.g. tax contacts → branches).
