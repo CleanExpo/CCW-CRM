@@ -1,7 +1,8 @@
 import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
+import { prisma } from '@/lib/db/prisma';
 import {
-  fetchDerivedReferenceCatalog,
-  fetchFullOmniProductsRawCatalog,
+  fetchFullOmniBranchCatalog,
+  fetchFullOmniContactsByType,
   getCatalogPageGapMs,
   mapPriceColumnLabels,
   resolveCin7SyncSource,
@@ -16,21 +17,29 @@ import {
 import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
 import {
   extractReferenceDataFromProducts,
+  extractTaxCodesFromContactsAndBranches,
   fetchOmniBranchesPage,
   fetchOmniContactsPage,
   fetchOmniProductCategoriesPage,
   fetchOmniProductPage,
+  fetchOmniProductsRawPage,
   fetchOmniSalesOrderCount,
   fetchOmniStockPage,
   getCin7OmniCredentials,
   pingCin7Omni,
 } from '@/lib/integrations/cin7-omni';
 import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
+import { getCin7PageSize, getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 import {
-  getCin7PageSize,
-  getCin7SyncMaxPages,
-  shouldContinueCin7SyncPage,
-} from '@/lib/integrations/cin7-sync-config';
+  getCin7SyncTimeBudgetMs,
+  isCin7SyncRunStaleRunning,
+  loadOrCreateCin7SyncRun,
+  markCin7SyncRunRunning,
+  persistCin7SyncRunCheckpoint,
+  recoverStaleCin7SyncRuns,
+  resolveSyncStartPage,
+  runPagedSyncEngine,
+} from '@/lib/integrations/cin7-sync-engine';
 import {
   batchUpsertBranches,
   batchUpsertBrands,
@@ -49,14 +58,11 @@ import {
   mapOmniProductRows,
   mapOmniStockLevelRows,
   mapOmniSupplierRows,
-  recordCin7SyncRun,
   type Cin7SyncSkipInput,
 } from '@/lib/integrations/cin7-sync-persist';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
-
-const MAX_PAGES = getCin7SyncMaxPages();
 
 type SyncSkipped = {
   wrong_contact_type: number;
@@ -64,6 +70,34 @@ type SyncSkipped = {
   inactive_products: number;
   missing_core_id: number;
 };
+
+function jsonSyncResult(input: {
+  status: string;
+  recordsProcessed: number;
+  durationMs: number;
+  pageSize: number;
+  complete: boolean;
+  nextPage: number | null;
+  failedPage: number | null;
+  syncErrors: string[];
+  skipped: SyncSkipped;
+  cin7SourceStyles?: number;
+  lastCommittedPage?: number;
+}) {
+  return NextResponse.json({
+    status: input.status,
+    records_processed: input.recordsProcessed,
+    cin7_source_styles: input.cin7SourceStyles || undefined,
+    skipped: input.skipped,
+    duration_ms: input.durationMs,
+    page_size: input.pageSize,
+    complete: input.complete,
+    next_page: input.nextPage,
+    failed_page: input.failedPage,
+    last_committed_page: input.lastCommittedPage,
+    sync_errors: input.syncErrors.length > 0 ? input.syncErrors.slice(0, 20) : undefined,
+  });
+}
 
 export async function POST(
   request: NextRequest,
@@ -102,6 +136,10 @@ export async function POST(
     return NextResponse.json({ detail: 'Unsupported entity type' }, { status: 400 });
   }
 
+  const forceRestart = request.nextUrl.searchParams.get('restart') === 'true';
+  const isCron = Boolean(request.headers.get('authorization')?.startsWith('Bearer '));
+  const timeBudgetMs = getCin7SyncTimeBudgetMs(isCron ? 'cron' : 'interactive');
+
   const coreCreds = getCin7CoreCredentials(request);
   const omniCreds = getCin7OmniCredentials(request);
 
@@ -123,8 +161,8 @@ export async function POST(
   }
 
   const pageSize = getCin7PageSize();
-  let recordsProcessed = 0;
-  let cin7SourceStyles = 0;
+  const maxPages = getCin7SyncMaxPages();
+  const pageGapMs = getCatalogPageGapMs();
   const skipped: SyncSkipped = {
     wrong_contact_type: 0,
     missing_cin7_id: 0,
@@ -132,320 +170,627 @@ export async function POST(
     missing_core_id: 0,
   };
   const skipRecords: Cin7SyncSkipInput[] = [];
-  const syncErrors: string[] = [];
-  const pageGapMs = getCatalogPageGapMs();
-  const startedAt = Date.now();
-  let syncComplete = true;
+  let cin7SourceStyles = 0;
 
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  await recoverStaleCin7SyncRuns(scope.userId);
 
-  /** Empty page after a fetch error is NOT end-of-catalog — retry then stop incomplete. */
-  const handleEmptyPage = async (
-    page: number,
-    error: string | undefined,
-    emptyRetries: { count: number }
-  ): Promise<'retry' | 'eof' | 'stop'> => {
-    if (error) {
-      syncErrors.push(`Page ${page}: ${error}`);
-      if (emptyRetries.count < 4) {
-        emptyRetries.count += 1;
-        syncErrors.push(`Page ${page}: empty after error — retry ${emptyRetries.count}/4`);
-        await sleep(Math.max(pageGapMs, 300) * (emptyRetries.count + 2));
-        return 'retry';
-      }
-      syncComplete = false;
-      return 'stop';
+  let run = await loadOrCreateCin7SyncRun({
+    ownerUserId: scope.userId,
+    entityType: rawEntityType,
+  });
+
+  // Block concurrent sync of the same entity (prevents multi-click pileups).
+  if (run.status === 'running' && !isCin7SyncRunStaleRunning(run) && !forceRestart) {
+    return NextResponse.json(
+      {
+        status: 'running',
+        detail:
+          'Sync already in progress for this entity. Wait for it to finish or retry in a few minutes.',
+        complete: false,
+        records_processed: run.recordsProcessed,
+        next_page: run.nextPage,
+        last_committed_page: run.lastCommittedPage,
+      },
+      { status: 409 }
+    );
+  }
+
+  // Stale running → treat as incomplete resume.
+  if (run.status === 'running' && isCin7SyncRunStaleRunning(run)) {
+    await persistCin7SyncRunCheckpoint({
+      runId: run.id,
+      status: 'incomplete',
+      recordsProcessed: run.recordsProcessed,
+      pagesFetched: run.pagesFetched,
+      lastCommittedPage: run.lastCommittedPage,
+      nextPage: run.nextPage ?? run.lastCommittedPage + 1,
+      failedPage: null,
+      failureReason: 'Sync abandoned (stale running) — resuming.',
+      durationMs: 0,
+    });
+    run = { ...run, status: 'incomplete' };
+  }
+
+  const resetCheckpoint =
+    forceRestart || run.status === 'complete' || run.status === 'failed' || run.status === 'idle';
+  const startPage = resetCheckpoint ? 1 : resolveSyncStartPage(run);
+  const priorRecords = resetCheckpoint ? 0 : run.recordsProcessed;
+
+  await markCin7SyncRunRunning({ runId: run.id, resetCheckpoint });
+
+  // Tax codes: one-shot from contacts + branches (not paged). The old BRANCH_BASE
+  // page bridge jumped early on short Cin7 pages and left status stuck incomplete.
+  if (entityType === 'tax-codes') {
+    const startedAt = Date.now();
+    if (!useOmni || !omniCreds) {
+      await persistCin7SyncRunCheckpoint({
+        runId: run.id,
+        status: 'failed',
+        recordsProcessed: 0,
+        pagesFetched: 0,
+        lastCommittedPage: 0,
+        nextPage: 1,
+        failedPage: 1,
+        failureReason: 'Tax code sync requires Cin7 Omni.',
+        durationMs: 0,
+        source: sourceKind,
+      });
+      return NextResponse.json({ detail: 'Tax code sync requires Cin7 Omni.' }, { status: 400 });
     }
-    return 'eof';
+    try {
+      const customers = await fetchFullOmniContactsByType(omniCreds, ['Customer']);
+      const branches = await fetchFullOmniBranchCatalog(omniCreds);
+      const pagesFetched = customers.pages_fetched + branches.pages_fetched;
+      const errors = [...customers.errors, ...branches.errors];
+      const taxCodes = extractTaxCodesFromContactsAndBranches({
+        contacts: customers.contacts,
+        branches: branches.branches,
+      });
+      const durationMs = Date.now() - startedAt;
+      if (errors.length > 0 && taxCodes.length === 0) {
+        await persistCin7SyncRunCheckpoint({
+          runId: run.id,
+          status: 'incomplete',
+          recordsProcessed: 0,
+          pagesFetched,
+          lastCommittedPage: 0,
+          nextPage: 1,
+          failedPage: 1,
+          failureReason: errors.slice(0, 3).join('; '),
+          durationMs,
+          source: sourceKind,
+        });
+        return jsonSyncResult({
+          status: 'incomplete',
+          recordsProcessed: 0,
+          durationMs,
+          pageSize,
+          complete: false,
+          nextPage: 1,
+          failedPage: 1,
+          syncErrors: errors.slice(0, 20),
+          skipped,
+        });
+      }
+      const recordsProcessed = await batchUpsertTaxCodes(scope.userId, taxCodes);
+      await persistCin7SyncRunCheckpoint({
+        runId: run.id,
+        status: 'complete',
+        recordsProcessed,
+        pagesFetched,
+        lastCommittedPage: Math.max(1, pagesFetched),
+        nextPage: null,
+        failedPage: null,
+        failureReason: errors.length > 0 ? errors.slice(0, 3).join('; ') : null,
+        durationMs,
+        source: sourceKind,
+      });
+      clearCachedReconciliation(scope.userId);
+      return jsonSyncResult({
+        status: 'complete',
+        recordsProcessed,
+        durationMs,
+        pageSize,
+        complete: true,
+        nextPage: null,
+        failedPage: null,
+        syncErrors: errors.slice(0, 20),
+        skipped,
+        lastCommittedPage: Math.max(1, pagesFetched),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const durationMs = Date.now() - startedAt;
+      await persistCin7SyncRunCheckpoint({
+        runId: run.id,
+        status: 'failed',
+        recordsProcessed: 0,
+        pagesFetched: 0,
+        lastCommittedPage: 0,
+        nextPage: 1,
+        failedPage: 1,
+        failureReason: message,
+        durationMs,
+        source: sourceKind,
+      });
+      return jsonSyncResult({
+        status: 'failed',
+        recordsProcessed: 0,
+        durationMs,
+        pageSize,
+        complete: false,
+        nextPage: 1,
+        failedPage: 1,
+        syncErrors: [message],
+        skipped,
+      });
+    }
+  }
+
+  // Orders: count-only, single shot (no paging).
+  if (entityType === 'orders') {
+    const startedAt = Date.now();
+    let recordsProcessed = 0;
+    try {
+      if (useCore && coreCreds) {
+        recordsProcessed = await fetchCin7SaleTotal(coreCreds);
+      } else if (useOmni && omniCreds) {
+        recordsProcessed = await fetchOmniSalesOrderCount(omniCreds);
+      }
+      const durationMs = Date.now() - startedAt;
+      await persistCin7SyncRunCheckpoint({
+        runId: run.id,
+        status: 'complete',
+        recordsProcessed,
+        pagesFetched: 1,
+        lastCommittedPage: 1,
+        nextPage: null,
+        failedPage: null,
+        failureReason: null,
+        durationMs,
+        source: sourceKind,
+      });
+      clearCachedReconciliation(scope.userId);
+      return jsonSyncResult({
+        status: 'complete',
+        recordsProcessed,
+        durationMs,
+        pageSize,
+        complete: true,
+        nextPage: null,
+        failedPage: null,
+        syncErrors: [],
+        skipped,
+        lastCommittedPage: 1,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const durationMs = Date.now() - startedAt;
+      await persistCin7SyncRunCheckpoint({
+        runId: run.id,
+        status: 'failed',
+        recordsProcessed: 0,
+        pagesFetched: 0,
+        lastCommittedPage: 0,
+        nextPage: 1,
+        failedPage: 1,
+        failureReason: message,
+        durationMs,
+        source: sourceKind,
+      });
+      return jsonSyncResult({
+        status: 'failed',
+        recordsProcessed: 0,
+        durationMs,
+        pageSize,
+        complete: false,
+        nextPage: 1,
+        failedPage: 1,
+        syncErrors: [message],
+        skipped,
+      });
+    }
+  }
+
+  // Accumulator for derived reference entities across product pages.
+  const derivedAccum = {
+    brands: new Set<string>(),
+    priceColumns: new Set<string>(),
+    unitsOfMeasure: new Set<string>(),
   };
+
+  type EngineFetch = Parameters<typeof runPagedSyncEngine>[0]['fetchPage'];
+
+  let fetchPage: EngineFetch | null = null;
+  let hardError: string | null = null;
+
   if (entityType === 'products') {
     if (useCore && coreCreds) {
-      for (let page = 1; page <= MAX_PAGES; page += 1) {
+      fetchPage = async (page) => {
         const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
-        if (rows.length === 0) break;
-        cin7SourceStyles += rows.length;
-        recordsProcessed += await batchUpsertProducts(scope.userId, mapCoreProductRows(rows));
-        if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, MAX_PAGES)) break;
-      }
+        return {
+          sourceRowCount: rows.length,
+          error: undefined,
+          persist: async () => {
+            cin7SourceStyles += rows.length;
+            const n = await batchUpsertProducts(scope.userId, mapCoreProductRows(rows));
+            void total;
+            return { recordsProcessed: n };
+          },
+        };
+      };
     } else if (useOmni && omniCreds) {
-      type OmniProductPage = Awaited<ReturnType<typeof fetchOmniProductPage>>;
-      let nextFetch: Promise<OmniProductPage> = fetchOmniProductPage(omniCreds, 1, pageSize, {
-        excludeInactive: false,
-      });
-      const emptyRetries = { count: 0 };
-
-      for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, sourceRowCount, skippedInactive, error } = await nextFetch;
-        if (sourceRowCount === 0) {
-          const action = await handleEmptyPage(page, error, emptyRetries);
-          if (action === 'retry') {
-            nextFetch = fetchOmniProductPage(omniCreds, page, pageSize, {
-              excludeInactive: false,
-            });
-            page -= 1;
-            continue;
-          }
-          break;
-        }
-        emptyRetries.count = 0;
-
-        skipped.inactive_products += skippedInactive;
-        cin7SourceStyles += sourceRowCount;
-
-        const nextPage = page + 1;
-        nextFetch =
-          nextPage <= MAX_PAGES
-            ? fetchOmniProductPage(omniCreds, nextPage, pageSize, { excludeInactive: false })
-            : Promise.resolve({
-                rows: [],
-                total: null,
-                sourceRowCount: 0,
-                skippedInactive: 0,
-              });
-
-        recordsProcessed += await batchUpsertProducts(scope.userId, mapOmniProductRows(rows));
-        if (sourceRowCount < pageSize) break;
-        if (page >= MAX_PAGES) break;
-      }
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, skippedInactive, error } = await fetchOmniProductPage(
+          omniCreds,
+          page,
+          pageSize,
+          { excludeInactive: false }
+        );
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            skipped.inactive_products += skippedInactive;
+            cin7SourceStyles += sourceRowCount;
+            const n = await batchUpsertProducts(scope.userId, mapOmniProductRows(rows));
+            return { recordsProcessed: n };
+          },
+        };
+      };
     }
   } else if (entityType === 'customers' || entityType === 'internal-customers') {
     const contactType = entityType === 'internal-customers' ? 'Internal' : 'Customer';
     if (useCore && coreCreds && entityType === 'customers') {
-      for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total } = await fetchCin7CustomerPage(coreCreds, page, pageSize);
-        if (rows.length === 0) break;
-        const mapped = mapCoreCustomerRows(rows);
-        skipped.missing_core_id += rows.length - mapped.length;
-        recordsProcessed += await batchUpsertCustomers(scope.userId, mapped);
-        if (!shouldContinueCin7SyncPage(page, pageSize, rows.length, total, MAX_PAGES)) break;
-      }
+      fetchPage = async (page) => {
+        const { rows } = await fetchCin7CustomerPage(coreCreds, page, pageSize);
+        return {
+          sourceRowCount: rows.length,
+          persist: async () => {
+            const mapped = mapCoreCustomerRows(rows);
+            skipped.missing_core_id += rows.length - mapped.length;
+            const n = await batchUpsertCustomers(scope.userId, mapped);
+            return { recordsProcessed: n };
+          },
+        };
+      };
     } else if (useOmni && omniCreds) {
-      type OmniContactPage = Awaited<ReturnType<typeof fetchOmniContactsPage>>;
-      let nextFetch: Promise<OmniContactPage> = fetchOmniContactsPage(omniCreds, 1, pageSize, {
-        whereType: contactType,
-      });
-
-      for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords } =
-          await nextFetch;
-        if (sourceRowCount === 0) break;
-
-        skipped.missing_cin7_id += skippedMissingId;
-        skipped.wrong_contact_type += skippedWrongType;
-        for (const record of skippedRecords) {
-          skipRecords.push({
-            cin7Id: record.cin7Id ?? `page-${page}-missing-id`,
-            label: record.label,
-            reason: record.reason,
-          });
-        }
-
-        const nextPage = page + 1;
-        nextFetch =
-          nextPage <= MAX_PAGES
-            ? pageGapMs > 0
-              ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
-                  fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType })
-                )
-              : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: contactType })
-            : Promise.resolve({
-                rows: [],
-                total: null,
-                sourceRowCount: 0,
-                skippedWrongType: 0,
-                skippedMissingId: 0,
-                skippedRecords: [],
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords, error } =
+          await fetchOmniContactsPage(omniCreds, page, pageSize, { whereType: contactType });
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            skipped.missing_cin7_id += skippedMissingId;
+            skipped.wrong_contact_type += skippedWrongType;
+            for (const record of skippedRecords) {
+              skipRecords.push({
+                cin7Id: record.cin7Id ?? `page-${page}-missing-id`,
+                label: record.label,
+                reason: record.reason,
               });
-
-        recordsProcessed += await batchUpsertCustomers(scope.userId, mapOmniCustomerRows(rows));
-        if (sourceRowCount < pageSize) break;
-        if (page >= MAX_PAGES) break;
-      }
+            }
+            const n = await batchUpsertCustomers(scope.userId, mapOmniCustomerRows(rows));
+            return { recordsProcessed: n };
+          },
+        };
+      };
     } else if (entityType === 'internal-customers') {
-      return NextResponse.json(
-        { detail: 'Internal customer sync requires Cin7 Omni.' },
-        { status: 400 }
-      );
+      hardError = 'Internal customer sync requires Cin7 Omni.';
     }
-  } else if (entityType === 'branches' || entityType === 'warehouses') {
+  } else if (entityType === 'branches') {
     if (useOmni && omniCreds) {
-      for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, total, sourceRowCount, skippedMissingId } = await fetchOmniBranchesPage(
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, skippedMissingId, error } = await fetchOmniBranchesPage(
           omniCreds,
           page,
           pageSize
         );
-        if (sourceRowCount === 0) break;
-        skipped.missing_cin7_id += skippedMissingId;
-        recordsProcessed += await batchUpsertBranches(scope.userId, mapOmniBranchRows(rows));
-        if (sourceRowCount < pageSize) break;
-        if (page >= MAX_PAGES) break;
-      }
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            skipped.missing_cin7_id += skippedMissingId;
+            const n = await batchUpsertBranches(scope.userId, mapOmniBranchRows(rows));
+            return { recordsProcessed: n };
+          },
+        };
+      };
     } else {
-      return NextResponse.json(
-        { detail: 'Branch sync requires Cin7 Omni (/v1/Branches).' },
-        { status: 400 }
-      );
+      hardError = 'Branch sync requires Cin7 Omni (/v1/Branches).';
     }
   } else if (entityType === 'suppliers') {
     if (useOmni && omniCreds) {
-      type OmniContactPage = Awaited<ReturnType<typeof fetchOmniContactsPage>>;
-      let nextFetch: Promise<OmniContactPage> = fetchOmniContactsPage(omniCreds, 1, pageSize, {
-        whereType: 'Supplier',
-      });
-
-      for (let page = 1; page <= MAX_PAGES; page += 1) {
-        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords } =
-          await nextFetch;
-        if (sourceRowCount === 0) break;
-
-        skipped.missing_cin7_id += skippedMissingId;
-        skipped.wrong_contact_type += skippedWrongType;
-        for (const record of skippedRecords) {
-          skipRecords.push({
-            cin7Id: record.cin7Id ?? `page-${page}-missing-id`,
-            label: record.label,
-            reason: record.reason,
-          });
-        }
-
-        const nextPage = page + 1;
-        nextFetch =
-          nextPage <= MAX_PAGES
-            ? pageGapMs > 0
-              ? new Promise((resolve) => setTimeout(resolve, pageGapMs)).then(() =>
-                  fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' })
-                )
-              : fetchOmniContactsPage(omniCreds, nextPage, pageSize, { whereType: 'Supplier' })
-            : Promise.resolve({
-                rows: [],
-                total: null,
-                sourceRowCount: 0,
-                skippedWrongType: 0,
-                skippedMissingId: 0,
-                skippedRecords: [],
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords, error } =
+          await fetchOmniContactsPage(omniCreds, page, pageSize, { whereType: 'Supplier' });
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            skipped.missing_cin7_id += skippedMissingId;
+            skipped.wrong_contact_type += skippedWrongType;
+            for (const record of skippedRecords) {
+              skipRecords.push({
+                cin7Id: record.cin7Id ?? `page-${page}-missing-id`,
+                label: record.label,
+                reason: record.reason,
               });
-
-        recordsProcessed += await batchUpsertSuppliers(scope.userId, mapOmniSupplierRows(rows));
-        if (sourceRowCount < pageSize) break;
-        if (page >= MAX_PAGES) break;
-      }
+            }
+            const n = await batchUpsertSuppliers(scope.userId, mapOmniSupplierRows(rows));
+            return { recordsProcessed: n };
+          },
+        };
+      };
     } else {
-      return NextResponse.json(
-        { detail: 'Supplier sync requires Cin7 Omni (contact type Supplier).' },
-        { status: 400 }
-      );
+      hardError = 'Supplier sync requires Cin7 Omni (contact type Supplier).';
     }
   } else if (entityType === 'product-categories') {
     if (!useOmni || !omniCreds) {
-      return NextResponse.json(
-        { detail: 'Product category sync requires Cin7 Omni (/v1/ProductCategories).' },
-        { status: 400 }
-      );
+      hardError = 'Product category sync requires Cin7 Omni (/v1/ProductCategories).';
+    } else {
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, error } = await fetchOmniProductCategoriesPage(
+          omniCreds,
+          page,
+          pageSize
+        );
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            const n = await batchUpsertProductCategories(scope.userId, rows);
+            return { recordsProcessed: n };
+          },
+        };
+      };
     }
-    for (let page = 1; page <= MAX_PAGES; page += 1) {
-      const { rows, sourceRowCount } = await fetchOmniProductCategoriesPage(
-        omniCreds,
-        page,
-        pageSize
-      );
-      if (sourceRowCount === 0) break;
-      recordsProcessed += await batchUpsertProductCategories(scope.userId, rows);
-      if (sourceRowCount < pageSize) break;
-      if (page >= MAX_PAGES) break;
-    }
-  } else if (entityType === 'brands') {
+  } else if (
+    entityType === 'brands' ||
+    entityType === 'price-lists' ||
+    entityType === 'units-of-measure'
+  ) {
     if (!useOmni || !omniCreds) {
-      return NextResponse.json({ detail: 'Brand sync requires Cin7 Omni.' }, { status: 400 });
+      hardError = `${entityType} sync requires Cin7 Omni.`;
+    } else {
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, error } = await fetchOmniProductsRawPage(
+          omniCreds,
+          page,
+          pageSize
+        );
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            const extracted = extractReferenceDataFromProducts(rows);
+            // Count only newly discovered keys — re-upserting the full unique set each
+            // page was inflating Recent sync (e.g. 400 / 4606) far above Optix rows.
+            const brandsBefore = derivedAccum.brands.size;
+            const priceBefore = derivedAccum.priceColumns.size;
+            const uomBefore = derivedAccum.unitsOfMeasure.size;
+            for (const b of extracted.brands) derivedAccum.brands.add(b);
+            for (const c of extracted.priceColumns) derivedAccum.priceColumns.add(c);
+            for (const u of extracted.unitsOfMeasure) derivedAccum.unitsOfMeasure.add(u);
+
+            if (entityType === 'brands') {
+              await batchUpsertBrands(scope.userId, [...derivedAccum.brands].sort());
+              return { recordsProcessed: derivedAccum.brands.size - brandsBefore };
+            }
+            if (entityType === 'price-lists') {
+              await batchUpsertPriceLists(
+                scope.userId,
+                mapPriceColumnLabels([...derivedAccum.priceColumns].sort())
+              );
+              return { recordsProcessed: derivedAccum.priceColumns.size - priceBefore };
+            }
+            await batchUpsertUnitsOfMeasure(scope.userId, [...derivedAccum.unitsOfMeasure].sort());
+            return { recordsProcessed: derivedAccum.unitsOfMeasure.size - uomBefore };
+          },
+        };
+      };
     }
-    const raw = await fetchFullOmniProductsRawCatalog(omniCreds);
-    const { brands } = extractReferenceDataFromProducts(raw.styles);
-    recordsProcessed = await batchUpsertBrands(scope.userId, brands);
-  } else if (entityType === 'price-lists') {
-    if (!useOmni || !omniCreds) {
-      return NextResponse.json({ detail: 'Price list sync requires Cin7 Omni.' }, { status: 400 });
-    }
-    const derived = await fetchDerivedReferenceCatalog(omniCreds);
-    recordsProcessed = await batchUpsertPriceLists(
-      scope.userId,
-      mapPriceColumnLabels(derived.priceColumns)
-    );
-  } else if (entityType === 'tax-codes') {
-    if (!useOmni || !omniCreds) {
-      return NextResponse.json({ detail: 'Tax code sync requires Cin7 Omni.' }, { status: 400 });
-    }
-    const derived = await fetchDerivedReferenceCatalog(omniCreds);
-    recordsProcessed = await batchUpsertTaxCodes(scope.userId, derived.taxCodes);
-  } else if (entityType === 'units-of-measure') {
-    if (!useOmni || !omniCreds) {
-      return NextResponse.json(
-        { detail: 'Unit of measure sync requires Cin7 Omni.' },
-        { status: 400 }
-      );
-    }
-    const raw = await fetchFullOmniProductsRawCatalog(omniCreds);
-    const { unitsOfMeasure } = extractReferenceDataFromProducts(raw.styles);
-    recordsProcessed = await batchUpsertUnitsOfMeasure(scope.userId, unitsOfMeasure);
   } else if (entityType === 'stock-levels') {
     if (!useOmni || !omniCreds) {
-      return NextResponse.json(
-        { detail: 'Stock level sync requires Cin7 Omni (/v1/Stock).' },
-        { status: 400 }
-      );
-    }
-    const emptyRetries = { count: 0 };
-    for (let page = 1; page <= MAX_PAGES; page += 1) {
-      if (page > 1 && pageGapMs > 0) await sleep(pageGapMs);
-      const { rows, sourceRowCount, error } = await fetchOmniStockPage(omniCreds, page, pageSize);
-      if (sourceRowCount === 0) {
-        const action = await handleEmptyPage(page, error, emptyRetries);
-        if (action === 'retry') {
-          page -= 1;
-          continue;
-        }
-        break;
-      }
-      emptyRetries.count = 0;
-      recordsProcessed += await batchUpsertStockLevels(scope.userId, mapOmniStockLevelRows(rows));
-      if (sourceRowCount < pageSize) break;
-      if (page >= MAX_PAGES) break;
-    }
-  } else if (entityType === 'orders') {
-    if (useCore && coreCreds) {
-      recordsProcessed = await fetchCin7SaleTotal(coreCreds);
-    } else if (useOmni && omniCreds) {
-      recordsProcessed = await fetchOmniSalesOrderCount(omniCreds);
+      hardError = 'Stock level sync requires Cin7 Omni (/v1/Stock).';
+    } else {
+      fetchPage = async (page) => {
+        const { rows, sourceRowCount, error } = await fetchOmniStockPage(omniCreds, page, pageSize);
+        return {
+          sourceRowCount,
+          error,
+          persist: async () => {
+            const n = await batchUpsertStockLevels(scope.userId, mapOmniStockLevelRows(rows));
+            return { recordsProcessed: n };
+          },
+        };
+      };
     }
   }
 
-  const durationMs = Date.now() - startedAt;
-  const source = sourceKind;
-  console.log(
-    `[Cin7 sync] ${entityType}: ${recordsProcessed} records in ${durationMs}ms (${source})`
-  );
+  if (hardError) {
+    await persistCin7SyncRunCheckpoint({
+      runId: run.id,
+      status: 'failed',
+      recordsProcessed: 0,
+      pagesFetched: 0,
+      lastCommittedPage: 0,
+      nextPage: 1,
+      failedPage: 1,
+      failureReason: hardError,
+      durationMs: 0,
+      source: sourceKind,
+    });
+    return NextResponse.json({ detail: hardError }, { status: 400 });
+  }
 
-  await recordCin7SyncRun({
+  if (!fetchPage) {
+    await persistCin7SyncRunCheckpoint({
+      runId: run.id,
+      status: 'failed',
+      recordsProcessed: 0,
+      pagesFetched: 0,
+      lastCommittedPage: 0,
+      nextPage: 1,
+      failedPage: 1,
+      failureReason: 'No fetch strategy for entity/source combination.',
+      durationMs: 0,
+      source: sourceKind,
+    });
+    return NextResponse.json(
+      { detail: 'No fetch strategy for entity/source combination.' },
+      { status: 400 }
+    );
+  }
+
+  // For derived entities on resume, reload prior Optix sets so accum isn't empty.
+  if (
+    !resetCheckpoint &&
+    (entityType === 'brands' || entityType === 'price-lists' || entityType === 'units-of-measure')
+  ) {
+    // Accumulators restart empty within a process; upserts are full-set replaces of discovered
+    // keys from pages in this chunk only. On resume mid-catalog, re-scan from startPage and
+    // merge with DB-existing names so we don't wipe earlier pages.
+    if (entityType === 'brands') {
+      const existing = await prisma.cin7Brand.findMany({
+        where: { ownerUserId: scope.userId },
+        select: { name: true },
+      });
+      for (const row of existing) derivedAccum.brands.add(row.name);
+    } else if (entityType === 'price-lists') {
+      const existing = await prisma.cin7PriceList.findMany({
+        where: { ownerUserId: scope.userId },
+        select: { cin7PriceColumn: true },
+      });
+      for (const row of existing) derivedAccum.priceColumns.add(row.cin7PriceColumn);
+    } else if (entityType === 'units-of-measure') {
+      const existing = await prisma.cin7UnitOfMeasure.findMany({
+        where: { ownerUserId: scope.userId },
+        select: { code: true },
+      });
+      for (const row of existing) derivedAccum.unitsOfMeasure.add(row.code);
+    }
+  }
+
+  let result = await runPagedSyncEngine({
     ownerUserId: scope.userId,
     entityType: rawEntityType,
-    recordsProcessed,
+    runId: run.id,
+    startPage,
+    timeBudgetMs,
+    pageSize,
+    pageGapMs,
+    maxPages,
+    priorRecordsProcessed: priorRecords,
+    fetchPage,
+  });
+
+  // Price lists recon includes customer PriceColumn values; product scan alone misses those.
+  if (entityType === 'price-lists' && result.status === 'complete' && useOmni && omniCreds) {
+    try {
+      const customers = await fetchFullOmniContactsByType(omniCreds, ['Customer']);
+      const before = derivedAccum.priceColumns.size;
+      for (const contact of customers.contacts) {
+        const col = contact.priceColumn?.trim();
+        if (col) derivedAccum.priceColumns.add(col);
+      }
+      await batchUpsertPriceLists(
+        scope.userId,
+        mapPriceColumnLabels([...derivedAccum.priceColumns].sort())
+      );
+      const added = derivedAccum.priceColumns.size - before;
+      result = {
+        ...result,
+        recordsProcessed: derivedAccum.priceColumns.size,
+        syncErrors: [...result.syncErrors, ...customers.errors].slice(0, 20),
+      };
+      if (added > 0) {
+        console.log(
+          `[Cin7 sync] price-lists: merged ${added} customer price columns → ${derivedAccum.priceColumns.size} total`
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      result = {
+        ...result,
+        status: 'incomplete',
+        complete: false,
+        nextPage: result.lastCommittedPage > 0 ? result.lastCommittedPage + 1 : 1,
+        failureReason: `Product price columns synced; customer price columns failed: ${message}`,
+        syncErrors: [...result.syncErrors, message].slice(0, 20),
+      };
+    }
+  }
+
+  // Normalize derived-entity counters to unique Optix set size (not summed page upserts).
+  if (
+    result.status === 'complete' &&
+    (entityType === 'brands' || entityType === 'price-lists' || entityType === 'units-of-measure')
+  ) {
+    const uniqueCount =
+      entityType === 'brands'
+        ? derivedAccum.brands.size
+        : entityType === 'price-lists'
+          ? derivedAccum.priceColumns.size
+          : derivedAccum.unitsOfMeasure.size;
+    result = { ...result, recordsProcessed: uniqueCount };
+  }
+
+  // Attach skipped + source on final checkpoint write.
+  await persistCin7SyncRunCheckpoint({
+    runId: run.id,
+    status: result.status,
+    recordsProcessed: result.recordsProcessed,
+    pagesFetched: result.pagesFetched,
+    lastCommittedPage: result.lastCommittedPage,
+    nextPage: result.nextPage,
+    failedPage: result.failedPage,
+    failureReason: result.failureReason,
+    durationMs: result.durationMs,
     skipped,
-    skipRecords,
-    durationMs,
-    source,
-  }).catch(() => undefined);
+    source: sourceKind,
+  });
+
+  if (skipRecords.length > 0) {
+    await prisma.cin7SyncSkipRecord
+      .deleteMany({ where: { syncRunId: run.id } })
+      .catch(() => undefined);
+    const batchSize = 500;
+    for (let i = 0; i < skipRecords.length; i += batchSize) {
+      const chunk = skipRecords.slice(i, i + batchSize);
+      await prisma.cin7SyncSkipRecord
+        .createMany({
+          data: chunk.map((row) => ({
+            ownerUserId: scope.userId,
+            syncRunId: run.id,
+            entityType: rawEntityType,
+            cin7Id: row.cin7Id,
+            label: row.label,
+            reason: row.reason,
+          })),
+        })
+        .catch(() => undefined);
+    }
+  }
 
   clearCachedReconciliation(scope.userId);
 
-  const failedEmpty = recordsProcessed === 0 && (syncErrors.length > 0 || !syncComplete);
+  console.log(
+    `[Cin7 sync] ${rawEntityType}: status=${result.status} records=${result.recordsProcessed} page=${result.lastCommittedPage} in ${result.durationMs}ms (${sourceKind})`
+  );
 
-  return NextResponse.json({
-    status: failedEmpty ? 'error' : syncComplete ? 'ok' : 'incomplete',
-    records_processed: recordsProcessed,
-    cin7_source_styles: cin7SourceStyles || undefined,
+  return jsonSyncResult({
+    status: result.status,
+    recordsProcessed: result.recordsProcessed,
+    durationMs: result.durationMs,
+    pageSize,
+    complete: result.complete,
+    nextPage: result.nextPage,
+    failedPage: result.failedPage,
+    syncErrors: result.syncErrors,
     skipped,
-    duration_ms: durationMs,
-    page_size: pageSize,
-    complete: syncComplete && !failedEmpty,
-    sync_errors: syncErrors.length > 0 ? syncErrors.slice(0, 20) : undefined,
+    cin7SourceStyles,
+    lastCommittedPage: result.lastCommittedPage,
   });
 }
