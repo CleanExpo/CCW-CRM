@@ -29,6 +29,8 @@ import {
   type Cin7SyncLog,
 } from '@/lib/api/cin7';
 
+import { Cin7ScheduledSyncRunner } from './Cin7ScheduledSyncRunner';
+
 interface Cin7SyncControlsProps {
   isConnected: boolean;
 }
@@ -73,8 +75,12 @@ const SYNC_ENTITIES: {
   { key: 'units-of-measure', label: 'UOM', icon: Ruler, color: 'text-lime-600' },
   { key: 'stock-levels', label: 'Stock', icon: Boxes, color: 'text-orange-600' },
   { key: 'orders', label: 'Orders', icon: ShoppingCart, color: 'text-purple-600' },
+  // inventory aliases stock-levels on the server; kept as its own sync/history row.
   { key: 'inventory', label: 'Inventory', icon: Boxes, color: 'text-orange-500' },
 ];
+
+/** Always shown in Recent sync (includes Orders + Inventory). */
+const RECENT_SYNC_ENTITIES = SYNC_ENTITIES;
 
 function formatLogTime(iso: string | null | undefined): string {
   if (!iso) return 'Never synced';
@@ -90,11 +96,12 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   const { toast } = useToast();
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [polling, setPolling] = useState(false);
+  const [scheduledBusy, setScheduledBusy] = useState(false);
   const [logsByEntity, setLogsByEntity] = useState<Record<string, Cin7SyncLog>>({});
   const [logsLoading, setLogsLoading] = useState(false);
 
   const anySyncing = Object.values(syncing).some(Boolean);
-  const syncActionsLocked = anySyncing || polling;
+  const syncActionsLocked = anySyncing || polling || scheduledBusy;
 
   const loadLogs = useCallback(async () => {
     setLogsLoading(true);
@@ -118,28 +125,59 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
     }
   }, [isConnected, loadLogs]);
 
-  const handleSync = async (entityType: Cin7SyncEntityKey) => {
+  const handleSync = async (
+    entityType: Cin7SyncEntityKey,
+    options?: { forceRestart?: boolean }
+  ) => {
     if (syncActionsLocked) return;
     setSyncing((prev) => ({ ...prev, [entityType]: true }));
     try {
-      const result = await triggerCin7Sync(entityType);
+      const prior = logsByEntity[entityType];
+      // Resume incomplete/running; only restart when never synced, complete, failed, or forced.
+      const restart =
+        options?.forceRestart === true ||
+        !prior ||
+        prior.status === 'never' ||
+        prior.status === 'complete' ||
+        prior.status === 'failed' ||
+        prior.status === 'idle';
+      const result = await triggerCin7Sync(entityType, { restart, maxChunks: 4 });
       const durationSec =
         result.duration_ms != null ? (result.duration_ms / 1000).toFixed(1) : null;
       const count = result.records_processed ?? 0;
       const rateLimited = (result.sync_errors ?? []).some((e) => /429|rate-?limit/i.test(e));
+      if (result.status === 'running') {
+        toast({
+          title: 'Sync already running',
+          description:
+            result.sync_errors?.[0] ||
+            `${entityType} is already syncing. Wait for it to finish, then refresh.`,
+        });
+        await loadLogs();
+        return;
+      }
+      const failed =
+        result.status === 'failed' ||
+        result.status === 'error' ||
+        (result.complete === false && result.failed_page != null);
+      const incomplete = result.status === 'incomplete' || result.complete === false;
       const failedEmpty =
-        count === 0 &&
-        (result.status === 'error' ||
-          result.complete === false ||
-          (result.sync_errors?.length ?? 0) > 0);
+        count === 0 && (failed || incomplete || (result.sync_errors?.length ?? 0) > 0);
 
-      if (failedEmpty) {
+      if (failed || failedEmpty) {
         toast({
           variant: 'destructive',
-          title: rateLimited ? 'Cin7 rate-limited' : 'Sync returned no records',
+          title: rateLimited ? 'Cin7 rate-limited' : failed ? 'Sync failed' : 'Sync incomplete',
           description:
             result.sync_errors?.slice(0, 2).join(' ') ||
-            `${entityType} synced 0 records. Wait a minute and retry — Cin7 may be throttling or the request failed.`,
+            `${entityType}: ${result.status}${
+              result.failed_page != null ? ` (page ${result.failed_page})` : ''
+            }. ${count} records. Click Sync again to resume from page ${result.next_page ?? '—'}.`,
+        });
+      } else if (incomplete) {
+        toast({
+          title: 'Sync paused — click again to continue',
+          description: `${entityType} paused at page ${result.next_page ?? '—'}. ${count} records stored. Resume continues from the checkpoint (not page 1).`,
         });
       } else {
         toast({
@@ -218,6 +256,14 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Cin7ScheduledSyncRunner
+          isConnected={isConnected}
+          manualBusy={anySyncing || polling}
+          onScheduledBusyChange={setScheduledBusy}
+          onLogsMayHaveChanged={() => {
+            void loadLogs();
+          }}
+        />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {SYNC_ENTITIES.map(({ key, label, icon: Icon, color }) => {
             const isSyncing = syncing[key] ?? false;
@@ -254,17 +300,26 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               {logsLoading ? 'Loading…' : 'Refresh'}
             </Button>
           </div>
-          <ul className="max-h-64 space-y-1.5 overflow-y-auto">
-            {SYNC_ENTITIES.map(({ key, label }) => {
+          <ul className="space-y-1.5">
+            {RECENT_SYNC_ENTITIES.map(({ key, label }) => {
               const log = logsByEntity[key];
               const isSyncing = syncing[key] ?? false;
-              const neverSynced = !log || log.status === 'never' || !log.synced_at;
+              const neverSynced = !log || log.status === 'never';
+              const status = log?.status ?? 'never';
+              const statusTone =
+                status === 'complete'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : status === 'failed'
+                    ? 'text-destructive'
+                    : status === 'incomplete' || status === 'running'
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-muted-foreground';
               return (
                 <li
                   key={key}
                   className="flex items-center justify-between gap-2 text-xs tabular-nums"
                 >
-                  <span className="text-muted-foreground shrink-0 font-medium">{label}</span>
+                  <span className="text-muted-foreground shrink-0 font-medium">Sync {label}</span>
                   <span className="text-right">
                     {isSyncing ? (
                       <span className="text-amber-600 dark:text-amber-400">Syncing…</span>
@@ -272,7 +327,12 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
                       <span className="text-muted-foreground">Not synced yet</span>
                     ) : (
                       <>
-                        {log.records_processed.toLocaleString()} · {formatLogTime(log.synced_at)}
+                        <span className={statusTone}>{status}</span>
+                        {' · '}
+                        {log.records_processed.toLocaleString()}
+                        {log.failed_page != null ? ` · fail p${log.failed_page}` : ''}
+                        {' · '}
+                        {formatLogTime(log.synced_at)}
                       </>
                     )}
                   </span>
