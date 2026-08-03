@@ -208,18 +208,23 @@ export async function triggerCin7Sync(
     | 'stock-levels'
     | 'orders'
     | 'inventory',
-  options?: { restart?: boolean; maxChunks?: number; signal?: AbortSignal }
+  options?: { restart?: boolean; full?: boolean; maxChunks?: number; signal?: AbortSignal }
 ): Promise<Cin7SyncResult> {
   const maxChunks = options?.maxChunks ?? 4;
   let last: Cin7SyncResult | null = null;
   // Default resume — never wipe checkpoint unless caller asks for restart.
   let restart = options?.restart ?? false;
+  const forceFull = options?.full === true;
 
   for (let chunk = 0; chunk < maxChunks; chunk += 1) {
     if (options?.signal?.aborted) {
       throw new Error('Sync canceled');
     }
-    const qs = restart && chunk === 0 ? '?restart=true' : '';
+    const params = new URLSearchParams();
+    if (restart && chunk === 0) params.set('restart', 'true');
+    // full=true on every chunk of a forced full walk (mode is re-evaluated each request).
+    if (forceFull) params.set('full', 'true');
+    const qs = params.toString() ? `?${params.toString()}` : '';
     try {
       last = await apiClient.post<Cin7SyncResult>(
         `/api/integrations/cin7/sync/${entityType}${qs}`,
