@@ -11,6 +11,8 @@ export type Cin7SyncRunStatus = 'idle' | 'running' | 'complete' | 'incomplete' |
 export type PagedSyncPageResult = {
   /** Raw rows returned by Cin7 for this page (0 = empty). */
   sourceRowCount: number;
+  /** Authoritative Cin7 Total when the API envelope provides it. */
+  total?: number | null;
   /** HTTP / fetch error message when the page could not be trusted. */
   error?: string;
   /** Persist this page into Optix. Must throw or return on failure. */
@@ -293,6 +295,8 @@ export async function runPagedSyncEngine(
   let pagesFetched = 0;
   let emptyRetries = 0;
   let emptyEofHits = 0;
+  let sourceRowsFetched = 0;
+  let reportedTotal: number | null = null;
   const syncErrors: string[] = [];
 
   const budgetExceeded = () => Date.now() - startedAt >= input.timeBudgetMs;
@@ -435,6 +439,43 @@ export async function runPagedSyncEngine(
         continue;
       }
 
+      // Empty pages before Cin7's reported Total → false EOF; keep resumable.
+      if (reportedTotal != null && reportedTotal > 0 && sourceRowsFetched + 5 < reportedTotal) {
+        const failureReason = `Empty page at ${page} but only fetched ${sourceRowsFetched}/${reportedTotal} source rows — not complete.`;
+        const durationMs = Date.now() - startedAt;
+        await persistCin7SyncRunCheckpoint({
+          runId: input.runId,
+          status: 'incomplete',
+          recordsProcessed,
+          pagesFetched: lastCommittedPage,
+          lastCommittedPage,
+          nextPage: page,
+          failedPage: null,
+          failureReason,
+          durationMs,
+        });
+        await appendCin7SyncJobLog({
+          ownerUserId: input.ownerUserId,
+          entityType: input.entityType,
+          runId: input.runId,
+          level: 'warn',
+          message: failureReason,
+          page,
+        });
+        return {
+          status: 'incomplete',
+          recordsProcessed,
+          pagesFetched: lastCommittedPage,
+          lastCommittedPage,
+          nextPage: page,
+          failedPage: null,
+          failureReason,
+          syncErrors,
+          complete: false,
+          durationMs,
+        };
+      }
+
       // Clean EOF
       const durationMs = Date.now() - startedAt;
       await persistCin7SyncRunCheckpoint({
@@ -472,6 +513,10 @@ export async function runPagedSyncEngine(
 
     emptyRetries = 0;
     emptyEofHits = 0;
+    sourceRowsFetched += fetched.sourceRowCount;
+    if (typeof fetched.total === 'number' && fetched.total > 0) {
+      reportedTotal = Math.max(reportedTotal ?? 0, fetched.total);
+    }
 
     try {
       const persistResult = await fetched.persist();
