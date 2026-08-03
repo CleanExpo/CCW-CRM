@@ -134,11 +134,19 @@ describe('client requirement checklist (static)', () => {
     expect(src).not.toContain('idByEmail');
   });
 
-  it('contacts fetch uses server-side where filter', async () => {
+  it('contacts sync filters type in memory (not Omni where=type)', async () => {
     const fs = await import('node:fs/promises');
-    const src = await fs.readFile(`${REPO_ROOT}/src/lib/integrations/cin7-omni.ts`, 'utf8');
-    expect(src).toContain("where=type='");
-    expect(src).toContain('whereType');
+    const omni = await fs.readFile(`${REPO_ROOT}/src/lib/integrations/cin7-omni.ts`, 'utf8');
+    const route = await fs.readFile(
+      `${REPO_ROOT}/src/app/api/integrations/cin7/sync/[entityType]/route.ts`,
+      'utf8'
+    );
+    // whereType remains available for optional callers, but sync must use allowedTypes only.
+    expect(omni).toContain('whereType');
+    expect(omni).toContain('Do NOT infer whereType from allowedTypes');
+    expect(route).toContain('allowedTypes: [contactType]');
+    expect(route).not.toMatch(/whereType:\s*contactType/);
+    expect(route).not.toMatch(/whereType:\s*'Supplier'/);
   });
 
   it('reconciliation fetches catalogs sequentially', async () => {
