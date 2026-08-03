@@ -34,17 +34,36 @@ export function resolveIncrementalWatermark(completedAt: Date | null | undefined
  * - incomplete/running → resume checkpoint
  * - complete + not full → incremental (ModifiedDate), never wipe Optix
  * - failed/idle/never/full → full page scan (still upsert-only)
+ * - complete but Optix still short of a known Cin7 total → full (backfill gap)
  */
 export function decideCin7SyncMode(input: {
   forceFull: boolean;
   forceRestart: boolean;
   status: string;
   completedAt: Date | null | undefined;
+  /** Live Optix rows for this entity (when available). */
+  optixCount?: number;
+  /** Last known Cin7 total (e.g. from recon cache). */
+  expectedSourceCount?: number | null;
+  /** Tolerate small timing drift between recon and sync. */
+  shortfallTolerance?: number;
 }): { mode: Cin7SyncMode; modifiedSince: Date | null } {
   if (input.status === 'incomplete' || input.status === 'running') {
     return { mode: 'resume', modifiedSince: null };
   }
   if (input.forceFull) {
+    return { mode: 'full', modifiedSince: null };
+  }
+  const tolerance = input.shortfallTolerance ?? 5;
+  const expected = input.expectedSourceCount;
+  const optix = input.optixCount;
+  if (
+    typeof expected === 'number' &&
+    expected > 0 &&
+    typeof optix === 'number' &&
+    optix + tolerance < expected
+  ) {
+    // Prior "complete" left a recon gap — ModifiedDate deltas will never backfill missing IDs.
     return { mode: 'full', modifiedSince: null };
   }
   // Re-running a completed entity: prefer incremental unless explicitly full.
@@ -55,6 +74,60 @@ export function decideCin7SyncMode(input: {
     }
   }
   return { mode: 'full', modifiedSince: null };
+}
+
+/** Map sync entity → Cin7 count on a live recon snapshot (null when N/A). */
+export function expectedCin7CountFromRecon(
+  entityType: string,
+  snapshot:
+    | {
+        cin7: {
+          customers: number;
+          internal_customers: number;
+          suppliers: number;
+          products: { skus: number };
+          branches: number;
+          reference: {
+            brands: number;
+            price_lists: number;
+            tax_codes: number;
+            units_of_measure: number;
+            stock_levels: number;
+            product_categories: number;
+          } | null;
+        };
+      }
+    | null
+    | undefined
+): number | null {
+  if (!snapshot) return null;
+  const resolved = resolveCin7SyncEntityAlias(entityType);
+  switch (resolved) {
+    case 'customers':
+      return snapshot.cin7.customers;
+    case 'internal-customers':
+      return snapshot.cin7.internal_customers;
+    case 'suppliers':
+      return snapshot.cin7.suppliers;
+    case 'products':
+      return snapshot.cin7.products.skus;
+    case 'branches':
+      return snapshot.cin7.branches;
+    case 'brands':
+      return snapshot.cin7.reference?.brands ?? null;
+    case 'price-lists':
+      return snapshot.cin7.reference?.price_lists ?? null;
+    case 'tax-codes':
+      return snapshot.cin7.reference?.tax_codes ?? null;
+    case 'units-of-measure':
+      return snapshot.cin7.reference?.units_of_measure ?? null;
+    case 'stock-levels':
+      return snapshot.cin7.reference?.stock_levels ?? null;
+    case 'product-categories':
+      return snapshot.cin7.reference?.product_categories ?? null;
+    default:
+      return null;
+  }
 }
 
 /** Live Optix row count for the sync entity (authoritative for UI). */
@@ -125,14 +198,15 @@ export function floorSyncRecordCount(input: {
   return Math.max(0, input.optixCount, input.thisRunProcessed, input.previousFloor ?? 0);
 }
 
-/** Entities that support Omni `modifieddate>=` filters for incremental pulls. */
+/**
+ * Entities that support Omni `modifieddate>=` filters for incremental pulls.
+ * Contact entities are excluded: a prior short "complete" + ModifiedDate deltas
+ * never backfills IDs that were never imported (recon gap stuck forever).
+ */
 export function entitySupportsModifiedSince(entityType: string): boolean {
   const resolved = resolveCin7SyncEntityAlias(entityType);
   return (
     resolved === 'products' ||
-    resolved === 'customers' ||
-    resolved === 'internal-customers' ||
-    resolved === 'suppliers' ||
     resolved === 'brands' ||
     resolved === 'price-lists' ||
     resolved === 'units-of-measure' ||
