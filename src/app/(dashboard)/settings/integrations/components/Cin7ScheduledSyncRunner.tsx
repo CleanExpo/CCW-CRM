@@ -58,8 +58,13 @@ export function Cin7ScheduledSyncRunner({
       for (let click = 0; click < maxClicks; click += 1) {
         setActiveEntity(entityType);
         setStatusLine(`Syncing ${entityType.replace(/-/g, ' ')}…`);
+        const contactFull =
+          entityType === 'customers' ||
+          entityType === 'internal-customers' ||
+          entityType === 'suppliers';
         const result = await triggerCin7Sync(entityType, {
           restart,
+          full: contactFull,
           maxChunks: 4,
         });
         restart = false;
