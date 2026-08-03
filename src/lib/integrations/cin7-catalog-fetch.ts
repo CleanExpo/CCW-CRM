@@ -249,20 +249,22 @@ export async function fetchFullOmniProductCatalog(
   };
 }
 
-/** Full Cin7 Omni contacts filtered by business contact type (Customer, Supplier, Internal). */
+/**
+ * Full Cin7 Omni contacts filtered by business contact type (Customer, Supplier, Internal).
+ * Walks the unfiltered Contacts feed and filters in memory — same approach as live recon.
+ * Omni's server-side `where=type='…'` under-counts and must not be used for catalog completeness.
+ */
 export async function fetchFullOmniContactsByType(
   creds: Cin7OmniCredentials,
   allowedTypes: string[],
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { contacts: Cin7OmniContactRow[] }> {
-  const whereType = allowedTypes[0];
   const { items, pages_fetched, errors } = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
       const result = await fetchOmniContactsPage(creds, page, getCin7PageSize(), {
-        whereType,
         allowedTypes,
       });
       return {
