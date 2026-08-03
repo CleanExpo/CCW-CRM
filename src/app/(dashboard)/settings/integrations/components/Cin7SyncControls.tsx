@@ -141,7 +141,16 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
         prior.status === 'complete' ||
         prior.status === 'failed' ||
         prior.status === 'idle';
-      const result = await triggerCin7Sync(entityType, { restart, maxChunks: 4 });
+      // Contact entities: always full catalog walk (Omni type filter under-counts; deltas won't backfill).
+      const contactFull =
+        entityType === 'customers' ||
+        entityType === 'internal-customers' ||
+        entityType === 'suppliers';
+      const result = await triggerCin7Sync(entityType, {
+        restart,
+        full: contactFull || options?.forceRestart === true,
+        maxChunks: 4,
+      });
       const durationSec =
         result.duration_ms != null ? (result.duration_ms / 1000).toFixed(1) : null;
       const count = result.records_processed ?? 0;
@@ -306,14 +315,25 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               const isSyncing = syncing[key] ?? false;
               const neverSynced = !log || log.status === 'never';
               const status = log?.status ?? 'never';
+              // idle = run row exists but never finished; show clearer label than raw "idle".
+              const statusLabel =
+                status === 'idle'
+                  ? log && log.records_processed > 0
+                    ? 'stopped'
+                    : 'not started'
+                  : status;
               const statusTone =
                 status === 'complete'
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : status === 'failed'
                     ? 'text-destructive'
-                    : status === 'incomplete' || status === 'running'
+                    : status === 'incomplete' || status === 'running' || status === 'idle'
                       ? 'text-amber-600 dark:text-amber-400'
                       : 'text-muted-foreground';
+              const failPageNote =
+                (status === 'failed' || status === 'incomplete') && log?.failed_page != null
+                  ? ` · fail p${log.failed_page}`
+                  : '';
               return (
                 <li
                   key={key}
@@ -327,10 +347,10 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
                       <span className="text-muted-foreground">Not synced yet</span>
                     ) : (
                       <>
-                        <span className={statusTone}>{status}</span>
+                        <span className={statusTone}>{statusLabel}</span>
                         {' · '}
                         {log.records_processed.toLocaleString()}
-                        {log.failed_page != null ? ` · fail p${log.failed_page}` : ''}
+                        {failPageNote}
                         {' · '}
                         {formatLogTime(log.synced_at)}
                       </>
