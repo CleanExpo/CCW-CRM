@@ -328,6 +328,19 @@ describe('additive / incremental sync guards', () => {
     expect(buildCin7ModifiedSinceWhere(decided.modifiedSince!)).toContain("modifieddate>='");
   });
 
+  it('forces full mode when Optix is short of a known Cin7 total', () => {
+    const decided = decideCin7SyncMode({
+      forceFull: false,
+      forceRestart: true,
+      status: 'complete',
+      completedAt: new Date('2026-08-01T00:00:00Z'),
+      optixCount: 30_345,
+      expectedSourceCount: 30_957,
+    });
+    expect(decided.mode).toBe('full');
+    expect(decided.modifiedSince).toBeNull();
+  });
+
   it('uses full mode when full=true', () => {
     const decided = decideCin7SyncMode({
       forceFull: true,
