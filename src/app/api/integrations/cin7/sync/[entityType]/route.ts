@@ -28,7 +28,10 @@ import {
   getCin7OmniCredentials,
   pingCin7Omni,
 } from '@/lib/integrations/cin7-omni';
-import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
+import {
+  clearCachedReconciliation,
+  getCachedReconciliation,
+} from '@/lib/integrations/cin7-reconciliation-cache';
 import { getCin7PageSize, getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 import {
   getCin7SyncTimeBudgetMs,
@@ -44,6 +47,7 @@ import {
   buildCin7ModifiedSinceWhere,
   decideCin7SyncMode,
   entitySupportsModifiedSince,
+  expectedCin7CountFromRecon,
   floorSyncRecordCount,
   getOptixEntityRecordCount,
 } from '@/lib/integrations/cin7-sync-incremental';
@@ -221,11 +225,15 @@ export async function POST(
   }
 
   const optixFloor = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+  const reconCached = getCachedReconciliation(scope.userId);
+  const expectedSourceCount = expectedCin7CountFromRecon(entityType, reconCached?.snapshot ?? null);
   const { mode: syncMode, modifiedSince } = decideCin7SyncMode({
     forceFull,
     forceRestart,
     status: run.status,
     completedAt: run.completedAt,
+    optixCount: optixFloor,
+    expectedSourceCount,
   });
   const incrementalWhere =
     syncMode === 'incremental' &&
@@ -234,6 +242,15 @@ export async function POST(
     useOmni
       ? buildCin7ModifiedSinceWhere(modifiedSince)
       : null;
+  if (
+    syncMode === 'full' &&
+    typeof expectedSourceCount === 'number' &&
+    optixFloor + 5 < expectedSourceCount
+  ) {
+    console.log(
+      `[Cin7 sync] ${rawEntityType}: forcing full walk — Optix ${optixFloor} < Cin7 ${expectedSourceCount} (recon cache)`
+    );
+  }
 
   const resetCheckpoint =
     syncMode === 'full' ||
@@ -506,14 +523,24 @@ export async function POST(
         };
       };
     } else if (useOmni && omniCreds) {
+      // Unfiltered Contacts pages + client type filter — matches live recon catalog.
+      // Server-side where=type='Customer' under-counts vs the full feed.
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords, error } =
-          await fetchOmniContactsPage(omniCreds, page, pageSize, {
-            whereType: contactType,
-            where: incrementalWhere ?? undefined,
-          });
+        const {
+          rows,
+          sourceRowCount,
+          total,
+          skippedMissingId,
+          skippedWrongType,
+          skippedRecords,
+          error,
+        } = await fetchOmniContactsPage(omniCreds, page, pageSize, {
+          allowedTypes: [contactType],
+          where: incrementalWhere ?? undefined,
+        });
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             skipped.missing_cin7_id += skippedMissingId;
@@ -557,13 +584,21 @@ export async function POST(
   } else if (entityType === 'suppliers') {
     if (useOmni && omniCreds) {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, skippedMissingId, skippedWrongType, skippedRecords, error } =
-          await fetchOmniContactsPage(omniCreds, page, pageSize, {
-            whereType: 'Supplier',
-            where: incrementalWhere ?? undefined,
-          });
+        const {
+          rows,
+          sourceRowCount,
+          total,
+          skippedMissingId,
+          skippedWrongType,
+          skippedRecords,
+          error,
+        } = await fetchOmniContactsPage(omniCreds, page, pageSize, {
+          allowedTypes: ['Supplier'],
+          where: incrementalWhere ?? undefined,
+        });
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             skipped.missing_cin7_id += skippedMissingId;
@@ -736,6 +771,9 @@ export async function POST(
     }
   }
 
+  const isContactEntity =
+    entityType === 'customers' || entityType === 'internal-customers' || entityType === 'suppliers';
+
   let result = await runPagedSyncEngine({
     ownerUserId: scope.userId,
     entityType: rawEntityType,
@@ -745,6 +783,8 @@ export async function POST(
     pageSize,
     pageGapMs,
     maxPages,
+    // Contact feeds occasionally return a transient empty page mid-catalog.
+    emptyEofConfirms: isContactEntity ? 2 : 1,
     priorRecordsProcessed: priorRecords,
     recordFloor: optixFloor,
     refreshRecordCount: () => getOptixEntityRecordCount(scope.userId, rawEntityType),
