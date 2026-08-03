@@ -427,7 +427,10 @@ export async function fetchOmniContactsPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const whereType = options?.whereType ?? options?.allowedTypes?.[0];
+  // Only an explicit whereType adds Cin7's server-side `type=` filter.
+  // Do NOT infer whereType from allowedTypes — Omni's type filter under-counts vs an
+  // unfiltered walk + in-memory partition (same path reconciliation uses).
+  const whereType = options?.whereType;
   const { ok, status, data, error } = await cin7OmniGet<unknown>(
     buildOmniContactsPath(page, safeRows, whereType, options?.where),
     creds
@@ -444,9 +447,9 @@ export async function fetchOmniContactsPage(
     };
   }
   const { rows: list, total } = parseOmniListEnvelope(data);
-  const allowedTypes = whereType
-    ? [whereType.toLowerCase()]
-    : options?.allowedTypes?.map((t) => t.toLowerCase());
+  const allowedTypes = (
+    options?.allowedTypes?.length ? options.allowedTypes : whereType ? [whereType] : undefined
+  )?.map((t) => t.toLowerCase());
   let skippedWrongType = 0;
   let skippedMissingId = 0;
   const skippedRecords: Cin7OmniContactSkip[] = [];
