@@ -282,7 +282,7 @@ export async function POST(
     if (!useOmni || !omniCreds) {
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed: 0,
         pagesFetched: 0,
         lastCommittedPage: 0,
@@ -371,7 +371,7 @@ export async function POST(
       const durationMs = Date.now() - startedAt;
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed: optixFloor,
         pagesFetched: 0,
         lastCommittedPage: 0,
@@ -382,7 +382,7 @@ export async function POST(
         source: sourceKind,
       });
       return jsonSyncResult({
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed: optixFloor,
         durationMs,
         pageSize,
@@ -436,7 +436,7 @@ export async function POST(
       const durationMs = Date.now() - startedAt;
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed: 0,
         pagesFetched: 0,
         lastCommittedPage: 0,
@@ -447,7 +447,7 @@ export async function POST(
         source: sourceKind,
       });
       return jsonSyncResult({
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed: 0,
         durationMs,
         pageSize,
@@ -710,7 +710,7 @@ export async function POST(
   if (hardError) {
     await persistCin7SyncRunCheckpoint({
       runId: run.id,
-      status: 'failed',
+      status: 'incomplete',
       recordsProcessed: optixFloor,
       pagesFetched: 0,
       lastCommittedPage: 0,
@@ -726,7 +726,7 @@ export async function POST(
   if (!fetchPage) {
     await persistCin7SyncRunCheckpoint({
       runId: run.id,
-      status: 'failed',
+      status: 'incomplete',
       recordsProcessed: optixFloor,
       pagesFetched: 0,
       lastCommittedPage: 0,
