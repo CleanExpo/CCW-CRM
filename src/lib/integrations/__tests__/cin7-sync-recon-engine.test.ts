@@ -5,7 +5,11 @@ import {
   parseRetryAfterMs,
 } from '@/lib/integrations/cin7-http-retry';
 import { getIncompleteSyncEntities } from '@/lib/integrations/cin7-reconciliation-job';
-import { resolveSyncStartPage, runPagedSyncEngine } from '@/lib/integrations/cin7-sync-engine';
+import {
+  resolveSyncStartPage,
+  runPagedSyncEngine,
+  toCin7SyncDisplayStatus,
+} from '@/lib/integrations/cin7-sync-engine';
 import {
   buildCin7ModifiedSinceWhere,
   decideCin7SyncMode,
@@ -156,7 +160,7 @@ describe('runPagedSyncEngine', () => {
     });
 
     expect(pageCalls).toBe(2);
-    expect(result.status).toBe('failed');
+    expect(result.status).toBe('incomplete');
     expect(result.lastCommittedPage).toBe(1);
     expect(result.failedPage).toBe(2);
     expect(result.recordsProcessed).toBe(2);
@@ -302,6 +306,18 @@ describe('client requirement checklist (static) — sync recon engine', () => {
     );
     expect(src).toContain('consecutive_complete_count');
     expect(src).toContain('proof_ready');
+  });
+});
+
+describe('toCin7SyncDisplayStatus', () => {
+  it('maps every non-complete status to incomplete for client UI', () => {
+    expect(toCin7SyncDisplayStatus('complete')).toBe('complete');
+    expect(toCin7SyncDisplayStatus('incomplete')).toBe('incomplete');
+    expect(toCin7SyncDisplayStatus('idle')).toBe('incomplete');
+    expect(toCin7SyncDisplayStatus('failed')).toBe('incomplete');
+    expect(toCin7SyncDisplayStatus('running')).toBe('incomplete');
+    expect(toCin7SyncDisplayStatus('never')).toBe('incomplete');
+    expect(toCin7SyncDisplayStatus(undefined)).toBe('incomplete');
   });
 });
 
