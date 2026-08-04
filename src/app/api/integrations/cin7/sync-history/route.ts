@@ -1,12 +1,15 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 import { CIN7_SYNCABLE_ENTITY_TYPES } from '@/lib/integrations/cin7-master-entities';
-import { recoverStaleCin7SyncRuns } from '@/lib/integrations/cin7-sync-engine';
+import {
+  recoverStaleCin7SyncRuns,
+  toCin7SyncDisplayStatus,
+} from '@/lib/integrations/cin7-sync-engine';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Latest Cin7 sync status per entity for the integrations history panel.
- * Returns real status / checkpoint fields (never forced ok).
+ * Client-facing status is only complete | incomplete.
  */
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -17,7 +20,7 @@ export async function GET(request: NextRequest) {
   void request.nextUrl.searchParams.get('limit');
 
   try {
-    // Flip abandoned "running" rows so the UI does not stick on Syncing…
+    // Heal idle / failed / abandoned running → incomplete before reading.
     await recoverStaleCin7SyncRuns(scope.userId);
 
     const runs = await prisma.cin7SyncRun.findMany({
@@ -52,7 +55,7 @@ export async function GET(request: NextRequest) {
           id: `pending:${entityType}`,
           entity_type: entityType,
           direction: 'pull',
-          status: 'never',
+          status: 'incomplete' as const,
           records_processed: 0,
           synced_at: null as string | null,
           error_message: undefined as string | undefined,
@@ -69,7 +72,8 @@ export async function GET(request: NextRequest) {
         id: run.id,
         entity_type: run.entityType,
         direction: 'pull',
-        status: run.status,
+        // Only complete | incomplete for Settings UI — never idle / failed / running.
+        status: toCin7SyncDisplayStatus(run.status),
         records_processed: run.recordsProcessed,
         synced_at: syncedAt,
         error_message: run.failureReason ?? undefined,
