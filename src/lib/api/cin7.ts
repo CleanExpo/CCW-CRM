@@ -44,7 +44,7 @@ export interface Cin7SyncLog {
   id: string;
   entity_type: string;
   direction: string;
-  /** never | idle | running | complete | incomplete | failed */
+  /** Client-facing: complete | incomplete (legacy idle/failed/running normalized by API). */
   status: string;
   records_processed: number;
   /** ISO timestamp of last sync; null when the entity has never been synced. */
@@ -187,34 +187,42 @@ export type Cin7SyncResult = {
   sync_errors?: string[];
 };
 
+export type Cin7SyncEntityType =
+  | 'products'
+  | 'customers'
+  | 'internal-customers'
+  | 'suppliers'
+  | 'branches'
+  | 'warehouses'
+  | 'product-categories'
+  | 'brands'
+  | 'price-lists'
+  | 'tax-codes'
+  | 'units-of-measure'
+  | 'stock-levels'
+  | 'orders'
+  | 'inventory';
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Trigger manual sync for a specific entity type.
- * Auto-resumes a few chunks while incomplete (interactive default is low so one
- * click does not run for hours; nightly cron uses its own higher chunk budget).
+ * Auto-resumes chunks while incomplete; retries brief page errors so one click
+ * can finish large catalogs without leaving "incomplete" after every timeout.
  */
 export async function triggerCin7Sync(
-  entityType:
-    | 'products'
-    | 'customers'
-    | 'internal-customers'
-    | 'suppliers'
-    | 'branches'
-    | 'warehouses'
-    | 'product-categories'
-    | 'brands'
-    | 'price-lists'
-    | 'tax-codes'
-    | 'units-of-measure'
-    | 'stock-levels'
-    | 'orders'
-    | 'inventory',
+  entityType: Cin7SyncEntityType,
   options?: { restart?: boolean; full?: boolean; maxChunks?: number; signal?: AbortSignal }
 ): Promise<Cin7SyncResult> {
-  const maxChunks = options?.maxChunks ?? 4;
+  const maxChunks = options?.maxChunks ?? 8;
   let last: Cin7SyncResult | null = null;
   // Default resume — never wipe checkpoint unless caller asks for restart.
   let restart = options?.restart ?? false;
   const forceFull = options?.full === true;
+  let pageErrorRetries = 0;
+  const maxPageErrorRetries = 3;
 
   for (let chunk = 0; chunk < maxChunks; chunk += 1) {
     if (options?.signal?.aborted) {
@@ -255,11 +263,67 @@ export async function triggerCin7Sync(
     if (last.complete === true || last.status === 'complete') {
       return last;
     }
-    if (last.status === 'failed' || last.failed_page != null) {
+    if (last.status === 'running') {
+      return last;
+    }
+    // Transient page error — brief backoff then resume from checkpoint.
+    if (last.failed_page != null && last.complete === false && last.next_page != null) {
+      if (pageErrorRetries < maxPageErrorRetries) {
+        pageErrorRetries += 1;
+        const rateLimited = (last.sync_errors ?? []).some((e) => /429|rate-?limit/i.test(e));
+        await sleepMs(rateLimited ? 15_000 : 5_000 * pageErrorRetries);
+        continue;
+      }
+      return last;
+    }
+    if (last.complete === false && last.next_page != null) {
+      pageErrorRetries = 0;
+      continue;
+    }
+    return last;
+  }
+
+  return last ?? { status: 'incomplete', complete: false };
+}
+
+/**
+ * Keep syncing one entity until complete (or give up after maxRounds).
+ * Used by Sync buttons and the client scheduled runner so one action finishes the job.
+ */
+export async function syncCin7EntityUntilComplete(
+  entityType: Cin7SyncEntityType,
+  options?: {
+    restart?: boolean;
+    full?: boolean;
+    maxRounds?: number;
+    maxChunksPerRound?: number;
+    signal?: AbortSignal;
+    onProgress?: (result: Cin7SyncResult, round: number) => void;
+  }
+): Promise<Cin7SyncResult> {
+  const maxRounds = options?.maxRounds ?? 40;
+  let restart = options?.restart ?? false;
+  let last: Cin7SyncResult = { status: 'incomplete', complete: false };
+
+  for (let round = 0; round < maxRounds; round += 1) {
+    if (options?.signal?.aborted) {
+      throw new Error('Sync canceled');
+    }
+    last = await triggerCin7Sync(entityType, {
+      restart,
+      full: options?.full,
+      maxChunks: options?.maxChunksPerRound ?? 8,
+      signal: options?.signal,
+    });
+    restart = false;
+    options?.onProgress?.(last, round);
+
+    if (last.complete === true || last.status === 'complete') {
       return last;
     }
     if (last.status === 'running') {
-      return last;
+      await sleepMs(12_000);
+      continue;
     }
     if (last.complete === false && last.next_page != null) {
       continue;
@@ -267,7 +331,7 @@ export async function triggerCin7Sync(
     return last;
   }
 
-  return last ?? { status: 'incomplete', complete: false };
+  return last;
 }
 
 export type {
