@@ -1,10 +1,8 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 import { CIN7_SYNCABLE_ENTITY_TYPES } from '@/lib/integrations/cin7-master-entities';
-import {
-  recoverStaleCin7SyncRuns,
-  toCin7SyncDisplayStatus,
-} from '@/lib/integrations/cin7-sync-engine';
+import { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
+import { recoverStaleCin7SyncRuns } from '@/lib/integrations/cin7-sync-engine';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
