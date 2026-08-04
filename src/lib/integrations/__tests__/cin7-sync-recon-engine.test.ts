@@ -5,11 +5,8 @@ import {
   parseRetryAfterMs,
 } from '@/lib/integrations/cin7-http-retry';
 import { getIncompleteSyncEntities } from '@/lib/integrations/cin7-reconciliation-job';
-import {
-  resolveSyncStartPage,
-  runPagedSyncEngine,
-  toCin7SyncDisplayStatus,
-} from '@/lib/integrations/cin7-sync-engine';
+import { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
+import { resolveSyncStartPage, runPagedSyncEngine } from '@/lib/integrations/cin7-sync-engine';
 import {
   buildCin7ModifiedSinceWhere,
   decideCin7SyncMode,
