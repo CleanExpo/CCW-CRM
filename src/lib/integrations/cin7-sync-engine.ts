@@ -8,6 +8,17 @@ import { getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 
 export type Cin7SyncRunStatus = 'idle' | 'running' | 'complete' | 'incomplete' | 'failed';
 
+/** Client-facing Recent sync labels — only these two. */
+export type Cin7SyncDisplayStatus = 'complete' | 'incomplete';
+
+/**
+ * Map any stored sync status to a professional display status.
+ * complete → complete; everything else (idle, running, failed, never, …) → incomplete.
+ */
+export function toCin7SyncDisplayStatus(status: string | null | undefined): Cin7SyncDisplayStatus {
+  return status === 'complete' ? 'complete' : 'incomplete';
+}
+
 export type PagedSyncPageResult = {
   /** Raw rows returned by Cin7 for this page (0 = empty). */
   sourceRowCount: number;
@@ -51,7 +62,8 @@ export type RunPagedSyncEngineInput = {
 };
 
 export type RunPagedSyncEngineResult = {
-  status: 'complete' | 'incomplete' | 'failed';
+  /** Persisted/client status — only complete or incomplete (errors stay incomplete + failedPage). */
+  status: 'complete' | 'incomplete';
   recordsProcessed: number;
   pagesFetched: number;
   lastCommittedPage: number;
@@ -140,7 +152,8 @@ export async function loadOrCreateCin7SyncRun(input: {
     data: {
       ownerUserId: input.ownerUserId,
       entityType: input.entityType,
-      status: 'idle',
+      // Prefer incomplete over idle — clients only see complete / incomplete.
+      status: 'incomplete',
       recordsProcessed: 0,
       durationMs: 0,
       lastCommittedPage: 0,
@@ -183,13 +196,18 @@ export function resolveSyncStartPage(run: {
   return 1;
 }
 
-/** Flip abandoned `running` rows to `incomplete` so UI never sticks on Syncing/running. */
+/**
+ * Normalize stored statuses so the UI never surfaces idle / stuck running / failed jargon.
+ * - Abandoned running → incomplete (resumable)
+ * - Legacy idle → incomplete
+ * - failed → incomplete (keeps failed_page / failure_reason for resume)
+ */
 export async function recoverStaleCin7SyncRuns(
   ownerUserId: string,
   staleMs = CIN7_SYNC_STALE_RUNNING_MS
 ): Promise<number> {
   const cutoff = new Date(Date.now() - staleMs);
-  const result = await prisma.cin7SyncRun.updateMany({
+  const staleRunning = await prisma.cin7SyncRun.updateMany({
     where: {
       ownerUserId,
       status: 'running',
@@ -197,10 +215,23 @@ export async function recoverStaleCin7SyncRuns(
     },
     data: {
       status: 'incomplete',
-      failureReason: 'Sync abandoned (stale running) — click Sync again to resume.',
+      failureReason: 'Sync paused — click Sync again to continue.',
     },
   });
-  return result.count;
+  const idle = await prisma.cin7SyncRun.updateMany({
+    where: { ownerUserId, status: 'idle' },
+    data: {
+      status: 'incomplete',
+      failureReason: null,
+    },
+  });
+  const failed = await prisma.cin7SyncRun.updateMany({
+    where: { ownerUserId, status: 'failed' },
+    data: {
+      status: 'incomplete',
+    },
+  });
+  return staleRunning.count + idle.count + failed.count;
 }
 
 export function isCin7SyncRunStaleRunning(
@@ -350,7 +381,7 @@ export async function runPagedSyncEngine(
       const durationMs = Date.now() - startedAt;
       await persistCin7SyncRunCheckpoint({
         runId: input.runId,
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
         lastCommittedPage,
@@ -368,7 +399,7 @@ export async function runPagedSyncEngine(
         page,
       });
       return {
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
         lastCommittedPage,
@@ -558,7 +589,7 @@ export async function runPagedSyncEngine(
       const durationMs = Date.now() - startedAt;
       await persistCin7SyncRunCheckpoint({
         runId: input.runId,
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
         lastCommittedPage,
@@ -568,7 +599,7 @@ export async function runPagedSyncEngine(
         durationMs,
       });
       return {
-        status: 'failed',
+        status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
         lastCommittedPage,
