@@ -8,16 +8,8 @@ import { getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 
 export type Cin7SyncRunStatus = 'idle' | 'running' | 'complete' | 'incomplete' | 'failed';
 
-/** Client-facing Recent sync labels — only these two. */
-export type Cin7SyncDisplayStatus = 'complete' | 'incomplete';
-
-/**
- * Map any stored sync status to a professional display status.
- * complete → complete; everything else (idle, running, failed, never, …) → incomplete.
- */
-export function toCin7SyncDisplayStatus(status: string | null | undefined): Cin7SyncDisplayStatus {
-  return status === 'complete' ? 'complete' : 'incomplete';
-}
+export { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
+export type { Cin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
 
 export type PagedSyncPageResult = {
   /** Raw rows returned by Cin7 for this page (0 = empty). */
