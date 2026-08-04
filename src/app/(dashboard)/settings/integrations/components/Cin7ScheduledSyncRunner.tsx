@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast } from '@/hooks/use-toast';
-import { getCin7SyncLogs, triggerCin7Sync, type Cin7SyncLog } from '@/lib/api/cin7';
+import { getCin7SyncLogs, syncCin7EntityUntilComplete, type Cin7SyncLog } from '@/lib/api/cin7';
 import {
   CIN7_CLIENT_SYNC_ENTITY_ORDER,
   formatCountdownUntil,
@@ -45,57 +45,36 @@ export function Cin7ScheduledSyncRunner({
 
   const syncOneEntityLikeButtonClick = useCallback(
     async (entityType: Cin7ClientSyncEntity, prior: Cin7SyncLog | undefined) => {
-      // Same restart rules as Cin7SyncControls.handleSync
-      let restart =
-        !prior ||
-        prior.status === 'never' ||
-        prior.status === 'complete' ||
-        prior.status === 'failed' ||
-        prior.status === 'idle';
+      // Same rules as Sync buttons — resume incomplete; restart after complete.
+      const restart = !prior || prior.status === 'complete';
+      const contactFull =
+        entityType === 'customers' ||
+        entityType === 'internal-customers' ||
+        entityType === 'suppliers';
 
-      // Keep "clicking Sync" until this entity finishes (or hard-fails), just like a user would.
-      const maxClicks = 80;
-      for (let click = 0; click < maxClicks; click += 1) {
-        setActiveEntity(entityType);
-        setStatusLine(`Syncing ${entityType.replace(/-/g, ' ')}…`);
-        const contactFull =
-          entityType === 'customers' ||
-          entityType === 'internal-customers' ||
-          entityType === 'suppliers';
-        const result = await triggerCin7Sync(entityType, {
-          restart,
-          full: contactFull,
-          maxChunks: 4,
-        });
-        restart = false;
+      setActiveEntity(entityType);
+      setStatusLine(`Syncing ${entityType.replace(/-/g, ' ')}…`);
 
-        onLogsMayHaveChanged?.();
+      const result = await syncCin7EntityUntilComplete(entityType, {
+        restart,
+        full: contactFull,
+        maxRounds: contactFull ? 60 : 40,
+        maxChunksPerRound: 8,
+        onProgress: (partial) => {
+          const count = partial.records_processed ?? 0;
+          setStatusLine(
+            `Syncing ${entityType.replace(/-/g, ' ')}… ${count.toLocaleString()} records`
+          );
+          onLogsMayHaveChanged?.();
+        },
+      });
 
-        if (result.status === 'running') {
-          // Another request holds the lock — wait briefly and retry this entity.
-          await new Promise((r) => setTimeout(r, 15_000));
-          continue;
-        }
-        if (result.status === 'complete' || result.complete === true) {
-          return { ok: true as const, result };
-        }
-        if (
-          result.status === 'failed' ||
-          result.status === 'error' ||
-          (result.complete === false && result.failed_page != null)
-        ) {
-          return { ok: false as const, result };
-        }
-        // Incomplete with checkpoint — continue (same as clicking Sync again).
-        if (result.complete === false && result.next_page != null) {
-          continue;
-        }
-        return { ok: false as const, result };
+      onLogsMayHaveChanged?.();
+
+      if (result.status === 'complete' || result.complete === true) {
+        return { ok: true as const, result };
       }
-      return {
-        ok: false as const,
-        result: { status: 'incomplete', complete: false as const },
-      };
+      return { ok: false as const, result };
     },
     [onLogsMayHaveChanged]
   );
