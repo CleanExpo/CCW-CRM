@@ -28,7 +28,7 @@ import {
   triggerCin7Poll,
   type Cin7SyncLog,
 } from '@/lib/api/cin7';
-import { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-engine';
+import { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
 
 import { Cin7ScheduledSyncRunner } from './Cin7ScheduledSyncRunner';
 
