@@ -25,6 +25,7 @@ import {
   type Cin7ReferenceExceptionEntity,
   type Cin7ReferenceExceptionSummary,
 } from '@/lib/integrations/cin7-reconciliation-reference';
+import { healOptixStockFieldMismatches } from '@/lib/integrations/cin7-stock-prune';
 import {
   getCin7PageSize,
   getCin7SyncMaxPages,
@@ -382,8 +383,9 @@ export async function buildCin7Reconciliation(
     branchRows,
     customerTotal,
     supplierTotal,
-    referenceSnapshot,
+    referenceSnapshot: referenceSnapshotInitial,
   } = await optixPromise;
+  let referenceSnapshot = referenceSnapshotInitial;
   const optixMs = Date.now() - optixStarted;
 
   const optixByVisibility: Record<string, number> = {};
@@ -562,6 +564,26 @@ export async function buildCin7Reconciliation(
       omniCatalogs,
       referenceSnapshot
     );
+    // Stock qtys move constantly in Cin7. When keys already match, push live
+    // available/on-hand/incoming onto Optix so recon does not stay stuck on 1 field diff.
+    if (referenceExceptions.stock_levels_field_mismatches > 0) {
+      const { healed } = await healOptixStockFieldMismatches(
+        ownerUserId,
+        omniCatalogs.stockLevels.stockLevels
+      );
+      if (healed > 0) {
+        referenceSnapshot = await loadOptixReferenceSnapshot(ownerUserId);
+        referenceOptix = referenceCountsFromOptixSnapshot(referenceSnapshot);
+        referenceExceptions = await buildReferenceExceptionSummary(
+          ownerUserId,
+          omniCatalogs,
+          referenceSnapshot
+        );
+        notes.push(
+          `Aligned ${healed} stock row${healed === 1 ? '' : 's'} to live Cin7 quantities.`
+        );
+      }
+    }
     notes.push(
       'Warehouses in Cin7 Omni map to Branches; stock levels are per branch from /v1/Stock.'
     );
