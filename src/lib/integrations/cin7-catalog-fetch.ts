@@ -250,6 +250,58 @@ export async function fetchFullOmniProductCatalog(
 }
 
 /**
+ * Discover distinct TaxStatus values without walking the entire contact book.
+ * Early-exits once new codes stop appearing (tax catalogs are tiny, often &lt; 20).
+ */
+export async function fetchOmniTaxCodeCatalog(
+  creds: Cin7OmniCredentials,
+  options?: Cin7CatalogFetchOptions & {
+    onPage?: (page: number) => void | Promise<void>;
+  }
+): Promise<Cin7CatalogFetchMeta & { taxCodes: string[] }> {
+  const pageSize = getCin7PageSize();
+  const maxPages = options?.maxPages ?? CIN7_SYNC_SAFETY_MAX_PAGES;
+  const pageGapMs = resolvePageGap(options);
+  const codes = new Set<string>();
+  const errors: string[] = [];
+  let pagesFetched = 0;
+  let stablePages = 0;
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    if (page > 1 && pageGapMs > 0) await sleep(pageGapMs);
+    await options?.onPage?.(page);
+    const result = await fetchOmniContactsPage(creds, page, pageSize, {
+      whereType: 'Customer',
+    });
+    pagesFetched = page;
+    if (result.error) errors.push(`Contacts page ${page}: ${result.error}`);
+    if (result.sourceRowCount === 0) break;
+    const before = codes.size;
+    for (const row of result.rows) {
+      const code = row.taxStatus?.trim();
+      if (code) codes.add(code);
+    }
+    if (codes.size === before) stablePages += 1;
+    else stablePages = 0;
+    if (stablePages >= 3 && codes.size > 0) break;
+    if (result.sourceRowCount < pageSize) break;
+  }
+
+  await entityGap(options);
+  const branches = await fetchFullOmniBranchCatalog(creds, undefined, options);
+  for (const b of branches.branches) {
+    const code = b.taxStatus?.trim();
+    if (code) codes.add(code);
+  }
+
+  return {
+    taxCodes: [...codes].sort(),
+    pages_fetched: pagesFetched + branches.pages_fetched,
+    errors: [...errors, ...branches.errors],
+  };
+}
+
+/**
  * Full Cin7 Omni contacts filtered by business contact type (Customer, Supplier, Internal).
  * Walks the unfiltered Contacts feed and filters in memory — same approach as live recon.
  * Omni's server-side `where=type='…'` under-counts and must not be used for catalog completeness.
