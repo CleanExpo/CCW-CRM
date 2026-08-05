@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
 import type { Cin7OmniMasterCatalogs } from '@/lib/integrations/cin7-catalog-fetch';
+import { dedupeOmniStockLevels, normalizeOmniStockQty } from '@/lib/integrations/cin7-omni';
 import type { Cin7ExceptionRecord } from '@/lib/integrations/cin7-reconciliation';
 
 export type Cin7ReferenceExceptionEntity =
@@ -55,7 +56,8 @@ export function getCin7ReferenceCounts(catalogs: Cin7OmniMasterCatalogs): Cin7Re
     price_lists: catalogs.derived.priceColumns.length,
     tax_codes: catalogs.derived.taxCodes.length,
     units_of_measure: catalogs.derived.unitsOfMeasure.length,
-    stock_levels: catalogs.stockLevels.stockLevels.length,
+    // Unique branch:sku keys (raw page rows can duplicate the same key).
+    stock_levels: dedupeOmniStockLevels(catalogs.stockLevels.stockLevels).size,
     warehouses: catalogs.branches.branches.length,
   };
 }
@@ -169,11 +171,9 @@ export async function buildReferenceExceptionSummary(
     new Set(optixUoms.map((u) => u.code))
   );
 
-  const cin7Stock = new Map(
-    catalogs.stockLevels.stockLevels.map((s) => [`${s.cin7BranchId}:${s.sku}`, s] as const)
-  );
-  const optixStockByKey = new Map(
-    optixStockRows.map((s) => [`${s.cin7BranchId}:${s.sku}`, s] as const)
+  const cin7Stock = dedupeOmniStockLevels(catalogs.stockLevels.stockLevels);
+  const optixStockByKey = new Map<string, (typeof optixStockRows)[number]>(
+    optixStockRows.map((s) => [`${s.cin7BranchId}:${s.sku}`, s])
   );
   let stockMissing = 0;
   let stockExtra = 0;
@@ -185,9 +185,9 @@ export async function buildReferenceExceptionSummary(
       continue;
     }
     if (
-      optix.available !== cin7.available ||
-      optix.stockOnHand !== cin7.stockOnHand ||
-      optix.incoming !== cin7.incoming
+      normalizeOmniStockQty(optix.available) !== cin7.available ||
+      normalizeOmniStockQty(optix.stockOnHand) !== cin7.stockOnHand ||
+      normalizeOmniStockQty(optix.incoming) !== cin7.incoming
     ) {
       stockMismatch += 1;
     }
@@ -308,8 +308,8 @@ export async function buildReferenceExceptionItems(
   if (entity === 'stock-levels') {
     const optix = await prisma.cin7StockLevel.findMany({ where: { ownerUserId } });
     const optixByKey = new Map(optix.map((r) => [`${r.cin7BranchId}:${r.sku}`, r]));
-    for (const cin7 of catalogs.stockLevels.stockLevels) {
-      const key = `${cin7.cin7BranchId}:${cin7.sku}`;
+    const cin7Stock = dedupeOmniStockLevels(catalogs.stockLevels.stockLevels);
+    for (const [key, cin7] of cin7Stock) {
       const row = optixByKey.get(key);
       if (!row) {
         items.push({
@@ -320,25 +320,25 @@ export async function buildReferenceExceptionItems(
         continue;
       }
       const fields: Cin7ExceptionRecord['fields'] = [];
-      if (row.available !== cin7.available) {
+      if (normalizeOmniStockQty(row.available) !== cin7.available) {
         fields.push({
           field: 'available',
           cin7_value: String(cin7.available),
-          optix_value: String(row.available),
+          optix_value: String(normalizeOmniStockQty(row.available)),
         });
       }
-      if (row.stockOnHand !== cin7.stockOnHand) {
+      if (normalizeOmniStockQty(row.stockOnHand) !== cin7.stockOnHand) {
         fields.push({
           field: 'stock_on_hand',
           cin7_value: String(cin7.stockOnHand),
-          optix_value: String(row.stockOnHand),
+          optix_value: String(normalizeOmniStockQty(row.stockOnHand)),
         });
       }
-      if (row.incoming !== cin7.incoming) {
+      if (normalizeOmniStockQty(row.incoming) !== cin7.incoming) {
         fields.push({
           field: 'incoming',
           cin7_value: String(cin7.incoming),
-          optix_value: String(row.incoming),
+          optix_value: String(normalizeOmniStockQty(row.incoming)),
         });
       }
       if (fields.length > 0) {
@@ -347,7 +347,7 @@ export async function buildReferenceExceptionItems(
     }
     for (const row of optix) {
       const key = `${row.cin7BranchId}:${row.sku}`;
-      if (!catalogs.stockLevels.stockLevels.some((s) => `${s.cin7BranchId}:${s.sku}` === key)) {
+      if (!cin7Stock.has(key)) {
         items.push({ cin7_id: key, label: row.sku, reason: 'extra_in_optix' });
       }
     }
