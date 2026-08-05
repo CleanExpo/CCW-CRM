@@ -649,6 +649,29 @@ export type Cin7OmniStockLevelRow = {
   openSales: number;
 };
 
+export function normalizeOmniStockQty(n: unknown): number {
+  const v = Math.floor(Number(n));
+  return Number.isFinite(v) ? Math.max(0, v) : 0;
+}
+
+/** Dedupe Omni stock rows by branch:sku (last write wins — matches upsert order). */
+export function dedupeOmniStockLevels(
+  rows: Cin7OmniStockLevelRow[]
+): Map<string, Cin7OmniStockLevelRow> {
+  const map = new Map<string, Cin7OmniStockLevelRow>();
+  for (const row of rows) {
+    if (!row.cin7BranchId || !row.sku) continue;
+    map.set(`${row.cin7BranchId}:${row.sku}`, {
+      ...row,
+      available: normalizeOmniStockQty(row.available),
+      stockOnHand: normalizeOmniStockQty(row.stockOnHand),
+      incoming: normalizeOmniStockQty(row.incoming),
+      openSales: normalizeOmniStockQty(row.openSales),
+    });
+  }
+  return map;
+}
+
 function mapOmniStockRaw(raw: unknown): Cin7OmniStockLevelRow | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as Record<string, unknown>;
@@ -662,10 +685,10 @@ function mapOmniStockRaw(raw: unknown): Cin7OmniStockLevelRow | null {
     cin7BranchId,
     sku,
     branchName: String(pick(s, 'BranchName', 'branchName') ?? '').trim() || undefined,
-    available: Math.max(0, Math.floor(Number(pick(s, 'Available', 'available') ?? 0))),
-    stockOnHand: Math.max(0, Math.floor(Number(pick(s, 'StockOnHand', 'stockOnHand') ?? 0))),
-    incoming: Math.max(0, Math.floor(Number(pick(s, 'Incoming', 'incoming') ?? 0))),
-    openSales: Math.max(0, Math.floor(Number(pick(s, 'OpenSales', 'openSales') ?? 0))),
+    available: normalizeOmniStockQty(pick(s, 'Available', 'available') ?? 0),
+    stockOnHand: normalizeOmniStockQty(pick(s, 'StockOnHand', 'stockOnHand') ?? 0),
+    incoming: normalizeOmniStockQty(pick(s, 'Incoming', 'incoming') ?? 0),
+    openSales: normalizeOmniStockQty(pick(s, 'OpenSales', 'openSales') ?? 0),
   };
 }
 
