@@ -241,7 +241,7 @@ export async function triggerCin7Sync(
         300_000
       );
     } catch (error: unknown) {
-      // Concurrent sync lock — surface as running, do not keep retrying.
+      // Legacy 409 lock — treat as running so until-complete can wait (no error spam).
       if (
         error &&
         typeof error === 'object' &&
@@ -263,6 +263,7 @@ export async function triggerCin7Sync(
     if (last.complete === true || last.status === 'complete') {
       return last;
     }
+    // Concurrent lock (200 or legacy 409) — stop this chunk loop; caller waits.
     if (last.status === 'running') {
       return last;
     }
@@ -322,7 +323,8 @@ export async function syncCin7EntityUntilComplete(
       return last;
     }
     if (last.status === 'running') {
-      await sleepMs(12_000);
+      // Another request holds the lock (common for tax-codes while it finishes).
+      await sleepMs(20_000);
       continue;
     }
     if (last.complete === false && last.next_page != null) {
