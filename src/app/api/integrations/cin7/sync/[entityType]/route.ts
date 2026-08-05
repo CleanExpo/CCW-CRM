@@ -1,8 +1,8 @@
 import { requireAuthScopeOrCronIntegrationJob } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 import {
-  fetchFullOmniBranchCatalog,
   fetchFullOmniContactsByType,
+  fetchOmniTaxCodeCatalog,
   getCatalogPageGapMs,
   mapPriceColumnLabels,
   resolveCin7SyncSource,
@@ -17,7 +17,6 @@ import {
 import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
 import {
   extractReferenceDataFromProducts,
-  extractTaxCodesFromContactsAndBranches,
   fetchOmniBranchesPage,
   fetchOmniContactsPage,
   fetchOmniProductCategoriesPage,
@@ -35,13 +34,14 @@ import {
 import { getCin7PageSize, getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 import {
   getCin7SyncTimeBudgetMs,
+  heartbeatCin7SyncRun,
   isCin7SyncRunStaleRunning,
   loadOrCreateCin7SyncRun,
-  markCin7SyncRunRunning,
   persistCin7SyncRunCheckpoint,
   recoverStaleCin7SyncRuns,
   resolveSyncStartPage,
   runPagedSyncEngine,
+  tryAcquireCin7SyncRunLock,
 } from '@/lib/integrations/cin7-sync-engine';
 import {
   buildCin7ModifiedSinceWhere,
@@ -192,23 +192,7 @@ export async function POST(
     entityType: rawEntityType,
   });
 
-  // Block concurrent sync of the same entity (prevents multi-click pileups).
-  if (run.status === 'running' && !isCin7SyncRunStaleRunning(run) && !forceRestart) {
-    return NextResponse.json(
-      {
-        status: 'running',
-        detail:
-          'Sync already in progress for this entity. Wait for it to finish or retry in a few minutes.',
-        complete: false,
-        records_processed: run.recordsProcessed,
-        next_page: run.nextPage,
-        last_committed_page: run.lastCommittedPage,
-      },
-      { status: 409 }
-    );
-  }
-
-  // Stale running → treat as incomplete resume.
+  // Stale running → incomplete so we can steal the lock below.
   if (run.status === 'running' && isCin7SyncRunStaleRunning(run)) {
     await persistCin7SyncRunCheckpoint({
       runId: run.id,
@@ -230,7 +214,7 @@ export async function POST(
   const { mode: syncMode, modifiedSince } = decideCin7SyncMode({
     forceFull,
     forceRestart,
-    status: run.status,
+    status: forceRestart ? 'incomplete' : run.status === 'running' ? 'incomplete' : run.status,
     completedAt: run.completedAt,
     optixCount: optixFloor,
     expectedSourceCount,
@@ -264,11 +248,34 @@ export async function POST(
   const priorRecords =
     syncMode === 'resume' ? Math.max(optixFloor, run.recordsProcessed) : optixFloor;
 
-  await markCin7SyncRunRunning({
-    runId: run.id,
-    resetCheckpoint,
-    recordFloor: optixFloor,
-  });
+  // Atomic lock — avoids two tax-codes requests both passing a status check then racing.
+  if (!forceRestart) {
+    const lock = await tryAcquireCin7SyncRunLock({
+      runId: run.id,
+      resetCheckpoint,
+      recordFloor: optixFloor,
+    });
+    if (!lock.acquired) {
+      // 200 (not 409) so the client waits/retries instead of error-spamming the console.
+      return NextResponse.json({
+        status: 'running',
+        detail:
+          'Sync already in progress for this entity. Wait for it to finish — progress is saved.',
+        complete: false,
+        records_processed: run.recordsProcessed,
+        next_page: run.nextPage,
+        last_committed_page: run.lastCommittedPage,
+      });
+    }
+  } else {
+    await tryAcquireCin7SyncRunLock({
+      runId: run.id,
+      resetCheckpoint: true,
+      recordFloor: optixFloor,
+      allowStealStale: true,
+      staleMs: 0,
+    });
+  }
 
   console.log(
     `[Cin7 sync] ${rawEntityType}: mode=${syncMode}` +
@@ -295,14 +302,15 @@ export async function POST(
       return NextResponse.json({ detail: 'Tax code sync requires Cin7 Omni.' }, { status: 400 });
     }
     try {
-      const customers = await fetchFullOmniContactsByType(omniCreds, ['Customer']);
-      const branches = await fetchFullOmniBranchCatalog(omniCreds);
-      const pagesFetched = customers.pages_fetched + branches.pages_fetched;
-      const errors = [...customers.errors, ...branches.errors];
-      const taxCodes = extractTaxCodesFromContactsAndBranches({
-        contacts: customers.contacts,
-        branches: branches.branches,
+      // Fast path: do NOT walk all 30k+ contacts (that held running for minutes → 409 storms).
+      const catalog = await fetchOmniTaxCodeCatalog(omniCreds, {
+        onPage: async () => {
+          await heartbeatCin7SyncRun(run.id);
+        },
       });
+      const pagesFetched = catalog.pages_fetched;
+      const errors = catalog.errors;
+      const taxCodes = catalog.taxCodes;
       const durationMs = Date.now() - startedAt;
       if (errors.length > 0 && taxCodes.length === 0) {
         const floored = floorSyncRecordCount({
