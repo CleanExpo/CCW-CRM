@@ -265,6 +265,68 @@ export async function markCin7SyncRunRunning(input: {
   });
 }
 
+/** Keep long one-shot syncs (e.g. tax-codes) from looking abandoned mid-fetch. */
+export async function heartbeatCin7SyncRun(runId: string): Promise<void> {
+  await prisma.cin7SyncRun
+    .update({
+      where: { id: runId },
+      data: { updatedAt: new Date(), status: 'running' },
+    })
+    .catch(() => undefined);
+}
+
+/**
+ * Atomically claim a sync run. Returns false if another request holds a fresh lock.
+ */
+export async function tryAcquireCin7SyncRunLock(input: {
+  runId: string;
+  resetCheckpoint: boolean;
+  recordFloor?: number;
+  allowStealStale?: boolean;
+  staleMs?: number;
+}): Promise<{ acquired: boolean; stolenStale: boolean }> {
+  const floor = Math.max(0, input.recordFloor ?? 0);
+  const staleMs = input.staleMs ?? CIN7_SYNC_STALE_RUNNING_MS;
+  const cutoff = new Date(Date.now() - staleMs);
+
+  const baseData = {
+    status: 'running' as const,
+    startedAt: new Date(),
+    completedAt: null as Date | null,
+    failureReason: null as string | null,
+    failedPage: null as number | null,
+    attemptCount: { increment: 1 },
+    ...(input.resetCheckpoint
+      ? {
+          lastCommittedPage: 0,
+          nextPage: 1,
+          recordsProcessed: floor,
+          pagesFetched: 0,
+        }
+      : {}),
+  };
+
+  // Claim if not running.
+  const fresh = await prisma.cin7SyncRun.updateMany({
+    where: { id: input.runId, status: { not: 'running' } },
+    data: baseData,
+  });
+  if (fresh.count > 0) return { acquired: true, stolenStale: false };
+
+  if (input.allowStealStale !== false) {
+    const stolen = await prisma.cin7SyncRun.updateMany({
+      where: { id: input.runId, status: 'running', updatedAt: { lt: cutoff } },
+      data: {
+        ...baseData,
+        failureReason: 'Took over abandoned sync lock.',
+      },
+    });
+    if (stolen.count > 0) return { acquired: true, stolenStale: true };
+  }
+
+  return { acquired: false, stolenStale: false };
+}
+
 export async function persistCin7SyncRunCheckpoint(input: {
   runId: string;
   status: Cin7SyncRunStatus;
