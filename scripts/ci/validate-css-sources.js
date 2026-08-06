@@ -7,119 +7,92 @@
 // quoted in review as though they applied. Nothing caught it because nothing
 // checked whether a stylesheet was reachable.
 //
-// This asserts every CSS file under src/ is reachable from the entry
-// stylesheet, either by a TS/TSX import or by an @import chain. An unreachable
-// stylesheet is not dead weight — it is a second, silent source of truth about
-// what the product looks like.
+// WHY THIS USES THE TYPESCRIPT PARSER
+//
+// Two earlier versions matched imports with regexes and an independent reviewer
+// defeated both. Basename matching let a COMMENT naming the file count as an
+// import. Line-anchored regexes then let a multi-line TEMPLATE LITERAL count,
+// while falsely flagging legitimate same-line and dynamic imports. Regexes
+// cannot tell an import statement from text that looks like one; the compiler
+// can. `ts.preProcessFile` returns exactly the module specifiers TypeScript
+// itself resolves — static, dynamic, and re-exports — and nothing else.
+//
+// REACHABILITY IS FROM THE ENTRY POINTS, NOT FROM "ANY FILE"
+//
+// Treating every non-CSS file as a root meant a stylesheet imported only by a
+// test, a Storybook story, a config file, or by another dead module counted as
+// reachable. Reachability is now a walk from the Next.js entry points, so a
+// stylesheet only reachable through dead code is correctly reported dead.
 //
 // `node scripts/ci/validate-css-sources.js --self-test` proves it still rejects.
 
 const fs = require('fs');
 const path = require('path');
+const ts = require('typescript');
 
 const ROOT = path.resolve(__dirname, '../..');
 const SRC = path.join(ROOT, 'src');
 const ENTRY = 'src/app/globals.css';
 
-/** Every .css file under src/, as repo-relative posix paths. */
-function findCssFiles(dir, acc = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
-      findCssFiles(full, acc);
-    } else if (entry.name.endsWith('.css')) {
-      acc.push(path.relative(ROOT, full).split(path.sep).join('/'));
-    }
-  }
-  return acc;
+/** Next.js entry points — the only legitimate roots of the module graph. */
+const ENTRY_POINT = /^src\/(middleware\.[jt]sx?|app\/.*\/?(layout|page|template|default|error|global-error|loading|not-found|route)\.[jt]sx?)$/;
+
+function isEntryPoint(filePath) {
+  return ENTRY_POINT.test(filePath);
 }
 
-/** Repo-relative paths of every file that could reference a stylesheet. */
-function findSourceFiles(dir, acc = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
-      findSourceFiles(full, acc);
-    } else if (/\.(ts|tsx|js|jsx|css|mjs)$/.test(entry.name)) {
-      acc.push(path.relative(ROOT, full).split(path.sep).join('/'));
-    }
-  }
-  return acc;
-}
-
-/**
- * @param {string[]} cssFiles repo-relative css paths
- * @param {string[]} sourceFiles repo-relative source paths
- * @param {(p: string) => string | null} read
- * @returns {string[]} failures
- */
-/** Remove block and line comments so a mention inside one cannot count as an import. */
-function stripComments(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
-}
-
-/**
- * Quoted specifiers from genuine import forms only:
- *   import './x.css'      import x from '@/styles/x.css'
- *   require('./x.css')    @import './x.css'    @import url('./x.css')
- */
-function extractSpecifiers(source) {
-  const cleaned = stripComments(source);
-  const specifiers = [];
-  // Anchored at line start (multiline flag), because a real import is a
-  // statement. Without the anchor, an ordinary string such as
-  //   const doc = "import './orphan.css' to enable the theme";
-  // counted as an import and made an orphan pass — an independent reviewer
-  // demonstrated that with both a quoted string and a template literal.
-  const patterns = [
-    /^\s*import\s+(?:[\w*{},\s]+\s+from\s+)?['"]([^'"]+)['"]/gm,
-    /^\s*export\s+(?:\*|{[^}]*})\s+from\s+['"]([^'"]+)['"]/gm,
-    /^\s*(?:const|let|var)?\s*\w*\s*=?\s*require\s*\(\s*['"]([^'"]+)['"]\s*\)/gm,
-    /^\s*@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/gm,
-  ];
-  for (const pattern of patterns) {
+/** Module specifiers this file genuinely imports. */
+function extractImports(filePath, source) {
+  if (filePath.endsWith('.css')) {
+    // CSS has no string-literal ambiguity, but strip comments anyway.
+    const cleaned = source.replace(/\/\*[\s\S]*?\*\//g, ' ');
+    const specifiers = [];
+    const pattern = /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g;
     let match;
     while ((match = pattern.exec(cleaned)) !== null) specifiers.push(match[1]);
+    return specifiers;
   }
-  return specifiers;
+  // detectJavaScriptImports=true, readImportFiles=true — catches static,
+  // dynamic import(), and re-exports. A string that merely reads like an
+  // import is not one, and this is what knows the difference.
+  return ts.preProcessFile(source, true, true).importedFiles.map((f) => f.fileName);
 }
 
 /**
- * Files that must not act as reachability roots.
- *
- * A stylesheet imported only by a test does not reach the browser. The first
- * version treated every non-CSS file as a production root, so importing an
- * orphan from a `.test.ts` was enough to make it pass.
+ * Resolve to a repo-relative posix path inside src/, or null.
+ * Anything escaping src/ is dropped rather than read — a specifier such as
+ * `../../../../outside/x` previously resolved above the repository root.
  */
-function isProductionRoot(filePath) {
-  if (filePath.endsWith('.css')) return false;
-  return !/(^|\/)(__tests__|__mocks__|e2e)\//.test(filePath) &&
-    !/\.(test|spec)\.[jt]sx?$/.test(filePath) &&
-    !/(^|\/)test-setup\.[jt]s$/.test(filePath);
-}
-
-/** Resolve a specifier to a repo-relative posix path, or null if not a local file. */
 function resolveSpecifier(specifier, importerPath) {
   const bare = specifier.split('?')[0];
-  if (bare.startsWith('@/')) return path.posix.normalize(`src/${bare.slice(2)}`);
-  if (bare.startsWith('./') || bare.startsWith('../')) {
-    const importerDir = importerPath.split('/').slice(0, -1).join('/');
-    return path.posix.normalize(path.posix.join(importerDir, bare));
+  let resolved = null;
+  if (bare.startsWith('@/')) resolved = path.posix.normalize(`src/${bare.slice(2)}`);
+  else if (bare.startsWith('./') || bare.startsWith('../')) {
+    const dir = importerPath.split('/').slice(0, -1).join('/');
+    resolved = path.posix.normalize(path.posix.join(dir, bare));
   }
-  return null; // bare package specifier — node_modules, not ours
+  if (resolved === null) return null;
+  if (resolved !== 'src' && !resolved.startsWith('src/')) return null;
+  return resolved;
+}
+
+/** Candidate on-disk paths for a resolved specifier. */
+function candidatePaths(resolved) {
+  if (/\.(css|tsx?|jsx?|mjs)$/.test(resolved)) return [resolved];
+  return [
+    resolved,
+    `${resolved}.ts`,
+    `${resolved}.tsx`,
+    `${resolved}.js`,
+    `${resolved}.jsx`,
+    `${resolved}/index.ts`,
+    `${resolved}/index.tsx`,
+  ];
 }
 
 /**
- * A stylesheet is reachable only if some file actually imports it by resolved
- * path, transitively through CSS @import chains. Matching a basename anywhere
- * in a line is NOT sufficient: a comment naming the file would satisfy it, and
- * an independent reviewer demonstrated exactly that bypass against the first
- * version of this check.
- *
  * @param {string[]} cssFiles repo-relative css paths
- * @param {string[]} sourceFiles repo-relative source paths
+ * @param {string[]} sourceFiles repo-relative source paths (all files, incl. css)
  * @param {(p: string) => string | null} read
  * @returns {string[]} failures
  */
@@ -131,53 +104,38 @@ function validateCssSources(cssFiles, sourceFiles, read) {
     return failures;
   }
 
-  const cssSet = new Set(cssFiles);
-
-  // Edge: importer -> resolved stylesheet targets it genuinely imports.
-  const importsByFile = new Map();
-  for (const sourceFile of sourceFiles) {
-    const contents = read(sourceFile);
-    if (contents === null) continue;
-    const targets = extractSpecifiers(contents)
-      .map((specifier) => resolveSpecifier(specifier, sourceFile))
-      .filter((resolved) => resolved !== null && cssSet.has(resolved));
-    importsByFile.set(sourceFile, targets);
-  }
-
-  // Seed: stylesheets imported from a NON-css file (a component or layout).
-  // Then walk CSS @import chains outward from those.
+  const known = new Set(sourceFiles);
   const reachable = new Set();
-  const queue = [];
-  for (const [sourceFile, targets] of importsByFile) {
-    if (!isProductionRoot(sourceFile)) continue;
-    for (const target of targets) {
-      if (!reachable.has(target)) {
-        reachable.add(target);
-        queue.push(target);
-      }
-    }
+  const queue = sourceFiles.filter(isEntryPoint);
+
+  if (queue.length === 0) {
+    failures.push(
+      'no Next.js entry point found (layout/page/route/middleware) — reachability cannot be computed'
+    );
+    return failures;
   }
+
   while (queue.length > 0) {
     const current = queue.shift();
-    for (const target of importsByFile.get(current) || []) {
-      if (!reachable.has(target)) {
-        reachable.add(target);
-        queue.push(target);
+    if (reachable.has(current)) continue;
+    reachable.add(current);
+
+    const source = read(current);
+    if (source === null) continue;
+
+    for (const specifier of extractImports(current, source)) {
+      const resolved = resolveSpecifier(specifier, current);
+      if (resolved === null) continue;
+      for (const candidate of candidatePaths(resolved)) {
+        if (known.has(candidate) && !reachable.has(candidate)) queue.push(candidate);
       }
     }
-  }
-
-  if (!reachable.has(ENTRY)) {
-    failures.push(
-      `${ENTRY}: the entry stylesheet itself is not imported by any component. ` +
-        `Nothing in it reaches the browser.`
-    );
   }
 
   for (const cssFile of cssFiles) {
     if (reachable.has(cssFile)) continue;
     failures.push(
-      `${cssFile}: nothing imports it by path, so nothing in it reaches the browser. ` +
+      `${cssFile}: no entry point reaches it, so nothing in it reaches the browser. ` +
         `Delete it, or import it from ${ENTRY}. A stylesheet that looks authoritative ` +
         `but never loads is a second source of truth about the design.`
     );
@@ -186,140 +144,198 @@ function validateCssSources(cssFiles, sourceFiles, read) {
   return failures;
 }
 
-function readFromDisk(relPath) {
-  const abs = path.join(ROOT, relPath);
-  return fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+function walk(dir, test, acc = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+      walk(full, test, acc);
+    } else if (test(entry.name)) {
+      acc.push(path.relative(ROOT, full).split(path.sep).join('/'));
+    }
+  }
+  return acc;
 }
 
+function readFromDisk(relPath) {
+  const abs = path.join(ROOT, relPath);
+  if (!abs.startsWith(ROOT + path.sep)) return null; // never read outside the repo
+  return fs.existsSync(abs) && fs.statSync(abs).isFile()
+    ? fs.readFileSync(abs, 'utf8')
+    : null;
+}
+
+/**
+ * Positive controls.
+ *
+ * Every fixture path below is consistent: the stylesheet a fixture imports is
+ * the stylesheet the fixture declares. An earlier revision imported
+ * './fake.css' from src/app/doc.ts — which resolves to src/app/fake.css — while
+ * declaring src/styles/fake.css, so the case passed no matter what the code did.
+ * A reviewer proved it by reverting the repair and watching --self-test stay
+ * green. Keep fixture paths aligned, or this file is decoration.
+ */
 function selfTest() {
-  const entryContents = '@import "tailwindcss" source(none);\n:root { --brand-primary: 221 83% 53%; }';
+  const LAYOUT = 'src/app/layout.tsx';
+  const entryCss = '@import "tailwindcss" source(none);\n:root { --brand-primary: 221 83% 53%; }';
+  const layoutSrc = "import './globals.css';\nexport default function L() { return null; }";
 
-  // Must REJECT: an orphaned stylesheet, which is the exact defect that shipped.
-  const orphanFailures = validateCssSources(
-    [ENTRY, 'src/styles/design-system.css'],
-    [ENTRY, 'src/styles/design-system.css', 'src/app/layout.tsx'],
-    (p) => {
-      if (p === ENTRY) return entryContents;
-      if (p === 'src/styles/design-system.css') return ':root { --primary: #0D9488; }';
-      if (p === 'src/app/layout.tsx') return "import './globals.css';";
-      return null;
-    }
-  );
-  if (orphanFailures.length === 0) throw new Error('self-test did not reject: orphaned stylesheet');
+  const mustReject = [
+    {
+      name: 'orphaned stylesheet (the defect that shipped)',
+      files: { [ENTRY]: entryCss, [LAYOUT]: layoutSrc, 'src/styles/design-system.css': ':root{}' },
+      orphan: 'src/styles/design-system.css',
+    },
+    {
+      name: 'orphan named only in a comment',
+      files: {
+        [ENTRY]: `${entryCss}\n/* do not import reviewer-orphan.css here */`,
+        [LAYOUT]: layoutSrc,
+        'src/styles/reviewer-orphan.css': '.o{}',
+      },
+      orphan: 'src/styles/reviewer-orphan.css',
+    },
+    {
+      name: 'orphan named inside an ordinary string',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nconst doc = "import '@/styles/str.css' to enable";`,
+        'src/styles/str.css': '.s{}',
+      },
+      orphan: 'src/styles/str.css',
+    },
+    {
+      name: 'orphan named inside a multi-line template literal',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nconst t = \`line one\nimport '@/styles/tpl.css'\nline three\`;`,
+        'src/styles/tpl.css': '.t{}',
+      },
+      orphan: 'src/styles/tpl.css',
+    },
+    {
+      name: 'orphan imported only by a test',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/test-only.css': '.t{}',
+        'src/app/probe.test.ts': "import '@/styles/test-only.css';",
+      },
+      orphan: 'src/styles/test-only.css',
+    },
+    {
+      name: 'orphan imported only by a Storybook story',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/story-only.css': '.s{}',
+        'src/components/X.stories.tsx': "import '@/styles/story-only.css';",
+      },
+      orphan: 'src/styles/story-only.css',
+    },
+    {
+      name: 'orphan imported only by an unreachable module',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/dead-only.css': '.d{}',
+        'src/lib/dead.ts': "import '@/styles/dead-only.css';",
+      },
+      orphan: 'src/styles/dead-only.css',
+    },
+    {
+      name: 'orphan-only CSS cycle with no entry point reaching it',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/a.css': "@import './b.css';",
+        'src/styles/b.css': "@import './a.css';",
+      },
+      orphan: 'src/styles/a.css',
+    },
+  ];
 
-  // Must REJECT: the reviewer's demonstrated bypass. The first version of this
-  // check matched a basename anywhere in an import-like line, so a comment
-  // merely NAMING the orphan made it pass. Keep this case forever.
-  const commentBypassFailures = validateCssSources(
-    [ENTRY, 'src/styles/reviewer-orphan.css'],
-    [ENTRY, 'src/styles/reviewer-orphan.css', 'src/app/layout.tsx'],
-    (p) => {
-      if (p === ENTRY) {
-        return `${entryContents}\n/* Reviewer note: do not import reviewer-orphan.css here. */`;
-      }
-      if (p === 'src/styles/reviewer-orphan.css') return '.orphan { color: red; }';
-      if (p === 'src/app/layout.tsx') return "import './globals.css';";
-      return null;
-    }
-  );
-  if (commentBypassFailures.length === 0) {
-    throw new Error('self-test did not reject: orphan named only in a comment');
-  }
-
-  // Must REJECT: a stylesheet whose basename matches an imported one in a
-  // different directory. Basename matching would have let this ride along.
-  const basenameCollisionFailures = validateCssSources(
-    [ENTRY, 'src/features/a/theme.css', 'src/features/b/theme.css'],
-    [ENTRY, 'src/features/a/theme.css', 'src/features/b/theme.css', 'src/app/layout.tsx'],
-    (p) => {
-      if (p === ENTRY) return entryContents;
-      if (p === 'src/app/layout.tsx') {
-        return "import './globals.css';\nimport '@/features/a/theme.css';";
-      }
-      if (p.endsWith('theme.css')) return '.t { color: blue; }';
-      return null;
-    }
-  );
-  if (!basenameCollisionFailures.some((f) => f.startsWith('src/features/b/theme.css'))) {
-    throw new Error('self-test did not reject: same-basename stylesheet in another directory');
-  }
-
-  // Must REJECT: reviewer bypass — an ordinary string that merely looks like an
-  // import statement.
-  for (const [label, line] of [
-    ['quoted string', `const doc = "import './fake.css' to enable the theme";`],
-    ['template literal', 'const doc = `import \'./fake.css\' here`;'],
-  ]) {
-    const failures = validateCssSources(
-      [ENTRY, 'src/styles/fake.css'],
-      [ENTRY, 'src/styles/fake.css', 'src/app/layout.tsx', 'src/app/doc.ts'],
-      (p) => {
-        if (p === ENTRY) return entryContents;
-        if (p === 'src/styles/fake.css') return '.f { color: red; }';
-        if (p === 'src/app/layout.tsx') return "import './globals.css';";
-        if (p === 'src/app/doc.ts') return line;
-        return null;
-      }
+  for (const testCase of mustReject) {
+    const all = Object.keys(testCase.files);
+    const css = all.filter((f) => f.endsWith('.css'));
+    const failures = validateCssSources(css, all, (p) =>
+      Object.prototype.hasOwnProperty.call(testCase.files, p) ? testCase.files[p] : null
     );
-    if (failures.length === 0) throw new Error(`self-test did not reject: ${label} posing as import`);
+    if (!failures.some((f) => f.startsWith(testCase.orphan))) {
+      throw new Error(
+        `self-test did not reject: ${testCase.name} (expected a failure naming ${testCase.orphan}, got ${
+          failures.length ? failures.join('; ') : 'none'
+        })`
+      );
+    }
   }
 
-  // Must REJECT: reviewer bypass — an orphan imported only by a test. A
-  // stylesheet a test imports still does not reach the browser.
-  const testOnlyFailures = validateCssSources(
-    [ENTRY, 'src/styles/test-only.css'],
-    [ENTRY, 'src/styles/test-only.css', 'src/app/layout.tsx', 'src/app/probe.test.ts'],
+  // Negative controls. A legitimately imported stylesheet must never be flagged,
+  // in any of the import forms real code uses — the line-anchored regex version
+  // falsely flagged the same-line and dynamic cases.
+  const mustAccept = [
+    {
+      name: 'plain side-effect import from the layout',
+      files: { [ENTRY]: entryCss, [LAYOUT]: layoutSrc },
+    },
+    {
+      name: 'same-line static import after other tokens',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nimport '@/styles/same-line.css';`,
+        'src/styles/same-line.css': '.x{}',
+      },
+    },
+    {
+      name: 'dynamic import',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nexport const load = () => import('@/styles/dyn.css');`,
+        'src/styles/dyn.css': '.d{}',
+      },
+    },
+    {
+      name: 'reached through a CSS @import chain',
+      files: {
+        [ENTRY]: `${entryCss}\n@import './theme.css';`,
+        [LAYOUT]: layoutSrc,
+        'src/app/theme.css': '.th{}',
+      },
+    },
+    {
+      name: 'reached through a component the layout imports',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nimport '@/components/Shell';`,
+        'src/components/Shell.tsx': "import '@/styles/shell.css';\nexport default () => null;",
+        'src/styles/shell.css': '.sh{}',
+      },
+    },
+  ];
+
+  for (const testCase of mustAccept) {
+    const all = Object.keys(testCase.files);
+    const css = all.filter((f) => f.endsWith('.css'));
+    const failures = validateCssSources(css, all, (p) =>
+      Object.prototype.hasOwnProperty.call(testCase.files, p) ? testCase.files[p] : null
+    );
+    if (failures.length > 0) {
+      throw new Error(`self-test wrongly rejected: ${testCase.name}\n- ${failures.join('\n- ')}`);
+    }
+  }
+
+  // A specifier escaping the repo must never be read from disk.
+  validateCssSources(
+    [ENTRY],
+    [ENTRY, LAYOUT],
     (p) => {
-      if (p === ENTRY) return entryContents;
-      if (p === 'src/styles/test-only.css') return '.t { color: red; }';
-      if (p === 'src/app/layout.tsx') return "import './globals.css';";
-      if (p === 'src/app/probe.test.ts') return "import '@/styles/test-only.css';";
-      return null;
+      if (p === ENTRY) return entryCss;
+      if (p === LAYOUT) return `${layoutSrc}\nimport '../../../../../outside/secrets';`;
+      throw new Error(`read escaped the repo: ${p}`);
     }
   );
-  if (testOnlyFailures.length === 0) {
-    throw new Error('self-test did not reject: stylesheet imported only by a test');
-  }
 
-  // Must REJECT: a cycle of orphans with no production root.
-  const cycleFailures = validateCssSources(
-    [ENTRY, 'src/styles/a.css', 'src/styles/b.css'],
-    [ENTRY, 'src/styles/a.css', 'src/styles/b.css', 'src/app/layout.tsx'],
-    (p) => {
-      if (p === ENTRY) return entryContents;
-      if (p === 'src/app/layout.tsx') return "import './globals.css';";
-      if (p === 'src/styles/a.css') return "@import './b.css';";
-      if (p === 'src/styles/b.css') return "@import './a.css';";
-      return null;
-    }
-  );
-  if (cycleFailures.length < 2) {
-    throw new Error('self-test did not reject: orphan-only CSS cycle');
-  }
-
-  // Must REJECT: a missing entry stylesheet.
-  const missingEntryFailures = validateCssSources(['src/other.css'], ['src/other.css'], () => '');
-  if (missingEntryFailures.length === 0) {
-    throw new Error('self-test did not reject: missing entry stylesheet');
-  }
-
-  // Must ACCEPT: an imported stylesheet, or the check rejects everything and a
-  // failure from it would carry no information.
-  const soundFailures = validateCssSources(
-    [ENTRY, 'src/styles/print.css'],
-    [ENTRY, 'src/styles/print.css', 'src/app/layout.tsx'],
-    (p) => {
-      if (p === ENTRY) return entryContents;
-      if (p === 'src/styles/print.css') return '@media print { body { color: #000; } }';
-      if (p === 'src/app/layout.tsx') return "import './globals.css';\nimport '@/styles/print.css';";
-      return null;
-    }
-  );
-  if (soundFailures.length > 0) {
-    throw new Error(`self-test rejected a sound tree:\n- ${soundFailures.join('\n- ')}`);
-  }
-
-  return { rejectedCases: 8, acceptedCases: 1 };
+  return { rejectedCases: mustReject.length, acceptedCases: mustAccept.length };
 }
 
 function main() {
@@ -331,10 +347,10 @@ function main() {
     return 0;
   }
 
-  console.log('\n🔍 Validating every stylesheet under src/ is reachable...\n');
+  console.log('\n🔍 Validating every stylesheet under src/ is reachable from an entry point...\n');
 
-  const cssFiles = findCssFiles(SRC);
-  const sourceFiles = findSourceFiles(SRC);
+  const cssFiles = walk(SRC, (n) => n.endsWith('.css'));
+  const sourceFiles = walk(SRC, (n) => /\.(css|tsx?|jsx?|mjs)$/.test(n));
   const failures = validateCssSources(cssFiles, sourceFiles, readFromDisk);
 
   if (failures.length > 0) {

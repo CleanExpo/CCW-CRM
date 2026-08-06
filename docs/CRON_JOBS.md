@@ -9,7 +9,8 @@ There is **one tier**, not two. Every cron path resolves to a Route Handler unde
 external integration APIs.
 
 1. **Vercel Cron** triggers the Route Handler on schedule
-2. The handler checks `Authorization: Bearer $CRON_SECRET` and returns 401 otherwise
+2. The handler calls `cronAuthFailure(request)`, which returns **401** for a wrong or missing
+   credential and **503** when `CRON_SECRET` is not configured at all
 3. The handler executes the work directly and returns results
 4. Results are logged to Vercel
 
@@ -78,6 +79,11 @@ The jobs additionally need whatever their integration requires:
   of this document named it and following them configured no credential at all.
 - A database connection — `DATABASE_URL`, or the `DB_HOST`/`DB_USER`/`DB_PASSWORD` triple resolved
   by `src/lib/db/database-env.ts`
+- `CRON_INTEGRATION_USER_ID` — the workspace owner the scheduled work runs as. Read by five
+  handlers: `check-invoice-overdue`, `check-sla-breaches`, `check-trade-finance-maturities`,
+  `nightly-full-sync` and `sync-bank-feeds`. Without it those jobs cannot resolve a workspace.
+
+> None of the above is currently set in production. See `docs/RESTORE-PRODUCTION-DATABASE.md`.
 
 > As of 2026-08-07 the production deployment has **no** database connection configured, so every
 > database-backed cron fails. See section 0 of `docs/PROJECT-STATUS.md`.
@@ -162,12 +168,11 @@ There is one tier. Write a Route Handler that does the work; do not proxy to ano
 ```typescript
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
+  const unauthorized = cronAuthFailure(request);
+  if (unauthorized) return unauthorized;
 
   try {
     // Do the work here, against Postgres and the integration APIs directly.

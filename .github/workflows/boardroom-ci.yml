@@ -70,6 +70,43 @@ jobs:
       - name: Scan for hardcoded secrets
         run: node scripts/ci/scan-secrets.js
 
+  # The browser suite was written but never wired into CI, so nothing would have
+  # surfaced an accessibility regression or a stale visual baseline until a human
+  # happened to run it locally. This runs the PUBLIC specs — the authenticated
+  # ones need credentials and a working production database, neither of which
+  # exists yet (see docs/RESTORE-PRODUCTION-DATABASE.md).
+  #
+  # Reporting-only for now, deliberately and visibly: the six committed baselines
+  # were captured from production before the 2026-08-07 contrast fix, so the first
+  # run after that deploys WILL diff. Making this blocking before those baselines
+  # are regenerated would produce a red gate everyone routes around. Flip
+  # continue-on-error off once `--update-snapshots` has been run against a
+  # production build that includes the fix.
+  e2e-public:
+    name: Browser Suite (public routes, reporting-only)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run public browser specs
+        run: npx playwright test e2e/public-surface.spec.ts
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   deploy:
     name: Deploy Gate
     needs: [test, validate, security]

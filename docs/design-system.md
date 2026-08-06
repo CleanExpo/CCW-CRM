@@ -32,7 +32,27 @@ a precondition for any design review. Now there is one answer.
 **Lucide is the icon set.** That is the decision, taken because 282 files already depend on it and
 there is no custom icon set to migrate to.
 
-## The open defect: greys on dark surfaces
+## The contrast defect — FIXED 2026-08-07, pending deploy
+
+**Status: repaired in the source, not yet live.** Production still serves the pre-fix build, so
+measuring `ccw-crm-web.vercel.app` will still show the failures described below until this branch
+deploys.
+
+Verified locally against `http://localhost:3002` with a working positive control — reintroducing
+`text-zinc-600` produced 6 violations, the repaired build produced none, and
+`npx playwright test e2e/public-surface.spec.ts -g "accessibility"` passed on all three public
+routes. The first measurement of this fix was taken against the wrong application entirely (another
+service held port 3000), which the control caught; see the commit message on the a11y fix.
+
+Fix applied: `text-zinc-500` and `text-zinc-600` to `text-zinc-400` on the marketing surface, and
+`text-sky-500/50` to `/80`.
+
+**The six committed visual baselines were captured from production before this change.** The first
+E2E run after deploy will report a landing-page screenshot diff. That is a true positive. Resolve it
+with `npx playwright test --update-snapshots` against production once it serves this build — do not
+resolve it by weakening `maxDiffPixelRatio`.
+
+## The original defect, kept for reference: greys on dark surfaces
 
 Measured on production 2026-08-07 by two independent tools — `axe-core` via
 `npm run test:e2e`, and Lighthouse via `npm run test:lighthouse`, which scores `color-contrast`

@@ -7,26 +7,33 @@
 // the operator runbooks told CCW staff to curl those exact URLs to confirm the
 // nightly sync had run. Nothing in CI noticed, because nothing in CI looked.
 //
-// This looks. For every path in vercel.json's cron array it asserts:
-//   1. a Route Handler exists at src/app/<path>/route.ts
-//   2. that handler exports GET or POST
-//   3. that handler does not resolve to a 501 stub (upstream-proxy /
-//      notImplementedResponse), which is the shape a dead cron takes here
+// Separately, twelve handlers inlined
+//   authHeader !== `Bearer ${process.env.CRON_SECRET}`
+// which authorises the literal header "Bearer undefined" when the variable is
+// unset. That is fail-open auth on every scheduled endpoint.
 //
-// Run `node scripts/ci/validate-vercel-crons.js --self-test` to prove the check
-// can still fail. A validator that has never been seen rejecting anything is
-// indistinguishable from a validator that always passes.
+// For each path in vercel.json's cron array this asserts:
+//   1. the path is well-formed and scheduled once
+//   2. a Route Handler exists at src/app/<path>/route.ts
+//   3. it exports GET or POST
+//   4. it authorises via cronAuthFailure(), not an inline comparison
+//   5. it does not reach a 501 stub through its import graph
+//
+// WHAT THIS DOES NOT CATCH — stated so its green is not over-read.
+// Rule 5 detects the stub SHAPES this codebase actually produces: an import of
+// upstream-proxy or not-implemented-response, or a literal `status: 501`. It is
+// a lint, not a proof. A status code computed at runtime (`500 + 1`), assembled
+// by string concatenation, or returned from a dynamically-resolved module will
+// pass. Detecting those needs execution, not parsing. Rules 1-4 ARE decisive.
+//
+// `node scripts/ci/validate-vercel-crons.js --self-test` proves it still rejects.
 
 const fs = require('fs');
 const path = require('path');
+const ts = require('typescript');
 
 const ROOT = path.resolve(__dirname, '../..');
 
-/**
- * Markers that mean "this handler cannot do its job in this deployment".
- * Regexes, not substrings: `{ status : 501 }` with unusual spacing slipped past
- * the literal-string version, and an independent reviewer demonstrated it.
- */
 const STUB_MARKERS = [
   { name: 'upstream-proxy', pattern: /upstream-proxy/ },
   { name: 'requireUpstreamBase', pattern: /\brequireUpstreamBase\b/ },
@@ -35,44 +42,20 @@ const STUB_MARKERS = [
   { name: 'status: 501', pattern: /\bstatus\s*:\s*501\b/ },
 ];
 
+/** The fail-open pattern, in any spacing. */
+const INLINE_FAIL_OPEN = /!==\s*`Bearer \$\{\s*process\.env\.CRON_SECRET\s*\}`/;
+
 /**
- * Remove comments AND string literals.
- *
- * Comments were already stripped so a marker inside one could not trip the
- * check. String literals matter for the opposite reason: the reviewer showed a
- * harmless module containing the string "legacy status: 501" being REJECTED, a
- * false positive. A gate that cries wolf gets ignored, which is the same
- * failure mode as one that stays silent.
+ * Local module specifiers, via the TypeScript parser.
+ * Regexes could not tell an import from a string that reads like one; the
+ * compiler can. Catches static, dynamic import() and re-exports.
  */
-function stripCommentsAndStrings(source) {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
-    .replace(/`(?:\\[\s\S]|[^\\`])*`/g, '``')
-    .replace(/'(?:\\[\s\S]|[^\\'\n])*'/g, "''")
-    .replace(/"(?:\\[\s\S]|[^\\"\n])*"/g, '""');
-}
-
-/** Comments only — used where quoted module specifiers must survive. */
-function stripComments(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
-}
-
-/** Local module specifiers imported by this file, resolved to repo-relative paths. */
 function localImports(source, importerPath) {
-  const cleaned = stripComments(source);
-  const specifiers = [];
-  const patterns = [
-    /\bimport\s+(?:[\w*{},\s]+\s+from\s+)?['"]([^'"]+)['"]/g,
-    /\bexport\s+(?:\*|{[^}]*})\s+from\s+['"]([^'"]+)['"]/g,
-    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-    // Dynamic import — a 501 reached through `await import('./stub')` escaped
-    // the first graph walk entirely.
-    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-  ];
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(cleaned)) !== null) specifiers.push(match[1]);
+  let specifiers;
+  try {
+    specifiers = ts.preProcessFile(source, true, true).importedFiles.map((f) => f.fileName);
+  } catch {
+    return [];
   }
 
   const resolved = [];
@@ -85,33 +68,77 @@ function localImports(source, importerPath) {
       base = path.posix.normalize(path.posix.join(dir, bare));
     }
     if (base === null) continue;
-    // Clamp inside src/. `../../../outside/x` resolved to a path above the repo
-    // root, which the disk reader would then have happily opened.
+    // Clamp inside src/. `../../../../outside/x` previously resolved above the
+    // repository root and would have been read from disk.
     if (base !== 'src' && !base.startsWith('src/')) continue;
-    // Try the usual TS resolution shapes.
     resolved.push(base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`);
   }
   return resolved;
 }
 
+/** Does this module export a GET or POST handler, in any of the forms Next.js accepts? */
+function exportsHandler(source) {
+  let sourceFile;
+  try {
+    sourceFile = ts.createSourceFile('route.ts', source, ts.ScriptTarget.Latest, true);
+  } catch {
+    return false;
+  }
+
+  let found = false;
+  const isHandlerName = (name) => name === 'GET' || name === 'POST';
+  const isExported = (node) =>
+    node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) ?? false;
+
+  const visit = (node) => {
+    if (found) return;
+    // export async function GET() {}
+    if (ts.isFunctionDeclaration(node) && node.name && isExported(node)) {
+      if (isHandlerName(node.name.text)) found = true;
+    }
+    // export const GET = async () => {}   <- was falsely rejected before
+    if (ts.isVariableStatement(node) && isExported(node)) {
+      for (const decl of node.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && isHandlerName(decl.name.text)) found = true;
+      }
+    }
+    // export { GET } / export { handler as GET }
+    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      for (const el of node.exportClause.elements) {
+        if (isHandlerName(el.name.text)) found = true;
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  ts.forEachChild(sourceFile, visit);
+  return found;
+}
+
+/** Comments and string literals removed, so markers match code, not prose. */
+function stripCommentsAndStrings(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+    .replace(/`(?:\\[\s\S]|[^\\`])*`/g, '``')
+    .replace(/'(?:\\[\s\S]|[^\\'\n])*'/g, "''")
+    .replace(/"(?:\\[\s\S]|[^\\"\n])*"/g, '""');
+}
+
+/** Comments only — the fail-open pattern lives in a template literal. */
+function stripComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+}
+
 /**
- * Walk the route's local import graph looking for a 501 stub.
- *
- * Scanning only the route file is not enough: an independent reviewer showed
- * that a scheduled route calling a thin local wrapper — where the wrapper is
- * what calls upstreamUnavailable() — passed the first version of this check
- * while still returning HTTP 501 on every run. The defect this gate exists to
- * catch was reachable one hop away from where it was looking.
- *
- * @returns {{marker: string, via: string} | null}
+ * Walk the route's import graph looking for a 501 stub. No depth cap — `seen`
+ * guarantees termination, and a cap only guaranteed a blind spot: a reviewer
+ * put a 501 seven hops away and walked straight past a limit of six.
  */
 function findStubInClosure(entryPath, read) {
   const seen = new Set();
   const queue = [entryPath];
 
-  // No depth cap. The first version stopped at six hops, and the reviewer put a
-  // 501 seven hops away and walked straight past. `seen` already guarantees
-  // termination — a depth limit only guaranteed a blind spot.
   while (queue.length > 0) {
     const filePath = queue.shift();
     if (seen.has(filePath)) continue;
@@ -120,8 +147,7 @@ function findStubInClosure(entryPath, read) {
     const source = read(filePath);
     if (source === null) continue;
 
-    const forMarkers = stripCommentsAndStrings(source);
-    const marker = STUB_MARKERS.find((m) => m.pattern.test(forMarkers));
+    const marker = STUB_MARKERS.find((m) => m.pattern.test(stripCommentsAndStrings(source)));
     if (marker) return { marker: marker.name, via: filePath };
 
     queue.push(...localImports(source, filePath));
@@ -130,30 +156,13 @@ function findStubInClosure(entryPath, read) {
 }
 
 /**
- * Scheduled handlers must authorise through the shared guard.
- *
- * Twelve handlers each inlined `authHeader !== \`Bearer ${process.env.CRON_SECRET}\``,
- * which authorises the literal header "Bearer undefined" whenever CRON_SECRET is
- * unset. That is a fail-open auth check on every scheduled endpoint, and it was
- * copy-pasted, so the only durable fix is one guard plus this check.
- */
-const INLINE_FAIL_OPEN = /!==\s*`Bearer \$\{\s*process\.env\.CRON_SECRET\s*\}`/;
-
-function findInlineAuth(routePath, read) {
-  const source = read(routePath);
-  if (source === null) return false;
-  return INLINE_FAIL_OPEN.test(stripComments(source));
-}
-
-/**
  * @param {{crons?: Array<{path?: string, schedule?: string}>}} config
  * @param {(relPath: string) => string | null} readSource
- * @returns {string[]} failures — empty means the config is sound
+ * @returns {string[]} failures
  */
 function validateCrons(config, readSource) {
   const failures = [];
   const crons = Array.isArray(config.crons) ? config.crons : [];
-
   if (crons.length === 0) return failures;
 
   const seen = new Set();
@@ -165,12 +174,15 @@ function validateCrons(config, readSource) {
       failures.push(`cron entry has no usable path: ${JSON.stringify(cron)}`);
       continue;
     }
+    // A path containing `..` produced a read request above the repository root.
+    if (cronPath.split('/').includes('..')) {
+      failures.push(`${cronPath}: path traversal segment is not a valid route`);
+      continue;
+    }
     if (typeof cron.schedule !== 'string' || cron.schedule.trim() === '') {
       failures.push(`${cronPath}: missing schedule`);
     }
-    if (seen.has(cronPath)) {
-      failures.push(`${cronPath}: scheduled more than once`);
-    }
+    if (seen.has(cronPath)) failures.push(`${cronPath}: scheduled more than once`);
     seen.add(cronPath);
 
     const relPath = path.posix.join('src/app', cronPath, 'route.ts');
@@ -180,11 +192,10 @@ function validateCrons(config, readSource) {
       failures.push(`${cronPath}: scheduled, but no Route Handler at ${relPath}`);
       continue;
     }
-    if (!/export\s+(?:async\s+)?function\s+(?:GET|POST)\b/.test(source)) {
+    if (!exportsHandler(source)) {
       failures.push(`${cronPath}: ${relPath} exports neither GET nor POST`);
     }
-
-    if (findInlineAuth(relPath, readSource)) {
+    if (INLINE_FAIL_OPEN.test(stripComments(source))) {
       failures.push(
         `${cronPath}: ${relPath} inlines the CRON_SECRET comparison. When CRON_SECRET is ` +
           `unset that template is the literal string "Bearer undefined", so sending exactly ` +
@@ -208,201 +219,122 @@ function validateCrons(config, readSource) {
 
 function readFromDisk(relPath) {
   const abs = path.join(ROOT, relPath);
-  return fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+  if (!abs.startsWith(ROOT + path.sep)) return null; // never read outside the repo
+  return fs.existsSync(abs) && fs.statSync(abs).isFile()
+    ? fs.readFileSync(abs, 'utf8')
+    : null;
 }
 
-/**
- * Positive control. Each case must be REJECTED; a case that passes means the
- * check has stopped discriminating and its clean verdict is worthless.
- */
 function selfTest() {
-  const good = 'export async function GET(request: Request) { return new Response("ok"); }';
+  const good =
+    'export async function GET(request: Request) {\n' +
+    "  const unauthorized = cronAuthFailure(request);\n" +
+    '  if (unauthorized) return unauthorized;\n' +
+    '  return Response.json({ ok: true });\n' +
+    '}';
+  const P = '/api/cron/ghost';
+  const R = 'src/app/api/cron/ghost/route.ts';
+  const oneCron = { crons: [{ path: P, schedule: '0 19 * * *' }] };
 
-  const cases = [
+  const mustReject = [
+    { name: '501 via upstream-proxy import', files: { [R]: "import { requireUpstreamBase } from '@/lib/api/upstream-proxy';\n" + good } },
+    { name: '501 via notImplementedResponse', files: { [R]: "import { notImplementedResponse } from '@/lib/integrations/not-implemented-response';\n" + good } },
+    { name: 'literal status: 501', files: { [R]: 'export async function GET() { return Response.json({}, { status: 501 }); }' } },
+    { name: 'status : 501 with unusual spacing', files: { [R]: 'export async function GET() { return Response.json({}, { status : 501 }); }' } },
     {
-      name: '501 stub via upstream-proxy',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          "import { requireUpstreamBase } from '@/lib/api/upstream-proxy';\n" + good,
+      name: '501 one hop away via a local wrapper',
+      files: {
+        [R]: "import { run } from '@/lib/jobs/ghost';\nexport async function GET() { return run(); }",
+        'src/lib/jobs/ghost.ts': "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\nexport const run = () => upstreamUnavailable('g');",
       },
     },
     {
-      name: '501 stub via notImplementedResponse',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          "import { notImplementedResponse } from '@/lib/integrations/not-implemented-response';\n" +
-          good,
+      name: '501 seven hops away',
+      files: (() => {
+        const f = { [R]: "import { h1 } from './h1';\nexport async function GET() { return h1(); }" };
+        for (let i = 1; i < 7; i += 1) {
+          f[`src/app/api/cron/ghost/h${i}.ts`] = `import { h${i + 1} } from './h${i + 1}';\nexport const h${i} = () => h${i + 1}();`;
+        }
+        f['src/app/api/cron/ghost/h7.ts'] = 'export const h7 = () => Response.json({}, { status: 501 });';
+        return f;
+      })(),
+    },
+    {
+      name: '501 through a dynamic import',
+      files: {
+        [R]: "export async function GET() { const m = await import('./stub'); return m.run(); }",
+        'src/app/api/cron/ghost/stub.ts': "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\nexport const run = () => upstreamUnavailable('g');",
       },
     },
     {
-      // The reviewer's demonstrated bypass: the route itself is clean, and a
-      // thin local wrapper one hop away is what returns 501. Keep this forever.
-      name: '501 stub one import hop away, via a local wrapper',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          "import { runGhostJob } from '@/lib/jobs/ghost-runner';\n" +
-          'export async function GET() { return runGhostJob(); }',
-        'src/lib/jobs/ghost-runner.ts':
-          "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\n" +
-          'export function runGhostJob() { return upstreamUnavailable("Ghost job"); }',
+      name: '501 through a barrel re-export',
+      files: {
+        [R]: "import { run } from './barrel';\nexport async function GET() { return run(); }",
+        'src/app/api/cron/ghost/barrel.ts': "export { run } from './impl';",
+        'src/app/api/cron/ghost/impl.ts': 'export const run = () => Response.json({}, { status: 501 });',
       },
     },
+    { name: 'inline fail-open CRON_SECRET comparison', files: { [R]: 'export async function GET(request) {\n  const a = request.headers.get("authorization");\n  if (a !== `Bearer ${process.env.CRON_SECRET}`) return new Response("no", { status: 401 });\n  return Response.json({ ok: true });\n}' } },
+    { name: 'no GET or POST export', files: { [R]: 'export const revalidate = 0;' } },
+    { name: 'no route file at all', files: {} },
+  ];
+
+  for (const c of mustReject) {
+    const failures = validateCrons(oneCron, (p) =>
+      Object.prototype.hasOwnProperty.call(c.files, p) ? c.files[p] : null
+    );
+    if (failures.length === 0) throw new Error(`self-test did not reject: ${c.name}`);
+  }
+
+  // Config-shape rejections.
+  for (const [name, cfg] of [
+    ['missing schedule', { crons: [{ path: P }] }],
+    ['duplicate schedule', { crons: [{ path: P, schedule: '0 9 * * *' }, { path: P, schedule: '0 10 * * *' }] }],
+    ['path traversal segment', { crons: [{ path: '/api/../../../../outside', schedule: '0 9 * * *' }] }],
+  ]) {
+    const failures = validateCrons(cfg, (p) => (p === R ? good : null));
+    if (failures.length === 0) throw new Error(`self-test did not reject: ${name}`);
+  }
+
+  // Negative controls — each MUST pass, or a failure from this gate means nothing.
+  const mustAccept = [
+    { name: 'export async function GET', files: { [R]: good } },
+    { name: 'export const GET = async', files: { [R]: 'export const GET = async (request: Request) => Response.json({ ok: true });' } },
+    { name: 'export { GET }', files: { [R]: 'const GET = async () => Response.json({});\nexport { GET };' } },
+    { name: 'export async function POST', files: { [R]: 'export async function POST() { return Response.json({}); }' } },
     {
-      name: '501 returned by a transitively imported helper',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          "import { a } from './a';\nexport async function GET() { return a(); }",
-        'src/app/api/cron/ghost/a.ts': "import { b } from './b';\nexport const a = () => b();",
-        'src/app/api/cron/ghost/b.ts':
-          'export const b = () => Response.json({ ok: false }, { status: 501 });',
+      name: 'a string literal mentioning status: 501 must NOT flag',
+      files: {
+        [R]: "import { note } from './note';\n" + good,
+        'src/app/api/cron/ghost/note.ts': "export const note = 'legacy status: 501 was returned here until 2026-08';",
       },
-    },
-    {
-      // Reviewer bypass: a depth cap of six let a 501 seven hops away escape.
-      name: '501 seven import hops away',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          "import { h1 } from './h1';\nexport async function GET() { return h1(); }",
-        'src/app/api/cron/ghost/h1.ts': "import { h2 } from './h2';\nexport const h1 = () => h2();",
-        'src/app/api/cron/ghost/h2.ts': "import { h3 } from './h3';\nexport const h2 = () => h3();",
-        'src/app/api/cron/ghost/h3.ts': "import { h4 } from './h4';\nexport const h3 = () => h4();",
-        'src/app/api/cron/ghost/h4.ts': "import { h5 } from './h5';\nexport const h4 = () => h5();",
-        'src/app/api/cron/ghost/h5.ts': "import { h6 } from './h6';\nexport const h5 = () => h6();",
-        'src/app/api/cron/ghost/h6.ts': "import { h7 } from './h7';\nexport const h6 = () => h7();",
-        'src/app/api/cron/ghost/h7.ts':
-          'export const h7 = () => Response.json({}, { status: 501 });',
-      },
-    },
-    {
-      // Reviewer bypass: dynamic import() was not treated as an edge.
-      name: '501 reached through a dynamic import',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          "export async function GET() { const m = await import('./stub'); return m.run(); }",
-        'src/app/api/cron/ghost/stub.ts':
-          "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\n" +
-          'export const run = () => upstreamUnavailable("ghost");',
-      },
-    },
-    {
-      // Reviewer bypass: literal-substring matching missed unusual spacing.
-      name: '501 written with unusual spacing',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          'export async function GET() { return Response.json({}, { status : 501 }); }',
-      },
-    },
-    {
-      // The fail-open auth pattern that shipped in twelve handlers.
-      name: 'handler inlines the fail-open CRON_SECRET comparison',
-      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
-      sources: {
-        'src/app/api/cron/ghost/route.ts':
-          'export async function GET(request) {\n' +
-          "  const authHeader = request.headers.get('authorization');\n" +
-          '  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) return new Response("no", { status: 401 });\n' +
-          '  return Response.json({ ok: true });\n' +
-          '}',
-      },
-    },
-    {
-      name: 'scheduled path with no route file',
-      config: { crons: [{ path: '/api/cron/missing', schedule: '0 9 * * *' }] },
-      sources: {},
-    },
-    {
-      name: 'route exports neither GET nor POST',
-      config: { crons: [{ path: '/api/cron/inert', schedule: '0 9 * * *' }] },
-      sources: { 'src/app/api/cron/inert/route.ts': 'export const revalidate = 0;' },
-    },
-    {
-      name: 'missing schedule',
-      config: { crons: [{ path: '/api/cron/ok' }] },
-      sources: { 'src/app/api/cron/ok/route.ts': good },
-    },
-    {
-      name: 'duplicate schedule for one path',
-      config: {
-        crons: [
-          { path: '/api/cron/ok', schedule: '0 9 * * *' },
-          { path: '/api/cron/ok', schedule: '0 10 * * *' },
-        ],
-      },
-      sources: { 'src/app/api/cron/ok/route.ts': good },
     },
   ];
 
-  for (const testCase of cases) {
-    const failures = validateCrons(testCase.config, (p) =>
-      Object.prototype.hasOwnProperty.call(testCase.sources, p) ? testCase.sources[p] : null
+  for (const c of mustAccept) {
+    const failures = validateCrons(oneCron, (p) =>
+      Object.prototype.hasOwnProperty.call(c.files, p) ? c.files[p] : null
     );
-    if (failures.length === 0) {
-      throw new Error(`self-test did not reject: ${testCase.name}`);
+    if (failures.length > 0) {
+      throw new Error(`self-test wrongly rejected: ${c.name}\n- ${failures.join('\n- ')}`);
     }
   }
 
-  // Negative control: a sound config must pass, or the check rejects everything
-  // and its failures carry no information either.
-  const soundFailures = validateCrons(
-    { crons: [{ path: '/api/cron/ok', schedule: '0 9 * * *' }] },
-    (p) => (p === 'src/app/api/cron/ok/route.ts' ? good : null)
-  );
-  if (soundFailures.length > 0) {
-    throw new Error(`self-test rejected a sound config:\n- ${soundFailures.join('\n- ')}`);
-  }
+  // A specifier escaping the repo must never be read.
+  validateCrons(oneCron, (p) => {
+    if (p === R) return "import { x } from '../../../../../../outside/secrets';\n" + good;
+    if (p.includes('outside')) throw new Error(`read escaped the repo root: ${p}`);
+    return null;
+  });
 
-  // Negative control 2: the reviewer showed a harmless module being REJECTED
-  // because a STRING contained "status: 501". A gate that cries wolf is ignored,
-  // which fails the same way as one that stays silent.
-  const falsePositiveFailures = validateCrons(
-    { crons: [{ path: '/api/cron/ok', schedule: '0 9 * * *' }] },
-    (p) => {
-      if (p === 'src/app/api/cron/ok/route.ts') {
-        return "import { note } from './note';\n" + good;
-      }
-      if (p === 'src/app/api/cron/ok/note.ts') {
-        return "export const note = 'legacy status: 501 was returned here until 2026-08';";
-      }
-      return null;
-    }
-  );
-  if (falsePositiveFailures.length > 0) {
-    throw new Error(
-      `self-test rejected a sound config over a string literal:\n- ${falsePositiveFailures.join('\n- ')}`
-    );
-  }
-
-  // Negative control 3: a specifier escaping the repo must simply not resolve,
-  // never be read from disk above the root.
-  const traversalFailures = validateCrons(
-    { crons: [{ path: '/api/cron/ok', schedule: '0 9 * * *' }] },
-    (p) => {
-      if (p === 'src/app/api/cron/ok/route.ts') {
-        return "import { x } from '../../../../../../outside/secrets';\n" + good;
-      }
-      if (p.includes('outside')) throw new Error(`read escaped the repo root: ${p}`);
-      return null;
-    }
-  );
-  if (traversalFailures.length > 0) {
-    throw new Error(`self-test rejected a sound config on traversal:\n- ${traversalFailures.join('\n- ')}`);
-  }
-
-  return { rejectedCases: cases.length, acceptedCases: 3 };
+  return { rejectedCases: mustReject.length + 3, acceptedCases: mustAccept.length };
 }
 
 function main() {
   if (process.argv[2] === '--self-test') {
-    const result = selfTest();
+    const r = selfTest();
     console.log(
-      `Vercel cron validator self-test passed: rejected=${result.rejectedCases} accepted=${result.acceptedCases}`
+      `Vercel cron validator self-test passed: rejected=${r.rejectedCases} accepted=${r.acceptedCases}`
     );
     return 0;
   }

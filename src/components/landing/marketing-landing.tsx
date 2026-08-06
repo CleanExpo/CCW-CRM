@@ -386,7 +386,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                         <div key={label} className="flex items-center gap-2 sm:gap-3">
                           {idx > 0 ? (
                             <ArrowRight
-                              className="hidden h-4 w-4 text-zinc-400 sm:block"
+                              className="hidden h-4 w-4 text-zinc-600 sm:block"
                               aria-hidden
                             />
                           ) : null}
@@ -426,7 +426,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                         className="group/pill rounded-xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400/45 hover:bg-sky-500/12 hover:shadow-[0_12px_40px_-16px_rgba(56,189,248,0.25)]"
                       >
                         <span className="block text-sm font-bold text-white">{label}</span>
-                        <span className="mt-1.5 block text-[11px] leading-tight font-medium text-zinc-400 transition-colors group-hover/pill:text-zinc-400">
+                        <span className="mt-1.5 block text-[11px] leading-tight font-medium text-zinc-400 transition-colors group-hover/pill:text-zinc-200">
                           {sub}
                         </span>
                       </div>
