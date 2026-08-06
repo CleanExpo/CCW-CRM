@@ -69,7 +69,7 @@ export function Cin7SyncButton({
     setSyncing(true);
     setJustSynced(false);
     try {
-      const result = await triggerCin7Sync(entity, { autoResume: true });
+      const result = await triggerCin7Sync(entity);
       const count = result.records_processed ?? 0;
       const durationSec =
         result.duration_ms != null ? (result.duration_ms / 1000).toFixed(1) : null;

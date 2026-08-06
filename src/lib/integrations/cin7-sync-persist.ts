@@ -117,8 +117,10 @@ export async function batchUpsertProducts(
 }
 
 /**
- * Upsert customers by Cin7 contact id (primary) or email (legacy match).
- * Never bulk-creates duplicate rows for contacts without email.
+ * Upsert customers by Cin7 contact id only.
+ * Legacy Optix customers (no cin7ContactId) are NOT merged/updated by email —
+ * full sync creates/links Cin7 rows by id; pre-existing CRM rows stay until
+ * they share a Cin7 contact id. "Extra without Cin7 id" in recon = those legacy rows.
  */
 export async function batchUpsertCustomers(
   ownerUserId: string,
@@ -235,19 +237,45 @@ export async function recordCin7SyncRun(input: {
   durationMs: number;
   source?: string;
 }): Promise<string | null> {
-  const run = await prisma.cin7SyncRun.create({
-    data: {
+  // One persistent row per owner + entity — re-sync updates the same record.
+  // Use find+update/create (not compound upsert) so hot-reload / stale Prisma
+  // clients without ownerUserId_entityType still work after migrate.
+  const existing = await prisma.cin7SyncRun.findFirst({
+    where: {
       ownerUserId: input.ownerUserId,
       entityType: input.entityType,
-      recordsProcessed: input.recordsProcessed,
-      skipped: input.skipped ?? undefined,
-      durationMs: input.durationMs,
-      source: input.source,
     },
+    select: { id: true },
+    orderBy: { createdAt: 'desc' },
   });
+
+  const data = {
+    recordsProcessed: input.recordsProcessed,
+    skipped: input.skipped ?? undefined,
+    durationMs: input.durationMs,
+    source: input.source,
+    createdAt: new Date(),
+  };
+
+  const run = existing
+    ? await prisma.cin7SyncRun.update({
+        where: { id: existing.id },
+        data,
+      })
+    : await prisma.cin7SyncRun.create({
+        data: {
+          ownerUserId: input.ownerUserId,
+          entityType: input.entityType,
+          ...data,
+        },
+      });
 
   const skipRecords = input.skipRecords ?? [];
   if (skipRecords.length > 0) {
+    // Replace prior skip rows for this entity run so history stays bounded.
+    await prisma.cin7SyncSkipRecord.deleteMany({
+      where: { syncRunId: run.id },
+    });
     const batchSize = 500;
     for (let i = 0; i < skipRecords.length; i += batchSize) {
       const chunk = skipRecords.slice(i, i + batchSize);

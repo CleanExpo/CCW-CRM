@@ -78,13 +78,18 @@ export type SendMailResult =
   | { ok: true; message_id: string; mode: 'demo' | 'live' }
   | { ok: false; status: number; detail: string };
 
-/** Validates API key against SendGrid (read-only). */
+/** Validates API key against SendGrid (read-only). Never throws — network/DNS failures return false. */
 export async function pingSendGridApi(apiKey: string): Promise<boolean> {
-  const res = await fetch(`${SENDGRID_API}/user/profile`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-    cache: 'no-store',
-  });
-  return res.ok;
+  try {
+    const res = await fetch(`${SENDGRID_API}/user/profile`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      cache: 'no-store',
+    });
+    return res.ok;
+  } catch {
+    // Offline, DNS failure (ENOTFOUND), TLS errors, etc.
+    return false;
+  }
 }
 
 export async function sendMailViaSendGrid(
@@ -268,7 +273,7 @@ export async function buildSendGridStatusPayload(
             : 'SendGrid API key verified (saved in this browser).';
     } else {
       message =
-        'SendGrid rejected this API key or the profile request failed. Check the key and network access.';
+        'SendGrid is unreachable or rejected this API key. Check network/DNS access to api.sendgrid.com and the key.';
     }
   }
 

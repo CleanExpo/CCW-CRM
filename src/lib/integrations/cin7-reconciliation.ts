@@ -4,6 +4,7 @@ import {
   fetchFullOmniBranchCatalog,
   fetchFullOmniContactsByType,
   fetchFullOmniProductCatalog,
+  getReconCatalogFetchOptions,
   resolveCin7SyncSource,
   type Cin7OmniMasterCatalogs,
 } from '@/lib/integrations/cin7-catalog-fetch';
@@ -18,20 +19,22 @@ import {
   buildReferenceExceptionItems,
   buildReferenceExceptionSummary,
   getCin7ReferenceCounts,
-  getOptixReferenceCounts,
+  loadOptixReferenceSnapshot,
+  referenceCountsFromOptixSnapshot,
   type Cin7ReferenceCounts,
   type Cin7ReferenceExceptionEntity,
   type Cin7ReferenceExceptionSummary,
 } from '@/lib/integrations/cin7-reconciliation-reference';
-import {
-  buildSyncCompletenessSummary,
-  type Cin7SyncCompletenessRow,
-} from '@/lib/integrations/cin7-sync-completeness';
+import { healOptixStockFieldMismatches } from '@/lib/integrations/cin7-stock-prune';
 import {
   getCin7PageSize,
   getCin7SyncMaxPages,
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
+import {
+  buildSyncCompletenessSummary,
+  type Cin7SyncCompletenessRow,
+} from '@/lib/integrations/cin7-sync-completeness';
 
 const CIN7_PRODUCT_CATEGORY_PREFIX = 'Cin7';
 
@@ -119,15 +122,121 @@ function normalize(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
 }
 
+async function loadOptixMasterForReconciliation(ownerUserId: string) {
+  const [
+    productRows,
+    customerRows,
+    internalCustomerRows,
+    supplierRows,
+    branchRows,
+    customerTotal,
+    customerExtraWithoutId,
+    supplierTotal,
+    supplierExtraWithoutId,
+    referenceSnapshot,
+  ] = await Promise.all([
+    prisma.product.findMany({
+      where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
+      select: {
+        sku: true,
+        name: true,
+        price: true,
+        stock: true,
+        isActive: true,
+        cin7StyleCode: true,
+        cin7Visibility: true,
+        category: true,
+      },
+    }),
+    prisma.customer.findMany({
+      where: {
+        ownerUserId,
+        cin7ContactId: { not: null },
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
+      select: {
+        cin7ContactId: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        city: true,
+      },
+    }),
+    prisma.customer.findMany({
+      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
+      select: {
+        cin7ContactId: true,
+        companyName: true,
+        email: true,
+        phone: true,
+        city: true,
+      },
+    }),
+    prisma.supplier.findMany({
+      where: { ownerUserId, supplierCode: { startsWith: 'cin7:' } },
+      select: { supplierCode: true, companyName: true, email: true, phone: true },
+    }),
+    prisma.cin7Branch.findMany({
+      where: { ownerUserId },
+      select: {
+        cin7BranchId: true,
+        name: true,
+        city: true,
+        state: true,
+        postCode: true,
+        isActive: true,
+      },
+    }),
+    prisma.customer.count({ where: { ownerUserId } }),
+    prisma.customer.count({
+      where: {
+        ownerUserId,
+        cin7ContactId: null,
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
+    }),
+    prisma.supplier.count({ where: { ownerUserId } }),
+    prisma.supplier.count({
+      where: { ownerUserId, NOT: { supplierCode: { startsWith: 'cin7:' } } },
+    }),
+    loadOptixReferenceSnapshot(ownerUserId),
+  ]);
+
+  return {
+    productRows,
+    customerRows,
+    internalCustomerRows,
+    internalCustomerCount: internalCustomerRows.length,
+    supplierRows,
+    branchRows,
+    customerTotal,
+    customerExtraWithoutId,
+    supplierTotal,
+    supplierExtraWithoutId,
+    referenceSnapshot,
+  };
+}
+
 export async function buildCin7Reconciliation(
   ownerUserId: string
 ): Promise<Cin7ReconciliationSnapshot> {
+  const wallStart = Date.now();
   const notes: string[] = [];
   const fetchErrors: string[] = [];
   const coreCreds = getCin7CoreCredentials();
   const omniCreds = getCin7OmniCredentials();
-  const coreLive = coreCreds ? await pingCin7Core(coreCreds) : false;
-  const omniLive = omniCreds ? await pingCin7Omni(omniCreds) : false;
+
+  // Ping Core/Omni in parallel — sequential pings wasted a round-trip.
+  const [coreLive, omniLive] = await Promise.all([
+    coreCreds ? pingCin7Core(coreCreds) : Promise.resolve(false),
+    omniCreds ? pingCin7Omni(omniCreds) : Promise.resolve(false),
+  ]);
   const source = resolveCin7SyncSource(coreLive, omniLive);
 
   const cin7Products = { styles: 0, skus: 0, by_visibility: {} as Record<string, number> };
@@ -160,8 +269,14 @@ export async function buildCin7Reconciliation(
   const fetchMeta: Cin7ReconciliationSnapshot['fetch_meta'] = { errors: [] };
   let omniCatalogs: Cin7OmniMasterCatalogs | null = null;
 
+  // Optix DB work runs in parallel with the Cin7 catalog pull (independent I/O).
+  const optixPromise = loadOptixMasterForReconciliation(ownerUserId);
+
   if (source === 'omni' && omniCreds) {
-    const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    const catalogs = await fetchAllOmniMasterCatalogsSequential(
+      omniCreds,
+      getReconCatalogFetchOptions()
+    );
     omniCatalogs = catalogs;
     const {
       products: productCatalog,
@@ -180,7 +295,9 @@ export async function buildCin7Reconciliation(
       ...customers.errors,
       ...internalCustomers.errors,
       ...suppliers.errors,
-      ...branches.errors
+      ...branches.errors,
+      ...catalogs.stockLevels.errors,
+      ...catalogs.productCategories.errors
     );
 
     cin7Products.styles = productCatalog.styles;
@@ -278,7 +395,8 @@ export async function buildCin7Reconciliation(
     notes.push('Cin7 is not connected — Optix counts only.');
   }
 
-  const [
+  const optixStarted = Date.now();
+  const {
     productRows,
     customerRows,
     internalCustomerRows,
@@ -289,81 +407,10 @@ export async function buildCin7Reconciliation(
     customerExtraWithoutId,
     supplierTotal,
     supplierExtraWithoutId,
-  ] = await Promise.all([
-    prisma.product.findMany({
-      where: { ownerUserId, category: { startsWith: CIN7_PRODUCT_CATEGORY_PREFIX } },
-      select: {
-        sku: true,
-        name: true,
-        price: true,
-        stock: true,
-        isActive: true,
-        cin7StyleCode: true,
-        cin7Visibility: true,
-        category: true,
-      },
-    }),
-    prisma.customer.findMany({
-      where: {
-        ownerUserId,
-        cin7ContactId: { not: null },
-        OR: [
-          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
-          { cin7ContactType: null },
-        ],
-      },
-      select: {
-        cin7ContactId: true,
-        companyName: true,
-        email: true,
-        phone: true,
-        city: true,
-      },
-    }),
-    prisma.customer.findMany({
-      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
-      select: {
-        cin7ContactId: true,
-        companyName: true,
-        email: true,
-        phone: true,
-        city: true,
-      },
-    }),
-    prisma.customer.count({
-      where: { ownerUserId, cin7ContactType: { equals: 'Internal', mode: 'insensitive' } },
-    }),
-    prisma.supplier.findMany({
-      where: { ownerUserId, supplierCode: { startsWith: 'cin7:' } },
-      select: { supplierCode: true, companyName: true, email: true, phone: true },
-    }),
-    prisma.cin7Branch.findMany({
-      where: { ownerUserId },
-      select: {
-        cin7BranchId: true,
-        name: true,
-        city: true,
-        state: true,
-        postCode: true,
-        isActive: true,
-      },
-    }),
-    prisma.customer.count({ where: { ownerUserId } }),
-    prisma.customer.count({
-      where: {
-        ownerUserId,
-        cin7ContactId: null,
-        OR: [
-          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
-          { cin7ContactType: null },
-        ],
-      },
-    }),
-    prisma.supplier.count({ where: { ownerUserId } }),
-    prisma.supplier.count({
-      where: { ownerUserId, NOT: { supplierCode: { startsWith: 'cin7:' } } },
-    }),
-  ]);
+    referenceSnapshot: referenceSnapshotInitial,
+  } = await optixPromise;
+  let referenceSnapshot = referenceSnapshotInitial;
+  const optixMs = Date.now() - optixStarted;
 
   const optixByVisibility: Record<string, number> = {};
   const optixStyleCodes = new Set<string>();
@@ -502,15 +549,7 @@ export async function buildCin7Reconciliation(
   const customerLinked = customerRows.length;
   const supplierLinked = supplierRows.length;
 
-  if (source === 'none') {
-    notes.push(
-      'Cin7 is unreachable — exception counts below are not valid for acceptance. Reconnect and refresh from live Cin7.'
-    );
-  }
   if (fetchErrors.length > 0) {
-    notes.push(
-      `Cin7 fetch was incomplete (${fetchErrors.length} warning(s)) — do not use this snapshot for sign-off until a clean live refresh succeeds.`
-    );
     notes.push(`Cin7 fetch warnings: ${fetchErrors.slice(0, 3).join('; ')}`);
   }
   notes.push(
@@ -541,20 +580,52 @@ export async function buildCin7Reconciliation(
 
   if (omniCatalogs) {
     referenceCin7 = getCin7ReferenceCounts(omniCatalogs);
-    referenceOptix = await getOptixReferenceCounts(ownerUserId);
-    referenceExceptions = await buildReferenceExceptionSummary(ownerUserId, omniCatalogs);
+    referenceOptix = referenceCountsFromOptixSnapshot(referenceSnapshot);
+    referenceExceptions = await buildReferenceExceptionSummary(
+      ownerUserId,
+      omniCatalogs,
+      referenceSnapshot
+    );
+    // Stock qtys move constantly in Cin7. When keys already match, push live
+    // available/on-hand/incoming onto Optix so recon does not stay stuck on 1 field diff.
+    if (referenceExceptions.stock_levels_field_mismatches > 0) {
+      const { healed } = await healOptixStockFieldMismatches(
+        ownerUserId,
+        omniCatalogs.stockLevels.stockLevels
+      );
+      if (healed > 0) {
+        referenceSnapshot = await loadOptixReferenceSnapshot(ownerUserId);
+        referenceOptix = referenceCountsFromOptixSnapshot(referenceSnapshot);
+        referenceExceptions = await buildReferenceExceptionSummary(
+          ownerUserId,
+          omniCatalogs,
+          referenceSnapshot
+        );
+        notes.push(
+          `Aligned ${healed} stock row${healed === 1 ? '' : 's'} to live Cin7 quantities.`
+        );
+      }
+    }
     notes.push(
       'Warehouses in Cin7 Omni map to Branches; stock levels are per branch from /v1/Stock.'
     );
     notes.push(
       'Brands, price lists, units of measure, and tax codes are derived from product and contact data.'
     );
+  }
+
+  if (source === 'none') {
     notes.push(
-      'Optix customers without a Cin7 ID are legacy CRM records — sync adds Cin7-linked rows; it does not retroactively attach IDs to existing Optix-only customers (Phase 1: no merge/delete).'
+      'Cin7 is unreachable — counts below are not valid for acceptance. Reconnect and refresh from live Cin7.'
+    );
+  }
+  if (fetchErrors.length > 0) {
+    notes.push(
+      'Cin7 fetch was incomplete — do not use this snapshot for sign-off until a clean live refresh succeeds.'
     );
   }
 
-  const snapshotWithoutCompleteness = {
+  const snapshotWithoutCompleteness: Cin7ReconciliationSnapshot = {
     source,
     checked_at: new Date().toISOString(),
     cin7: {
@@ -599,8 +670,7 @@ export async function buildCin7Reconciliation(
       branches_missing_in_optix: source === 'none' ? 0 : branchExceptions.missing,
       branches_extra_in_optix: source === 'none' ? 0 : branchExceptions.extra,
       branches_field_mismatches: source === 'none' ? 0 : branchExceptions.fieldMismatch,
-      internal_customers_missing_in_optix:
-        source === 'none' ? 0 : internalCustomerExceptions.missing,
+      internal_customers_missing_in_optix: source === 'none' ? 0 : internalCustomerExceptions.missing,
       internal_customers_extra_in_optix: source === 'none' ? 0 : internalCustomerExceptions.extra,
       internal_customers_field_mismatches:
         source === 'none' ? 0 : internalCustomerExceptions.fieldMismatch,
@@ -621,14 +691,18 @@ export async function buildCin7Reconciliation(
     );
   }
 
-  return {
+  const snapshot: Cin7ReconciliationSnapshot = {
     ...snapshotWithoutCompleteness,
-    notes: uniqueNotes([
-      ...snapshotWithoutCompleteness.notes,
-      ...notes.filter((n) => !snapshotWithoutCompleteness.notes.includes(n)),
-    ]),
+    notes: uniqueNotes(notes),
     sync_completeness: syncCompleteness,
   };
+
+  console.log(
+    `[Cin7 recon] total=${Date.now() - wallStart}ms optix_await=${optixMs}ms ` +
+      `source=${source} cin7_skus=${cin7Products.skus} cin7_customers=${cin7Customers}`
+  );
+
+  return snapshot;
 }
 
 export async function buildCin7ExceptionReport(
@@ -667,7 +741,6 @@ export async function buildCin7ExceptionReport(
         stock: true,
         isActive: true,
         cin7Visibility: true,
-        category: true,
       },
     });
     const optixBySku = new Map(optixRows.map((r) => [r.sku, r]));
@@ -703,10 +776,7 @@ export async function buildCin7ExceptionReport(
           optix_value: String(optix.isActive),
         });
       }
-      const optixVis =
-        optix.cin7Visibility ??
-        (optix.category?.includes('·') ? optix.category.split('·').pop()?.trim() : '') ??
-        '';
+      const optixVis = optix.cin7Visibility ?? '';
       if (normalize(optixVis) !== normalize(cin7.visibility)) {
         fields.push({ field: 'visibility', cin7_value: cin7.visibility, optix_value: optixVis });
       }
@@ -963,7 +1033,10 @@ export async function buildCin7ExceptionReport(
     source === 'omni' &&
     omniCreds
   ) {
-    const catalogs = await fetchAllOmniMasterCatalogsSequential(omniCreds);
+    const catalogs = await fetchAllOmniMasterCatalogsSequential(
+      omniCreds,
+      getReconCatalogFetchOptions()
+    );
     const refItems = await buildReferenceExceptionItems(
       ownerUserId,
       entity as Cin7ReferenceExceptionEntity,
@@ -972,15 +1045,10 @@ export async function buildCin7ExceptionReport(
     items.push(...refItems);
   }
 
-  const entityTypesForSkips =
-    entity === 'warehouses' || entity === 'branches'
-      ? ['warehouses', 'branches']
-      : entity === 'stock-levels'
-        ? ['stock-levels', 'inventory']
-        : [entity === 'internal-customers' ? 'internal-customers' : entity];
+  const entityType = entity === 'internal-customers' ? 'internal-customers' : entity;
 
   const skipRows = await prisma.cin7SyncSkipRecord.findMany({
-    where: { ownerUserId, entityType: { in: entityTypesForSkips } },
+    where: { ownerUserId, entityType },
     orderBy: { createdAt: 'desc' },
     take: 500,
     select: { cin7Id: true, label: true, reason: true },
@@ -995,7 +1063,7 @@ export async function buildCin7ExceptionReport(
   }
 
   const lastRun = await prisma.cin7SyncRun.findFirst({
-    where: { ownerUserId, entityType: { in: entityTypesForSkips } },
+    where: { ownerUserId, entityType },
     orderBy: { createdAt: 'desc' },
   });
   if (lastRun?.skipped && typeof lastRun.skipped === 'object' && skipRows.length === 0) {

@@ -1,15 +1,16 @@
+import {
+  delayForRetry,
+  isRetryableHttpStatus,
+  sleepForRetry,
+  type Cin7HttpRetryResult,
+} from '@/lib/integrations/cin7-http-retry';
 import type { NextRequest } from 'next/server';
 
 const OMNI_API_BASE = 'https://api.cin7.com/api';
 const DEFAULT_TIMEOUT_MS = 45_000;
-const DEFAULT_RETRIES = 2;
+const DEFAULT_RETRIES = 4;
 
-type Cin7HttpResult<T> = {
-  ok: boolean;
-  status: number;
-  data: T;
-  error?: string;
-};
+type Cin7HttpResult<T> = Cin7HttpRetryResult<T>;
 
 export type Cin7OmniCredentials = {
   username: string;
@@ -33,10 +34,6 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function getCin7OmniCredentials(request?: NextRequest): Cin7OmniCredentials | null {
   const username =
     request?.cookies.get('cin7_omni_username')?.value?.trim() ||
@@ -58,12 +55,14 @@ function basicAuthHeader(creds: Cin7OmniCredentials): string {
 
 export async function cin7OmniGet<T>(
   pathWithQuery: string,
-  creds: Cin7OmniCredentials
+  creds: Cin7OmniCredentials,
+  options?: { retries?: number }
 ): Promise<Cin7HttpResult<T>> {
   const base = OMNI_API_BASE.replace(/\/$/, '');
   const p = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
   const url = `${base}${p}`;
-  const retries = getCin7RequestRetries();
+  const retries = options?.retries ?? getCin7RequestRetries();
+  let lastRetryAfterMs: number | undefined;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
@@ -79,16 +78,33 @@ export async function cin7OmniGet<T>(
       });
       const data = (await res.json().catch(() => ({}))) as T;
       clearTimeout(timeout);
-      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
-        await sleep(2_000 * (attempt + 1));
+      if (isRetryableHttpStatus(res.status) && attempt < retries) {
+        const waitMs = delayForRetry({
+          status: res.status,
+          attempt,
+          retryAfterHeader: res.headers.get('retry-after'),
+        });
+        lastRetryAfterMs = waitMs;
+        await sleepForRetry(waitMs);
         continue;
       }
-      return { ok: res.ok, status: res.status, data };
+      return {
+        ok: res.ok,
+        status: res.status,
+        data,
+        error: res.ok ? undefined : `Cin7 Omni HTTP ${res.status}`,
+        retryAfterMs: res.status === 429 ? lastRetryAfterMs : undefined,
+      };
     } catch (error) {
       clearTimeout(timeout);
       const message = getErrorMessage(error);
       if (attempt < retries) {
-        await sleep(1_000 * (attempt + 1));
+        const waitMs = delayForRetry({
+          status: 503,
+          attempt,
+          retryAfterHeader: null,
+        });
+        await sleepForRetry(waitMs);
         continue;
       }
       return {
@@ -105,6 +121,7 @@ export async function cin7OmniGet<T>(
     status: 504,
     data: {} as T,
     error: 'Cin7 Omni request failed after retries.',
+    retryAfterMs: lastRetryAfterMs,
   };
 }
 
@@ -154,7 +171,12 @@ function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number |
 
 /** Lightweight connectivity check (read-only friendly). */
 export async function pingCin7Omni(creds: Cin7OmniCredentials): Promise<boolean> {
-  const { ok, status, data } = await cin7OmniGet<unknown>('/v1/Products?page=1&rows=1', creds);
+  // One-shot: status pings must not burn retry budget / amplify 429s.
+  const { ok, status, data } = await cin7OmniGet<unknown>('/v1/Products?page=1&rows=1', creds, {
+    retries: 0,
+  });
+  // 429 means credentials were accepted but rate-limited — treat as reachable.
+  if (status === 429) return true;
   if (!ok || status !== 200) return false;
   const { rows } = parseOmniListEnvelope(data);
   return Array.isArray(rows);
@@ -246,11 +268,18 @@ export function flattenOmniProducts(
   return out;
 }
 
+function appendOmniWhere(path: string, where?: string): string {
+  const clause = where?.trim();
+  if (!clause) return path;
+  // Do not URL-encode `=` / `'` — Cin7 Omni rejects percent-encoded where clauses.
+  return `${path}&where=${clause}`;
+}
+
 export async function fetchOmniProductPage(
   creds: Cin7OmniCredentials,
   page: number,
   rows: number,
-  options?: { excludeInactive?: boolean }
+  options?: { excludeInactive?: boolean; where?: string }
 ): Promise<{
   rows: ReturnType<typeof flattenOmniProducts>;
   total: number | null;
@@ -260,12 +289,18 @@ export async function fetchOmniProductPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Products?page=${page}&rows=${safeRows}`,
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
+    appendOmniWhere(`/v1/Products?page=${page}&rows=${safeRows}`, options?.where),
     creds
   );
   if (!ok) {
-    return { rows: [], total: null, sourceRowCount: 0, skippedInactive: 0, error };
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      skippedInactive: 0,
+      error: error ?? `Cin7 Omni Products HTTP ${status}`,
+    };
   }
   const { rows: rawRows, total } = parseOmniListEnvelope(data);
   const excludeInactive = options?.excludeInactive === true;
@@ -273,9 +308,7 @@ export async function fetchOmniProductPage(
   if (excludeInactive) {
     for (const raw of rawRows) {
       if (!raw || typeof raw !== 'object') continue;
-      const status = String(
-        pick(raw as Record<string, unknown>, 'Status', 'status') ?? ''
-      ).trim();
+      const status = String(pick(raw as Record<string, unknown>, 'Status', 'status') ?? '').trim();
       if (status === 'Inactive') skippedInactive += 1;
     }
   }
@@ -292,11 +325,12 @@ export async function fetchOmniProductPage(
 export async function fetchOmniProductsRawPage(
   creds: Cin7OmniCredentials,
   page: number,
-  rows: number
+  rows: number,
+  options?: { where?: string }
 ): Promise<{ rows: unknown[]; total: number | null; sourceRowCount: number; error?: string }> {
   const safeRows = Math.max(1, Math.min(250, rows));
   const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Products?page=${page}&rows=${safeRows}`,
+    appendOmniWhere(`/v1/Products?page=${page}&rows=${safeRows}`, options?.where),
     creds
   );
   if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
@@ -327,13 +361,9 @@ function mapOmniContactRaw(raw: unknown): Cin7OmniContactRow | null {
   ).trim();
   const lastName = String(pick(c, 'LastName', 'lastName') ?? '').trim();
   const displayName =
-    [company, lastName].filter(Boolean).join(' ').trim() ||
-    company ||
-    lastName ||
-    'Cin7 contact';
+    [company, lastName].filter(Boolean).join(' ').trim() || company || lastName || 'Cin7 contact';
   const email = String(pick(c, 'Email', 'email') ?? '').trim();
-  const phone =
-    String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
+  const phone = String(pick(c, 'Phone', 'phone', 'Mobile', 'mobile') ?? '').trim() || undefined;
   const city =
     String(
       pick(c, 'DeliveryCity', 'deliveryCity', 'BillingCity', 'billingCity', 'City', 'city') ?? ''
@@ -358,22 +388,35 @@ export type Cin7OmniContactSkip = {
   reason: 'missing_cin7_id' | 'wrong_contact_type';
 };
 
-function buildOmniContactsPath(page: number, rows: number, whereType?: string): string {
-  const params = new URLSearchParams();
-  params.set('page', String(page));
-  params.set('rows', String(rows));
-  params.set('order', 'id asc');
+function buildOmniContactsPath(
+  page: number,
+  rows: number,
+  whereType?: string,
+  extraWhere?: string
+): string {
+  // Build manually: URLSearchParams percent-encodes `=`/`'` inside `where`, which Cin7 Omni
+  // rejects or silently mis-filters. Do not send `order=id asc` (space → false empty pages).
+  const safeRows = Math.max(1, Math.min(250, rows));
+  let path = `/v1/Contacts?page=${page}&rows=${safeRows}`;
+  const clauses: string[] = [];
   if (whereType) {
-    params.set('where', `type='${whereType}'`);
+    const safeType = whereType.replace(/[^a-zA-Z]/g, '');
+    clauses.push(`type='${safeType}'`);
   }
-  return `/v1/Contacts?${params.toString()}`;
+  if (extraWhere?.trim()) {
+    clauses.push(extraWhere.trim());
+  }
+  if (clauses.length > 0) {
+    path += `&where=${clauses.join(' AND ')}`;
+  }
+  return path;
 }
 
 export async function fetchOmniContactsPage(
   creds: Cin7OmniCredentials,
   page: number,
   rows: number,
-  options?: { allowedTypes?: string[]; whereType?: string }
+  options?: { allowedTypes?: string[]; whereType?: string; where?: string }
 ): Promise<{
   rows: Cin7OmniContactRow[];
   total: number | null;
@@ -384,9 +427,12 @@ export async function fetchOmniContactsPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const whereType = options?.whereType ?? options?.allowedTypes?.[0];
-  const { ok, data, error } = await cin7OmniGet<unknown>(
-    buildOmniContactsPath(page, safeRows, whereType),
+  // Only an explicit whereType adds Cin7's server-side `type=` filter.
+  // Do NOT infer whereType from allowedTypes — Omni's type filter under-counts vs an
+  // unfiltered walk + in-memory partition (same path reconciliation uses).
+  const whereType = options?.whereType;
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
+    buildOmniContactsPath(page, safeRows, whereType, options?.where),
     creds
   );
   if (!ok) {
@@ -397,13 +443,13 @@ export async function fetchOmniContactsPage(
       skippedWrongType: 0,
       skippedMissingId: 0,
       skippedRecords: [],
-      error,
+      error: error ?? `Cin7 Omni Contacts HTTP ${status}`,
     };
   }
   const { rows: list, total } = parseOmniListEnvelope(data);
-  const allowedTypes = whereType
-    ? [whereType.toLowerCase()]
-    : options?.allowedTypes?.map((t) => t.toLowerCase());
+  const allowedTypes = (
+    options?.allowedTypes?.length ? options.allowedTypes : whereType ? [whereType] : undefined
+  )?.map((t) => t.toLowerCase());
   let skippedWrongType = 0;
   let skippedMissingId = 0;
   const skippedRecords: Cin7OmniContactSkip[] = [];
@@ -493,12 +539,18 @@ export async function fetchOmniBranchesPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
     `/v1/Branches?page=${page}&rows=${safeRows}`,
     creds
   );
   if (!ok) {
-    return { rows: [], total: null, sourceRowCount: 0, skippedMissingId: 0, error };
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      skippedMissingId: 0,
+      error: error ?? `Cin7 Omni Branches HTTP ${status}`,
+    };
   }
   const { rows: list, total } = parseOmniListEnvelope(data);
   let skippedMissingId = 0;
@@ -568,11 +620,18 @@ export async function fetchOmniProductCategoriesPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/ProductCategories?page=${page}&rows=${safeRows}&order=id asc`,
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
+    `/v1/ProductCategories?page=${page}&rows=${safeRows}`,
     creds
   );
-  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  if (!ok) {
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      error: error ?? `Cin7 Omni ProductCategories HTTP ${status}`,
+    };
+  }
   const { rows: list, total } = parseOmniListEnvelope(data);
   const mapped = list
     .map(mapOmniProductCategoryRaw)
@@ -590,27 +649,54 @@ export type Cin7OmniStockLevelRow = {
   openSales: number;
 };
 
+export function normalizeOmniStockQty(n: unknown): number {
+  const v = Math.floor(Number(n));
+  return Number.isFinite(v) ? Math.max(0, v) : 0;
+}
+
+/** Dedupe Omni stock rows by branch:sku (last write wins — matches upsert order). */
+export function dedupeOmniStockLevels(
+  rows: Cin7OmniStockLevelRow[]
+): Map<string, Cin7OmniStockLevelRow> {
+  const map = new Map<string, Cin7OmniStockLevelRow>();
+  for (const row of rows) {
+    if (!row.cin7BranchId || !row.sku) continue;
+    map.set(`${row.cin7BranchId}:${row.sku}`, {
+      ...row,
+      available: normalizeOmniStockQty(row.available),
+      stockOnHand: normalizeOmniStockQty(row.stockOnHand),
+      incoming: normalizeOmniStockQty(row.incoming),
+      openSales: normalizeOmniStockQty(row.openSales),
+    });
+  }
+  return map;
+}
+
 function mapOmniStockRaw(raw: unknown): Cin7OmniStockLevelRow | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as Record<string, unknown>;
-  const cin7BranchId = String(pick(s, 'BranchId', 'branchId') ?? '').trim();
-  const sku = String(pick(s, 'Code', 'code', 'ProductOptionCode', 'productOptionCode') ?? '').trim();
+  const cin7BranchId = String(pick(s, 'BranchId', 'branchId', 'BranchID', 'branchID') ?? '').trim();
+  const sku = String(
+    pick(s, 'Code', 'code', 'ProductOptionCode', 'productOptionCode', 'StyleCode', 'styleCode') ??
+      ''
+  ).trim();
   if (!cin7BranchId || !sku) return null;
   return {
     cin7BranchId,
     sku,
     branchName: String(pick(s, 'BranchName', 'branchName') ?? '').trim() || undefined,
-    available: Math.max(0, Math.floor(Number(pick(s, 'Available', 'available') ?? 0))),
-    stockOnHand: Math.max(0, Math.floor(Number(pick(s, 'StockOnHand', 'stockOnHand') ?? 0))),
-    incoming: Math.max(0, Math.floor(Number(pick(s, 'Incoming', 'incoming') ?? 0))),
-    openSales: Math.max(0, Math.floor(Number(pick(s, 'OpenSales', 'openSales') ?? 0))),
+    available: normalizeOmniStockQty(pick(s, 'Available', 'available') ?? 0),
+    stockOnHand: normalizeOmniStockQty(pick(s, 'StockOnHand', 'stockOnHand') ?? 0),
+    incoming: normalizeOmniStockQty(pick(s, 'Incoming', 'incoming') ?? 0),
+    openSales: normalizeOmniStockQty(pick(s, 'OpenSales', 'openSales') ?? 0),
   };
 }
 
 export async function fetchOmniStockPage(
   creds: Cin7OmniCredentials,
   page: number,
-  rows: number
+  rows: number,
+  options?: { where?: string }
 ): Promise<{
   rows: Cin7OmniStockLevelRow[];
   total: number | null;
@@ -618,20 +704,29 @@ export async function fetchOmniStockPage(
   error?: string;
 }> {
   const safeRows = Math.max(1, Math.min(250, rows));
-  const { ok, data, error } = await cin7OmniGet<unknown>(
-    `/v1/Stock?page=${page}&rows=${safeRows}&order=modifiedDate asc`,
+  // Do not pass an unencoded `order=… asc` — the space breaks the request and Cin7 returns an error
+  // that older sync loops treated as an empty catalog (0 records, status ok).
+  const { ok, status, data, error } = await cin7OmniGet<unknown>(
+    appendOmniWhere(`/v1/Stock?page=${page}&rows=${safeRows}`, options?.where),
     creds
   );
-  if (!ok) return { rows: [], total: null, sourceRowCount: 0, error };
+  if (!ok) {
+    return {
+      rows: [],
+      total: null,
+      sourceRowCount: 0,
+      error: error ?? `Cin7 Omni Stock HTTP ${status}`,
+    };
+  }
   const { rows: list, total } = parseOmniListEnvelope(data);
-  const mapped = list.map(mapOmniStockRaw).filter((row): row is Cin7OmniStockLevelRow => row != null);
+  const mapped = list
+    .map(mapOmniStockRaw)
+    .filter((row): row is Cin7OmniStockLevelRow => row != null);
   return { rows: mapped, total, sourceRowCount: list.length };
 }
 
 /** Extract reference master data from a full product catalog scan. */
-export function extractReferenceDataFromProducts(
-  rawStyles: unknown[]
-): {
+export function extractReferenceDataFromProducts(rawStyles: unknown[]): {
   brands: string[];
   priceColumns: string[];
   unitsOfMeasure: string[];

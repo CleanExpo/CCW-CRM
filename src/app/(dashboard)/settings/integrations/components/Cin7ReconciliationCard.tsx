@@ -14,7 +14,7 @@ import {
   type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
 import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 type Cin7ReconciliationCardProps = {
   isConnected: boolean;
@@ -136,12 +136,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     [snapshot, toast]
   );
 
-  useEffect(() => {
-    if (isConnected) {
-      void load({ silent: true });
-    }
-  }, [isConnected]); // eslint-disable-line react-hooks/exhaustive-deps -- load once when connected
-
+  // Manual refresh only — auto-loading on connect fights sync for Cin7 rate limits
+  // and looks like "reloading from scratch" every time status flips.
   const loadExceptions = async (entity: Cin7ExceptionEntity, offset = 0, append = false) => {
     setExceptionsLoading(true);
     setExceptionEntity(entity);
@@ -430,32 +426,12 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 </div>
               ) : null}
 
-              {snapshot.sync_completeness?.some((row) => row.likely_incomplete) ? (
-                <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
-                  <p className="flex items-start gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    Last sync may be incomplete — counts below Cin7 live totals
-                  </p>
-                  <ul className="text-muted-foreground space-y-1 text-xs">
-                    {snapshot.sync_completeness
-                      .filter((row) => row.likely_incomplete)
-                      .map((row) => (
-                        <li key={row.entity}>
-                          <span className="text-foreground font-medium">{row.label}:</span>{' '}
-                          {row.note ??
-                            `Cin7 ${row.cin7_count?.toLocaleString() ?? '—'} vs last sync ${row.last_sync_records?.toLocaleString() ?? '—'}`}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ) : null}
-
               {snapshot.optix.customers.extra_without_cin7_id > 0 ? (
                 <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  {snapshot.optix.customers.extra_without_cin7_id.toLocaleString()} Optix customers
-                  have no Cin7 id — these are legacy CRM records. Sync adds Cin7-linked rows; Phase
-                  1 does not merge or backfill IDs onto existing Optix-only customers.
+                  {snapshot.optix.customers.extra_without_cin7_id} Optix customers have no Cin7 id —
+                  these are legacy CRM records. Sync adds Cin7-linked rows; it does not merge or
+                  backfill IDs onto existing Optix-only customers (Phase 1: no merge/delete/cleanse).
                 </p>
               ) : null}
 
@@ -538,12 +514,14 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                               Reason: {row.skipped_reason}
                             </p>
                           ) : null}
-                          {row.fields?.map((f) => (
-                            <p key={f.field} className="text-muted-foreground mt-1">
-                              <span className="text-foreground">{f.field}:</span> Cin7 &quot;
-                              {f.cin7_value}&quot; · Optix &quot;{f.optix_value}&quot;
-                            </p>
-                          ))}
+                          {Array.isArray(row.fields)
+                            ? row.fields.map((f) => (
+                                <p key={f.field} className="text-muted-foreground mt-1">
+                                  <span className="text-foreground">{f.field}:</span> Cin7 &quot;
+                                  {f.cin7_value}&quot; · Optix &quot;{f.optix_value}&quot;
+                                </p>
+                              ))
+                            : null}
                         </div>
                       ))}
                     </div>

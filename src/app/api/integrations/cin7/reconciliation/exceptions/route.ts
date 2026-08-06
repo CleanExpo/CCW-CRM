@@ -26,8 +26,9 @@ export const maxDuration = 300;
 function toCsv(items: Cin7ExceptionRecord[]): string {
   const header = 'cin7_id,label,reason,fields,skipped_reason';
   const rows = items.map((row) => {
-    const fields =
-      row.fields?.map((f) => `${f.field}:${f.cin7_value}->${f.optix_value}`).join('; ') ?? '';
+    const fields = Array.isArray(row.fields)
+      ? row.fields.map((f) => `${f.field}:${f.cin7_value}->${f.optix_value}`).join('; ')
+      : '';
     const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
     return [
       escape(row.cin7_id),
@@ -61,22 +62,17 @@ export async function GET(request: NextRequest) {
   const offset = Math.max(Number(request.nextUrl.searchParams.get('offset')) || 0, 0);
   const format = request.nextUrl.searchParams.get('format')?.toLowerCase();
 
-  try {
-    const report = await buildCin7ExceptionReport(scope.userId, entity, limit, offset);
+  const report = await buildCin7ExceptionReport(scope.userId, entity, limit, offset);
 
-    if (format === 'csv') {
-      const csv = toCsv(report.items);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="cin7-exceptions-${entity}.csv"`,
-        },
-      });
-    }
-
-    return NextResponse.json(report);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Exception report failed';
-    return NextResponse.json({ detail: message }, { status: 500 });
+  if (format === 'csv') {
+    const csv = toCsv(report.items);
+    return new NextResponse(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="cin7-exceptions-${entity}.csv"`,
+      },
+    });
   }
+
+  return NextResponse.json(report);
 }

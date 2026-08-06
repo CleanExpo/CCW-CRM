@@ -1,8 +1,13 @@
 /**
  * i18n Provider Component
  *
- * Wraps the application with NextIntlClientProvider to enable translations
- * in client components.
+ * Prefer using `NextIntlClientProvider` directly from a Server Component layout
+ * (see `src/app/layout.tsx`). This wrapper remains for legacy call sites.
+ *
+ * Do not import `NextIntlClientProvider` into client wrappers unless necessary —
+ * next-intl's package exports can resolve the async Server Component version into
+ * the client graph, which surfaces as:
+ * "Element type is invalid. Received a promise that resolves to: undefined".
  */
 
 'use client';
