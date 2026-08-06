@@ -676,21 +676,135 @@ model Cin7StockLevel {
   @@map("cin7_stock_levels")
 }
 
-/// Audit trail for manual and scheduled Cin7 sync runs.
+/// Latest sync status per entity (one row per owner + entity type) with resume checkpoints.
 model Cin7SyncRun {
-  id               String   @id @default(uuid()) @db.Uuid
-  ownerUserId      String   @map("owner_user_id") @db.Uuid
-  entityType       String   @map("entity_type")
-  recordsProcessed Int      @map("records_processed")
-  skipped          Json?
-  durationMs       Int      @map("duration_ms")
-  source           String?
-  createdAt        DateTime @default(now()) @map("created_at")
+  id                 String    @id @default(uuid()) @db.Uuid
+  ownerUserId        String    @map("owner_user_id") @db.Uuid
+  entityType         String    @map("entity_type")
+  /// idle | running | complete | incomplete | failed
+  status             String    @default("idle")
+  recordsProcessed   Int       @map("records_processed") @default(0)
+  skipped            Json?
+  durationMs         Int       @map("duration_ms") @default(0)
+  source             String?
+  lastCommittedPage  Int       @map("last_committed_page") @default(0)
+  nextPage           Int?      @map("next_page")
+  failedPage         Int?      @map("failed_page")
+  failureReason      String?   @map("failure_reason") @db.Text
+  pagesFetched       Int       @map("pages_fetched") @default(0)
+  attemptCount       Int       @map("attempt_count") @default(0)
+  startedAt          DateTime? @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   skipRecords Cin7SyncSkipRecord[]
+  jobLogs     Cin7SyncJobLog[]
 
-  @@index([ownerUserId, createdAt(sort: Desc)])
+  @@unique([ownerUserId, entityType])
+  @@index([ownerUserId, status])
+  @@index([ownerUserId, updatedAt(sort: Desc)])
   @@map("cin7_sync_runs")
+}
+
+/// Append-only execution log for Cin7 sync pages / retries.
+model Cin7SyncJobLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  entityType  String   @map("entity_type")
+  runId       String?  @map("run_id") @db.Uuid
+  level       String   @default("info")
+  message     String   @db.Text
+  page        Int?
+  httpStatus  Int?     @map("http_status")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  run Cin7SyncRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@index([ownerUserId, entityType, createdAt(sort: Desc)])
+  @@index([runId])
+  @@map("cin7_sync_job_logs")
+}
+
+/// Proof ledger for unattended nightly Cin7 sync runs.
+model Cin7NightlySyncLedger {
+  id                        String    @id @default(uuid()) @db.Uuid
+  ownerUserId               String    @map("owner_user_id") @db.Uuid
+  startedAt                 DateTime  @map("started_at")
+  finishedAt                DateTime? @map("finished_at")
+  /// complete | failed | incomplete
+  overallStatus             String    @map("overall_status")
+  entityResults             Json      @map("entity_results")
+  consecutiveCompleteCount  Int       @map("consecutive_complete_count") @default(0)
+  createdAt                 DateTime  @default(now()) @map("created_at")
+
+  @@index([ownerUserId, startedAt(sort: Desc)])
+  @@map("cin7_nightly_sync_ledger")
+}
+
+/// Fail-closed reconciliation acceptance run (DB-backed).
+model Cin7ReconRun {
+  id                   String    @id @default(uuid()) @db.Uuid
+  ownerUserId          String    @map("owner_user_id") @db.Uuid
+  /// blocked | running | complete | failed
+  status               String
+  blockedReason        String?   @map("blocked_reason") @db.Text
+  optixComplete        Boolean   @map("optix_complete") @default(false)
+  cin7Complete         Boolean   @map("cin7_complete") @default(false)
+  missingCount         Int       @map("missing_count") @default(0)
+  extraCount           Int       @map("extra_count") @default(0)
+  linkedCount          Int       @map("linked_count") @default(0)
+  fieldMismatchCount   Int       @map("field_mismatch_count") @default(0)
+  skippedCount         Int       @map("skipped_count") @default(0)
+  summary              Json?
+  checkedAt            DateTime  @default(now()) @map("checked_at")
+  completedAt          DateTime? @map("completed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  snapshots  Cin7CatalogSnapshot[]
+  exceptions Cin7ReconException[]
+
+  @@index([ownerUserId, checkedAt(sort: Desc)])
+  @@index([ownerUserId, status])
+  @@map("cin7_recon_runs")
+}
+
+/// Durable Cin7 catalog keys/counts captured only after a complete Cin7 pull.
+model Cin7CatalogSnapshot {
+  id          String   @id @default(uuid()) @db.Uuid
+  reconRunId  String   @map("recon_run_id") @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  entityType  String   @map("entity_type")
+  recordCount Int      @map("record_count") @default(0)
+  /// Array of { id, label, fields? } for compare
+  payload     Json
+  complete    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  reconRun Cin7ReconRun @relation(fields: [reconRunId], references: [id], onDelete: Cascade)
+
+  @@unique([reconRunId, entityType])
+  @@index([ownerUserId, entityType])
+  @@map("cin7_catalog_snapshots")
+}
+
+/// Durable per-record reconciliation exceptions.
+model Cin7ReconException {
+  id          String   @id @default(uuid()) @db.Uuid
+  reconRunId  String   @map("recon_run_id") @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  entityType  String   @map("entity_type")
+  reason      String
+  cin7Id      String   @map("cin7_id")
+  label       String?
+  fieldDiffs  Json?    @map("field_diffs")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  reconRun Cin7ReconRun @relation(fields: [reconRunId], references: [id], onDelete: Cascade)
+
+  @@index([reconRunId, entityType])
+  @@index([ownerUserId, entityType, reason])
+  @@map("cin7_recon_exceptions")
 }
 
 /// Per-record skip log for Cin7 sync runs (record id + reason).

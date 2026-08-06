@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { shouldContinueCin7SyncPage } from '@/lib/integrations/cin7-sync-config';
 import { resolveCin7SyncSource } from '@/lib/integrations/cin7-catalog-fetch';
 import { flattenOmniProducts } from '@/lib/integrations/cin7-omni';
+import { shouldContinueCin7SyncPage } from '@/lib/integrations/cin7-sync-config';
+import { afterEach, describe, expect, it } from 'vitest';
 
 describe('cin7 sync config pagination', () => {
   it('continues when page is full and total is unknown', () => {
@@ -134,21 +134,23 @@ describe('client requirement checklist (static)', () => {
 
   it('customer upsert does not merge by email', async () => {
     const fs = await import('node:fs/promises');
-    const src = await fs.readFile(
-      `${REPO_ROOT}/src/lib/integrations/cin7-sync-persist.ts`,
-      'utf8'
-    );
+    const src = await fs.readFile(`${REPO_ROOT}/src/lib/integrations/cin7-sync-persist.ts`, 'utf8');
     expect(src).not.toContain('idByEmail');
   });
 
-  it('contacts fetch uses server-side where filter', async () => {
+  it('contacts sync filters type in memory (not Omni where=type)', async () => {
     const fs = await import('node:fs/promises');
-    const src = await fs.readFile(
-      `${REPO_ROOT}/src/lib/integrations/cin7-omni.ts`,
+    const omni = await fs.readFile(`${REPO_ROOT}/src/lib/integrations/cin7-omni.ts`, 'utf8');
+    const route = await fs.readFile(
+      `${REPO_ROOT}/src/app/api/integrations/cin7/sync/[entityType]/route.ts`,
       'utf8'
     );
-    expect(src).toContain("params.set('where',");
-    expect(src).toContain('whereType');
+    // whereType remains available for optional callers, but sync must use allowedTypes only.
+    expect(omni).toContain('whereType');
+    expect(omni).toContain('Do NOT infer whereType from allowedTypes');
+    expect(route).toContain('allowedTypes: [contactType]');
+    expect(route).not.toMatch(/whereType:\s*contactType/);
+    expect(route).not.toMatch(/whereType:\s*'Supplier'/);
   });
 
   it('reconciliation fetches catalogs sequentially', async () => {
@@ -177,6 +179,7 @@ describe('client requirement checklist (static)', () => {
     );
     expect(src).toContain('offset');
     expect(src).toContain("format === 'csv'");
+    expect(src).toContain('buildCin7ExceptionReport');
   });
 
   it('sync route supports Phase 1 reference master data entities', async () => {
@@ -198,9 +201,14 @@ describe('client requirement checklist (static)', () => {
     }
   });
 
-  it('master entity registry resolves warehouses and inventory aliases', async () => {
-    const { resolveCin7SyncEntityAlias } = await import('@/lib/integrations/cin7-master-entities');
-    expect(resolveCin7SyncEntityAlias('warehouses')).toBe('branches');
-    expect(resolveCin7SyncEntityAlias('inventory')).toBe('stock-levels');
+  it('status treats env credentials as connected without requiring cookie', async () => {
+    const fs = await import('node:fs/promises');
+    const src = await fs.readFile(
+      `${REPO_ROOT}/src/app/api/integrations/cin7/status/route.ts`,
+      'utf8'
+    );
+    expect(src).toContain('explicitlyDisconnected');
+    expect(src).not.toContain('connectedCookie && apiOk');
+    expect(src).toContain("get('verify') === 'true'");
   });
 });

@@ -1,3 +1,7 @@
-# CODEOWNERS — sole owner is the CleanExpo account (solo founder workflow)
-# Self-review is acceptable for this single-owner setup.
-* @CleanExpo
+# RA-3026 — require founder review on supply-chain and infra-critical paths.
+# Binding via require_code_owner_reviews=true in main branch protection.
+.npmrc @CleanExpo
+/.github/workflows/ @CleanExpo
+/prisma/ @CleanExpo
+package.json @CleanExpo
+package-lock.json @CleanExpo

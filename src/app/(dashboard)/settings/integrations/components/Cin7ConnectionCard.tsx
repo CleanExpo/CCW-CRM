@@ -1,9 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import {
   AlertCircle,
   CheckCircle2,
@@ -15,10 +12,10 @@ import {
   Unplug,
   XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +27,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -101,7 +101,7 @@ type ConfigureFormValues = z.infer<typeof configureSchema>;
 interface Cin7ConnectionCardProps {
   status: Cin7ConnectionStatus | null;
   loading: boolean;
-  onStatusChange: () => void;
+  onStatusChange: (options?: { verify?: boolean }) => void | Promise<unknown>;
 }
 
 export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7ConnectionCardProps) {
@@ -154,7 +154,8 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
         await connectCin7();
         toast({
           title: 'Cin7 connected',
-          description: 'Credentials saved and Cin7 responded successfully. You can run sync from the controls below.',
+          description:
+            'Credentials saved and Cin7 responded successfully. You can run sync from the controls below.',
         });
       } catch (connectErr: unknown) {
         toast({
@@ -216,8 +217,9 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await onStatusChange();
-      toast({ title: 'Status Refreshed' });
+      // Live-ping Cin7 only on explicit Refresh — page load uses the fast path.
+      await onStatusChange({ verify: true });
+      toast({ title: 'Status Refreshed', description: 'Live Cin7 connectivity checked.' });
     } catch {
       toast({ variant: 'destructive', title: 'Refresh Failed' });
     } finally {
@@ -259,7 +261,9 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
             </div>
             <div>
               <CardTitle>Cin7 Inventory</CardTitle>
-              <CardDescription>Pull products, customers, and orders from Cin7 Omni (read-only API).</CardDescription>
+              <CardDescription>
+                Pull products, customers, and orders from Cin7 Omni (read-only API).
+              </CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -292,27 +296,30 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
         {status?.core_connected &&
           status?.connector_allowlist &&
           status.connector_allowlist.length > 0 && (
-          <div className="rounded-lg border border-border/80 bg-muted/40 p-3">
-            <p className="text-sm font-medium">Cin7 Core API connector IPs</p>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Only applies to Cin7 Core. Omni uses username + connection key and does not require IP
-              allowlisting.
-            </p>
-            <ul className="mt-2 space-y-1 font-mono text-xs">
-              {status.connector_allowlist.map((c) => (
-                <li key={c.name}>
-                  {c.name}: {c.ip}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+            <div className="border-border/80 bg-muted/40 rounded-lg border p-3">
+              <p className="text-sm font-medium">Cin7 Core API connector IPs</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Only applies to Cin7 Core. Omni uses username + connection key and does not require
+                IP allowlisting.
+              </p>
+              <ul className="mt-2 space-y-1 font-mono text-xs">
+                {status.connector_allowlist.map((c) => (
+                  <li key={c.name}>
+                    {c.name}: {c.ip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
         {needsConnect && (
           <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-900 dark:bg-indigo-950">
-            <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">Ready to sync</p>
+            <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+              Ready to sync
+            </p>
             <p className="text-muted-foreground mt-1 text-xs dark:text-indigo-200/90">
-              {status?.message ?? 'Cin7 responded successfully. Click Connect to pull read-only data from Omni.'}
+              {status?.message ??
+                'Cin7 responded successfully. Click Connect to pull read-only data from Omni.'}
             </p>
             <Button className="mt-3" size="sm" onClick={handleConnect}>
               Connect
@@ -331,7 +338,8 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                     Cin7 Integration Active
                   </p>
                   <p className="text-xs text-indigo-700 dark:text-indigo-300">
-                    Inbound sync from Cin7 is enabled (Omni uses read-only GET calls to your live tenant).
+                    Inbound sync from Cin7 is enabled (Omni uses read-only GET calls to your live
+                    tenant).
                   </p>
                 </div>
               </div>
@@ -397,11 +405,12 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                   <p className="font-medium">Cin7 Omni (recommended)</p>
                   <p className="mt-1 text-xs">
                     Use your <strong className="font-medium">API username</strong> and{' '}
-                    <strong className="font-medium">connection key</strong> from Cin7. Read-only Omni access
-                    is enough: we only call Cin7 GET endpoints and copy data into this app. No IP
-                    allowlisting is required for Omni. You can also set{' '}
+                    <strong className="font-medium">connection key</strong> from Cin7. Read-only
+                    Omni access is enough: we only call Cin7 GET endpoints and copy data into this
+                    app. No IP allowlisting is required for Omni. You can also set{' '}
                     <code className="text-xs">CIN7_OMNI_USERNAME</code> and{' '}
-                    <code className="text-xs">CIN7_OMNI_API_KEY</code> in <code className="text-xs">.env.local</code>.
+                    <code className="text-xs">CIN7_OMNI_API_KEY</code> in{' '}
+                    <code className="text-xs">.env.local</code>.
                   </p>
                 </div>
               </div>
@@ -433,7 +442,11 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                           <FormItem>
                             <FormLabel>API username</FormLabel>
                             <FormControl>
-                              <Input placeholder="Cin7 Omni API username" autoComplete="off" {...field} />
+                              <Input
+                                placeholder="Cin7 Omni API username"
+                                autoComplete="off"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -536,7 +549,6 @@ export function Cin7ConnectionCard({ status, loading, onStatusChange }: Cin7Conn
                 </div>
               </form>
             </Form>
-
           </>
         )}
       </CardContent>

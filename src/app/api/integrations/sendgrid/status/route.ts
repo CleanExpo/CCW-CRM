@@ -7,6 +7,20 @@ export async function GET(request: NextRequest) {
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
-  const payload = await buildSendGridStatusPayload(request, undefined, scope.userId);
-  return NextResponse.json(payload);
+  try {
+    const payload = await buildSendGridStatusPayload(request, undefined, scope.userId);
+    return NextResponse.json(payload);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'SendGrid status unavailable';
+    return NextResponse.json(
+      {
+        connected: false,
+        can_send: false,
+        mode: 'live',
+        api_verified: false,
+        message,
+      },
+      { status: 200 }
+    );
+  }
 }

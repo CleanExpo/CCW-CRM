@@ -23,6 +23,8 @@ export interface Cin7ConnectionStatus {
   last_sync?: string;
   message?: string;
   connector_allowlist?: Cin7ConnectorAllowlistEntry[];
+  /** True when status included a live Cin7 ping (`verify=true`). */
+  verified?: boolean;
 }
 
 /**
@@ -42,10 +44,16 @@ export interface Cin7SyncLog {
   id: string;
   entity_type: string;
   direction: string;
+  /** Client-facing: complete | incomplete (legacy idle/failed/running normalized by API). */
   status: string;
   records_processed: number;
-  synced_at: string;
+  /** ISO timestamp of last sync; null when the entity has never been synced. */
+  synced_at: string | null;
   error_message?: string;
+  last_committed_page?: number;
+  failed_page?: number | null;
+  next_page?: number | null;
+  completed_at?: string | null;
 }
 
 /**
@@ -96,16 +104,56 @@ export interface Cin7SyncHealth {
 }
 
 /**
- * Get Cin7 connection status
+ * Get Cin7 connection status.
+ * Default is fast (credentials + disconnect cookie only). Pass `{ verify: true }` to live-ping Cin7.
+ * Concurrent identical fast requests are deduped; short TTL cache avoids remount storms.
  */
-export async function getCin7Status(): Promise<Cin7ConnectionStatus> {
-  return apiClient.get<Cin7ConnectionStatus>('/api/integrations/cin7/status');
+let cin7StatusInFlight: Promise<Cin7ConnectionStatus> | null = null;
+let cin7StatusCache: { at: number; value: Cin7ConnectionStatus } | null = null;
+const CIN7_STATUS_TTL_MS = 4_000;
+
+export async function getCin7Status(options?: { verify?: boolean }): Promise<Cin7ConnectionStatus> {
+  const verify = options?.verify ?? false;
+  const qs = verify ? '?verify=true' : '';
+  const timeoutMs = verify ? 60_000 : 15_000;
+
+  if (!verify) {
+    if (cin7StatusCache && Date.now() - cin7StatusCache.at < CIN7_STATUS_TTL_MS) {
+      return cin7StatusCache.value;
+    }
+    if (cin7StatusInFlight) return cin7StatusInFlight;
+  }
+
+  const request = apiClient
+    .get<Cin7ConnectionStatus>(`/api/integrations/cin7/status${qs}`, undefined, timeoutMs)
+    .then((status) => {
+      if (!verify) {
+        cin7StatusCache = { at: Date.now(), value: status };
+      } else {
+        // Live verify updates the cache so UI stays consistent.
+        cin7StatusCache = { at: Date.now(), value: status };
+      }
+      return status;
+    })
+    .finally(() => {
+      if (!verify) cin7StatusInFlight = null;
+    });
+
+  if (!verify) cin7StatusInFlight = request;
+  return request;
+}
+
+/** Clear client status cache after connect/disconnect/configure. */
+export function invalidateCin7StatusCache(): void {
+  cin7StatusCache = null;
+  cin7StatusInFlight = null;
 }
 
 /**
  * Save Cin7 credentials to the database (creates or updates the connection record)
  */
 export async function configureCin7(data: Cin7ConfigureRequest): Promise<Cin7ConnectionStatus> {
+  invalidateCin7StatusCache();
   return apiClient.post<Cin7ConnectionStatus>('/api/integrations/cin7/configure', data);
 }
 
@@ -113,6 +161,7 @@ export async function configureCin7(data: Cin7ConfigureRequest): Promise<Cin7Con
  * Connect to Cin7 (demo or live mode)
  */
 export async function connectCin7(): Promise<Cin7ConnectionStatus> {
+  invalidateCin7StatusCache();
   return apiClient.post<Cin7ConnectionStatus>('/api/integrations/cin7/connect');
 }
 
@@ -120,13 +169,10 @@ export async function connectCin7(): Promise<Cin7ConnectionStatus> {
  * Disconnect from Cin7
  */
 export async function disconnectCin7(): Promise<{ status: string }> {
+  invalidateCin7StatusCache();
   return apiClient.post<{ status: string }>('/api/integrations/cin7/disconnect');
 }
 
-/**
- * Trigger manual sync for a specific entity type.
- * Pass `autoResume: true` to continue from `next_page` until the entity sync completes or stalls.
- */
 export type Cin7SyncResult = {
   status: string;
   records_processed?: number;
@@ -135,60 +181,159 @@ export type Cin7SyncResult = {
   cin7_source_styles?: number;
   skipped?: Record<string, number>;
   complete?: boolean;
-  timed_out?: boolean;
   next_page?: number | null;
-  start_page?: number;
-  pages_fetched?: number;
+  failed_page?: number | null;
+  last_committed_page?: number;
   sync_errors?: string[];
 };
 
+export type Cin7SyncEntityType =
+  | 'products'
+  | 'customers'
+  | 'internal-customers'
+  | 'suppliers'
+  | 'branches'
+  | 'warehouses'
+  | 'product-categories'
+  | 'brands'
+  | 'price-lists'
+  | 'tax-codes'
+  | 'units-of-measure'
+  | 'stock-levels'
+  | 'orders'
+  | 'inventory';
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Trigger manual sync for a specific entity type.
+ * Auto-resumes chunks while incomplete; retries brief page errors so one click
+ * can finish large catalogs without leaving "incomplete" after every timeout.
+ */
 export async function triggerCin7Sync(
-  entityType:
-    | 'products'
-    | 'customers'
-    | 'internal-customers'
-    | 'suppliers'
-    | 'branches'
-    | 'warehouses'
-    | 'product-categories'
-    | 'brands'
-    | 'price-lists'
-    | 'tax-codes'
-    | 'units-of-measure'
-    | 'stock-levels'
-    | 'orders'
-    | 'inventory',
-  options?: { startPage?: number; autoResume?: boolean }
+  entityType: Cin7SyncEntityType,
+  options?: { restart?: boolean; full?: boolean; maxChunks?: number; signal?: AbortSignal }
 ): Promise<Cin7SyncResult> {
-  const autoResume = options?.autoResume ?? false;
-  let startPage = Math.max(options?.startPage ?? 1, 1);
-  let totalRecords = 0;
-  let totalDuration = 0;
-  let lastResult: Cin7SyncResult = { status: 'ok' };
+  const maxChunks = options?.maxChunks ?? 8;
+  let last: Cin7SyncResult | null = null;
+  // Default resume — never wipe checkpoint unless caller asks for restart.
+  let restart = options?.restart ?? false;
+  const forceFull = options?.full === true;
+  let pageErrorRetries = 0;
+  const maxPageErrorRetries = 3;
 
-  for (;;) {
-    const qs = startPage > 1 ? `?start_page=${startPage}` : '';
-    const result = await apiClient.post<Cin7SyncResult>(
-      `/api/integrations/cin7/sync/${entityType}${qs}`,
-      undefined,
-      undefined,
-      300_000
-    );
-    totalRecords += result.records_processed ?? 0;
-    totalDuration += result.duration_ms ?? 0;
-    lastResult = result;
-
-    if (!autoResume || result.complete !== false || result.next_page == null) {
-      break;
+  for (let chunk = 0; chunk < maxChunks; chunk += 1) {
+    if (options?.signal?.aborted) {
+      throw new Error('Sync canceled');
     }
-    startPage = result.next_page;
+    const params = new URLSearchParams();
+    if (restart && chunk === 0) params.set('restart', 'true');
+    // full=true on every chunk of a forced full walk (mode is re-evaluated each request).
+    if (forceFull) params.set('full', 'true');
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    try {
+      last = await apiClient.post<Cin7SyncResult>(
+        `/api/integrations/cin7/sync/${entityType}${qs}`,
+        undefined,
+        undefined,
+        300_000
+      );
+    } catch (error: unknown) {
+      // Legacy 409 lock — treat as running so until-complete can wait (no error spam).
+      if (
+        error &&
+        typeof error === 'object' &&
+        'status' in error &&
+        (error as { status: number }).status === 409
+      ) {
+        return {
+          status: 'running',
+          complete: false,
+          sync_errors: [
+            error instanceof Error ? error.message : 'Sync already in progress for this entity.',
+          ],
+        };
+      }
+      throw error;
+    }
+    restart = false;
+
+    if (last.complete === true || last.status === 'complete') {
+      return last;
+    }
+    // Concurrent lock (200 or legacy 409) — stop this chunk loop; caller waits.
+    if (last.status === 'running') {
+      return last;
+    }
+    // Transient page error — brief backoff then resume from checkpoint.
+    if (last.failed_page != null && last.complete === false && last.next_page != null) {
+      if (pageErrorRetries < maxPageErrorRetries) {
+        pageErrorRetries += 1;
+        const rateLimited = (last.sync_errors ?? []).some((e) => /429|rate-?limit/i.test(e));
+        await sleepMs(rateLimited ? 15_000 : 5_000 * pageErrorRetries);
+        continue;
+      }
+      return last;
+    }
+    if (last.complete === false && last.next_page != null) {
+      pageErrorRetries = 0;
+      continue;
+    }
+    return last;
   }
 
-  return {
-    ...lastResult,
-    records_processed: totalRecords,
-    duration_ms: totalDuration,
-  };
+  return last ?? { status: 'incomplete', complete: false };
+}
+
+/**
+ * Keep syncing one entity until complete (or give up after maxRounds).
+ * Used by Sync buttons and the client scheduled runner so one action finishes the job.
+ */
+export async function syncCin7EntityUntilComplete(
+  entityType: Cin7SyncEntityType,
+  options?: {
+    restart?: boolean;
+    full?: boolean;
+    maxRounds?: number;
+    maxChunksPerRound?: number;
+    signal?: AbortSignal;
+    onProgress?: (result: Cin7SyncResult, round: number) => void;
+  }
+): Promise<Cin7SyncResult> {
+  const maxRounds = options?.maxRounds ?? 40;
+  let restart = options?.restart ?? false;
+  let last: Cin7SyncResult = { status: 'incomplete', complete: false };
+
+  for (let round = 0; round < maxRounds; round += 1) {
+    if (options?.signal?.aborted) {
+      throw new Error('Sync canceled');
+    }
+    last = await triggerCin7Sync(entityType, {
+      restart,
+      full: options?.full,
+      maxChunks: options?.maxChunksPerRound ?? 8,
+      signal: options?.signal,
+    });
+    restart = false;
+    options?.onProgress?.(last, round);
+
+    if (last.complete === true || last.status === 'complete') {
+      return last;
+    }
+    if (last.status === 'running') {
+      // Another request holds the lock (common for tax-codes while it finishes).
+      await sleepMs(20_000);
+      continue;
+    }
+    if (last.complete === false && last.next_page != null) {
+      continue;
+    }
+    return last;
+  }
+
+  return last;
 }
 
 export type {
@@ -266,10 +411,29 @@ export async function cleanupCin7DuplicateCustomers(): Promise<{
 }
 
 /**
- * Get recent sync logs
+ * Get latest sync status for every Cin7 syncable entity (one row each).
  */
-export async function getCin7SyncLogs(limit: number = 20): Promise<{ logs: Cin7SyncLog[] }> {
-  return apiClient.get(`/api/integrations/cin7/sync-history?limit=${limit}`);
+export async function getCin7SyncLogs(_limit: number = 20): Promise<{ logs: Cin7SyncLog[] }> {
+  // Must use /sync-history — /sync/logs is gitignored and also collides with POST /sync/[entityType] (405).
+  // Server always returns the full entity set; limit is kept for call-site compatibility.
+  return apiClient.get(`/api/integrations/cin7/sync-history`);
+}
+
+/** Nightly sync proof ledger (consecutive complete runs). */
+export async function getCin7SyncProof(limit = 10): Promise<{
+  consecutive_complete_count: number;
+  proof_ready: boolean;
+  required_consecutive: number;
+  ledger: Array<{
+    id: string;
+    started_at: string;
+    finished_at: string | null;
+    overall_status: string;
+    consecutive_complete_count: number;
+    entity_results: unknown;
+  }>;
+}> {
+  return apiClient.get(`/api/integrations/cin7/sync-proof?limit=${limit}`);
 }
 
 /**
