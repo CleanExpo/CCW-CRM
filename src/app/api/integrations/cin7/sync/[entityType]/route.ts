@@ -302,8 +302,13 @@ export async function POST(
       return NextResponse.json({ detail: 'Tax code sync requires Cin7 Omni.' }, { status: 400 });
     }
     try {
-      // Fast path: do NOT walk all 30k+ contacts (that held running for minutes → 409 storms).
+      // Full unfiltered TaxStatus walk (same completeness as recon). Heartbeat keeps the lock.
+      const expectedTaxCodes =
+        typeof expectedSourceCount === 'number' && expectedSourceCount > 0
+          ? expectedSourceCount
+          : undefined;
       const catalog = await fetchOmniTaxCodeCatalog(omniCreds, {
+        expectedMinCodes: expectedTaxCodes,
         onPage: async () => {
           await heartbeatCin7SyncRun(run.id);
         },
@@ -349,27 +354,36 @@ export async function POST(
         thisRunProcessed: taxCodes.length,
         previousFloor: optixFloor,
       });
+      // Never report complete when Optix is still short of the recon Cin7 tax-code floor.
+      const underReconFloor =
+        typeof expectedTaxCodes === 'number' && taxCodes.length < expectedTaxCodes;
+      const status = underReconFloor ? 'incomplete' : 'complete';
+      if (underReconFloor) {
+        errors.push(
+          `Tax codes incomplete: found ${taxCodes.length}, recon expects at least ${expectedTaxCodes}.`
+        );
+      }
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
-        status: 'complete',
+        status,
         recordsProcessed,
         pagesFetched,
         lastCommittedPage: Math.max(1, pagesFetched),
-        nextPage: null,
-        failedPage: null,
+        nextPage: underReconFloor ? 1 : null,
+        failedPage: underReconFloor ? 1 : null,
         failureReason: errors.length > 0 ? errors.slice(0, 3).join('; ') : null,
         durationMs,
         source: sourceKind,
       });
       clearCachedReconciliation(scope.userId);
       return jsonSyncResult({
-        status: 'complete',
+        status,
         recordsProcessed,
         durationMs,
         pageSize,
-        complete: true,
-        nextPage: null,
-        failedPage: null,
+        complete: status === 'complete',
+        nextPage: underReconFloor ? 1 : null,
+        failedPage: underReconFloor ? 1 : null,
         syncErrors: errors.slice(0, 20),
         skipped,
         lastCommittedPage: Math.max(1, pagesFetched),
