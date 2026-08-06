@@ -58,7 +58,7 @@ export function LandingFaq() {
             >
               <span
                 className={cn(
-                  'mt-0.5 shrink-0 text-[11px] font-bold tracking-widest text-zinc-600 tabular-nums transition-colors md:text-xs',
+                  'mt-0.5 shrink-0 text-[11px] font-bold tracking-widest text-zinc-400 tabular-nums transition-colors md:text-xs',
                   isOpen && 'text-sky-400/90'
                 )}
                 aria-hidden

@@ -44,7 +44,7 @@ export function LandingOperationsPulsePlaceholder() {
                 <p id="ops-pulse-heading" className="mt-4 max-w-lg text-lg font-semibold tracking-tight text-white md:text-xl">
                   One spine—catalog, orders, and branches—kept in sync
                 </p>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-500">
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-400">
                   When your deployment exposes public metrics, live counters appear here so visitors
                   see real throughput—not a static brochure.
                 </p>
@@ -52,7 +52,7 @@ export function LandingOperationsPulsePlaceholder() {
 
               <OperationsPulseGraphic className="mx-auto w-full max-w-3xl" />
 
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 ring-1 ring-white/[0.06]">
                   <Layers3 className="h-3.5 w-3.5 text-sky-400" aria-hidden />
                   Unified data layer
@@ -74,7 +74,7 @@ export function LandingOperationsPulsePlaceholder() {
         <div className="relative mx-auto mt-14 max-w-[min(94vw,1728px)] md:mt-16">
           <div className="mb-6 flex items-center justify-center gap-2">
             <Sparkles className="h-4 w-4 text-sky-400/80" aria-hidden />
-            <p className="text-center text-[11px] font-bold tracking-[0.28em] text-zinc-500 uppercase">
+            <p className="text-center text-[11px] font-bold tracking-[0.28em] text-zinc-400 uppercase">
               Preview — live KPI strip
             </p>
           </div>
@@ -93,16 +93,16 @@ export function LandingOperationsPulsePlaceholder() {
                 />
                 <div className="relative">
                   <div className="shimmer mx-auto mb-3 h-8 w-16 overflow-hidden rounded-md opacity-60" />
-                  <div className="font-mono text-lg font-bold tabular-nums text-zinc-600">—</div>
-                  <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  <div className="font-mono text-lg font-bold tabular-nums text-zinc-400">—</div>
+                  <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                     {label}
                   </div>
-                  <div className="mt-0.5 text-[10px] text-zinc-600">{short}</div>
+                  <div className="mt-0.5 text-[10px] text-zinc-400">{short}</div>
                 </div>
               </div>
             ))}
           </div>
-          <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-relaxed text-zinc-500">
+          <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-relaxed text-zinc-400">
             Connect your data layer and expose{' '}
             <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-zinc-400">
               /api/public/stats

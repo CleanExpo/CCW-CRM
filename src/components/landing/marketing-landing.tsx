@@ -197,7 +197,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
 
               <div className="relative mt-16 w-full max-w-[min(100%,960px)] md:mt-20 lg:mt-28">
                 <div className="mb-8 flex flex-col items-center gap-2">
-                  <span className="text-[11px] font-bold tracking-[0.32em] text-zinc-500 uppercase">
+                  <span className="text-[11px] font-bold tracking-[0.32em] text-zinc-400 uppercase">
                     Operations at a glance
                   </span>
                   <div className="h-px w-16 bg-gradient-to-r from-transparent via-sky-500/50 to-transparent" />
@@ -342,7 +342,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                             accent
                           )}
                         />
-                        <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                        <p className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
                           {label}
                         </p>
                         <p className="mt-1 text-sm font-semibold text-zinc-100">{sub}</p>
@@ -386,7 +386,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                         <div key={label} className="flex items-center gap-2 sm:gap-3">
                           {idx > 0 ? (
                             <ArrowRight
-                              className="hidden h-4 w-4 text-zinc-600 sm:block"
+                              className="hidden h-4 w-4 text-zinc-400 sm:block"
                               aria-hidden
                             />
                           ) : null}
@@ -398,7 +398,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                                 aria-hidden
                               />
                             </div>
-                            <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                            <span className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
                               {label}
                             </span>
                           </div>
@@ -426,7 +426,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                         className="group/pill rounded-xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400/45 hover:bg-sky-500/12 hover:shadow-[0_12px_40px_-16px_rgba(56,189,248,0.25)]"
                       >
                         <span className="block text-sm font-bold text-white">{label}</span>
-                        <span className="mt-1.5 block text-[11px] leading-tight font-medium text-zinc-500 transition-colors group-hover/pill:text-zinc-400">
+                        <span className="mt-1.5 block text-[11px] leading-tight font-medium text-zinc-400 transition-colors group-hover/pill:text-zinc-400">
                           {sub}
                         </span>
                       </div>
@@ -528,7 +528,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                     key={s.step}
                     className="hover:border-primary/25 hover:shadow-primary/5 relative rounded-2xl border border-white/[0.08] bg-black/50 p-7 shadow-md transition-all hover:shadow-lg"
                   >
-                    <span className="text-5xl leading-none font-black text-sky-500/50 tabular-nums">
+                    <span className="text-5xl leading-none font-black text-sky-500/80 tabular-nums">
                       {s.step}
                     </span>
                     <h3 className="mt-4 text-lg font-bold text-white">{s.title}</h3>
