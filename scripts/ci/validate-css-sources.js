@@ -44,6 +44,10 @@ const ENTRY = 'src/app/globals.css';
 const ENTRY_POINT = /^src\/app\/(.*\/)?(layout|page|template|default|error|global-error|loading|not-found)\.[jt]sx?$/;
 
 function isEntryPoint(filePath) {
+  // Next.js treats a path segment beginning with `_` as a PRIVATE folder and
+  // never routes it, so a page there renders for nobody. Seeding it as a root
+  // let an orphan under src/app/_anything/ pass — demonstrated on the real tree.
+  if (filePath.split('/').some((segment) => segment.startsWith('_'))) return false;
   return ENTRY_POINT.test(filePath);
 }
 
@@ -68,7 +72,24 @@ function extractImports(filePath, source) {
   // detectJavaScriptImports=true, readImportFiles=true — catches static,
   // dynamic import(), and re-exports. A string that merely reads like an
   // import is not one, and this is what knows the difference.
-  return ts.preProcessFile(source, true, true).importedFiles.map((f) => f.fileName);
+  const specifiers = ts.preProcessFile(source, true, true).importedFiles.map((f) => f.fileName);
+
+  // preProcessFile cannot resolve a computed specifier such as
+  // import(`./themes/${name}.css`), so a stylesheet loaded that way was reported
+  // orphaned — verified against a real webpack build that did emit its CSS.
+  // Rather than guess the value, treat the STATIC PREFIX as a wildcard: any
+  // stylesheet under that directory counts as reachable. Deliberately
+  // conservative. A false "this is dead" is worse than a missed orphan here,
+  // because acting on it deletes a stylesheet that is genuinely loaded.
+  const computed = /import\s*\(\s*`([^`$]*)\$\{/g;
+  let match;
+  while ((match = computed.exec(source)) !== null) {
+    const prefix = match[1];
+    if (prefix.startsWith('./') || prefix.startsWith('../') || prefix.startsWith('@/')) {
+      specifiers.push(`${prefix}*`);
+    }
+  }
+  return specifiers;
 }
 
 /**
@@ -145,6 +166,16 @@ function validateCssSources(cssFiles, sourceFiles, read) {
     if (source === null) continue;
 
     for (const specifier of extractImports(current, source)) {
+      // Wildcard from a computed dynamic import — everything under the static
+      // prefix is treated as reachable.
+      if (specifier.endsWith('*')) {
+        const prefix = resolveSpecifier(specifier.slice(0, -1), current);
+        if (prefix === null) continue;
+        for (const candidate of known) {
+          if (candidate.startsWith(prefix) && !reachable.has(candidate)) queue.push(candidate);
+        }
+        continue;
+      }
       const resolved = resolveSpecifier(specifier, current);
       if (resolved === null) continue;
       for (const candidate of candidatePaths(resolved)) {
@@ -287,6 +318,18 @@ function selfTest() {
       orphan: 'src/styles/mw-only.css',
     },
     {
+      // Next.js never routes a folder whose segment starts with '_', so a page
+      // there renders for nobody. Demonstrated on the real tree.
+      name: 'orphan imported only by a page in a Next.js private folder',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/private-orphan.css': '.p{}',
+        'src/app/_private/page.tsx': "import '@/styles/private-orphan.css';\nexport default () => null;",
+      },
+      orphan: 'src/styles/private-orphan.css',
+    },
+    {
       name: 'orphan-only CSS cycle with no entry point reaching it',
       files: {
         [ENTRY]: entryCss,
@@ -378,6 +421,17 @@ function selfTest() {
         [ENTRY]: `${entryCss}\n@import url(./unquoted.css);`,
         [LAYOUT]: layoutSrc,
         'src/app/unquoted.css': '.u{}',
+      },
+    },
+    {
+      // A computed dynamic import cannot be resolved statically; treating the
+      // static prefix as a wildcard keeps genuinely-loaded stylesheets from
+      // being reported dead. Verified against a real webpack build.
+      name: 'stylesheet loaded through a computed dynamic import',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nconst load = (n) => import(\`@/styles/themes/${'${n}'}.css\`);`,
+        'src/styles/themes/dark.css': '.d{}',
       },
     },
     {

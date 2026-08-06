@@ -24,7 +24,13 @@
 // upstream-proxy or not-implemented-response, or a literal `status: 501`. It is
 // a lint, not a proof. A status code computed at runtime (`500 + 1`), assembled
 // by string concatenation, or returned from a dynamically-resolved module will
-// pass. Detecting those needs execution, not parsing. Rules 1-4 ARE decisive.
+// pass. Detecting those needs execution, not parsing.
+//
+// Rule 4 is structural but NOT a control-flow proof: it requires the canonical
+// import, a real call, and the result reaching a return. A guard made
+// unreachable by `if (false)` or an earlier return still satisfies it. An
+// earlier header called rules 1-4 "decisive" while rule 4 was a substring match;
+// that claim was wrong and is not repeated.
 //
 // `node scripts/ci/validate-vercel-crons.js --self-test` proves it still rejects.
 
@@ -133,6 +139,99 @@ function exportsHandler(source) {
   return found;
 }
 
+const CRON_AUTH_MODULE = '@/lib/api/cron-auth';
+
+/**
+ * Rule 4, structurally.
+ *
+ * The first version tested only that the text `cronAuthFailure(` appeared
+ * somewhere. A reviewer walked past it six ways: ignoring the return value,
+ * wrapping the call in `if (false)`, placing it after the response, shadowing
+ * the name with a local no-op, importing it from a different module, and
+ * burying it in a closure that is never called.
+ *
+ * This now requires, via the AST:
+ *   - the identifier is imported from @/lib/api/cron-auth (kills the shadow and
+ *     the wrong-module import)
+ *   - it is actually called (kills a bare reference)
+ *   - its result reaches a `return` — either `return cronAuthFailure(...)` or
+ *     assigned to a name that a `return` uses (kills the ignored return value)
+ *
+ * WHAT IT STILL DOES NOT PROVE: that the return executes. Code made unreachable
+ * by a surrounding `if (false)` or an earlier `return` will satisfy this. That
+ * needs control-flow analysis, and saying so is the point — the previous header
+ * called this rule "decisive" when it was satisfied by a substring.
+ *
+ * @returns {string | null} a problem description, or null when satisfied
+ */
+function checkGuardUsage(source) {
+  let sourceFile;
+  try {
+    sourceFile = ts.createSourceFile('route.ts', source, ts.ScriptTarget.Latest, true);
+  } catch {
+    return 'could not be parsed, so its authorisation cannot be verified.';
+  }
+
+  let importedFromCanonical = false;
+  const calledAndBoundTo = new Set();
+  let callResultReturnedDirectly = false;
+  const returnedIdentifiers = new Set();
+  let calledAtAll = false;
+
+  const visit = (node) => {
+    if (
+      ts.isImportDeclaration(node) &&
+      ts.isStringLiteral(node.moduleSpecifier) &&
+      node.moduleSpecifier.text === CRON_AUTH_MODULE &&
+      node.importClause?.namedBindings &&
+      ts.isNamedImports(node.importClause.namedBindings)
+    ) {
+      for (const el of node.importClause.namedBindings.elements) {
+        if ((el.propertyName?.text ?? el.name.text) === 'cronAuthFailure') importedFromCanonical = true;
+      }
+    }
+
+    const isGuardCall = (n) =>
+      ts.isCallExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === 'cronAuthFailure';
+
+    if (isGuardCall(node)) calledAtAll = true;
+
+    // const x = cronAuthFailure(request)
+    if (ts.isVariableDeclaration(node) && node.initializer && ts.isIdentifier(node.name)) {
+      if (isGuardCall(node.initializer)) calledAndBoundTo.add(node.name.text);
+    }
+
+    const noteReturned = (expr) => {
+      if (!expr) return;
+      if (isGuardCall(expr)) callResultReturnedDirectly = true;
+      // `cronAuthFailure(req) ?? Response.json(...)` — the guard short-circuits.
+      if (ts.isBinaryExpression(expr) && isGuardCall(expr.left)) callResultReturnedDirectly = true;
+      if (ts.isIdentifier(expr)) returnedIdentifiers.add(expr.text);
+    };
+
+    if (ts.isReturnStatement(node)) noteReturned(node.expression);
+
+    // An arrow with a concise body returns it — `const GET = async (r) =>
+    // cronAuthFailure(r) ?? json()` is valid and was being rejected.
+    if (ts.isArrowFunction(node) && !ts.isBlock(node.body)) noteReturned(node.body);
+
+    ts.forEachChild(node, visit);
+  };
+  ts.forEachChild(sourceFile, visit);
+
+  if (!calledAtAll) return 'never calls cronAuthFailure().';
+  if (!importedFromCanonical) {
+    return `calls cronAuthFailure() but does not import it from '${CRON_AUTH_MODULE}'.`;
+  }
+
+  const resultIsReturned =
+    callResultReturnedDirectly || [...calledAndBoundTo].some((name) => returnedIdentifiers.has(name));
+  if (!resultIsReturned) {
+    return 'calls cronAuthFailure() but never returns its result, so the check cannot refuse anything.';
+  }
+  return null;
+}
+
 /** Comments and string literals removed, so markers match code, not prose. */
 function stripCommentsAndStrings(source) {
   return source
@@ -222,16 +321,12 @@ function validateCrons(config, readSource) {
           `@/lib/api/cron-auth, which fails closed.`
       );
     }
-    // REQUIRE the guard, do not merely forbid one bad shape. Rejecting a single
-    // known-bad comparison left an unauthenticated handler, an arbitrary
-    // allowEveryone() helper, and `export const GET = 42` all passing — so the
-    // claim that this rule was "decisive" was false. Requiring the call makes it
-    // decisive: there is exactly one sanctioned way to authorise a cron.
-    if (!/\bcronAuthFailure\s*\(/.test(code)) {
+    const authProblem = checkGuardUsage(source);
+    if (authProblem) {
       failures.push(
-        `${cronPath}: ${relPath} never calls cronAuthFailure(). Every scheduled endpoint must ` +
-          `authorise through @/lib/api/cron-auth, which fails closed when CRON_SECRET is unset. ` +
-          `A handler that authorises some other way, or not at all, is publicly callable.`
+        `${cronPath}: ${relPath} ${authProblem} Every scheduled endpoint must authorise ` +
+          `through cronAuthFailure() from '${CRON_AUTH_MODULE}', which fails closed when ` +
+          `CRON_SECRET is unset, and must RETURN its result.`
       );
     }
 
@@ -258,8 +353,9 @@ function readFromDisk(relPath) {
 
 function selfTest() {
   const good =
+    "import { cronAuthFailure } from '@/lib/api/cron-auth';\n" +
     'export async function GET(request: Request) {\n' +
-    "  const unauthorized = cronAuthFailure(request);\n" +
+    '  const unauthorized = cronAuthFailure(request);\n' +
     '  if (unauthorized) return unauthorized;\n' +
     '  return Response.json({ ok: true });\n' +
     '}';
@@ -267,22 +363,55 @@ function selfTest() {
   const R = 'src/app/api/cron/ghost/route.ts';
   const oneCron = { crons: [{ path: P, schedule: '0 19 * * *' }] };
 
+  // Every fixture below carries the auth guard unless it is specifically
+  // testing rule 4, and every case asserts the SPECIFIC failure it exists to
+  // provoke. An earlier revision asserted only `failures.length > 0`, so once
+  // rule 4 started rejecting fixtures for a missing guard, deleting the entire
+  // import-graph traversal left --self-test green. A reviewer demonstrated it.
+  // "Some failure occurred" is not a control; "this failure occurred" is.
+  const AUTH = "import { cronAuthFailure } from '@/lib/api/cron-auth';\n";
+  const guarded = (body) =>
+    AUTH +
+    'export async function GET(request: Request) {\n' +
+    '  const unauthorized = cronAuthFailure(request);\n' +
+    '  if (unauthorized) return unauthorized;\n' +
+    `  ${body}\n` +
+    '}';
+
   const mustReject = [
-    { name: '501 via upstream-proxy import', files: { [R]: "import { requireUpstreamBase } from '@/lib/api/upstream-proxy';\n" + good } },
-    { name: '501 via notImplementedResponse', files: { [R]: "import { notImplementedResponse } from '@/lib/integrations/not-implemented-response';\n" + good } },
-    { name: 'literal status: 501', files: { [R]: 'export async function GET() { return Response.json({}, { status: 501 }); }' } },
-    { name: 'status : 501 with unusual spacing', files: { [R]: 'export async function GET() { return Response.json({}, { status : 501 }); }' } },
+    {
+      name: '501 via upstream-proxy import',
+      expect: 'requireUpstreamBase',
+      files: { [R]: AUTH + "import { requireUpstreamBase } from '@/lib/api/upstream-proxy';\n" + guarded('return Response.json({});') },
+    },
+    {
+      name: '501 via notImplementedResponse',
+      expect: 'notImplementedResponse',
+      files: { [R]: AUTH + "import { notImplementedResponse } from '@/lib/integrations/not-implemented-response';\n" + guarded('return Response.json({});') },
+    },
+    {
+      name: 'literal status: 501',
+      expect: 'status: 501',
+      files: { [R]: guarded('return Response.json({}, { status: 501 });') },
+    },
+    {
+      name: 'status : 501 with unusual spacing',
+      expect: 'status: 501',
+      files: { [R]: guarded('return Response.json({}, { status : 501 });') },
+    },
     {
       name: '501 one hop away via a local wrapper',
+      expect: 'via src/lib/jobs/ghost.ts',
       files: {
-        [R]: "import { run } from '@/lib/jobs/ghost';\nexport async function GET() { return run(); }",
+        [R]: AUTH + "import { run } from '@/lib/jobs/ghost';\n" + guarded('return run();'),
         'src/lib/jobs/ghost.ts': "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\nexport const run = () => upstreamUnavailable('g');",
       },
     },
     {
       name: '501 seven hops away',
+      expect: 'via src/app/api/cron/ghost/h7.ts',
       files: (() => {
-        const f = { [R]: "import { h1 } from './h1';\nexport async function GET() { return h1(); }" };
+        const f = { [R]: AUTH + "import { h1 } from './h1';\n" + guarded('return h1();') };
         for (let i = 1; i < 7; i += 1) {
           f[`src/app/api/cron/ghost/h${i}.ts`] = `import { h${i + 1} } from './h${i + 1}';\nexport const h${i} = () => h${i + 1}();`;
         }
@@ -292,33 +421,128 @@ function selfTest() {
     },
     {
       name: '501 through a dynamic import',
+      expect: 'via src/app/api/cron/ghost/stub.ts',
       files: {
-        [R]: "export async function GET() { const m = await import('./stub'); return m.run(); }",
+        [R]: guarded("const m = await import('./stub'); return m.run();"),
         'src/app/api/cron/ghost/stub.ts': "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\nexport const run = () => upstreamUnavailable('g');",
       },
     },
     {
       name: '501 through a barrel re-export',
+      expect: 'via src/app/api/cron/ghost/impl.ts',
       files: {
-        [R]: "import { run } from './barrel';\nexport async function GET() { return run(); }",
+        [R]: AUTH + "import { run } from './barrel';\n" + guarded('return run();'),
         'src/app/api/cron/ghost/barrel.ts': "export { run } from './impl';",
         'src/app/api/cron/ghost/impl.ts': 'export const run = () => Response.json({}, { status: 501 });',
       },
     },
-    { name: 'inline fail-open CRON_SECRET comparison', files: { [R]: 'export async function GET(request) {\n  const a = request.headers.get("authorization");\n  if (a !== `Bearer ${process.env.CRON_SECRET}`) return new Response("no", { status: 401 });\n  return Response.json({ ok: true });\n}' } },
-    { name: 'no GET or POST export', files: { [R]: 'export const revalidate = 0;' } },
-    { name: 'no route file at all', files: {} },
-    // Rule 4 must REQUIRE the guard, not merely forbid one bad shape.
-    { name: 'handler with no authorisation at all', files: { [R]: 'export async function GET() { return Response.json({ ok: true }); }' } },
-    { name: 'handler authorising via some other helper', files: { [R]: "import { allowEveryone } from '@/lib/api/allow';\nexport async function GET(request) { allowEveryone(request); return Response.json({}); }" } },
-    { name: 'export const GET = 42 (not callable)', files: { [R]: 'export const GET = 42;' } },
+    {
+      name: '501 in a .js module',
+      expect: 'via src/app/api/cron/ghost/legacy.js',
+      files: {
+        [R]: AUTH + "import { run } from './legacy';\n" + guarded('return run();'),
+        'src/app/api/cron/ghost/legacy.js': 'export const run = () => Response.json({}, { status: 501 });',
+      },
+    },
+    {
+      name: '501 in a .mjs module',
+      expect: 'via src/app/api/cron/ghost/legacy.mjs',
+      files: {
+        [R]: AUTH + "import { run } from './legacy';\n" + guarded('return run();'),
+        'src/app/api/cron/ghost/legacy.mjs': 'export const run = () => Response.json({}, { status: 501 });',
+      },
+    },
+    {
+      name: '501 in a .jsx module',
+      expect: 'via src/app/api/cron/ghost/legacy.jsx',
+      files: {
+        [R]: AUTH + "import { run } from './legacy';\n" + guarded('return run();'),
+        'src/app/api/cron/ghost/legacy.jsx': 'export const run = () => Response.json({}, { status: 501 });',
+      },
+    },
+    {
+      name: '501 in a JavaScript directory index',
+      expect: 'via src/app/api/cron/ghost/jobs/index.js',
+      files: {
+        [R]: AUTH + "import { run } from './jobs';\n" + guarded('return run();'),
+        'src/app/api/cron/ghost/jobs/index.js': 'export const run = () => Response.json({}, { status: 501 });',
+      },
+    },
+    {
+      name: '501 in an index.mjs directory module',
+      expect: 'via src/app/api/cron/ghost/jobs/index.mjs',
+      files: {
+        [R]: AUTH + "import { run } from './jobs';\n" + guarded('return run();'),
+        'src/app/api/cron/ghost/jobs/index.mjs': 'export const run = () => Response.json({}, { status: 501 });',
+      },
+    },
+    {
+      name: 'inline fail-open CRON_SECRET comparison',
+      expect: 'inlines the CRON_SECRET comparison',
+      files: { [R]: AUTH + 'export async function GET(request) {\n  const unauthorized = cronAuthFailure(request);\n  if (unauthorized) return unauthorized;\n  const a = request.headers.get("authorization");\n  if (a !== `Bearer ${process.env.CRON_SECRET}`) return new Response("no", { status: 401 });\n  return Response.json({ ok: true });\n}' },
+    },
+    {
+      name: 'no GET or POST export',
+      expect: 'exports neither GET nor POST',
+      files: { [R]: AUTH + 'const unauthorized = cronAuthFailure(new Request("http://x"));\nexport const revalidate = 0;' },
+    },
+    {
+      name: 'no route file at all',
+      expect: 'no Route Handler at',
+      files: {},
+    },
+    {
+      name: 'handler with no authorisation at all',
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: 'export async function GET() { return Response.json({ ok: true }); }' },
+    },
+    {
+      name: 'handler authorising via some other helper',
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: "import { allowEveryone } from '@/lib/api/allow';\nexport async function GET(request) { allowEveryone(request); return Response.json({}); }" },
+    },
+    {
+      name: 'export const GET = 42 (not callable)',
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: 'export const GET = 42;' },
+    },
+    {
+      // Reviewer bypass: calls the guard and throws the answer away.
+      name: 'guard called but its return value ignored',
+      expect: 'never returns its result',
+      files: { [R]: AUTH + 'export async function GET(request) {\n  cronAuthFailure(request);\n  return Response.json({ ok: true });\n}' },
+    },
+    {
+      // Reviewer bypass: a local no-op shadowing the real guard.
+      name: 'guard name shadowed by a local no-op',
+      expect: "does not import it from '@/lib/api/cron-auth'",
+      files: { [R]: 'const cronAuthFailure = () => null;\nexport async function GET(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}' },
+    },
+    {
+      // Reviewer bypass: right name, wrong module.
+      name: 'guard imported from the wrong module',
+      expect: "does not import it from '@/lib/api/cron-auth'",
+      files: { [R]: "import { cronAuthFailure } from '@/lib/api/not-the-real-guard';\nexport async function GET(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}" },
+    },
+    {
+      // Reviewer bypass: referenced but never invoked.
+      name: 'guard referenced but never called',
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: AUTH + 'const guard = cronAuthFailure;\nexport async function GET() { return Response.json({}); }' },
+    },
   ];
 
   for (const c of mustReject) {
     const failures = validateCrons(oneCron, (p) =>
       Object.prototype.hasOwnProperty.call(c.files, p) ? c.files[p] : null
     );
-    if (failures.length === 0) throw new Error(`self-test did not reject: ${c.name}`);
+    if (!failures.some((f) => f.includes(c.expect))) {
+      throw new Error(
+        `self-test did not reject: ${c.name} (expected a failure containing "${c.expect}", got ${
+          failures.length ? failures.join(' | ') : 'none'
+        })`
+      );
+    }
   }
 
   // Config-shape rejections.
