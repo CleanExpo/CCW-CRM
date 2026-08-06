@@ -34,8 +34,14 @@ const ROOT = path.resolve(__dirname, '../..');
 const SRC = path.join(ROOT, 'src');
 const ENTRY = 'src/app/globals.css';
 
-/** Next.js entry points — the only legitimate roots of the module graph. */
-const ENTRY_POINT = /^src\/(middleware\.[jt]sx?|app\/.*\/?(layout|page|template|default|error|global-error|loading|not-found|route)\.[jt]sx?)$/;
+/**
+ * Entry points that can actually deliver CSS to a browser.
+ *
+ * `route.ts` and `middleware.ts` are server entry points — they return JSON or
+ * a redirect and render nothing, so a stylesheet reachable only from one of them
+ * still never loads. Seeding them made two orphans pass.
+ */
+const ENTRY_POINT = /^src\/app\/(.*\/)?(layout|page|template|default|error|global-error|loading|not-found)\.[jt]sx?$/;
 
 function isEntryPoint(filePath) {
   return ENTRY_POINT.test(filePath);
@@ -47,9 +53,16 @@ function extractImports(filePath, source) {
     // CSS has no string-literal ambiguity, but strip comments anyway.
     const cleaned = source.replace(/\/\*[\s\S]*?\*\//g, ' ');
     const specifiers = [];
-    const pattern = /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g;
-    let match;
-    while ((match = pattern.exec(cleaned)) !== null) specifiers.push(match[1]);
+    // Quoted form, plus the valid UNQUOTED `@import url(./x.css);` which was
+    // previously missed and would have reported a loaded stylesheet as orphaned.
+    const patterns = [
+      /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g,
+      /@import\s+url\(\s*([^'")\s]+)\s*\)/g,
+    ];
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(cleaned)) !== null) specifiers.push(match[1]);
+    }
     return specifiers;
   }
   // detectJavaScriptImports=true, readImportFiles=true — catches static,
@@ -76,7 +89,11 @@ function resolveSpecifier(specifier, importerPath) {
   return resolved;
 }
 
-/** Candidate on-disk paths for a resolved specifier. */
+/**
+ * Candidate on-disk paths for a resolved specifier.
+ * `.mjs` and the JavaScript directory indexes were missing, so a stylesheet
+ * loaded through any of those shapes was falsely reported orphaned.
+ */
 function candidatePaths(resolved) {
   if (/\.(css|tsx?|jsx?|mjs)$/.test(resolved)) return [resolved];
   return [
@@ -85,8 +102,12 @@ function candidatePaths(resolved) {
     `${resolved}.tsx`,
     `${resolved}.js`,
     `${resolved}.jsx`,
+    `${resolved}.mjs`,
     `${resolved}/index.ts`,
     `${resolved}/index.tsx`,
+    `${resolved}/index.js`,
+    `${resolved}/index.jsx`,
+    `${resolved}/index.mjs`,
   ];
 }
 
@@ -244,6 +265,28 @@ function selfTest() {
       orphan: 'src/styles/dead-only.css',
     },
     {
+      // route.ts and middleware render nothing — a stylesheet reachable only
+      // from a server entry point still never loads in a browser.
+      name: 'orphan imported only by an API route handler',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/api-only.css': '.a{}',
+        'src/app/api/probe/route.ts': "import '@/styles/api-only.css';\nexport async function GET() {}",
+      },
+      orphan: 'src/styles/api-only.css',
+    },
+    {
+      name: 'orphan imported only by middleware',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/mw-only.css': '.m{}',
+        'src/middleware.ts': "import '@/styles/mw-only.css';\nexport function middleware() {}",
+      },
+      orphan: 'src/styles/mw-only.css',
+    },
+    {
       name: 'orphan-only CSS cycle with no entry point reaching it',
       files: {
         [ENTRY]: entryCss,
@@ -309,6 +352,39 @@ function selfTest() {
         [LAYOUT]: `${layoutSrc}\nimport '@/components/Shell';`,
         'src/components/Shell.tsx': "import '@/styles/shell.css';\nexport default () => null;",
         'src/styles/shell.css': '.sh{}',
+      },
+    },
+    {
+      name: 'reached through an extensionless .mjs module',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nimport '@/lib/theme';`,
+        'src/lib/theme.mjs': "import '@/styles/mjs.css';\nexport const t = 1;",
+        'src/styles/mjs.css': '.m{}',
+      },
+    },
+    {
+      name: 'reached through a JavaScript directory index',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: `${layoutSrc}\nimport '@/lib/widgets';`,
+        'src/lib/widgets/index.js': "import '@/styles/widgets.css';\nexport const w = 1;",
+        'src/styles/widgets.css': '.w{}',
+      },
+    },
+    {
+      name: 'reached through an unquoted @import url()',
+      files: {
+        [ENTRY]: `${entryCss}\n@import url(./unquoted.css);`,
+        [LAYOUT]: layoutSrc,
+        'src/app/unquoted.css': '.u{}',
+      },
+    },
+    {
+      name: 'entry point inside a route group',
+      files: {
+        [ENTRY]: entryCss,
+        'src/app/(marketing)/layout.tsx': "import '@/app/globals.css';\nexport default () => null;",
       },
     },
   ];

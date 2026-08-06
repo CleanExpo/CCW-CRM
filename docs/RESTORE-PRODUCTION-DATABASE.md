@@ -138,7 +138,16 @@ vercel env add JWT_SECRET production        # openssl rand -base64 48
 vercel env add CIN7_OMNI_USERNAME production
 vercel env add CIN7_OMNI_API_KEY production
 #    or the Core pair — see src/lib/integrations/diagnostics.ts
+
+# 5. The workspace the scheduled work runs as:
+vercel env add CRON_INTEGRATION_USER_ID production
 ```
+
+`CRON_INTEGRATION_USER_ID` is not optional. Five scheduled handlers read it —
+`check-invoice-overdue`, `check-sla-breaches`, `check-trade-finance-maturities`,
+`nightly-full-sync` and `sync-bank-feeds` — and `nightly-full-sync/route.ts:23` returns **HTTP 500**
+when it is absent. Setting the database and Cin7 credentials without it leaves the nightly sync
+failing, just with a different error than before.
 
 Use the **transaction pooler** string (port 6543), never `db.<ref>.supabase.co` directly.
 

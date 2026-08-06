@@ -46,6 +46,24 @@ const STUB_MARKERS = [
 const INLINE_FAIL_OPEN = /!==\s*`Bearer \$\{\s*process\.env\.CRON_SECRET\s*\}`/;
 
 /**
+ * Every module shape a bare specifier can resolve to. `.mjs`, `.js`, `.jsx` and
+ * the JavaScript directory indexes were missing, so a 501 living in any of those
+ * was simply never read.
+ */
+const MODULE_CANDIDATES = [
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '/index.ts',
+  '/index.tsx',
+  '/index.js',
+  '/index.jsx',
+  '/index.mjs',
+];
+
+/**
  * Local module specifiers, via the TypeScript parser.
  * Regexes could not tell an import from a string that reads like one; the
  * compiler can. Catches static, dynamic import() and re-exports.
@@ -71,7 +89,7 @@ function localImports(source, importerPath) {
     // Clamp inside src/. `../../../../outside/x` previously resolved above the
     // repository root and would have been read from disk.
     if (base !== 'src' && !base.startsWith('src/')) continue;
-    resolved.push(base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`);
+    resolved.push(base, ...MODULE_CANDIDATES.map((ext) => `${base}${ext}`));
   }
   return resolved;
 }
@@ -195,12 +213,25 @@ function validateCrons(config, readSource) {
     if (!exportsHandler(source)) {
       failures.push(`${cronPath}: ${relPath} exports neither GET nor POST`);
     }
-    if (INLINE_FAIL_OPEN.test(stripComments(source))) {
+    const code = stripComments(source);
+    if (INLINE_FAIL_OPEN.test(code)) {
       failures.push(
         `${cronPath}: ${relPath} inlines the CRON_SECRET comparison. When CRON_SECRET is ` +
           `unset that template is the literal string "Bearer undefined", so sending exactly ` +
           `that header authorises the endpoint. Use cronAuthFailure() from ` +
           `@/lib/api/cron-auth, which fails closed.`
+      );
+    }
+    // REQUIRE the guard, do not merely forbid one bad shape. Rejecting a single
+    // known-bad comparison left an unauthenticated handler, an arbitrary
+    // allowEveryone() helper, and `export const GET = 42` all passing — so the
+    // claim that this rule was "decisive" was false. Requiring the call makes it
+    // decisive: there is exactly one sanctioned way to authorise a cron.
+    if (!/\bcronAuthFailure\s*\(/.test(code)) {
+      failures.push(
+        `${cronPath}: ${relPath} never calls cronAuthFailure(). Every scheduled endpoint must ` +
+          `authorise through @/lib/api/cron-auth, which fails closed when CRON_SECRET is unset. ` +
+          `A handler that authorises some other way, or not at all, is publicly callable.`
       );
     }
 
@@ -277,6 +308,10 @@ function selfTest() {
     { name: 'inline fail-open CRON_SECRET comparison', files: { [R]: 'export async function GET(request) {\n  const a = request.headers.get("authorization");\n  if (a !== `Bearer ${process.env.CRON_SECRET}`) return new Response("no", { status: 401 });\n  return Response.json({ ok: true });\n}' } },
     { name: 'no GET or POST export', files: { [R]: 'export const revalidate = 0;' } },
     { name: 'no route file at all', files: {} },
+    // Rule 4 must REQUIRE the guard, not merely forbid one bad shape.
+    { name: 'handler with no authorisation at all', files: { [R]: 'export async function GET() { return Response.json({ ok: true }); }' } },
+    { name: 'handler authorising via some other helper', files: { [R]: "import { allowEveryone } from '@/lib/api/allow';\nexport async function GET(request) { allowEveryone(request); return Response.json({}); }" } },
+    { name: 'export const GET = 42 (not callable)', files: { [R]: 'export const GET = 42;' } },
   ];
 
   for (const c of mustReject) {
@@ -297,16 +332,42 @@ function selfTest() {
   }
 
   // Negative controls — each MUST pass, or a failure from this gate means nothing.
+  const guard =
+    "import { cronAuthFailure } from '@/lib/api/cron-auth';\n" +
+    '  const unauthorized = cronAuthFailure(request);\n  if (unauthorized) return unauthorized;\n';
+
   const mustAccept = [
     { name: 'export async function GET', files: { [R]: good } },
-    { name: 'export const GET = async', files: { [R]: 'export const GET = async (request: Request) => Response.json({ ok: true });' } },
-    { name: 'export { GET }', files: { [R]: 'const GET = async () => Response.json({});\nexport { GET };' } },
-    { name: 'export async function POST', files: { [R]: 'export async function POST() { return Response.json({}); }' } },
+    { name: 'export const GET = async', files: { [R]: "import { cronAuthFailure } from '@/lib/api/cron-auth';\nexport const GET = async (request: Request) => cronAuthFailure(request) ?? Response.json({ ok: true });" } },
+    { name: 'export { GET }', files: { [R]: "import { cronAuthFailure } from '@/lib/api/cron-auth';\nconst GET = async (request) => cronAuthFailure(request) ?? Response.json({});\nexport { GET };" } },
+    { name: 'export async function POST', files: { [R]: 'export async function POST(request) {\n' + guard + '  return Response.json({});\n}' } },
     {
       name: 'a string literal mentioning status: 501 must NOT flag',
       files: {
         [R]: "import { note } from './note';\n" + good,
         'src/app/api/cron/ghost/note.ts': "export const note = 'legacy status: 501 was returned here until 2026-08';",
+      },
+    },
+    {
+      // MUTATION CANARY — this case is why the parser matters, and it is
+      // constructed so that a naive regex gives a DIFFERENT verdict.
+      //
+      // The handler does not import ./legacy-stub. It only MENTIONS it inside a
+      // string. The TypeScript parser sees no import and this passes. Swap the
+      // parser for a regex and it follows the string, reaches the 501, and
+      // wrongly rejects — so --self-test goes red.
+      //
+      // The previous canary failed to discriminate: it left a REAL import in
+      // place, so the mutant found the same 501 and the verdict never changed.
+      // A control that produces the same answer under the mutant is not a
+      // control. A reviewer mutated the parser out of this file and watched
+      // --self-test stay green.
+      name: 'a 501 module named only inside a string must NOT be followed',
+      files: {
+        [R]:
+          good + "\nconst hint = \"import './legacy-stub' if you need the old behaviour\";\n",
+        'src/app/api/cron/ghost/legacy-stub.ts':
+          'export const run = () => Response.json({}, { status: 501 });',
       },
     },
   ];

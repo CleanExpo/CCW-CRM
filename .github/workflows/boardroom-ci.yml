@@ -70,22 +70,26 @@ jobs:
       - name: Scan for hardcoded secrets
         run: node scripts/ci/scan-secrets.js
 
-  # The browser suite was written but never wired into CI, so nothing would have
-  # surfaced an accessibility regression or a stale visual baseline until a human
-  # happened to run it locally. This runs the PUBLIC specs — the authenticated
-  # ones need credentials and a working production database, neither of which
-  # exists yet (see docs/RESTORE-PRODUCTION-DATABASE.md).
+  # The browser suite was written but never wired into CI, so an accessibility
+  # regression would not have surfaced until a human happened to run it locally.
   #
-  # Reporting-only for now, deliberately and visibly: the six committed baselines
-  # were captured from production before the 2026-08-07 contrast fix, so the first
-  # run after that deploys WILL diff. Making this blocking before those baselines
-  # are regenerated would produce a red gate everyone routes around. Flip
-  # continue-on-error off once `--update-snapshots` has been run against a
-  # production build that includes the fix.
+  # This runs against THE CANDIDATE, not production. An earlier revision of this
+  # job set no E2E_BASE_URL, so playwright.config.ts fell back to the production
+  # alias — meaning a pull request was audited against code it had not changed.
+  # A dev server is started here instead; the public pages need no database.
+  #
+  # Accessibility and console-error specs only, on purpose. The visual-baseline
+  # specs compare against six PNGs captured from PRODUCTION, which a local dev
+  # render will not match pixel-for-pixel, so including them here would produce a
+  # permanent red for a non-reason. Visual comparison stays a manual check until
+  # the baselines are regenerated from a stable target — tracked in
+  # docs/design-system.md.
+  #
+  # The authenticated specs need credentials and a working database; see
+  # docs/RESTORE-PRODUCTION-DATABASE.md.
   e2e-public:
-    name: Browser Suite (public routes, reporting-only)
+    name: Browser Suite (public routes, accessibility)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -97,8 +101,18 @@ jobs:
         run: npm ci
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run public browser specs
-        run: npx playwright test e2e/public-surface.spec.ts
+      - name: Start the candidate
+        run: |
+          JWT_SECRET=ci-ephemeral-not-a-real-secret npm run dev > /tmp/dev.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000/; then echo "ready"; exit 0; fi
+            sleep 2
+          done
+          echo "dev server never became ready"; cat /tmp/dev.log; exit 1
+      - name: Accessibility and console-error specs
+        env:
+          E2E_BASE_URL: http://localhost:3000
+        run: npx playwright test e2e/public-surface.spec.ts -g "accessibility|console"
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,7 +123,7 @@ jobs:
 
   deploy:
     name: Deploy Gate
-    needs: [test, validate, security]
+    needs: [test, validate, security, e2e-public]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
