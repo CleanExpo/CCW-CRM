@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { getAppOrigin } from '@/lib/api/backend-url';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 /**
  * Health Check Cron Job
@@ -10,11 +11,8 @@ import { getAppOrigin } from '@/lib/api/backend-url';
  */
 export async function GET(request: Request) {
   try {
-    // Verify cron secret for security
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const backendStart = Date.now();
     const backendResponse = await fetch(`${getAppOrigin()}/api/health`, {

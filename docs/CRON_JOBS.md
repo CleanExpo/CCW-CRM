@@ -68,9 +68,16 @@ CRON_SECRET=your-secure-random-string-here
 
 Generate one with `openssl rand -base64 32`.
 
-The jobs additionally need whatever their integration requires — `XERO_CLIENT_ID`,
-`XERO_CLIENT_SECRET`, `CIN7_API_KEY`, and a database connection (`DATABASE_URL`, or the
-`DB_HOST`/`DB_USER`/`DB_PASSWORD` triple resolved by `src/lib/db/database-env.ts`).
+The jobs additionally need whatever their integration requires:
+
+- Xero — `XERO_CLIENT_ID`, `XERO_CLIENT_SECRET`
+- Cin7 — **either** Omni (`CIN7_OMNI_USERNAME` + `CIN7_OMNI_API_KEY`, or
+  `CIN7_OMNI_CONNECTION_KEY`) **or** Core (`CIN7_CORE_ACCOUNT_ID` +
+  `CIN7_CORE_APPLICATION_KEY`). `src/lib/integrations/diagnostics.ts` is the authority on which
+  combinations count as configured. A bare `CIN7_API_KEY` is read by nothing — earlier revisions
+  of this document named it and following them configured no credential at all.
+- A database connection — `DATABASE_URL`, or the `DB_HOST`/`DB_USER`/`DB_PASSWORD` triple resolved
+  by `src/lib/db/database-env.ts`
 
 > As of 2026-08-07 the production deployment has **no** database connection configured, so every
 > database-backed cron fails. See section 0 of `docs/PROJECT-STATUS.md`.
@@ -83,22 +90,42 @@ directly or through its imports — to a 501 stub.
 
 ## Security
 
-Every cron handler authenticates the same way:
+Every cron handler authenticates through one shared guard:
 
 ```typescript
-const authHeader = request.headers.get('authorization');
-if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-  return new NextResponse('Unauthorized', { status: 401 });
+import { cronAuthFailure } from '@/lib/api/cron-auth';
+
+export async function GET(request: Request) {
+  const unauthorized = cronAuthFailure(request);
+  if (unauthorized) return unauthorized;
+  // ...
 }
 ```
 
 An `x-cron-secret` header is **not** accepted; several older runbooks told operators to send one,
 and every such request returns 401.
 
-If `CRON_SECRET` is unset the comparison fails and the request is refused. This is deliberate.
-Earlier revisions of this document showed a FastAPI helper that returned `True` when the secret was
-missing, described as "development mode" — that pattern makes every scheduled endpoint publicly
-callable the moment a variable goes missing. Do not reintroduce it in any language.
+### Why this is not written inline
+
+Until 2026-08-07 each handler inlined the comparison:
+
+```typescript
+if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) { /* 401 */ }
+```
+
+That is **fail-open**. When `CRON_SECRET` is unset the template evaluates to the literal string
+`"Bearer undefined"`, so a request sending exactly that header is authorised. Twelve handlers
+carried the pattern. An independent reviewer demonstrated it; `src/lib/api/__tests__/cron-auth.test.ts`
+now pins the behaviour, and `scripts/ci/validate-vercel-crons.js` fails CI if the inline form
+reappears in any scheduled route.
+
+`cronAuthFailure` fails closed: a missing or blank `CRON_SECRET` returns **503** for every request,
+distinct from the **401** a wrong credential gets, so a misconfigured deployment is not mistaken
+for an attacker. The comparison is constant-time.
+
+Earlier revisions of this document also showed a FastAPI helper returning `True` when the secret was
+missing, described as "development mode". Same defect, different language. Do not reintroduce it in
+any form.
 
 Vercel sets the `Authorization` header itself and restricts cron invocations to its own
 infrastructure.

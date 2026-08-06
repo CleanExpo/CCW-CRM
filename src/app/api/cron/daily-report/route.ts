@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 /**
  * Daily Report Cron Job
@@ -11,10 +12,8 @@ import { logger } from "@/lib/logger";
  */
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);

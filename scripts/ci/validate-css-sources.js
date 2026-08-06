@@ -68,16 +68,36 @@ function stripComments(source) {
 function extractSpecifiers(source) {
   const cleaned = stripComments(source);
   const specifiers = [];
+  // Anchored at line start (multiline flag), because a real import is a
+  // statement. Without the anchor, an ordinary string such as
+  //   const doc = "import './orphan.css' to enable the theme";
+  // counted as an import and made an orphan pass — an independent reviewer
+  // demonstrated that with both a quoted string and a template literal.
   const patterns = [
-    /\bimport\s+(?:[\w*{},\s]+\s+from\s+)?['"]([^'"]+)['"]/g,
-    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-    /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g,
+    /^\s*import\s+(?:[\w*{},\s]+\s+from\s+)?['"]([^'"]+)['"]/gm,
+    /^\s*export\s+(?:\*|{[^}]*})\s+from\s+['"]([^'"]+)['"]/gm,
+    /^\s*(?:const|let|var)?\s*\w*\s*=?\s*require\s*\(\s*['"]([^'"]+)['"]\s*\)/gm,
+    /^\s*@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/gm,
   ];
   for (const pattern of patterns) {
     let match;
     while ((match = pattern.exec(cleaned)) !== null) specifiers.push(match[1]);
   }
   return specifiers;
+}
+
+/**
+ * Files that must not act as reachability roots.
+ *
+ * A stylesheet imported only by a test does not reach the browser. The first
+ * version treated every non-CSS file as a production root, so importing an
+ * orphan from a `.test.ts` was enough to make it pass.
+ */
+function isProductionRoot(filePath) {
+  if (filePath.endsWith('.css')) return false;
+  return !/(^|\/)(__tests__|__mocks__|e2e)\//.test(filePath) &&
+    !/\.(test|spec)\.[jt]sx?$/.test(filePath) &&
+    !/(^|\/)test-setup\.[jt]s$/.test(filePath);
 }
 
 /** Resolve a specifier to a repo-relative posix path, or null if not a local file. */
@@ -129,7 +149,7 @@ function validateCssSources(cssFiles, sourceFiles, read) {
   const reachable = new Set();
   const queue = [];
   for (const [sourceFile, targets] of importsByFile) {
-    if (sourceFile.endsWith('.css')) continue;
+    if (!isProductionRoot(sourceFile)) continue;
     for (const target of targets) {
       if (!reachable.has(target)) {
         reachable.add(target);
@@ -224,6 +244,59 @@ function selfTest() {
     throw new Error('self-test did not reject: same-basename stylesheet in another directory');
   }
 
+  // Must REJECT: reviewer bypass — an ordinary string that merely looks like an
+  // import statement.
+  for (const [label, line] of [
+    ['quoted string', `const doc = "import './fake.css' to enable the theme";`],
+    ['template literal', 'const doc = `import \'./fake.css\' here`;'],
+  ]) {
+    const failures = validateCssSources(
+      [ENTRY, 'src/styles/fake.css'],
+      [ENTRY, 'src/styles/fake.css', 'src/app/layout.tsx', 'src/app/doc.ts'],
+      (p) => {
+        if (p === ENTRY) return entryContents;
+        if (p === 'src/styles/fake.css') return '.f { color: red; }';
+        if (p === 'src/app/layout.tsx') return "import './globals.css';";
+        if (p === 'src/app/doc.ts') return line;
+        return null;
+      }
+    );
+    if (failures.length === 0) throw new Error(`self-test did not reject: ${label} posing as import`);
+  }
+
+  // Must REJECT: reviewer bypass — an orphan imported only by a test. A
+  // stylesheet a test imports still does not reach the browser.
+  const testOnlyFailures = validateCssSources(
+    [ENTRY, 'src/styles/test-only.css'],
+    [ENTRY, 'src/styles/test-only.css', 'src/app/layout.tsx', 'src/app/probe.test.ts'],
+    (p) => {
+      if (p === ENTRY) return entryContents;
+      if (p === 'src/styles/test-only.css') return '.t { color: red; }';
+      if (p === 'src/app/layout.tsx') return "import './globals.css';";
+      if (p === 'src/app/probe.test.ts') return "import '@/styles/test-only.css';";
+      return null;
+    }
+  );
+  if (testOnlyFailures.length === 0) {
+    throw new Error('self-test did not reject: stylesheet imported only by a test');
+  }
+
+  // Must REJECT: a cycle of orphans with no production root.
+  const cycleFailures = validateCssSources(
+    [ENTRY, 'src/styles/a.css', 'src/styles/b.css'],
+    [ENTRY, 'src/styles/a.css', 'src/styles/b.css', 'src/app/layout.tsx'],
+    (p) => {
+      if (p === ENTRY) return entryContents;
+      if (p === 'src/app/layout.tsx') return "import './globals.css';";
+      if (p === 'src/styles/a.css') return "@import './b.css';";
+      if (p === 'src/styles/b.css') return "@import './a.css';";
+      return null;
+    }
+  );
+  if (cycleFailures.length < 2) {
+    throw new Error('self-test did not reject: orphan-only CSS cycle');
+  }
+
   // Must REJECT: a missing entry stylesheet.
   const missingEntryFailures = validateCssSources(['src/other.css'], ['src/other.css'], () => '');
   if (missingEntryFailures.length === 0) {
@@ -246,7 +319,7 @@ function selfTest() {
     throw new Error(`self-test rejected a sound tree:\n- ${soundFailures.join('\n- ')}`);
   }
 
-  return { rejectedCases: 4, acceptedCases: 1 };
+  return { rejectedCases: 8, acceptedCases: 1 };
 }
 
 function main() {

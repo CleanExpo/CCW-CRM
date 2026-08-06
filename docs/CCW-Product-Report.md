@@ -1237,7 +1237,7 @@ The **BAS Report** (`/invoices/bas`) provides Australian GST figures for your Bu
 
 All times AEST. These run automatically once configured.
 
-> **Corrected 2026-08-07.** The table below now lists what is actually scheduled. Seven endpoints
+> **Corrected 2026-08-07.** The table below now lists what is actually scheduled. Eight endpoints
 > previously listed here returned HTTP 501 on every run and have been removed; they are recorded
 > underneath so anyone holding an older copy of this report can see what changed. Schedules are
 > AEST (Brisbane, UTC+10).

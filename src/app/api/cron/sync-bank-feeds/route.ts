@@ -2,13 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { logger } from '@/lib/logger';
 import { syncBankAccountFeeds } from '@/lib/bank-reconciliation/sync-feeds';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const userId = process.env.CRON_INTEGRATION_USER_ID?.trim();
     if (!userId) {

@@ -22,20 +22,38 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '../..');
 
-/** Markers that mean "this handler cannot do its job in this deployment". */
+/**
+ * Markers that mean "this handler cannot do its job in this deployment".
+ * Regexes, not substrings: `{ status : 501 }` with unusual spacing slipped past
+ * the literal-string version, and an independent reviewer demonstrated it.
+ */
 const STUB_MARKERS = [
-  'upstream-proxy',
-  'requireUpstreamBase',
-  'upstreamUnavailable',
-  'notImplementedResponse',
-  'status: 501',
-  'status:501',
+  { name: 'upstream-proxy', pattern: /upstream-proxy/ },
+  { name: 'requireUpstreamBase', pattern: /\brequireUpstreamBase\b/ },
+  { name: 'upstreamUnavailable', pattern: /\bupstreamUnavailable\b/ },
+  { name: 'notImplementedResponse', pattern: /\bnotImplementedResponse\b/ },
+  { name: 'status: 501', pattern: /\bstatus\s*:\s*501\b/ },
 ];
 
-/** How many import hops to follow from a route before giving up. */
-const MAX_IMPORT_DEPTH = 6;
+/**
+ * Remove comments AND string literals.
+ *
+ * Comments were already stripped so a marker inside one could not trip the
+ * check. String literals matter for the opposite reason: the reviewer showed a
+ * harmless module containing the string "legacy status: 501" being REJECTED, a
+ * false positive. A gate that cries wolf gets ignored, which is the same
+ * failure mode as one that stays silent.
+ */
+function stripCommentsAndStrings(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+    .replace(/`(?:\\[\s\S]|[^\\`])*`/g, '``')
+    .replace(/'(?:\\[\s\S]|[^\\'\n])*'/g, "''")
+    .replace(/"(?:\\[\s\S]|[^\\"\n])*"/g, '""');
+}
 
-/** Remove comments so a marker inside one cannot trip the check. */
+/** Comments only — used where quoted module specifiers must survive. */
 function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
 }
@@ -48,6 +66,9 @@ function localImports(source, importerPath) {
     /\bimport\s+(?:[\w*{},\s]+\s+from\s+)?['"]([^'"]+)['"]/g,
     /\bexport\s+(?:\*|{[^}]*})\s+from\s+['"]([^'"]+)['"]/g,
     /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+    // Dynamic import — a 501 reached through `await import('./stub')` escaped
+    // the first graph walk entirely.
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
   ];
   for (const pattern of patterns) {
     let match;
@@ -64,6 +85,9 @@ function localImports(source, importerPath) {
       base = path.posix.normalize(path.posix.join(dir, bare));
     }
     if (base === null) continue;
+    // Clamp inside src/. `../../../outside/x` resolved to a path above the repo
+    // root, which the disk reader would then have happily opened.
+    if (base !== 'src' && !base.startsWith('src/')) continue;
     // Try the usual TS resolution shapes.
     resolved.push(base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`);
   }
@@ -83,26 +107,42 @@ function localImports(source, importerPath) {
  */
 function findStubInClosure(entryPath, read) {
   const seen = new Set();
-  let frontier = [entryPath];
+  const queue = [entryPath];
 
-  for (let depth = 0; depth <= MAX_IMPORT_DEPTH && frontier.length > 0; depth += 1) {
-    const next = [];
-    for (const filePath of frontier) {
-      if (seen.has(filePath)) continue;
-      seen.add(filePath);
+  // No depth cap. The first version stopped at six hops, and the reviewer put a
+  // 501 seven hops away and walked straight past. `seen` already guarantees
+  // termination — a depth limit only guaranteed a blind spot.
+  while (queue.length > 0) {
+    const filePath = queue.shift();
+    if (seen.has(filePath)) continue;
+    seen.add(filePath);
 
-      const source = read(filePath);
-      if (source === null) continue;
+    const source = read(filePath);
+    if (source === null) continue;
 
-      const cleaned = stripComments(source);
-      const marker = STUB_MARKERS.find((m) => cleaned.includes(m));
-      if (marker) return { marker, via: filePath };
+    const forMarkers = stripCommentsAndStrings(source);
+    const marker = STUB_MARKERS.find((m) => m.pattern.test(forMarkers));
+    if (marker) return { marker: marker.name, via: filePath };
 
-      next.push(...localImports(source, filePath));
-    }
-    frontier = next;
+    queue.push(...localImports(source, filePath));
   }
   return null;
+}
+
+/**
+ * Scheduled handlers must authorise through the shared guard.
+ *
+ * Twelve handlers each inlined `authHeader !== \`Bearer ${process.env.CRON_SECRET}\``,
+ * which authorises the literal header "Bearer undefined" whenever CRON_SECRET is
+ * unset. That is a fail-open auth check on every scheduled endpoint, and it was
+ * copy-pasted, so the only durable fix is one guard plus this check.
+ */
+const INLINE_FAIL_OPEN = /!==\s*`Bearer \$\{\s*process\.env\.CRON_SECRET\s*\}`/;
+
+function findInlineAuth(routePath, read) {
+  const source = read(routePath);
+  if (source === null) return false;
+  return INLINE_FAIL_OPEN.test(stripComments(source));
 }
 
 /**
@@ -142,6 +182,15 @@ function validateCrons(config, readSource) {
     }
     if (!/export\s+(?:async\s+)?function\s+(?:GET|POST)\b/.test(source)) {
       failures.push(`${cronPath}: ${relPath} exports neither GET nor POST`);
+    }
+
+    if (findInlineAuth(relPath, readSource)) {
+      failures.push(
+        `${cronPath}: ${relPath} inlines the CRON_SECRET comparison. When CRON_SECRET is ` +
+          `unset that template is the literal string "Bearer undefined", so sending exactly ` +
+          `that header authorises the endpoint. Use cronAuthFailure() from ` +
+          `@/lib/api/cron-auth, which fails closed.`
+      );
     }
 
     const stub = findStubInClosure(relPath, readSource);
@@ -213,6 +262,57 @@ function selfTest() {
       },
     },
     {
+      // Reviewer bypass: a depth cap of six let a 501 seven hops away escape.
+      name: '501 seven import hops away',
+      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
+      sources: {
+        'src/app/api/cron/ghost/route.ts':
+          "import { h1 } from './h1';\nexport async function GET() { return h1(); }",
+        'src/app/api/cron/ghost/h1.ts': "import { h2 } from './h2';\nexport const h1 = () => h2();",
+        'src/app/api/cron/ghost/h2.ts': "import { h3 } from './h3';\nexport const h2 = () => h3();",
+        'src/app/api/cron/ghost/h3.ts': "import { h4 } from './h4';\nexport const h3 = () => h4();",
+        'src/app/api/cron/ghost/h4.ts': "import { h5 } from './h5';\nexport const h4 = () => h5();",
+        'src/app/api/cron/ghost/h5.ts': "import { h6 } from './h6';\nexport const h5 = () => h6();",
+        'src/app/api/cron/ghost/h6.ts': "import { h7 } from './h7';\nexport const h6 = () => h7();",
+        'src/app/api/cron/ghost/h7.ts':
+          'export const h7 = () => Response.json({}, { status: 501 });',
+      },
+    },
+    {
+      // Reviewer bypass: dynamic import() was not treated as an edge.
+      name: '501 reached through a dynamic import',
+      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
+      sources: {
+        'src/app/api/cron/ghost/route.ts':
+          "export async function GET() { const m = await import('./stub'); return m.run(); }",
+        'src/app/api/cron/ghost/stub.ts':
+          "import { upstreamUnavailable } from '@/lib/api/upstream-proxy';\n" +
+          'export const run = () => upstreamUnavailable("ghost");',
+      },
+    },
+    {
+      // Reviewer bypass: literal-substring matching missed unusual spacing.
+      name: '501 written with unusual spacing',
+      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
+      sources: {
+        'src/app/api/cron/ghost/route.ts':
+          'export async function GET() { return Response.json({}, { status : 501 }); }',
+      },
+    },
+    {
+      // The fail-open auth pattern that shipped in twelve handlers.
+      name: 'handler inlines the fail-open CRON_SECRET comparison',
+      config: { crons: [{ path: '/api/cron/ghost', schedule: '0 19 * * *' }] },
+      sources: {
+        'src/app/api/cron/ghost/route.ts':
+          'export async function GET(request) {\n' +
+          "  const authHeader = request.headers.get('authorization');\n" +
+          '  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) return new Response("no", { status: 401 });\n' +
+          '  return Response.json({ ok: true });\n' +
+          '}',
+      },
+    },
+    {
       name: 'scheduled path with no route file',
       config: { crons: [{ path: '/api/cron/missing', schedule: '0 9 * * *' }] },
       sources: {},
@@ -258,7 +358,44 @@ function selfTest() {
     throw new Error(`self-test rejected a sound config:\n- ${soundFailures.join('\n- ')}`);
   }
 
-  return { rejectedCases: cases.length, acceptedCases: 1 };
+  // Negative control 2: the reviewer showed a harmless module being REJECTED
+  // because a STRING contained "status: 501". A gate that cries wolf is ignored,
+  // which fails the same way as one that stays silent.
+  const falsePositiveFailures = validateCrons(
+    { crons: [{ path: '/api/cron/ok', schedule: '0 9 * * *' }] },
+    (p) => {
+      if (p === 'src/app/api/cron/ok/route.ts') {
+        return "import { note } from './note';\n" + good;
+      }
+      if (p === 'src/app/api/cron/ok/note.ts') {
+        return "export const note = 'legacy status: 501 was returned here until 2026-08';";
+      }
+      return null;
+    }
+  );
+  if (falsePositiveFailures.length > 0) {
+    throw new Error(
+      `self-test rejected a sound config over a string literal:\n- ${falsePositiveFailures.join('\n- ')}`
+    );
+  }
+
+  // Negative control 3: a specifier escaping the repo must simply not resolve,
+  // never be read from disk above the root.
+  const traversalFailures = validateCrons(
+    { crons: [{ path: '/api/cron/ok', schedule: '0 9 * * *' }] },
+    (p) => {
+      if (p === 'src/app/api/cron/ok/route.ts') {
+        return "import { x } from '../../../../../../outside/secrets';\n" + good;
+      }
+      if (p.includes('outside')) throw new Error(`read escaped the repo root: ${p}`);
+      return null;
+    }
+  );
+  if (traversalFailures.length > 0) {
+    throw new Error(`self-test rejected a sound config on traversal:\n- ${traversalFailures.join('\n- ')}`);
+  }
+
+  return { rejectedCases: cases.length, acceptedCases: 3 };
 }
 
 function main() {
