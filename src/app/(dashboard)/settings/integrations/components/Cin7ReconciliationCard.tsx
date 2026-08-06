@@ -229,6 +229,29 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           </p>
         ) : null}
 
+        {snapshot?.source === 'none' ? (
+          <div className="border-destructive/40 bg-destructive/5 rounded-lg border p-3">
+            <p className="text-destructive flex items-start gap-1.5 text-sm font-medium">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              Cin7 is unreachable — counts below are not valid for acceptance. Reconnect and refresh
+              from live Cin7.
+            </p>
+          </div>
+        ) : null}
+
+        {snapshot && snapshot.fetch_meta.errors.length > 0 ? (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+            <p className="flex items-start gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              Cin7 fetch was incomplete — do not use this snapshot for sign-off until a clean live
+              refresh succeeds.
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {snapshot.fetch_meta.errors.slice(0, 3).join('; ')}
+            </p>
+          </div>
+        ) : null}
+
         {snapshot ? (
           <div className="space-y-4">
             <div
