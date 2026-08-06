@@ -40,6 +40,10 @@ jobs:
         run: node scripts/ci/validate-agents.js
       - name: Validate CRON job registrations
         run: node scripts/ci/validate-cron-jobs.js
+      - name: Validate vercel.json crons resolve to live handlers
+        run: |
+          node scripts/ci/validate-vercel-crons.js
+          node scripts/ci/validate-vercel-crons.js --self-test
       - name: Validate Deepsec workflow contract
         run: |
           node scripts/ci/validate-deepsec-workflow.js

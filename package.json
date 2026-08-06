@@ -10,10 +10,12 @@
     "build": "next build",
     "start": "node scripts/production-start.mjs",
     "postinstall": "prisma generate",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings=0",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:lighthouse": "lhci autorun",
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {

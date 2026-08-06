@@ -51,17 +51,28 @@
 
 ## Cron Job Inventory
 
-| Schedule     | Path                               | Purpose                        |
-| ------------ | ---------------------------------- | ------------------------------ |
-| Every 5 min  | `/api/cron/health-check`           | System health monitoring       |
-| Every 5 min  | `/api/cron/retry-failed-webhooks`  | Webhook retry queue            |
-| Every 15 min | `/api/cron/check-sla-breaches`     | SLA breach detection           |
-| Hourly       | `/api/cron/run-autonomous-ops`     | AI autonomous operations       |
-| Daily 9am    | `/api/cron/daily-report`           | KPI metrics refresh            |
-| Daily 9am    | `/api/cron/check-expiring-quotes`  | Quote expiry alerts            |
-| Daily 7pm    | `/api/cron/shadow-sync-cin7`       | Cin7 inventory sync            |
-| Daily 9pm    | `/api/cron/auto-reorder-inventory` | Auto purchase order generation |
-| 4x daily     | `/api/boardroom/cron`              | AI Boardroom sessions          |
+Schedules below are AEST (Brisbane, UTC+10); `vercel.json` states them in UTC. This table is the
+one enforced by `node scripts/ci/validate-vercel-crons.js` — if it drifts from `vercel.json`, CI
+fails.
+
+| Schedule (AEST) | Path                                       | Purpose                                     |
+| --------------- | ------------------------------------------ | ------------------------------------------- |
+| Every 5 min     | `/api/cron/health-check`                   | System health monitoring                    |
+| Every 15 min    | `/api/cron/refresh-xero-tokens`            | Xero OAuth token refresh                    |
+| Every 15 min    | `/api/cron/check-sla-breaches`             | SLA breach detection                        |
+| Daily 12pm      | `/api/cron/cleanup-old-runs`               | Prune historical run records                |
+| Daily 4pm       | `/api/cron/sync-bank-feeds`                | Bank feed transaction pull                  |
+| Daily 7pm       | `/api/cron/daily-report`                   | KPI metrics refresh                         |
+| Daily 8pm       | `/api/cron/check-invoice-overdue`          | Overdue invoice notifications               |
+| Daily 9pm       | `/api/cron/check-trade-finance-maturities` | Trade finance maturity alerts               |
+| **Daily 9pm**   | **`/api/cron/nightly-full-sync`**          | **Cin7 nightly sync (resumable, all entities)** |
+
+Eight crons were removed on 2026-08-07 (`retry-failed-webhooks`, `run-autonomous-ops`,
+`refresh-health-scores`, `check-expiring-quotes`, `process-onboarding-emails`,
+`shadow-sync-cin7`, `shadow-sync-xero`, `auto-reorder-inventory`). Every one forwarded to a
+backend service that is not deployed and returned HTTP 501 on schedule. Webhook retry, autonomous
+ops, health-score refresh, quote-expiry alerts, onboarding emails and auto-reorder are therefore
+**not running** — treat them as unbuilt, not as broken.
 
 ---
 
@@ -120,7 +131,7 @@
 | POS error             | Railway Logs                  | Check backend health endpoint      |
 | Xero not connecting   | Railway Logs (`xero`)         | Run through xero-setup-guide.md    |
 | Boardroom not running | Vercel Logs (`boardroom`)     | Check ANTHROPIC_API_KEY is set     |
-| Invoices missing      | Dashboard, Cin7 sync logs     | Trigger shadow-sync-cin7 cron      |
+| Invoices missing      | Dashboard, Cin7 sync logs     | Trigger nightly-full-sync cron     |
 
 ---
 

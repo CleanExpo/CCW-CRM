@@ -1,47 +1,60 @@
 # Cron Jobs — CCW ERP/CRM
 
-Scheduled tasks using Vercel Cron (frontend) proxying to FastAPI (backend) for periodic maintenance, monitoring, integrations, and autonomous operations.
+Scheduled tasks run on Vercel Cron against Next.js Route Handlers in this repo.
 
 ## Architecture
 
-All cron jobs follow this flow:
+There is **one tier**, not two. Every cron path resolves to a Route Handler under
+`src/app/api/cron/` that verifies `CRON_SECRET` and does the work itself against Postgres and the
+external integration APIs.
 
-1. **Vercel Cron** triggers a Next.js API route on schedule
-2. The **Next.js route** verifies `CRON_SECRET` and either handles the task directly (Supabase queries) or proxies to the **FastAPI backend**
-3. The **FastAPI endpoint** executes the business logic and returns results
-4. Results are logged for monitoring
+1. **Vercel Cron** triggers the Route Handler on schedule
+2. The handler checks `Authorization: Bearer $CRON_SECRET` and returns 401 otherwise
+3. The handler executes the work directly and returns results
+4. Results are logged to Vercel
+
+> **Historical note.** Until 2026-08-07 this document described a second tier — a FastAPI backend
+> the routes proxied to. That service is not deployed and `API_UPSTREAM_URL` is not configured, so
+> the eight routes that proxied to it returned HTTP 501 every time Vercel called them. They have
+> been removed from `vercel.json` and deleted. `scripts/ci/validate-vercel-crons.js` now fails CI
+> if any scheduled path resolves to a stub, so this cannot recur silently.
 
 ## Complete Cron Schedule
 
-### High-Frequency (Every 5–15 Minutes)
+Enforced against `vercel.json` by `node scripts/ci/validate-vercel-crons.js`. AEST is Brisbane
+(UTC+10, no daylight saving).
 
-| Schedule       | Endpoint                          | Description                                             | Layer    |
-| -------------- | --------------------------------- | ------------------------------------------------------- | -------- |
-| `*/5 * * * *`  | `/api/cron/health-check`          | Ping backend, measure latency, detect outages           | Frontend |
-| `*/5 * * * *`  | `/api/cron/retry-failed-webhooks` | ISS-036: Retry failed webhooks with exponential backoff | Backend  |
-| `*/15 * * * *` | `/api/cron/refresh-xero-tokens`   | Proactively refresh Xero OAuth tokens before expiry     | Backend  |
-| `*/15 * * * *` | `/api/cron/check-sla-breaches`    | UNI-174 ST-4: Scan for SLA breaches, fire escalations   | Backend  |
+### High-Frequency (every 5–15 minutes)
 
-### Hourly
-
-| Schedule    | Endpoint                       | Description                                                                         | Layer   |
-| ----------- | ------------------------------ | ----------------------------------------------------------------------------------- | ------- |
-| `0 * * * *` | `/api/cron/run-autonomous-ops` | Claude Sonnet reviews ERP state — draft POs, payment reminders, flag unmatched txns | Backend |
+| Schedule       | Endpoint                        | Description                                           |
+| -------------- | ------------------------------- | ----------------------------------------------------- |
+| `*/5 * * * *`  | `/api/cron/health-check`        | Liveness probe, latency measurement, outage detection |
+| `*/15 * * * *` | `/api/cron/refresh-xero-tokens` | Refresh Xero OAuth tokens before expiry               |
+| `*/15 * * * *` | `/api/cron/check-sla-breaches`  | UNI-174 ST-4: scan for SLA breaches, fire escalations |
 
 ### Daily
 
-| Schedule (UTC) | AEST      | Endpoint                              | Description                                                    | Layer    |
-| -------------- | --------- | ------------------------------------- | -------------------------------------------------------------- | -------- |
-| `0 0 * * *`    | 10:00 AM  | `/api/cron/refresh-health-scores`     | UNI-1114/1112: Refresh CRM persona tags for all customers      | Backend  |
-| `0 2 * * *`    | 12:00 PM  | `/api/cron/cleanup-old-runs`          | Delete completed/failed agent runs older than 30 days          | Frontend |
-| `0 9 * * *`    | 7:00 PM   | `/api/cron/daily-report`              | Generate daily summary of agent activity and success rates     | Frontend |
-| `0 9 * * *`    | 7:00 PM   | `/api/cron/check-expiring-quotes`     | Check quotes expiring in 3 days, send notifications            | Backend  |
-| `0 9 * * *`    | 7:00 PM   | `/api/cron/process-onboarding-emails` | UNI-1113: Send due onboarding touchpoint emails                | Backend  |
-| `0 19 * * *`   | 5:00 AM+1 | `/api/cron/shadow-sync-cin7`          | Shadow sync: pull products, orders, customers from Cin7        | Backend  |
-| `0 20 * * *`   | 6:00 AM+1 | `/api/cron/shadow-sync-xero`          | Shadow sync: pull invoices, payments, accounts from Xero       | Backend  |
-| `0 21 * * *`   | 7:00 AM+1 | `/api/cron/auto-reorder-inventory`    | Sprint 4: Scan inventory, create draft POs for low-stock items | Backend  |
+| Schedule (UTC) | AEST     | Endpoint                                   | Description                                             |
+| -------------- | -------- | ------------------------------------------ | ------------------------------------------------------- |
+| `0 2 * * *`    | 12:00 PM | `/api/cron/cleanup-old-runs`               | Delete completed/failed agent runs older than 30 days   |
+| `0 6 * * *`    | 4:00 PM  | `/api/cron/sync-bank-feeds`                | Pull bank feed transactions                             |
+| `0 9 * * *`    | 7:00 PM  | `/api/cron/daily-report`                   | Daily summary of agent activity and success rates       |
+| `0 10 * * *`   | 8:00 PM  | `/api/cron/check-invoice-overdue`          | Overdue invoice notifications                           |
+| `0 11 * * *`   | 9:00 PM  | `/api/cron/check-trade-finance-maturities` | Trade finance maturity alerts                           |
+| `0 11 * * *`   | 9:00 PM  | `/api/cron/nightly-full-sync`              | Cin7 full sync, resumable across nights per entity      |
 
-**Total: 13 scheduled cron jobs**
+**Total: 9 scheduled cron jobs**
+
+### Removed 2026-08-07 — not running, treat as unbuilt
+
+`retry-failed-webhooks` · `run-autonomous-ops` · `refresh-health-scores` ·
+`check-expiring-quotes` · `process-onboarding-emails` · `shadow-sync-cin7` · `shadow-sync-xero` ·
+`auto-reorder-inventory`
+
+The Cin7 capability is covered by `nightly-full-sync`. The other seven have no replacement:
+webhook retry, autonomous ops, CRM health-score refresh, quote-expiry alerts, onboarding email
+sequences and auto-reorder are **not happening today** and were not happening before removal
+either.
 
 ## Setup
 

@@ -19,20 +19,25 @@
  * https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md
  */
 
+// Target defaults to the production alias. Override for a preview deployment:
+//   LHCI_TARGET_URL=https://ccw-erp-git-my-branch.vercel.app npm run test:lighthouse
+const TARGET = process.env.LHCI_TARGET_URL || 'https://ccw-crm-web.vercel.app';
+
 module.exports = {
   ci: {
     collect: {
-      // Build the application before running Lighthouse
-      startServerCommand: 'npm run build && npm run start -- -p 3005',
-      startServerReadyPattern: 'Ready',
-      startServerReadyTimeout: 30000,
+      // Audits a deployed target rather than starting a local server. The
+      // previous `npm run build && npm run start -- -p 3005` never ran: `start`
+      // is `node scripts/production-start.mjs`, which does not take `-p`, and
+      // the server needs DATABASE_URL and JWT_SECRET_KEY to boot at all.
 
-      // URLs to audit (relative to the server)
-      url: [
-        'http://localhost:3005/',
-        'http://localhost:3005/dashboard',
-        'http://localhost:3005/prd/generate',
-      ],
+      // Only genuinely public routes. `/dashboard` and `/prd/generate` were
+      // listed here previously, but both 307-redirect to /login for an
+      // unauthenticated client — Lighthouse would have audited the login page
+      // three times and reported the scores under the dashboard's name.
+      // Authenticated-screen performance is measured in the Playwright suite
+      // (`npm run test:e2e`), which logs in first.
+      url: [`${TARGET}/`, `${TARGET}/login`, `${TARGET}/register`],
 
       // Number of runs per URL (more runs = more reliable averages)
       numberOfRuns: 3,
@@ -99,10 +104,13 @@ module.exports = {
 
         // Best Practices
         'errors-in-console': 'warn',
-        'uses-https': 'error',
-        'no-vulnerable-libraries': 'error',
         'csp-xss': 'warn',
         'deprecations': 'warn',
+        // 'uses-https' and 'no-vulnerable-libraries' were asserted here but
+        // Lighthouse no longer ships those audits, so they failed on
+        // "auditRan" — a red that carried no information about the product.
+        // Removed rather than downgraded: an assertion that cannot measure
+        // anything is not a weaker gate, it is a broken one.
 
         // Performance
         'uses-responsive-images': 'warn',
@@ -110,7 +118,7 @@ module.exports = {
         'modern-image-formats': 'warn',
         'uses-text-compression': 'error',
         'uses-rel-preconnect': 'warn',
-        'uses-rel-preload': 'warn',
+        // 'uses-rel-preload' removed — also no longer a Lighthouse audit.
         'font-display': 'warn',
         'unminified-css': 'error',
         'unminified-javascript': 'error',

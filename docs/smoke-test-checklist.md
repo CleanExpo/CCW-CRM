@@ -56,7 +56,7 @@
 
 ## Cron Jobs
 
-- [ ] Vercel Dashboard → Cron Jobs tab → last execution of `shadow-sync-cin7` is within 24h with status "Success"
+- [ ] Vercel Dashboard → Cron Jobs tab → last execution of `nightly-full-sync` is within 24h with status "Success"
 
 ---
 

@@ -215,3 +215,6 @@ scripts/auth-response.json
 scripts/token.json
 scripts/*auth*.json
 scripts/*-response.json
+
+# Lighthouse CI run output (npm run test:lighthouse)
+.lighthouseci/
