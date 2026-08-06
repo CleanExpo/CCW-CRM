@@ -430,7 +430,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {snapshot.optix.customers.extra_without_cin7_id} Optix customers have no Cin7 id —
-                  run a full customer sync to link them (records are not deleted).
+                  these are legacy CRM records. Sync adds Cin7-linked rows; it does not merge or
+                  backfill IDs onto existing Optix-only customers (Phase 1: no merge/delete/cleanse).
                 </p>
               ) : null}
 
