@@ -47,10 +47,41 @@ Vercel runtime errors for `prj_oTCifkMVqP1NFoTJFBv6u82JmBYd`, live deployment
 
 The marketing pages render because they need no database. Everything behind the login does not.
 
-**Fix:** set the database connection on the Vercel project. Use the Supabase **transaction pooler**
-string (port 6543), not the direct `db.<ref>` host — serverless functions exhaust direct
-connections. The database is the Supabase project named "NodeJS Starter V1", ref
-`pwwwhoaxxtkmowifpuwf`.
+### Which database is production is an OPEN QUESTION
+
+Do not assume. An earlier draft of this section asserted the database was the Supabase project
+"NodeJS Starter V1" (`pwwwhoaxxtkmowifpuwf`). That was carried from a stale note rather than
+measured, and measurement contradicts it:
+
+```
+-- run against pwwwhoaxxtkmowifpuwf, 2026-08-07
+app_users                 exists: false     <- the table /api/auth/login reads
+cin7_sync_runs            exists: false
+cin7_branches             exists: false
+workspace_settings        exists: false
+invoices                  exists: false
+ccw_addon_feature_configs exists: false
+customers                 exists: true
+products                  exists: true
+```
+
+77 of the 105 `@@map` targets in `prisma/schema.prisma` are absent from that project, including
+`app_users`. Login could not work there even with a correct connection string. Its populated tables
+belong to unrelated applications.
+
+The code points at DigitalOcean instead: `src/lib/db/database-env.ts` resolves
+`DB_HOST`/`DB_USER`/`DB_PASSWORD` with libpq SSL compatibility and P1011 self-signed-certificate
+handling for DigitalOcean managed Postgres, and `src/lib/db/prisma.ts:148` states those variables
+are "only available at runtime on DigitalOcean".
+
+**Before setting anything**, confirm where CCW's live data actually is — `doctl auth init` then
+`doctl databases list` will settle the DigitalOcean side; it was not authenticated when this was
+written, so that check has not been run.
+
+If the answer turns out to be a Supabase project, the correct action is `prisma migrate deploy`
+against a dedicated project, never hand-written SQL against a shared one. Use the **transaction
+pooler** string (port 6543), not a direct `db.<ref>` host — serverless functions exhaust direct
+connections.
 
 **This requires a production credential and must not be changed without the owner.**
 
@@ -107,7 +138,7 @@ because two of them were used to justify work.
 | --- | --- | --- |
 | "type-check FAIL — 219 errors" | **0 errors** | The measurement used `npm install --ignore-scripts`, which skips `prisma generate`. ~180 of the 219 were the generated client simply being absent. The ~39 real implicit-any errors have since been fixed. |
 | "type-check requires `DATABASE_URL` at install time" | **It does not** | `prisma generate` succeeds with the variable unset, and the full gate above ran green without it. The previous revision blamed a missing secret for a flag it had set itself. |
-| "139 unit tests" | **377 passing, 2 skipped** | Growth since June. Neither figure matches the 823 still claimed in `CCW-Product-Report.md`. |
+| "139 unit tests" | **377 passing, 2 skipped** | Growth since June. Neither figure matched the 823 claimed in `CCW-Product-Report.md`, which is corrected on this branch — though its PDF is not. |
 | "Cin7 shadow sync — demo-grade, shadow store in-memory, real Cin7 API not integrated" | **Production-grade** | `src/lib/integrations/cin7-omni.ts` is a real HTTP client with retries and a time budget, backed by 12 Prisma models, with pagination and cross-night resume. It is the strongest thing in the repo. |
 
 Two of its open tasks are also done: `WorkspaceSettings` exists in the schema (TASK-1), and portal
@@ -147,7 +178,8 @@ These appear in earlier documents and are either false or unverifiable. Listed s
 in an old file reads as a red flag rather than a source:
 
 - "97% production-ready", "Platform readiness 95/100"
-- "823 automated tests, all passing" — the real figure is 377 passing, 2 skipped
+- "823 automated tests, all passing" — the real figure is 377 passing, 2 skipped. Corrected in
+  `CCW-Product-Report.md` on this branch; still present in its PDF and in any copy already sent
 - "99.92% uptime" — the health probe has failed 288 times since 2026-06-16
 - "96.1% load test pass rate (8000+ scenarios)"
 - "Zero critical security findings"
@@ -183,20 +215,28 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
 5. **Decide the fate of the not-built surface** — AP2, HeyGen, marketplace mock mode, and the four
    `comingSoon` nav items. Shipping a large surface the product cannot stand behind is the main
    thing separating this from a product that demos without caveats.
-6. **Correct `CCW-Product-Report.md`** — see section 6.
+6. **Regenerate the `CCW-Product-Report` PDF and reissue to CCW** — the markdown is corrected on
+   this branch, the PDF is not. See section 6.
 
 ---
 
-## 6. The client-facing report is wrong
+## 6. The client-facing report
 
-`docs/CCW-Product-Report.md` and its PDF are what CCW holds. As of 2026-08-07 they still state:
+`docs/CCW-Product-Report.md` is what CCW holds. **The markdown in this repo has been corrected on
+this branch**; the PDF beside it and any copy already in CCW's hands have not.
 
-- "823 automated tests all passing" — actual is 377 passing, 2 skipped
-- Setup instructions telling CCW staff to enter Cin7, Xero and Shopify credentials **into a Railway
-  backend**. There is no Railway backend in this repo, `API_UPSTREAM_URL` is not in
-  `.env.example`, and following those instructions configures nothing
-- An architecture diagram showing a Vercel frontend plus a Railway FastAPI backend plus Supabase.
-  That FastAPI tier is the one the removed 501 proxy routes were pointing at
-- A cron table listing seven endpoints removed for returning 501
+Corrected in the markdown:
 
-Reissuing it is customer-facing and should not go out without the owner reading it first.
+- The "823 automated tests all passing" sentence now reads 377 passing / 2 skipped
+- The §12 cron table now lists the nine scheduled endpoints, with the eight removed 501 endpoints
+  named underneath
+- The Railway configuration sections carry a notice that no Railway backend exists and those
+  variables belong on the Vercel project
+- A correction notice at the top of the document summarises all of the above
+
+**Still outstanding:**
+
+- The **PDF has not been regenerated** and still contains every original error
+- The copy CCW holds is uncorrected
+- Reissuing is customer-facing and should not go out without the owner reading it first, and not
+  before the deployment in section 0 is restored

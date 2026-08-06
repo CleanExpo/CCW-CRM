@@ -42,8 +42,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 810 } },
     },
     {
+      // Pixel 7 rather than iPhone 13: iPhone devices default to WebKit, which
+      // would make this project require a second browser download in CI and
+      // fail with "Executable doesn't exist" until someone noticed. Pixel 7 is
+      // Chromium, matching the mobile emulation the Lighthouse budget uses.
       name: 'mobile',
-      use: { ...devices['iPhone 13'] },
+      use: { ...devices['Pixel 7'] },
     },
   ],
 

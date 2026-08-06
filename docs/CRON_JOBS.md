@@ -58,207 +58,117 @@ either.
 
 ## Setup
 
-### 1. Environment Variables
+### 1. Environment variables
 
-Add to `.env.local` (frontend) and backend `.env`:
+Set on the **Vercel project**, and in `.env.local` for local work:
 
 ```env
 CRON_SECRET=your-secure-random-string-here
 ```
 
-Generate a secure secret:
+Generate one with `openssl rand -base64 32`.
 
-```bash
-openssl rand -base64 32
-```
+The jobs additionally need whatever their integration requires — `XERO_CLIENT_ID`,
+`XERO_CLIENT_SECRET`, `CIN7_API_KEY`, and a database connection (`DATABASE_URL`, or the
+`DB_HOST`/`DB_USER`/`DB_PASSWORD` triple resolved by `src/lib/db/database-env.ts`).
 
-### 2. Vercel Configuration
+> As of 2026-08-07 the production deployment has **no** database connection configured, so every
+> database-backed cron fails. See section 0 of `docs/PROJECT-STATUS.md`.
 
-All schedules are defined in `apps/web/vercel.json`. After any changes:
+### 2. Schedules
 
-```bash
-vercel --prod
-```
-
-Cron jobs start running automatically after deployment.
-
-### 3. Required Backend Environment Variables
-
-The backend cron endpoints also depend on:
-
-```env
-# Xero integration
-XERO_CLIENT_ID=...
-XERO_CLIENT_SECRET=...
-
-# Cin7 integration
-CIN7_API_KEY=...
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=...
-SUPABASE_SERVICE_ROLE_KEY=...
-```
+Schedules live in `vercel.json` at the repository root. `node scripts/ci/validate-vercel-crons.js`
+fails CI if a scheduled path has no Route Handler, exports neither GET nor POST, or resolves —
+directly or through its imports — to a 501 stub.
 
 ## Security
 
-### Authentication
-
-All cron endpoints verify the `CRON_SECRET` header:
-
-**Frontend (Next.js):**
+Every cron handler authenticates the same way:
 
 ```typescript
-const authHeader = request.headers.get("authorization");
-if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
-  return new NextResponse("Unauthorized", { status: 401 });
+const authHeader = request.headers.get('authorization');
+if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  return new NextResponse('Unauthorized', { status: 401 });
 }
 ```
 
-**Backend (FastAPI):**
+An `x-cron-secret` header is **not** accepted; several older runbooks told operators to send one,
+and every such request returns 401.
 
-```python
-def verify_cron_secret(authorization: str | None = Header(None)) -> bool:
-    cron_secret = os.getenv("CRON_SECRET")
-    if not cron_secret:
-        return True  # Development mode
-    return authorization == f"Bearer {cron_secret}"
-```
+If `CRON_SECRET` is unset the comparison fails and the request is refused. This is deliberate.
+Earlier revisions of this document showed a FastAPI helper that returned `True` when the secret was
+missing, described as "development mode" — that pattern makes every scheduled endpoint publicly
+callable the moment a variable goes missing. Do not reintroduce it in any language.
 
-### Vercel Protection
+Vercel sets the `Authorization` header itself and restricts cron invocations to its own
+infrastructure.
 
-Vercel automatically sets the `Authorization` header and restricts cron calls to Vercel infrastructure only.
+## Local testing
 
-## Internal Schedulers (Non-Vercel)
-
-### APScheduler — Bank Feed Sync
-
-Located in `apps/backend/src/scheduler/bank_feed_scheduler.py`. Runs inside the FastAPI process:
-
-| Job ID                  | Schedule             | Description                                   |
-| ----------------------- | -------------------- | --------------------------------------------- |
-| `bank_feed_sync_hourly` | Every hour at :05    | Sync accounts with 1-hour interval            |
-| `bank_feed_sync_4hour`  | Every 4 hours at :10 | Sync accounts with 4-hour interval            |
-| `bank_feed_sync_daily`  | Daily at 9:00 AM     | Sync accounts with 24-hour interval (default) |
-
-### Workshop Scheduler
-
-Located in `apps/backend/src/services/workshop_scheduler.py`. Event-driven (not cron):
-
-- Service reminders at 90, 30, and 7 days before due date
-- Overdue reminders for equipment past service date
-- Idempotent design prevents duplicate reminders
-
-## Local Testing
-
-Cron jobs don't run locally. Test them manually:
+Cron jobs do not run against a local dev server on a schedule. Invoke them directly:
 
 ```bash
-# Start dev server
-pnpm dev
+npm run dev
 
-# Call any cron endpoint
-curl http://localhost:3000/api/cron/health-check \\
-  -H "Authorization: Bearer your-cron-secret"
-
-# Test backend endpoint directly
-curl -X POST http://localhost:8000/api/cron/check-expiring-quotes \\
-  -H "Authorization: Bearer your-cron-secret"
+curl http://localhost:3000/api/cron/health-check \
+  -H "Authorization: Bearer $CRON_SECRET"
 ```
+
+Against production, derive the endpoint list from `vercel.json` rather than maintaining it by hand
+— see the loop in `docs/production-smoke-test.md` §11.
+
+A **501** means the route is a stub that cannot do its job — the failure this document exists to
+prevent. A **401** means `CRON_SECRET` is wrong locally, not that the endpoint is broken.
 
 ## Monitoring
 
-### Vercel Dashboard
+Vercel Dashboard → the project → **Cron Jobs** tab shows the last execution and status for each
+schedule. Function logs are under Deployments → Latest → Functions. Runtime errors are also
+retrievable through the Vercel API.
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → Your project
-2. Deployments → Latest → Functions tab
-3. Find cron functions and view execution logs
+## Adding a new cron job
 
-### On-Demand Health Endpoints
+There is one tier. Write a Route Handler that does the work; do not proxy to another service.
 
-These backend endpoints provide monitoring data without a schedule:
-
-| Endpoint                                 | Method | Description                                              |
-| ---------------------------------------- | ------ | -------------------------------------------------------- |
-| `/api/cron/xero-token-health`            | GET    | Xero OAuth connection health and expiry times            |
-| `/api/cron/webhook-health`               | GET    | Webhook processing stats, reliability rate (target: 99%) |
-| `/api/cron/dead-letter-queue`            | GET    | Webhooks that exceeded max retries                       |
-| `/api/cron/dead-letter-queue/{id}/retry` | POST   | Manually retry a dead-letter webhook                     |
-
-## Adding New Cron Jobs
-
-### 1. Create Backend Endpoint (if needed)
-
-```python
-# apps/backend/src/api/routes/cron_jobs.py
-@router.post("/my-new-task")
-async def my_new_task(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    authorization: str | None = Header(None),
-) -> dict:
-    if not verify_cron_secret(authorization):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    # Task logic here
-    return {"status": "success"}
-```
-
-### 2. Create Frontend Route
+1. Create `src/app/api/cron/<name>/route.ts`:
 
 ```typescript
-// apps/web/app/api/cron/my-new-task/route.ts
-import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
+import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
   try {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-    const response = await fetch(\`\${backendUrl}/api/cron/my-new-task\`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: \`Bearer \${process.env.CRON_SECRET}\`,
-      },
-    });
-
-    const data = await response.json();
-    logger.info("My new task cron", { ...data });
-    return NextResponse.json({ success: response.ok, ...data });
+    // Do the work here, against Postgres and the integration APIs directly.
+    return NextResponse.json({ success: true, timestamp: new Date().toISOString() });
   } catch (error) {
-    logger.error("My new task cron error", error);
+    logger.error('<name> cron error', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
 ```
 
-### 3. Add to vercel.json
+2. Add it to the `crons` array in `vercel.json`.
+3. Run `node scripts/ci/validate-vercel-crons.js` before pushing.
+4. Update the schedule table at the top of this file.
 
-```json
-{
-  "path": "/api/cron/my-new-task",
-  "schedule": "0 */6 * * *"
-}
-```
+## File reference
 
-### 4. Deploy
+| File | Purpose |
+| --- | --- |
+| `vercel.json` | Vercel cron schedule configuration |
+| `src/app/api/cron/*/route.ts` | Cron Route Handlers (9 scheduled) |
+| `scripts/ci/validate-vercel-crons.js` | Fails CI when a scheduled cron cannot run |
+| `src/lib/db/database-env.ts` | Database connection resolution |
+| `docs/CRON_JOBS.md` | This documentation |
 
-```bash
-vercel --prod
-```
-
-## File Reference
-
-| File                                                | Purpose                                  |
-| --------------------------------------------------- | ---------------------------------------- |
-| `apps/web/vercel.json`                              | Vercel cron schedule configuration       |
-| `apps/web/app/api/cron/*/route.ts`                  | Frontend cron route handlers (13 routes) |
-| `apps/backend/src/api/routes/cron_jobs.py`          | Backend cron endpoint implementations    |
-| `apps/backend/src/scheduler/bank_feed_scheduler.py` | APScheduler bank feed sync               |
-| `apps/backend/src/services/workshop_scheduler.py`   | Workshop service reminder scheduler      |
-| `docs/CRON_JOBS.md`                                 | This documentation                       |
+Paths under `apps/web/` and `apps/backend/` appeared in earlier revisions of this table. They do
+not exist in this repository — the FastAPI tier they referred to is the one whose absence made
+eight scheduled jobs return 501 for months.

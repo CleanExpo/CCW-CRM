@@ -44,6 +44,12 @@ module.exports = {
 
       // Chrome flags
       settings: {
+        // `uses-rel-preload` still ships in Lighthouse 12.6.1 but lives in
+        // experimental-config, not default-config — so under the default run it
+        // is reported as "not a known audit". The experimental preset collects
+        // it, which is what lets the assertion below be real instead of noise.
+        preset: 'experimental',
+
         // Use headless Chrome
         chromeFlags: '--no-sandbox --disable-dev-shm-usage',
 
@@ -106,11 +112,17 @@ module.exports = {
         'errors-in-console': 'warn',
         'csp-xss': 'warn',
         'deprecations': 'warn',
-        // 'uses-https' and 'no-vulnerable-libraries' were asserted here but
-        // Lighthouse no longer ships those audits, so they failed on
-        // "auditRan" — a red that carried no information about the product.
-        // Removed rather than downgraded: an assertion that cannot measure
-        // anything is not a weaker gate, it is a broken one.
+        // 'uses-https' and 'no-vulnerable-libraries' were asserted here and are
+        // removed. Verified against the installed Lighthouse 12.6.1: neither
+        // audit file exists under core/audits, and neither appears in
+        // default-config or experimental-config. They failed on "auditRan" — a
+        // red carrying no information about the product. An assertion that
+        // cannot measure anything is a broken gate, not a lenient one.
+        //
+        // 'uses-rel-preload' was ALSO removed here on the same reasoning, and
+        // that was wrong: it still ships, in experimental-config. An independent
+        // reviewer caught it. It is restored above, and collect.settings.preset
+        // is now 'experimental' so it is genuinely collected.
 
         // Performance
         'uses-responsive-images': 'warn',
@@ -118,7 +130,7 @@ module.exports = {
         'modern-image-formats': 'warn',
         'uses-text-compression': 'error',
         'uses-rel-preconnect': 'warn',
-        // 'uses-rel-preload' removed — also no longer a Lighthouse audit.
+        'uses-rel-preload': 'warn',
         'font-display': 'warn',
         'unminified-css': 'error',
         'unminified-javascript': 'error',

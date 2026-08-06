@@ -21,9 +21,9 @@
 >    backend, and §5.1–5.5 instruct CCW staff to enter Cin7, Xero and Shopify credentials into
 >    Railway. There is no Railway tier in this product. Following those instructions configures
 >    nothing. Credentials belong on the Vercel project.
-> 3. **The cron table in §12 lists seven endpoints that have been removed** for returning HTTP 501
+> 3. **The cron table in §12 lists eight endpoints that have been removed** for returning HTTP 501
 >    on every scheduled run: `retry-failed-webhooks`, `run-autonomous-ops`, `refresh-health-scores`,
->    `check-expiring-quotes`, `process-onboarding-emails`, `shadow-sync-cin7`,
+>    `check-expiring-quotes`, `process-onboarding-emails`, `shadow-sync-cin7`, `shadow-sync-xero`,
 >    `auto-reorder-inventory`. The nightly Cin7 sync described as running at 7:00pm did not run. The
 >    sync that does work is `nightly-full-sync` at 9:00pm AEST.
 > 4. **Auto-reorder (automatic draft purchase orders for low-stock items) is not built.** The
