@@ -30,6 +30,9 @@ export async function POST(request: NextRequest) {
 
   const inviter = await findAppUserById(claims.sub);
   if (!inviter?.isActive) return jsonDetail('Not authenticated', 401);
+  const inviterIsPrivileged =
+    (inviter.role === 'owner' || inviter.role === 'admin') && inviter.isAdmin;
+  if (!inviterIsPrivileged) return jsonDetail('Forbidden', 403);
 
   const parsedBody = await readJsonBody(request);
   if (!parsedBody.ok) return parsedBody.response;

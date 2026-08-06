@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { customerToApi } from '@/lib/db/api-serialize';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { customerToApi } from '@/lib/db/api-serialize';
+import { prisma } from '@/lib/db/prisma';
 import type { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {

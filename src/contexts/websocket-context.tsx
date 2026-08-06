@@ -7,9 +7,9 @@ import React, { createContext, useContext } from "react";
 
 interface WebSocketContextValue {
   connectionState: "disconnected";
-  subscribe: (channel: string, handler: (message: any) => void) => void;
+  subscribe: (channel: string, handler: (message: unknown) => void) => void;
   unsubscribe: (channel: string) => void;
-  sendMessage: (channel: string, message: any) => void;
+  sendMessage: (channel: string, message: unknown) => void;
   lastError: Error | null;
 }
 

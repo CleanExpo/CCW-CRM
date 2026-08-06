@@ -558,7 +558,7 @@ export function mapCoreCustomerRows(
     if (!cin7ContactId) continue;
     out.push({
       cin7ContactId,
-      cin7ContactType: 'Cin7',
+      cin7ContactType: 'Customer',
       companyName: String(row.Name ?? 'Cin7 customer').trim() || 'Cin7 customer',
       email: row.Email ? String(row.Email).trim() : '',
       phone: row.Phone ? String(row.Phone).trim() : undefined,

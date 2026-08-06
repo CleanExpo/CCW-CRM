@@ -110,12 +110,16 @@ describe('client requirement checklist (static)', () => {
 
   it('sync route imports full-catalog source resolver', async () => {
     const fs = await import('node:fs/promises');
-    const src = await fs.readFile(
+    const routeSrc = await fs.readFile(
       `${REPO_ROOT}/src/app/api/integrations/cin7/sync/[entityType]/route.ts`,
       'utf8'
     );
-    expect(src).toContain('resolveCin7SyncSource');
-    expect(src).toContain('excludeInactive: false');
+    const handlerSrc = await fs.readFile(
+      `${REPO_ROOT}/src/lib/integrations/cin7-sync-omni-handlers.ts`,
+      'utf8'
+    );
+    expect(routeSrc).toContain('resolveCin7SyncSource');
+    expect(handlerSrc).toContain('excludeInactive: false');
   });
 
   it('reconciliation implements internal-customers exception block', async () => {

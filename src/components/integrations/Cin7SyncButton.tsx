@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, RefreshCw, Settings2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { triggerCin7Sync } from '@/lib/api/cin7';
 import {
   CIN7_INTEGRATIONS_ANCHOR,
   getCin7VerifyPage,
 } from '@/lib/integrations/cin7-master-data-routes';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2, RefreshCw, Settings2 } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 export type Cin7SyncEntity =
   | 'products'
@@ -73,15 +73,22 @@ export function Cin7SyncButton({
       const count = result.records_processed ?? 0;
       const durationSec =
         result.duration_ms != null ? (result.duration_ms / 1000).toFixed(1) : null;
+      const partial = result.complete === false;
       toast({
-        title: `${ENTITY_LABELS[entity]} synced from Cin7`,
-        description:
-          count > 0
+        title: partial
+          ? `${ENTITY_LABELS[entity]} sync incomplete`
+          : `${ENTITY_LABELS[entity]} synced from Cin7`,
+        description: partial
+          ? `${count.toLocaleString()} record(s) so far (${durationSec ?? '—'}s). Re-run Sync from Cin7 to resume.`
+          : count > 0
             ? `${count.toLocaleString()} record(s) in ${durationSec ?? '—'}s. List refreshed below.`
             : 'Sync completed. No new records were returned from Cin7.',
+        variant: partial ? 'destructive' : 'default',
       });
-      setJustSynced(true);
-      window.setTimeout(() => setJustSynced(false), 2400);
+      if (!partial) {
+        setJustSynced(true);
+        window.setTimeout(() => setJustSynced(false), 2400);
+      }
       onSynced?.();
     } catch (error: unknown) {
       toast({
@@ -150,14 +157,15 @@ export function Cin7PageSyncToolbar({ entity, onSynced }: Cin7PageSyncToolbarPro
             <Badge variant="outline" className="border-primary/30 bg-primary/5 text-xs">
               Cin7 master data
             </Badge>
-            <span className="text-muted-foreground text-xs">
-              Nightly auto-sync · 9:00 PM AEST
-            </span>
+            <span className="text-muted-foreground text-xs">Nightly auto-sync · 9:00 PM AEST</span>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
             {page?.description ?? 'Pull the latest records from Cin7 Omni.'} Manage credentials and
             reconciliation in{' '}
-            <Link href={CIN7_INTEGRATIONS_ANCHOR} className="text-primary font-medium hover:underline">
+            <Link
+              href={CIN7_INTEGRATIONS_ANCHOR}
+              className="text-primary font-medium hover:underline"
+            >
               Integrations
             </Link>
             .

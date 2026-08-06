@@ -22,7 +22,7 @@ export interface WorkflowTemplate {
   name: string;
   description?: string;
   trigger_event: string;
-  trigger_conditions?: Record<string, any>;
+  trigger_conditions?: Record<string, unknown>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -32,7 +32,7 @@ export interface WorkflowTemplateAction {
   id: string;
   template_id: string;
   action_type: string;
-  action_config?: Record<string, any>;
+  action_config?: Record<string, unknown>;
   order: number;
   created_at: string;
 }
@@ -54,7 +54,7 @@ export interface SLARule {
   entity_type: string;
   sla_hours: number;
   escalation_action: string;
-  escalation_config?: Record<string, any>;
+  escalation_config?: Record<string, unknown>;
   is_active: boolean;
   created_at: string;
 }
@@ -91,14 +91,14 @@ export interface CreateWorkflowTemplateRequest {
   name: string;
   description?: string;
   trigger_event: string;
-  trigger_conditions?: Record<string, any>;
+  trigger_conditions?: Record<string, unknown>;
   is_active?: boolean;
   actions?: CreateWorkflowActionRequest[];
 }
 
 export interface CreateWorkflowActionRequest {
   action_type: string;
-  action_config?: Record<string, any>;
+  action_config?: Record<string, unknown>;
   order: number;
 }
 
@@ -107,7 +107,7 @@ export interface CreateSLARuleRequest {
   entity_type: string;
   sla_hours: number;
   escalation_action: string;
-  escalation_config?: Record<string, any>;
+  escalation_config?: Record<string, unknown>;
   is_active?: boolean;
 }
 

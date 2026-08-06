@@ -62,15 +62,15 @@ describe('auth onboarding routes', () => {
     expect(res.status).toBe(409);
   });
 
-  it('register creates the first user as owner', async () => {
+  it('register does not bootstrap privilege when the user table is empty', async () => {
     vi.mocked(findAppUserByEmail).mockResolvedValue(null);
     vi.mocked(countAppUsers).mockResolvedValue(0);
     vi.mocked(insertAppUser).mockResolvedValue({
       id: 'u-new',
-      email: 'owner@example.com',
-      isAdmin: true,
-      role: 'owner',
-      fullName: 'Owner',
+      email: 'member@example.com',
+      isAdmin: false,
+      role: 'member',
+      fullName: 'Member',
       isActive: true,
       workspaceId: 'u-new',
       createdAt: new Date(),
@@ -82,16 +82,17 @@ describe('auth onboarding routes', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'owner@example.com',
+          email: 'member@example.com',
           password: 'Password123!',
-          full_name: 'Owner',
+          full_name: 'Member',
         }),
       })
     );
 
     expect(res.status).toBe(200);
+    expect(countAppUsers).not.toHaveBeenCalled();
     expect(insertAppUser).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'owner', is_admin: true })
+      expect.objectContaining({ role: 'member', is_admin: false })
     );
   });
 

@@ -46,7 +46,7 @@
     "jose": "^5.10.0",
     "lucide-react": "^0.468.0",
     "mcp-linear": "^0.1.8",
-    "next": "16.2.6",
+    "next": "16.2.11",
     "next-intl": "^4.8.2",
     "pg": "^8.16.0",
     "react": "^19.0.0",
@@ -60,6 +60,9 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.24.1"
+  },
+  "optionalDependencies": {
+    "@img/sharp-wasm32": "0.35.3"
   },
   "devDependencies": {
     "@composio/core": "^0.6.3",
@@ -109,6 +112,9 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "sharp": "0.35.3"
   },
   "vitest": {
     "test": {

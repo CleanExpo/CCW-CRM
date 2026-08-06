@@ -9,6 +9,17 @@ const CACHE_TTL_MS = 15 * 60 * 1000;
 const cache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<Cin7ReconciliationSnapshot>>();
 
+function inflightKey(ownerUserId: string, force: boolean): string {
+  return `${ownerUserId}:${force ? 'force' : 'cached'}`;
+}
+
+/** Snapshots that must not be cached (would present false-clean acceptance numbers). */
+export function isReconciliationSnapshotCacheable(snapshot: Cin7ReconciliationSnapshot): boolean {
+  if (snapshot.source === 'none') return false;
+  if (snapshot.fetch_meta.errors.length > 0) return false;
+  return true;
+}
+
 export function getReconciliationCacheTtlMs(): number {
   return CACHE_TTL_MS;
 }
@@ -23,6 +34,10 @@ export function getCachedReconciliation(
     cache.delete(ownerUserId);
     return null;
   }
+  if (!isReconciliationSnapshotCacheable(entry.snapshot)) {
+    cache.delete(ownerUserId);
+    return null;
+  }
   return {
     snapshot: entry.snapshot,
     cachedAt: new Date(entry.cachedAt).toISOString(),
@@ -34,6 +49,10 @@ export function setCachedReconciliation(
   ownerUserId: string,
   snapshot: Cin7ReconciliationSnapshot
 ): void {
+  if (!isReconciliationSnapshotCacheable(snapshot)) {
+    cache.delete(ownerUserId);
+    return;
+  }
   cache.set(ownerUserId, { snapshot, cachedAt: Date.now() });
 }
 
@@ -50,7 +69,9 @@ export async function getOrBuildReconciliation(
   from_cache: boolean;
   cached_at: string | null;
 }> {
-  if (!options.force) {
+  const force = options.force === true;
+
+  if (!force) {
     const cached = getCachedReconciliation(ownerUserId);
     if (cached) {
       return {
@@ -61,7 +82,9 @@ export async function getOrBuildReconciliation(
     }
   }
 
-  const existing = inflight.get(ownerUserId);
+  // Force must not join a non-force in-flight build (stale/partial risk).
+  const key = inflightKey(ownerUserId, force);
+  const existing = inflight.get(key);
   if (existing) {
     const snapshot = await existing;
     return {
@@ -77,14 +100,14 @@ export async function getOrBuildReconciliation(
       return snapshot;
     })
     .finally(() => {
-      inflight.delete(ownerUserId);
+      inflight.delete(key);
     });
 
-  inflight.set(ownerUserId, promise);
+  inflight.set(key, promise);
   const snapshot = await promise;
   return {
     snapshot,
     from_cache: false,
-    cached_at: new Date().toISOString(),
+    cached_at: isReconciliationSnapshotCacheable(snapshot) ? new Date().toISOString() : null,
   };
 }

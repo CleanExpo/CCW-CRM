@@ -23,7 +23,6 @@ export interface ShadowSessionRecord {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __ccwShadowSessionsByUser: Map<string, ShadowSessionRecord> | undefined;
 }
 

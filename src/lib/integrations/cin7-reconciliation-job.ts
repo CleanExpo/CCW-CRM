@@ -108,11 +108,12 @@ export async function getIncompleteSyncEntities(ownerUserId: string): Promise<st
   return CIN7_RECON_GATE_ENTITIES.filter((entity) => byType.get(entity) !== 'complete');
 }
 
-async function loadOptixCounts(ownerUserId: string) {
+export async function loadOptixCounts(ownerUserId: string) {
   const [
     productRows,
     customerLinked,
     customerTotal,
+    customerExtraWithoutId,
     internalCount,
     supplierLinked,
     supplierTotal,
@@ -139,6 +140,16 @@ async function loadOptixCounts(ownerUserId: string) {
       },
     }),
     prisma.customer.count({ where: { ownerUserId } }),
+    prisma.customer.count({
+      where: {
+        ownerUserId,
+        cin7ContactId: null,
+        OR: [
+          { cin7ContactType: { equals: 'Customer', mode: 'insensitive' } },
+          { cin7ContactType: null },
+        ],
+      },
+    }),
     prisma.customer.count({
       where: {
         ownerUserId,
@@ -173,7 +184,7 @@ async function loadOptixCounts(ownerUserId: string) {
     customers: {
       total: customerTotal,
       cin7_linked: customerLinked,
-      extra_without_cin7_id: Math.max(0, customerTotal - customerLinked),
+      extra_without_cin7_id: customerExtraWithoutId,
     },
     internal_customers: internalCount,
     suppliers: {
