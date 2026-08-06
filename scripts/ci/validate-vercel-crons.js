@@ -56,6 +56,28 @@ const INLINE_FAIL_OPEN = /!==\s*`Bearer \$\{\s*process\.env\.CRON_SECRET\s*\}`/;
  * the JavaScript directory indexes were missing, so a 501 living in any of those
  * was simply never read.
  */
+/**
+ * The shapes MODULE_CANDIDATES must contain, written out literally.
+ *
+ * The self-test generates both its per-shape fixtures and its rule registry
+ * from MODULE_CANDIDATES. That made deleting a shape delete its own guard —
+ * a reviewer removed nine of them one at a time and --self-test stayed green
+ * every time, just reporting a smaller count. A generated control must be
+ * anchored to something it cannot edit, so the list is asserted against this.
+ */
+const EXPECTED_MODULE_CANDIDATES = [
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '/index.ts',
+  '/index.tsx',
+  '/index.js',
+  '/index.jsx',
+  '/index.mjs',
+];
+
 const MODULE_CANDIDATES = [
   '.ts',
   '.tsx',
@@ -177,6 +199,42 @@ function checkGuardUsage(source) {
     return 'could not be parsed, so its authorisation cannot be verified.';
   }
 
+  // The guard must be used by the EXPORTED HANDLER, not merely somewhere in
+  // the file. A reviewer put it in an unused nested function while GET
+  // returned a public response, and the check was satisfied.
+  // Only TOP-LEVEL declarations named GET/POST, whether exported inline or via
+  // `export { GET }`. Restricting to top level is what stops the bypass: a
+  // reviewer hid the guard in an unused NESTED function while GET returned a
+  // public response, and a file-wide walk was satisfied by it.
+  const handlerBodies = [];
+  for (const stmt of sourceFile.statements) {
+    if (ts.isFunctionDeclaration(stmt) && stmt.name && /^(GET|POST)$/.test(stmt.name.text)) {
+      if (stmt.body) handlerBodies.push(stmt.body);
+    }
+    if (ts.isVariableStatement(stmt)) {
+      for (const decl of stmt.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name) && /^(GET|POST)$/.test(decl.name.text) && decl.initializer) {
+          handlerBodies.push(decl.initializer);
+        }
+      }
+    }
+  }
+  if (handlerBodies.length === 0) return 'has no exported GET or POST body to authorise.';
+
+  // A `finally` that returns discards whatever the guard returned.
+  let finallyReturns = false;
+  const scanFinally = (node) => {
+    if (ts.isTryStatement(node) && node.finallyBlock) {
+      const look = (n) => {
+        if (ts.isReturnStatement(n)) finallyReturns = true;
+        ts.forEachChild(n, look);
+      };
+      look(node.finallyBlock);
+    }
+    ts.forEachChild(node, scanFinally);
+  };
+  handlerBodies.forEach(scanFinally);
+
   let canonicalLocalName = null;   // the binding the canonical import introduces
   let shadowedByLocalDecl = false; // a local declaration of that same name
   const calledAndBoundTo = new Set();
@@ -249,7 +307,11 @@ function checkGuardUsage(source) {
 
     ts.forEachChild(node, visit);
   };
-  ts.forEachChild(sourceFile, visit);
+  // Imports live at file scope; usage must live inside a handler body.
+  ts.forEachChild(sourceFile, (n) => {
+    if (ts.isImportDeclaration(n)) visit(n);
+  });
+  handlerBodies.forEach((body) => visit(body));
 
   if (canonicalLocalName === null) {
     return `does not import cronAuthFailure from '${CRON_AUTH_MODULE}'.`;
@@ -258,6 +320,10 @@ function checkGuardUsage(source) {
     return `declares a local '${canonicalLocalName}' shadowing the imported guard.`;
   }
   if (!calledAtAll) return 'never calls cronAuthFailure().';
+
+  if (finallyReturns) {
+    return 'returns from a finally block, which discards the guard result.';
+  }
 
   const resultIsReturned =
     callResultReturnedDirectly || [...calledAndBoundTo].some((name) => returnedIdentifiers.has(name));
@@ -687,6 +753,17 @@ function selfTest() {
     ...mustReject.map((c) => ({ name: c.name, expect: c.expect, cfg: oneCron, files: c.files })),
     ...configCases.map((c) => ({ name: c.name, expect: c.expect, cfg: c.cfg, files: { [R]: good } })),
   ];
+
+  // Anchor check — must run BEFORE the generated registry is trusted.
+  const missing = EXPECTED_MODULE_CANDIDATES.filter((e) => !MODULE_CANDIDATES.includes(e));
+  const extra = MODULE_CANDIDATES.filter((e) => !EXPECTED_MODULE_CANDIDATES.includes(e));
+  if (missing.length > 0 || extra.length > 0) {
+    throw new Error(
+      `MODULE_CANDIDATES drifted from its literal expectation. Missing: ` +
+        `[${missing.join(', ')}]; unexpected: [${extra.join(', ')}]. Every shape must stay ` +
+        `guarded — removing one previously removed its own control silently.`
+    );
+  }
 
   const RULES = [
     'path-shape',

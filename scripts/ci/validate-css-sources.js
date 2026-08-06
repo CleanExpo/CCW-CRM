@@ -42,7 +42,10 @@ const ENTRY = 'src/app/globals.css';
  * still never loads. Seeding them made two orphans pass.
  */
 const ENTRY_POINT =
-  /^src\/app\/(.*\/)?(layout|page|template|default|error|loading|not-found|forbidden|unauthorized)\.[jt]sx?$/;
+  /^src\/app\/(.*\/)?(layout|page|template|error|loading|not-found|forbidden|unauthorized)\.[jt]sx?$/;
+// `default` is deliberately absent: Next resolves it only while constructing
+// an adjacent parallel-route segment, not as a general entry point, and
+// seeding every default.tsx concealed an orphan.
 
 /** `global-error` is only a convention at the app root. */
 const ROOT_ONLY_ENTRY = /^src\/app\/global-error\.[jt]sx?$/;
@@ -85,23 +88,39 @@ function extractImports(filePath, source) {
   // stylesheet under that directory counts as reachable. Deliberately
   // conservative. A false "this is dead" is worse than a missed orphan here,
   // because acting on it deletes a stylesheet that is genuinely loaded.
-  // Comments and QUOTED strings are removed first. Running this on raw source
-  // let a comment or an ordinary string forge reachability, reintroducing the
-  // very ambiguity the header above disclaims. Template literals are kept,
-  // because the construct being detected IS a template literal.
-  const scannable = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
-    .replace(/'(?:\\[\s\S]|[^\\'\n])*'/g, "''")
-    .replace(/"(?:\\[\s\S]|[^\\"\n])*"/g, '""');
-  const computed = /import\s*\(\s*`([^`$]*)\$\{/g;
-  let match;
-  while ((match = computed.exec(scannable)) !== null) {
-    const prefix = match[1];
-    if (prefix.startsWith('./') || prefix.startsWith('../') || prefix.startsWith('@/')) {
-      specifiers.push(`${prefix}*`);
-    }
+  // Computed dynamic imports — `import(`./themes/${name}.css`)` — cannot be
+  // resolved statically, and preProcessFile omits them, so a stylesheet loaded
+  // that way was reported orphaned. Verified against a real webpack build that
+  // did emit its CSS.
+  //
+  // Found via the AST, not a regex. Two regex attempts were defeated: the first
+  // matched inside comments and strings, the second still matched JSX TEXT. Only
+  // the parser knows an ImportKeyword call from prose that resembles one.
+  //
+  // The static prefix becomes a wildcard: everything under that directory counts
+  // as reachable. Deliberately conservative — a false "this is dead" is worse
+  // than a missed orphan, because acting on it deletes a stylesheet that loads.
+  try {
+    const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true);
+    const visit = (node) => {
+      if (
+        ts.isCallExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+        node.arguments.length > 0 &&
+        ts.isTemplateExpression(node.arguments[0])
+      ) {
+        const prefix = node.arguments[0].head.text;
+        if (prefix.startsWith('./') || prefix.startsWith('../') || prefix.startsWith('@/')) {
+          specifiers.push(`${prefix}*`);
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    ts.forEachChild(sourceFile, visit);
+  } catch {
+    /* unparseable file contributes no computed imports */
   }
+
   return specifiers;
 }
 
@@ -341,6 +360,29 @@ function selfTest() {
         'src/app/_private/page.tsx': "import '@/styles/private-orphan.css';\nexport default () => null;",
       },
       orphan: 'src/styles/private-orphan.css',
+    },
+    {
+      // Reviewer forgery: JSX TEXT that merely displays a computed import. Two
+      // regex attempts were fooled by this; only the parser is not.
+      name: 'orphan forged by JSX text showing a computed import',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc + '\nexport function Doc() { return <p>import(`@/styles/themes/${name}.css`)</p>; }',
+        'src/styles/themes/dark.css': '.d{}',
+      },
+      orphan: 'src/styles/themes/dark.css',
+    },
+    {
+      // `default` is only resolved for an adjacent parallel segment, so an
+      // ordinary default.tsx routes for nobody.
+      name: 'orphan imported only by an ordinary default.tsx',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/convention.css': '.c{}',
+        'src/app/account/default.tsx': "import '@/styles/convention.css';\nexport default () => null;",
+      },
+      orphan: 'src/styles/convention.css',
     },
     {
       name: 'orphan-only CSS cycle with no entry point reaching it',
