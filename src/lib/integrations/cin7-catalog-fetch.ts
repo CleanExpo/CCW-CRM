@@ -180,13 +180,15 @@ export function buildDerivedReferenceFromParts(input: {
   rawStyles: unknown[];
   customers: Cin7OmniContactRow[];
   branches: Cin7OmniBranchRow[];
+  /** Optional — suppliers/internal TaxStatus values count toward the tax catalog. */
+  extraContacts?: Cin7OmniContactRow[];
 }): Cin7DerivedReferenceCatalog {
   const extracted = extractReferenceDataFromProducts(input.rawStyles);
   const contactPriceColumns = input.customers
     .map((c) => c.priceColumn?.trim())
     .filter((v): v is string => Boolean(v));
   const taxCodes = extractTaxCodesFromContactsAndBranches({
-    contacts: input.customers,
+    contacts: [...input.customers, ...(input.extraContacts ?? [])],
     branches: input.branches,
   });
   const priceColumns = new Set([...extracted.priceColumns, ...contactPriceColumns]);
@@ -250,31 +252,52 @@ export async function fetchFullOmniProductCatalog(
 }
 
 /**
- * Discover distinct TaxStatus values without walking the entire contact book.
- * Early-exits once new codes stop appearing (tax catalogs are tiny, often &lt; 20).
+ * Discover distinct TaxStatus values the same way live recon does:
+ * unfiltered Contacts walk + Branches (Omni's type= filter under-counts).
+ *
+ * Uses a TaxStatus field projection for speed. Does NOT early-exit after a few
+ * "stable" pages — rare codes often appear late (that bug left Optix at 1 while
+ * Cin7 recon showed 6). Optional expectedMinCodes only allows a soft stop once
+ * we have already matched the recon floor.
  */
 export async function fetchOmniTaxCodeCatalog(
   creds: Cin7OmniCredentials,
   options?: Cin7CatalogFetchOptions & {
     onPage?: (page: number) => void | Promise<void>;
+    /** Soft floor from recon — never stop below this count. */
+    expectedMinCodes?: number;
   }
 ): Promise<Cin7CatalogFetchMeta & { taxCodes: string[] }> {
   const pageSize = getCin7PageSize();
   const maxPages = options?.maxPages ?? CIN7_SYNC_SAFETY_MAX_PAGES;
   const pageGapMs = resolvePageGap(options);
+  const expectedMin = Math.max(0, options?.expectedMinCodes ?? 0);
   const codes = new Set<string>();
   const errors: string[] = [];
   let pagesFetched = 0;
   let stablePages = 0;
+  // Prefer a slim field list; fall back to full contact rows if Omni ignores/blank TaxStatus.
+  let fields: string | undefined = 'Id,TaxStatus,Type';
 
   for (let page = 1; page <= maxPages; page += 1) {
     if (page > 1 && pageGapMs > 0) await sleep(pageGapMs);
     await options?.onPage?.(page);
-    const result = await fetchOmniContactsPage(creds, page, pageSize, {
-      whereType: 'Customer',
-    });
+    // Unfiltered walk — same completeness as recon (type= filter under-counts).
+    let result = await fetchOmniContactsPage(creds, page, pageSize, { fields });
+    if (
+      page === 1 &&
+      fields &&
+      result.sourceRowCount > 0 &&
+      result.rows.every((r) => !r.taxStatus?.trim())
+    ) {
+      fields = undefined;
+      result = await fetchOmniContactsPage(creds, page, pageSize);
+    }
     pagesFetched = page;
-    if (result.error) errors.push(`Contacts page ${page}: ${result.error}`);
+    if (result.error) {
+      errors.push(`Contacts page ${page}: ${result.error}`);
+      // Keep going on transient page errors; empty+error still ends the walk below.
+    }
     if (result.sourceRowCount === 0) break;
     const before = codes.size;
     for (const row of result.rows) {
@@ -283,7 +306,8 @@ export async function fetchOmniTaxCodeCatalog(
     }
     if (codes.size === before) stablePages += 1;
     else stablePages = 0;
-    if (stablePages >= 3 && codes.size > 0) break;
+    // Soft early-exit only after we already match (or beat) the recon floor.
+    if (expectedMin > 0 && codes.size >= expectedMin && stablePages >= 5) break;
     if (result.sourceRowCount < pageSize) break;
   }
 
@@ -469,20 +493,22 @@ export async function fetchDerivedReferenceCatalog(
 ): Promise<Cin7DerivedReferenceCatalog & Cin7CatalogFetchMeta> {
   const rawProducts = await fetchFullOmniProductsRawCatalog(creds, undefined, options);
   await entityGap(options);
-  const customers = await fetchFullOmniContactsByType(creds, ['Customer'], undefined, options);
+  const allContacts = await fetchFullOmniAllContacts(creds, undefined, options);
   await entityGap(options);
   const branches = await fetchFullOmniBranchCatalog(creds, undefined, options);
+  const partitioned = partitionOmniContactsByType(allContacts.contacts);
 
   const derived = buildDerivedReferenceFromParts({
     rawStyles: rawProducts.styles,
-    customers: customers.contacts,
+    customers: partitioned.customers,
     branches: branches.branches,
+    extraContacts: [...partitioned.suppliers, ...partitioned.internalCustomers],
   });
 
   return {
     ...derived,
-    pages_fetched: rawProducts.pages_fetched + customers.pages_fetched + branches.pages_fetched,
-    errors: [...rawProducts.errors, ...customers.errors, ...branches.errors],
+    pages_fetched: rawProducts.pages_fetched + allContacts.pages_fetched + branches.pages_fetched,
+    errors: [...rawProducts.errors, ...allContacts.errors, ...branches.errors],
   };
 }
 
@@ -554,6 +580,7 @@ export async function fetchAllOmniMasterCatalogsSequential(
     rawStyles: rawProducts.styles,
     customers: customers.contacts,
     branches: branches.branches,
+    extraContacts: [...suppliers.contacts, ...internalCustomers.contacts],
   });
 
   // Drop raw styles ASAP — SKUs + derived already extracted (large heap win).
