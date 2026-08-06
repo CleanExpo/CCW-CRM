@@ -218,3 +218,10 @@ scripts/*-response.json
 
 # Lighthouse CI run output (npm run test:lighthouse)
 .lighthouseci/
+
+# Playwright run output (npm run test:e2e). Baselines under
+# e2e/__screenshots__/ ARE tracked — they are the comparison, not output.
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
