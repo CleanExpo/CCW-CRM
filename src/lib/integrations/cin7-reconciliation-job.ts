@@ -108,7 +108,7 @@ export async function getIncompleteSyncEntities(ownerUserId: string): Promise<st
   return CIN7_RECON_GATE_ENTITIES.filter((entity) => byType.get(entity) !== 'complete');
 }
 
-async function loadOptixCounts(ownerUserId: string) {
+export async function loadOptixCounts(ownerUserId: string) {
   const [
     productRows,
     customerLinked,
