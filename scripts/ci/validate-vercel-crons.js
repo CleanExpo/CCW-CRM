@@ -221,6 +221,49 @@ function checkGuardUsage(source) {
   }
   if (handlerBodies.length === 0) return 'has no exported GET or POST body to authorise.';
 
+  // Each handler is checked SEPARATELY. Pooling them let a guarded POST satisfy
+  // the rule for a completely unauthenticated GET in the same file — both are
+  // scheduled surface, so both must authorise on their own.
+  if (handlerBodies.length > 1) {
+    for (const single of handlerBodies) {
+      // A handler that simply delegates to its sibling — `export async function
+      // POST(request) { return GET(request); }` — is safe, because the sibling
+      // is evaluated on its own. src/app/api/cron/refresh-xero-tokens does
+      // exactly this, and the first per-handler pass flagged it wrongly.
+      if (delegatesToSiblingHandler(single)) continue;
+      const problem = evaluateHandler(sourceFile, [single]);
+      if (problem) return problem;
+    }
+    return null;
+  }
+
+  return evaluateHandler(sourceFile, handlerBodies);
+}
+
+
+/** Does this handler body do nothing but return a call to GET or POST? */
+function delegatesToSiblingHandler(body) {
+  const statements = ts.isBlock(body)
+    ? body.statements
+    : ts.isArrowFunction(body) && !ts.isBlock(body.body)
+      ? null
+      : null;
+  const isSiblingCall = (expr) =>
+    expr &&
+    ts.isCallExpression(expr) &&
+    ts.isIdentifier(expr.expression) &&
+    /^(GET|POST)$/.test(expr.expression.text);
+
+  if (statements === null) {
+    return ts.isArrowFunction(body) && !ts.isBlock(body.body) && isSiblingCall(body.body);
+  }
+  if (statements.length !== 1) return false;
+  const only = statements[0];
+  return ts.isReturnStatement(only) && isSiblingCall(only.expression);
+}
+
+/** The guard analysis, for one handler body (or one pooled set). */
+function evaluateHandler(sourceFile, handlerBodies) {
   // A `finally` that returns discards whatever the guard returned.
   let finallyReturns = false;
   const scanFinally = (node) => {
@@ -674,6 +717,13 @@ function selfTest() {
       files: { [R]: AUTH + 'export async function GET(request) {\n  try {\n    return cronAuthFailure(request);\n  } finally {\n    return Response.json({ public: true });\n  }\n}' },
     },
     {
+      // Reviewer bypass: a guarded POST vouching for an unauthenticated GET.
+      // Both are scheduled surface; each must authorise on its own.
+      name: 'public GET paired with a guarded POST',
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: AUTH + 'export async function GET() {\n  return Response.json({ public: true });\n}\nexport async function POST(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}' },
+    },
+    {
       // Reviewer bypass: referenced but never invoked.
       name: 'guard referenced but never called',
       expect: 'never calls cronAuthFailure',
@@ -736,6 +786,12 @@ function selfTest() {
     { name: 'export const GET = async', files: { [R]: "import { cronAuthFailure } from '@/lib/api/cron-auth';\nexport const GET = async (request: Request) => cronAuthFailure(request) ?? Response.json({ ok: true });" } },
     { name: 'export { GET }', files: { [R]: "import { cronAuthFailure } from '@/lib/api/cron-auth';\nconst GET = async (request) => cronAuthFailure(request) ?? Response.json({});\nexport { GET };" } },
     { name: 'export async function POST', files: { [R]: 'export async function POST(request) {\n' + guard + '  return Response.json({});\n}' } },
+    {
+      // The real shape in src/app/api/cron/refresh-xero-tokens: POST delegates to
+      // a guarded GET. Safe, because GET is evaluated on its own.
+      name: 'POST delegating to a guarded GET',
+      files: { [R]: AUTH + 'export async function GET(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}\nexport async function POST(request) {\n  return GET(request);\n}' },
+    },
     {
       name: 'a string literal mentioning status: 501 must NOT flag',
       files: {

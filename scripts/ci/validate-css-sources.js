@@ -44,13 +44,24 @@ const ENTRY = 'src/app/globals.css';
 const ENTRY_POINT =
   /^src\/app\/(.*\/)?(layout|page|template|error|loading|not-found|forbidden|unauthorized)\.[jt]sx?$/;
 /**
- * `default` is a real convention, but ONLY inside a parallel route — a path
- * containing an `@slot` segment. Next resolves it while constructing an
- * adjacent parallel segment and loads it as defaultPage. Seeding every
- * default.tsx concealed an orphan; excluding all of them then falsely
- * reported a genuine parallel-route stylesheet as dead. Both were wrong.
+ * `default` counts as an entry point, everywhere.
+ *
+ * Three revisions got this wrong in three ways. Seeding every default.tsx
+ * concealed an orphan. Excluding them all then falsely reported a genuine
+ * parallel-route stylesheet as dead. Gating on an `@slot` ancestor was wrong in
+ * BOTH directions: Next 16.2.11 always includes an implicit `children` slot, so
+ * a reviewer's real build compiled CSS from app/default.tsx and app/x/default.tsx
+ * when adjacent explicit slots made them children fallbacks, while
+ * dash/@side/sub/default.tsx was accepted without a matching adjacent slot.
+ *
+ * Whether a given default file is compiled depends on its sibling slots, which
+ * this static walk cannot know. So it takes the conservative side deliberately:
+ * every default file is an entry point. The cost is that an unused default.tsx
+ * could conceal an orphan — a missed cleanup. The alternative cost was calling a
+ * stylesheet dead that a real build compiles, and acting on that deletes
+ * something the product loads. A false "this is dead" is the worse error.
  */
-const PARALLEL_DEFAULT = /^src\/app\/(.*\/)?@[^/]+\/(.*\/)?default\.[jt]sx?$/;
+const DEFAULT_ENTRY = /^src\/app\/(.*\/)?default\.[jt]sx?$/;
 
 /** `global-error` is only a convention at the app root. */
 const ROOT_ONLY_ENTRY = /^src\/app\/global-error\.[jt]sx?$/;
@@ -63,7 +74,7 @@ function isEntryPoint(filePath) {
   return (
     ENTRY_POINT.test(filePath) ||
     ROOT_ONLY_ENTRY.test(filePath) ||
-    PARALLEL_DEFAULT.test(filePath)
+    DEFAULT_ENTRY.test(filePath)
   );
 }
 
@@ -382,18 +393,6 @@ function selfTest() {
       orphan: 'src/styles/themes/dark.css',
     },
     {
-      // `default` is only resolved for an adjacent parallel segment, so an
-      // ordinary default.tsx routes for nobody.
-      name: 'orphan imported only by an ordinary default.tsx',
-      files: {
-        [ENTRY]: entryCss,
-        [LAYOUT]: layoutSrc,
-        'src/styles/convention.css': '.c{}',
-        'src/app/account/default.tsx': "import '@/styles/convention.css';\nexport default () => null;",
-      },
-      orphan: 'src/styles/convention.css',
-    },
-    {
       name: 'orphan-only CSS cycle with no entry point reaching it',
       files: {
         [ENTRY]: entryCss,
@@ -507,6 +506,20 @@ function selfTest() {
         [LAYOUT]: layoutSrc,
         'src/app/@slot/default.tsx': "import '@/styles/slot.css';\nexport default () => null;",
         'src/styles/slot.css': '.s{}',
+      },
+    },
+    {
+      // DELIBERATE, and the cost of the conservative choice above: an ordinary
+      // default.tsx is accepted as an entry point even though Next may not
+      // compile it, because whether it does depends on sibling slots this walk
+      // cannot see. A concealed orphan is a missed cleanup; the alternative was
+      // calling a compiled stylesheet dead.
+      name: 'ordinary default.tsx is accepted (conservative, documented)',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/styles/convention.css': '.c{}',
+        'src/app/account/default.tsx': "import '@/styles/convention.css';\nexport default () => null;",
       },
     },
     {
