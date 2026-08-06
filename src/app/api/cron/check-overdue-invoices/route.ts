@@ -33,6 +33,7 @@ import {
   isValidEmailAddress,
 } from '@/lib/integrations/sendgrid-mail';
 import { getWorkspaceIdForUser } from '@/lib/auth/workspace-scope';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 const OVERDUE_THRESHOLDS_DAYS = [7, 30, 60] as const;
 
@@ -45,10 +46,8 @@ function daysBetween(from: Date, to: Date): number {
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const today = new Date();
     const todayMidnightUtc = new Date(

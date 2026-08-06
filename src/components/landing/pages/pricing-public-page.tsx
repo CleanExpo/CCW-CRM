@@ -177,7 +177,7 @@ export function PricingPublicPage() {
               </div>
             ))}
           </div>
-          <p className="mx-auto mt-12 max-w-2xl text-center text-sm text-zinc-500">
+          <p className="mx-auto mt-12 max-w-2xl text-center text-sm text-zinc-400">
             Figures on this page are illustrative tiers—not a public rate card. Final commercial terms are agreed with your
             stakeholders.
           </p>

@@ -19,26 +19,37 @@
  * https://github.com/GoogleChrome/lighthouse-ci/blob/main/docs/configuration.md
  */
 
+// Target defaults to the production alias. Override for a preview deployment:
+//   LHCI_TARGET_URL=https://ccw-erp-git-my-branch.vercel.app npm run test:lighthouse
+const TARGET = process.env.LHCI_TARGET_URL || 'https://ccw-crm-web.vercel.app';
+
 module.exports = {
   ci: {
     collect: {
-      // Build the application before running Lighthouse
-      startServerCommand: 'npm run build && npm run start -- -p 3005',
-      startServerReadyPattern: 'Ready',
-      startServerReadyTimeout: 30000,
+      // Audits a deployed target rather than starting a local server. The
+      // previous `npm run build && npm run start -- -p 3005` never ran: `start`
+      // is `node scripts/production-start.mjs`, which does not take `-p`, and
+      // the server needs DATABASE_URL and JWT_SECRET_KEY to boot at all.
 
-      // URLs to audit (relative to the server)
-      url: [
-        'http://localhost:3005/',
-        'http://localhost:3005/dashboard',
-        'http://localhost:3005/prd/generate',
-      ],
+      // Only genuinely public routes. `/dashboard` and `/prd/generate` were
+      // listed here previously, but both 307-redirect to /login for an
+      // unauthenticated client — Lighthouse would have audited the login page
+      // three times and reported the scores under the dashboard's name.
+      // Authenticated-screen performance is measured in the Playwright suite
+      // (`npm run test:e2e`), which logs in first.
+      url: [`${TARGET}/`, `${TARGET}/login`, `${TARGET}/register`],
 
       // Number of runs per URL (more runs = more reliable averages)
       numberOfRuns: 3,
 
       // Chrome flags
       settings: {
+        // `uses-rel-preload` still ships in Lighthouse 12.6.1 but lives in
+        // experimental-config, not default-config — so under the default run it
+        // is reported as "not a known audit". The experimental preset collects
+        // it, which is what lets the assertion below be real instead of noise.
+        preset: 'experimental',
+
         // Use headless Chrome
         chromeFlags: '--no-sandbox --disable-dev-shm-usage',
 
@@ -99,10 +110,19 @@ module.exports = {
 
         // Best Practices
         'errors-in-console': 'warn',
-        'uses-https': 'error',
-        'no-vulnerable-libraries': 'error',
         'csp-xss': 'warn',
         'deprecations': 'warn',
+        // 'uses-https' and 'no-vulnerable-libraries' were asserted here and are
+        // removed. Verified against the installed Lighthouse 12.6.1: neither
+        // audit file exists under core/audits, and neither appears in
+        // default-config or experimental-config. They failed on "auditRan" — a
+        // red carrying no information about the product. An assertion that
+        // cannot measure anything is a broken gate, not a lenient one.
+        //
+        // 'uses-rel-preload' was ALSO removed here on the same reasoning, and
+        // that was wrong: it still ships, in experimental-config. An independent
+        // reviewer caught it. It is restored above, and collect.settings.preset
+        // is now 'experimental' so it is genuinely collected.
 
         // Performance
         'uses-responsive-images': 'warn',

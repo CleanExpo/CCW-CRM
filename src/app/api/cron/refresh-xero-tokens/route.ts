@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { refreshAllWorkspaceXeroTokens } from '@/lib/integrations/xero-refresh-all';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 /**
  * Refresh expiring Xero tokens for all workspace connections.
@@ -8,10 +9,8 @@ import { refreshAllWorkspaceXeroTokens } from '@/lib/integrations/xero-refresh-a
  */
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const data = await refreshAllWorkspaceXeroTokens();
 

@@ -40,6 +40,14 @@ jobs:
         run: node scripts/ci/validate-agents.js
       - name: Validate CRON job registrations
         run: node scripts/ci/validate-cron-jobs.js
+      - name: Validate vercel.json crons resolve to live handlers
+        run: |
+          node scripts/ci/validate-vercel-crons.js
+          node scripts/ci/validate-vercel-crons.js --self-test
+      - name: Validate every stylesheet is reachable
+        run: |
+          node scripts/ci/validate-css-sources.js
+          node scripts/ci/validate-css-sources.js --self-test
       - name: Validate Deepsec workflow contract
         run: |
           node scripts/ci/validate-deepsec-workflow.js
@@ -62,9 +70,80 @@ jobs:
       - name: Scan for hardcoded secrets
         run: node scripts/ci/scan-secrets.js
 
+  # The browser suite was written but never wired into CI, so an accessibility
+  # regression would not have surfaced until a human happened to run it locally.
+  #
+  # This runs against THE CANDIDATE, not production. An earlier revision of this
+  # job set no E2E_BASE_URL, so playwright.config.ts fell back to the production
+  # alias — meaning a pull request was audited against code it had not changed.
+  # A dev server is started here instead; the public pages need no database.
+  #
+  # Accessibility and console-error specs only, on purpose. The visual-baseline
+  # specs compare against six PNGs captured from PRODUCTION, which a local dev
+  # render will not match pixel-for-pixel, so including them here would produce a
+  # permanent red for a non-reason. Visual comparison stays a manual check until
+  # the baselines are regenerated from a stable target — tracked in
+  # docs/design-system.md.
+  #
+  # The authenticated specs need credentials and a working database; see
+  # docs/RESTORE-PRODUCTION-DATABASE.md.
+  e2e-public:
+    name: Browser Suite (public routes, accessibility)
+    runs-on: ubuntu-latest
+    # A process that accepts a connection but never completes the response would
+    # otherwise block inside one curl and hang the job past its nominal 60-try
+    # limit. Fail, do not hang.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      # Next dev silently moves to another port when 3000 is taken. That exact
+      # failure produced a measurement against an unrelated application during
+      # development of this branch — the page looked fine because it was
+      # somebody else's page. Read the port Next actually bound, never assume it.
+      - name: Start the candidate
+        run: |
+          JWT_SECRET=ci-ephemeral-not-a-real-secret npm run dev > /tmp/dev.log 2>&1 &
+          PORT=""
+          for i in $(seq 1 60); do
+            PORT=$(grep -oE 'http://localhost:[0-9]+' /tmp/dev.log | head -1 | grep -oE '[0-9]+$' || true)
+            if [ -n "$PORT" ] && curl -sf --connect-timeout 5 --max-time 20 -o /dev/null "http://localhost:$PORT/"; then
+              echo "dev server ready on port $PORT"
+              echo "E2E_BASE_URL=http://localhost:$PORT" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "dev server never became ready"; cat /tmp/dev.log; exit 1
+      - name: Confirm the target is this application
+        run: |
+          TITLE=$(curl -s --connect-timeout 5 --max-time 20 "$E2E_BASE_URL/" | grep -oE '<title>[^<]*</title>' || true)
+          echo "target title: $TITLE"
+          case "$TITLE" in
+            *"CCW Online"*) echo "correct application" ;;
+            *) echo "WRONG APPLICATION on $E2E_BASE_URL — refusing to report a result"; exit 1 ;;
+          esac
+      - name: Accessibility and console-error specs
+        run: npx playwright test e2e/public-surface.spec.ts -g "accessibility|console"
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   deploy:
     name: Deploy Gate
-    needs: [test, validate, security]
+    needs: [test, validate, security, e2e-public]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

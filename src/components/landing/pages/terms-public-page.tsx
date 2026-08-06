@@ -93,7 +93,7 @@ export function TermsPublicPage() {
             <Link href="/privacy" className="font-semibold text-sky-300 hover:text-sky-200 hover:underline">
               ← Privacy policy
             </Link>
-            <span className="mx-3 text-zinc-600">·</span>
+            <span className="mx-3 text-zinc-400">·</span>
             <a href="mailto:sales@ccwequipment.com.au" className="font-semibold text-sky-300 hover:text-sky-200 hover:underline">
               Contact sales
             </a>

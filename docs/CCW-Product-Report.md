@@ -8,6 +8,35 @@
 
 ---
 
+> ## ⚠️ CORRECTION NOTICE — 2026-08-07 — DO NOT REISSUE AS-IS
+>
+> This report was written on 30 March 2026 and parts of it no longer describe the system that
+> exists. It is retained for history. The accurate current position is `docs/PROJECT-STATUS.md`,
+> where every figure carries the command that produced it.
+>
+> Known-wrong statements in the pages below:
+>
+> 1. **"823 automated tests all passing."** Measured 2026-08-07: **377 passing, 2 skipped.**
+> 2. **The Railway backend does not exist.** §2 diagrams a Vercel frontend plus a Railway FastAPI
+>    backend, and §5.1–5.5 instruct CCW staff to enter Cin7, Xero and Shopify credentials into
+>    Railway. There is no Railway tier in this product. Following those instructions configures
+>    nothing. Credentials belong on the Vercel project.
+> 3. **The cron table in §12 lists eight endpoints that have been removed** for returning HTTP 501
+>    on every scheduled run: `retry-failed-webhooks`, `run-autonomous-ops`, `refresh-health-scores`,
+>    `check-expiring-quotes`, `process-onboarding-emails`, `shadow-sync-cin7`, `shadow-sync-xero`,
+>    `auto-reorder-inventory`. The nightly Cin7 sync described as running at 7:00pm did not run. The
+>    sync that does work is `nightly-full-sync` at 9:00pm AEST.
+> 4. **Auto-reorder (automatic draft purchase orders for low-stock items) is not built.** The
+>    endpoint that claimed to do it returned 501.
+>
+> **The system is additionally not usable at the time of writing**: the production deployment has no
+> database connection configured, so login returns HTTP 503. See §0 of `docs/PROJECT-STATUS.md`.
+>
+> A corrected edition should be issued to CCW once the deployment is restored. Reissuing is
+> customer-facing and needs the owner's sign-off.
+
+---
+
 ## Table of Contents
 
 1. [Executive Summary](#1-executive-summary)
@@ -35,7 +64,7 @@
 
 ## 1. Executive Summary
 
-CCW Online is a cloud-based ERP/CRM system purpose-built to sit alongside CCW Equipment Supplies' existing technology stack — Cin7 (inventory), Xero (accounting), and Shopify (ecommerce). Rather than replacing these tools, CCW Online syncs data from them every night and presents everything through a single, unified dashboard at ccwonline.com.au. Staff across operations, sales, inventory, finance, and management can access the information they need without switching between multiple applications. The system currently comprises over 80 pages, 679+ API endpoints, and 823 automated tests all passing, covering every business function from point-of-sale transactions to AI-powered demand forecasting.
+CCW Online is a cloud-based ERP/CRM system purpose-built to sit alongside CCW Equipment Supplies' existing technology stack — Cin7 (inventory), Xero (accounting), and Shopify (ecommerce). Rather than replacing these tools, CCW Online syncs data from them every night and presents everything through a single, unified dashboard at ccwonline.com.au. Staff across operations, sales, inventory, finance, and management can access the information they need without switching between multiple applications. The system currently comprises over 80 pages, 679+ API endpoints, and 377 automated tests passing with 2 skipped (corrected 2026-08-07; this sentence previously claimed 823), covering every business function from point-of-sale transactions to AI-powered demand forecasting.
 
 The system is fully deployed and operational. The frontend runs on Vercel (a globally distributed hosting platform), the backend runs on Railway (a managed server platform), and the database is hosted on Supabase (enterprise-grade PostgreSQL with built-in authentication). All core modules are functional and loaded with demonstration data so that staff can explore every feature before going live. The system is ready to receive live data as soon as CCW connects its integrations.
 
@@ -1208,27 +1237,43 @@ The **BAS Report** (`/invoices/bas`) provides Australian GST figures for your Bu
 
 All times AEST. These run automatically once configured.
 
-| Time                    | Endpoint                            | Purpose                          |
-| ----------------------- | ----------------------------------- | -------------------------------- |
-| Every 5 min             | /api/cron/health-check              | System health verification       |
-| Every 5 min             | /api/cron/retry-failed-webhooks     | Retry failed webhook deliveries  |
-| Every 15 min            | /api/cron/check-sla-breaches        | SLA monitoring for workflows     |
-| Hourly                  | /api/cron/run-autonomous-ops        | AI agent autonomous operations   |
-| 9:00am daily            | /api/cron/daily-report              | KPI dashboard refresh            |
-| 9:00am daily            | /api/cron/check-expiring-quotes     | Quote expiry alerts              |
-| 9:00am daily            | /api/cron/process-onboarding-emails | Onboarding email sequences       |
-| 12:00am daily           | /api/cron/refresh-health-scores     | CRM health score recalculation   |
-| 2:00am daily            | /api/cron/cleanup-old-runs          | Cleanup aged records             |
-| 7:00pm daily            | /api/cron/shadow-sync-cin7          | Cin7 nightly sync                |
-| 9:00pm daily            | /api/cron/auto-reorder-inventory    | Auto-PO generation               |
-| 4x daily                | /api/boardroom/cron                 | AI Boardroom governance sessions |
-| _After Xero connected:_ |                                     |                                  |
-| Every 15 min            | /api/cron/refresh-xero-tokens       | Xero token refresh               |
-| 8:00pm daily            | /api/cron/shadow-sync-xero          | Xero nightly sync                |
+> **Corrected 2026-08-07.** The table below now lists what is actually scheduled. Eight endpoints
+> previously listed here returned HTTP 501 on every run and have been removed; they are recorded
+> underneath so anyone holding an older copy of this report can see what changed. Schedules are
+> AEST (Brisbane, UTC+10).
+
+| Time (AEST)  | Endpoint                                   | Purpose                                  |
+| ------------ | ------------------------------------------ | ---------------------------------------- |
+| Every 5 min  | /api/cron/health-check                     | System health verification               |
+| Every 15 min | /api/cron/check-sla-breaches               | SLA monitoring for workflows             |
+| Every 15 min | /api/cron/refresh-xero-tokens              | Xero token refresh                       |
+| 12:00pm      | /api/cron/cleanup-old-runs                 | Cleanup aged records                     |
+| 4:00pm       | /api/cron/sync-bank-feeds                  | Bank feed transaction pull               |
+| 7:00pm       | /api/cron/daily-report                     | KPI dashboard refresh                    |
+| 8:00pm       | /api/cron/check-invoice-overdue            | Overdue invoice notifications            |
+| 9:00pm       | /api/cron/check-trade-finance-maturities   | Trade finance maturity alerts            |
+| **9:00pm**   | **/api/cron/nightly-full-sync**            | **Cin7 nightly sync — the one that runs** |
+
+**Removed 2026-08-07 — these never ran.** Each returned HTTP 501 because it forwarded to a backend
+service that is not deployed:
+
+`retry-failed-webhooks` · `run-autonomous-ops` · `refresh-health-scores` ·
+`check-expiring-quotes` · `process-onboarding-emails` · `shadow-sync-cin7` · `shadow-sync-xero` ·
+`auto-reorder-inventory`
+
+The Cin7 capability is covered by `nightly-full-sync`. The others have no replacement: webhook
+retry, autonomous operations, CRM health-score refresh, quote-expiry alerts, onboarding email
+sequences and automatic purchase-order generation are **not currently happening**, and were not
+happening before the removal either.
 
 ### B. Environment Variables Reference
 
-#### Backend (Railway) — CCW Must Configure
+> **Corrected 2026-08-07 — there is no Railway backend.** The variables below are real, but they
+> belong on the **Vercel** project (`ccw-crm-web`), not on a Railway service. Setting them anywhere
+> else configures nothing. `API_UPSTREAM_URL`, referenced by the removed proxy routes, is not
+> required and is not part of this product.
+
+#### Backend Environment — CCW Must Configure (set these on Vercel)
 
 | Variable                  | Required    | Description                           |
 | ------------------------- | ----------- | ------------------------------------- |

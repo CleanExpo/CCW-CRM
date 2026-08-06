@@ -147,7 +147,7 @@ export function HowItWorksPublicPage() {
                 )}
               >
                 <div className="flex min-w-0 flex-1 flex-col items-start">
-                  <span className="text-5xl font-black leading-none text-sky-500/50 tabular-nums md:text-6xl">{s.step}</span>
+                  <span className="text-5xl font-black leading-none text-sky-500/80 tabular-nums md:text-6xl">{s.step}</span>
                   <h2 className="mt-4 text-2xl font-bold text-white md:text-3xl">{s.title}</h2>
                   <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-300 md:text-lg">{s.body}</p>
                   <ul className="mt-6 space-y-3">

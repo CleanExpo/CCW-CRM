@@ -94,19 +94,31 @@
 
 ### 11. All Cron Endpoints Return 200
 
-Test each endpoint directly (requires `CRON_SECRET` header):
+The handlers authenticate on `Authorization: Bearer $CRON_SECRET`. An `x-cron-secret` header —
+which earlier revisions of this checklist told you to send — is ignored and returns 401 for every
+endpoint, so this step could never pass as previously written.
+
+Do not maintain the endpoint list by hand; derive it from `vercel.json` so it cannot drift:
 
 ```bash
-curl -H "x-cron-secret: <CRON_SECRET>" https://ccwonline.com.au/api/cron/health-check
-curl -H "x-cron-secret: <CRON_SECRET>" https://ccwonline.com.au/api/cron/shadow-sync-cin7
-curl -H "x-cron-secret: <CRON_SECRET>" https://ccwonline.com.au/api/cron/auto-reorder-inventory
-curl -H "x-cron-secret: <CRON_SECRET>" https://ccwonline.com.au/api/cron/daily-report
+for p in $(python3 -c "import json;print('\n'.join(c['path'] for c in json.load(open('vercel.json'))['crons']))"); do
+  printf '%-46s ' "$p"
+  curl -s -o /dev/null -w '%{http_code}\n' \
+    -H "Authorization: Bearer $CRON_SECRET" "https://ccwonline.com.au$p"
+done
 ```
 
-- [ ] health-check → `{"status": "ok"}`
-- [ ] shadow-sync-cin7 → `{"status": "success"}` or `{"status": "demo"}`
-- [ ] auto-reorder-inventory → `{"status": "success"}`
-- [ ] daily-report → `{"status": "success"}`
+- [ ] Every path returns 200. A **501** means the route is a stub that cannot do its job — that is
+      the failure this checklist exists to catch. A **401** means `CRON_SECRET` is wrong or unset
+      locally, not that the endpoint is broken.
+- [ ] `/api/cron/health-check` → `{"status": "ok"}`
+- [ ] `/api/cron/nightly-full-sync` → reports per-entity results; `complete: false` with a
+      `next_page` is a resuming run, not a failure
+- [ ] `/api/cron/daily-report` → `{"status": "success"}`
+
+Eight endpoints that used to be listed here (`shadow-sync-cin7`, `shadow-sync-xero`,
+`auto-reorder-inventory`, and five others) were removed on 2026-08-07 because they returned 501.
+See `docs/nightly-sync-verification.md`.
 
 ### 12. Sidebar — No 404 Links
 

@@ -2,6 +2,7 @@ import { getApiRequestBase } from '@/lib/api/backend-url';
 import { prisma } from '@/lib/db/prisma';
 import { CIN7_RECON_GATE_ENTITIES } from '@/lib/integrations/cin7-reconciliation-job';
 import { NextResponse } from 'next/server';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 /**
  * Nightly Full Sync Cron Job
@@ -16,10 +17,8 @@ import { NextResponse } from 'next/server';
  */
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const ownerUserId = process.env.CRON_INTEGRATION_USER_ID?.trim();
     if (!ownerUserId) {

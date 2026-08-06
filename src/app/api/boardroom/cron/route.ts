@@ -9,13 +9,12 @@
 
 import { NextResponse } from "next/server";
 import { getApiRequestBase } from '@/lib/api/backend-url';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 export async function GET(request: Request) {
   // ── Auth: Vercel sends Authorization: Bearer <CRON_SECRET> ──
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  const unauthorized = cronAuthFailure(request);
+  if (unauthorized) return unauthorized;
 
   const sessionStart = Date.now();
   const timestamp = new Date().toISOString();

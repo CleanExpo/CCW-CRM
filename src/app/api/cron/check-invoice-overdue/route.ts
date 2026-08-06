@@ -4,13 +4,12 @@ import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
 import { logger } from '@/lib/logger';
 import { dispatchWorkflowTrigger } from '@/lib/workflows/workflow-engine';
 import { logOperationalEvent } from '@/lib/comms/operational-events';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const userId = process.env.CRON_INTEGRATION_USER_ID?.trim();
     if (!userId) {

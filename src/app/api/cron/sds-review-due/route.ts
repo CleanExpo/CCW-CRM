@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
+import { cronAuthFailure } from '@/lib/api/cron-auth';
 
 // SDS Review-Due Cron Job
 // Schedule: Daily at 8:00 AM AEST / 22:00 UTC (0 22 * * *)
@@ -9,10 +10,8 @@ import { requireUpstreamBase } from '@/lib/api/upstream-proxy';
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const unauthorized = cronAuthFailure(request);
+    if (unauthorized) return unauthorized;
 
     const base = requireUpstreamBase('SDS review-due');
     if (base instanceof NextResponse) return base;
