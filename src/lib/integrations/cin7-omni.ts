@@ -392,12 +392,18 @@ function buildOmniContactsPath(
   page: number,
   rows: number,
   whereType?: string,
-  extraWhere?: string
+  extraWhere?: string,
+  fields?: string
 ): string {
   // Build manually: URLSearchParams percent-encodes `=`/`'` inside `where`, which Cin7 Omni
   // rejects or silently mis-filters. Do not send `order=id asc` (space → false empty pages).
   const safeRows = Math.max(1, Math.min(250, rows));
   let path = `/v1/Contacts?page=${page}&rows=${safeRows}`;
+  // Literal commas — percent-encoded %2C can break Cin7 field lists.
+  const safeFields = fields?.replace(/[^a-zA-Z0-9_,]/g, '').trim();
+  if (safeFields) {
+    path += `&fields=${safeFields}`;
+  }
   const clauses: string[] = [];
   if (whereType) {
     const safeType = whereType.replace(/[^a-zA-Z]/g, '');
@@ -416,7 +422,7 @@ export async function fetchOmniContactsPage(
   creds: Cin7OmniCredentials,
   page: number,
   rows: number,
-  options?: { allowedTypes?: string[]; whereType?: string; where?: string }
+  options?: { allowedTypes?: string[]; whereType?: string; where?: string; fields?: string }
 ): Promise<{
   rows: Cin7OmniContactRow[];
   total: number | null;
@@ -432,7 +438,7 @@ export async function fetchOmniContactsPage(
   // unfiltered walk + in-memory partition (same path reconciliation uses).
   const whereType = options?.whereType;
   const { ok, status, data, error } = await cin7OmniGet<unknown>(
-    buildOmniContactsPath(page, safeRows, whereType, options?.where),
+    buildOmniContactsPath(page, safeRows, whereType, options?.where, options?.fields),
     creds
   );
   if (!ok) {
