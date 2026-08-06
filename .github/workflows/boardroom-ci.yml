@@ -90,6 +90,10 @@ jobs:
   e2e-public:
     name: Browser Suite (public routes, accessibility)
     runs-on: ubuntu-latest
+    # A process that accepts a connection but never completes the response would
+    # otherwise block inside one curl and hang the job past its nominal 60-try
+    # limit. Fail, do not hang.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -111,7 +115,7 @@ jobs:
           PORT=""
           for i in $(seq 1 60); do
             PORT=$(grep -oE 'http://localhost:[0-9]+' /tmp/dev.log | head -1 | grep -oE '[0-9]+$' || true)
-            if [ -n "$PORT" ] && curl -sf -o /dev/null "http://localhost:$PORT/"; then
+            if [ -n "$PORT" ] && curl -sf --connect-timeout 5 --max-time 20 -o /dev/null "http://localhost:$PORT/"; then
               echo "dev server ready on port $PORT"
               echo "E2E_BASE_URL=http://localhost:$PORT" >> "$GITHUB_ENV"
               exit 0
@@ -121,7 +125,7 @@ jobs:
           echo "dev server never became ready"; cat /tmp/dev.log; exit 1
       - name: Confirm the target is this application
         run: |
-          TITLE=$(curl -s "$E2E_BASE_URL/" | grep -oE '<title>[^<]*</title>' || true)
+          TITLE=$(curl -s --connect-timeout 5 --max-time 20 "$E2E_BASE_URL/" | grep -oE '<title>[^<]*</title>' || true)
           echo "target title: $TITLE"
           case "$TITLE" in
             *"CCW Online"*) echo "correct application" ;;

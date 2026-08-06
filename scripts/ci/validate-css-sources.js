@@ -41,14 +41,18 @@ const ENTRY = 'src/app/globals.css';
  * a redirect and render nothing, so a stylesheet reachable only from one of them
  * still never loads. Seeding them made two orphans pass.
  */
-const ENTRY_POINT = /^src\/app\/(.*\/)?(layout|page|template|default|error|global-error|loading|not-found)\.[jt]sx?$/;
+const ENTRY_POINT =
+  /^src\/app\/(.*\/)?(layout|page|template|default|error|loading|not-found|forbidden|unauthorized)\.[jt]sx?$/;
+
+/** `global-error` is only a convention at the app root. */
+const ROOT_ONLY_ENTRY = /^src\/app\/global-error\.[jt]sx?$/;
 
 function isEntryPoint(filePath) {
   // Next.js treats a path segment beginning with `_` as a PRIVATE folder and
   // never routes it, so a page there renders for nobody. Seeding it as a root
   // let an orphan under src/app/_anything/ pass — demonstrated on the real tree.
   if (filePath.split('/').some((segment) => segment.startsWith('_'))) return false;
-  return ENTRY_POINT.test(filePath);
+  return ENTRY_POINT.test(filePath) || ROOT_ONLY_ENTRY.test(filePath);
 }
 
 /** Module specifiers this file genuinely imports. */
@@ -81,9 +85,18 @@ function extractImports(filePath, source) {
   // stylesheet under that directory counts as reachable. Deliberately
   // conservative. A false "this is dead" is worse than a missed orphan here,
   // because acting on it deletes a stylesheet that is genuinely loaded.
+  // Comments and QUOTED strings are removed first. Running this on raw source
+  // let a comment or an ordinary string forge reachability, reintroducing the
+  // very ambiguity the header above disclaims. Template literals are kept,
+  // because the construct being detected IS a template literal.
+  const scannable = source
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+    .replace(/'(?:\\[\s\S]|[^\\'\n])*'/g, "''")
+    .replace(/"(?:\\[\s\S]|[^\\"\n])*"/g, '""');
   const computed = /import\s*\(\s*`([^`$]*)\$\{/g;
   let match;
-  while ((match = computed.exec(source)) !== null) {
+  while ((match = computed.exec(scannable)) !== null) {
     const prefix = match[1];
     if (prefix.startsWith('./') || prefix.startsWith('../') || prefix.startsWith('@/')) {
       specifiers.push(`${prefix}*`);

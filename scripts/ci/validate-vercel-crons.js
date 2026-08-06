@@ -74,7 +74,7 @@ const MODULE_CANDIDATES = [
  * Regexes could not tell an import from a string that reads like one; the
  * compiler can. Catches static, dynamic import() and re-exports.
  */
-function localImports(source, importerPath) {
+function localImports(source, importerPath, disabled = new Set()) {
   let specifiers;
   try {
     specifiers = ts.preProcessFile(source, true, true).importedFiles.map((f) => f.fileName);
@@ -95,7 +95,12 @@ function localImports(source, importerPath) {
     // Clamp inside src/. `../../../../outside/x` previously resolved above the
     // repository root and would have been read from disk.
     if (base !== 'src' && !base.startsWith('src/')) continue;
-    resolved.push(base, ...MODULE_CANDIDATES.map((ext) => `${base}${ext}`));
+    resolved.push(
+      base,
+      ...MODULE_CANDIDATES.filter((ext) => !disabled.has(`candidate:${ext}`)).map(
+        (ext) => `${base}${ext}`
+      )
+    );
   }
   return resolved;
 }
@@ -172,7 +177,8 @@ function checkGuardUsage(source) {
     return 'could not be parsed, so its authorisation cannot be verified.';
   }
 
-  let importedFromCanonical = false;
+  let canonicalLocalName = null;   // the binding the canonical import introduces
+  let shadowedByLocalDecl = false; // a local declaration of that same name
   const calledAndBoundTo = new Set();
   let callResultReturnedDirectly = false;
   const returnedIdentifiers = new Set();
@@ -187,12 +193,29 @@ function checkGuardUsage(source) {
       ts.isNamedImports(node.importClause.namedBindings)
     ) {
       for (const el of node.importClause.namedBindings.elements) {
-        if ((el.propertyName?.text ?? el.name.text) === 'cronAuthFailure') importedFromCanonical = true;
+        if ((el.propertyName?.text ?? el.name.text) === 'cronAuthFailure') {
+          canonicalLocalName = el.name.text;
+        }
       }
     }
 
+    // The call must target the binding the CANONICAL import introduced. An
+    // alias plus a local no-op named cronAuthFailure satisfied the old check.
     const isGuardCall = (n) =>
-      ts.isCallExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === 'cronAuthFailure';
+      ts.isCallExpression(n) &&
+      ts.isIdentifier(n.expression) &&
+      canonicalLocalName !== null &&
+      n.expression.text === canonicalLocalName;
+
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === canonicalLocalName &&
+      node.initializer &&
+      !isGuardCall(node.initializer)
+    ) {
+      shadowedByLocalDecl = true;
+    }
 
     if (isGuardCall(node)) calledAtAll = true;
 
@@ -204,8 +227,17 @@ function checkGuardUsage(source) {
     const noteReturned = (expr) => {
       if (!expr) return;
       if (isGuardCall(expr)) callResultReturnedDirectly = true;
-      // `cronAuthFailure(req) ?? Response.json(...)` — the guard short-circuits.
-      if (ts.isBinaryExpression(expr) && isGuardCall(expr.left)) callResultReturnedDirectly = true;
+      // ONLY `??`. The guard returns null when authorised, so
+      // `return cronAuthFailure(req) && Response.json(...)` yields the PUBLIC
+      // response on the refused path too — a bypass a reviewer demonstrated.
+      // `||` has the same defect.
+      if (
+        ts.isBinaryExpression(expr) &&
+        isGuardCall(expr.left) &&
+        expr.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken
+      ) {
+        callResultReturnedDirectly = true;
+      }
       if (ts.isIdentifier(expr)) returnedIdentifiers.add(expr.text);
     };
 
@@ -219,10 +251,13 @@ function checkGuardUsage(source) {
   };
   ts.forEachChild(sourceFile, visit);
 
-  if (!calledAtAll) return 'never calls cronAuthFailure().';
-  if (!importedFromCanonical) {
-    return `calls cronAuthFailure() but does not import it from '${CRON_AUTH_MODULE}'.`;
+  if (canonicalLocalName === null) {
+    return `does not import cronAuthFailure from '${CRON_AUTH_MODULE}'.`;
   }
+  if (shadowedByLocalDecl) {
+    return `declares a local '${canonicalLocalName}' shadowing the imported guard.`;
+  }
+  if (!calledAtAll) return 'never calls cronAuthFailure().';
 
   const resultIsReturned =
     callResultReturnedDirectly || [...calledAndBoundTo].some((name) => returnedIdentifiers.has(name));
@@ -252,7 +287,7 @@ function stripComments(source) {
  * guarantees termination, and a cap only guaranteed a blind spot: a reviewer
  * put a 501 seven hops away and walked straight past a limit of six.
  */
-function findStubInClosure(entryPath, read) {
+function findStubInClosure(entryPath, read, disabled = new Set()) {
   const seen = new Set();
   const queue = [entryPath];
 
@@ -267,7 +302,7 @@ function findStubInClosure(entryPath, read) {
     const marker = STUB_MARKERS.find((m) => m.pattern.test(stripCommentsAndStrings(source)));
     if (marker) return { marker: marker.name, via: filePath };
 
-    queue.push(...localImports(source, filePath));
+    queue.push(...localImports(source, filePath, disabled));
   }
   return null;
 }
@@ -277,8 +312,9 @@ function findStubInClosure(entryPath, read) {
  * @param {(relPath: string) => string | null} readSource
  * @returns {string[]} failures
  */
-function validateCrons(config, readSource) {
+function validateCrons(config, readSource, disabled = new Set()) {
   const failures = [];
+  const on = (rule) => !disabled.has(rule);
   const crons = Array.isArray(config.crons) ? config.crons : [];
   if (crons.length === 0) return failures;
 
@@ -287,33 +323,35 @@ function validateCrons(config, readSource) {
   for (const cron of crons) {
     const cronPath = cron && cron.path;
 
-    if (typeof cronPath !== 'string' || !cronPath.startsWith('/api/')) {
+    if (on('path-shape') && (typeof cronPath !== 'string' || !cronPath.startsWith('/api/'))) {
       failures.push(`cron entry has no usable path: ${JSON.stringify(cron)}`);
       continue;
     }
     // A path containing `..` produced a read request above the repository root.
-    if (cronPath.split('/').includes('..')) {
+    if (on('path-traversal') && cronPath.split('/').includes('..')) {
       failures.push(`${cronPath}: path traversal segment is not a valid route`);
       continue;
     }
-    if (typeof cron.schedule !== 'string' || cron.schedule.trim() === '') {
+    if (on('schedule') && (typeof cron.schedule !== 'string' || cron.schedule.trim() === '')) {
       failures.push(`${cronPath}: missing schedule`);
     }
-    if (seen.has(cronPath)) failures.push(`${cronPath}: scheduled more than once`);
+    if (on('duplicate') && seen.has(cronPath)) failures.push(`${cronPath}: scheduled more than once`);
     seen.add(cronPath);
 
     const relPath = path.posix.join('src/app', cronPath, 'route.ts');
     const source = readSource(relPath);
 
     if (source === null) {
-      failures.push(`${cronPath}: scheduled, but no Route Handler at ${relPath}`);
+      if (on('route-missing')) {
+        failures.push(`${cronPath}: scheduled, but no Route Handler at ${relPath}`);
+      }
       continue;
     }
-    if (!exportsHandler(source)) {
+    if (on('handler-export') && !exportsHandler(source)) {
       failures.push(`${cronPath}: ${relPath} exports neither GET nor POST`);
     }
     const code = stripComments(source);
-    if (INLINE_FAIL_OPEN.test(code)) {
+    if (on('inline-fail-open') && INLINE_FAIL_OPEN.test(code)) {
       failures.push(
         `${cronPath}: ${relPath} inlines the CRON_SECRET comparison. When CRON_SECRET is ` +
           `unset that template is the literal string "Bearer undefined", so sending exactly ` +
@@ -321,7 +359,7 @@ function validateCrons(config, readSource) {
           `@/lib/api/cron-auth, which fails closed.`
       );
     }
-    const authProblem = checkGuardUsage(source);
+    const authProblem = on('guard-usage') ? checkGuardUsage(source) : null;
     if (authProblem) {
       failures.push(
         `${cronPath}: ${relPath} ${authProblem} Every scheduled endpoint must authorise ` +
@@ -330,7 +368,7 @@ function validateCrons(config, readSource) {
       );
     }
 
-    const stub = findStubInClosure(relPath, readSource);
+    const stub = on('stub-graph') ? findStubInClosure(relPath, readSource, disabled) : null;
     if (stub) {
       const where = stub.via === relPath ? 'directly' : `via ${stub.via}`;
       failures.push(
@@ -436,46 +474,23 @@ function selfTest() {
         'src/app/api/cron/ghost/impl.ts': 'export const run = () => Response.json({}, { status: 501 });',
       },
     },
-    {
-      name: '501 in a .js module',
-      expect: 'via src/app/api/cron/ghost/legacy.js',
-      files: {
-        [R]: AUTH + "import { run } from './legacy';\n" + guarded('return run();'),
-        'src/app/api/cron/ghost/legacy.js': 'export const run = () => Response.json({}, { status: 501 });',
-      },
-    },
-    {
-      name: '501 in a .mjs module',
-      expect: 'via src/app/api/cron/ghost/legacy.mjs',
-      files: {
-        [R]: AUTH + "import { run } from './legacy';\n" + guarded('return run();'),
-        'src/app/api/cron/ghost/legacy.mjs': 'export const run = () => Response.json({}, { status: 501 });',
-      },
-    },
-    {
-      name: '501 in a .jsx module',
-      expect: 'via src/app/api/cron/ghost/legacy.jsx',
-      files: {
-        [R]: AUTH + "import { run } from './legacy';\n" + guarded('return run();'),
-        'src/app/api/cron/ghost/legacy.jsx': 'export const run = () => Response.json({}, { status: 501 });',
-      },
-    },
-    {
-      name: '501 in a JavaScript directory index',
-      expect: 'via src/app/api/cron/ghost/jobs/index.js',
-      files: {
-        [R]: AUTH + "import { run } from './jobs';\n" + guarded('return run();'),
-        'src/app/api/cron/ghost/jobs/index.js': 'export const run = () => Response.json({}, { status: 501 });',
-      },
-    },
-    {
-      name: '501 in an index.mjs directory module',
-      expect: 'via src/app/api/cron/ghost/jobs/index.mjs',
-      files: {
-        [R]: AUTH + "import { run } from './jobs';\n" + guarded('return run();'),
-        'src/app/api/cron/ghost/jobs/index.mjs': 'export const run = () => Response.json({}, { status: 501 });',
-      },
-    },
+    // One fixture per module shape in MODULE_CANDIDATES, generated so the list
+    // and its controls cannot drift apart. The meta-control below proves each
+    // shape is individually load-bearing.
+    ...MODULE_CANDIDATES.map((ext) => {
+      const target = `src/app/api/cron/ghost/shape${ext.startsWith('/') ? ext : `${ext}`}`;
+      const modulePath = ext.startsWith('/')
+        ? `src/app/api/cron/ghost/shape${ext}`
+        : `src/app/api/cron/ghost/shape${ext}`;
+      return {
+        name: `501 in a module resolved as "${ext}"`,
+        expect: `via ${modulePath}`,
+        files: {
+          [R]: AUTH + "import { run } from './shape';\n" + guarded('return run();'),
+          [modulePath]: 'export const run = () => Response.json({}, { status: 501 });',
+        },
+      };
+    }),
     {
       name: 'inline fail-open CRON_SECRET comparison',
       expect: 'inlines the CRON_SECRET comparison',
@@ -493,17 +508,17 @@ function selfTest() {
     },
     {
       name: 'handler with no authorisation at all',
-      expect: 'never calls cronAuthFailure',
+      expect: 'does not import cronAuthFailure',
       files: { [R]: 'export async function GET() { return Response.json({ ok: true }); }' },
     },
     {
       name: 'handler authorising via some other helper',
-      expect: 'never calls cronAuthFailure',
+      expect: 'does not import cronAuthFailure',
       files: { [R]: "import { allowEveryone } from '@/lib/api/allow';\nexport async function GET(request) { allowEveryone(request); return Response.json({}); }" },
     },
     {
       name: 'export const GET = 42 (not callable)',
-      expect: 'never calls cronAuthFailure',
+      expect: 'does not import cronAuthFailure',
       files: { [R]: 'export const GET = 42;' },
     },
     {
@@ -515,14 +530,37 @@ function selfTest() {
     {
       // Reviewer bypass: a local no-op shadowing the real guard.
       name: 'guard name shadowed by a local no-op',
-      expect: "does not import it from '@/lib/api/cron-auth'",
+      expect: 'does not import cronAuthFailure',
       files: { [R]: 'const cronAuthFailure = () => null;\nexport async function GET(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}' },
     },
     {
       // Reviewer bypass: right name, wrong module.
       name: 'guard imported from the wrong module',
-      expect: "does not import it from '@/lib/api/cron-auth'",
+      expect: 'does not import cronAuthFailure',
       files: { [R]: "import { cronAuthFailure } from '@/lib/api/not-the-real-guard';\nexport async function GET(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}" },
+    },
+    {
+      // Reviewer bypass: canonical import ALIASED, with a local no-op taking the
+      // original name — the call then targets the no-op.
+      name: 'canonical import aliased with a local no-op of the original name',
+      // Caught by the call-target rule: the alias is what was imported, and the
+      // alias is never called — the local no-op is.
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: "import { cronAuthFailure as realGuard } from '@/lib/api/cron-auth';\nconst cronAuthFailure = () => null;\nexport async function GET(request) {\n  const u = cronAuthFailure(request);\n  if (u) return u;\n  return Response.json({});\n}" },
+    },
+    {
+      // Reviewer bypass: `&&` returns the PUBLIC response on the refused path.
+      // Only `??` short-circuits correctly, because the guard returns null when
+      // the request IS authorised.
+      name: 'guard result combined with && instead of ??',
+      expect: 'never returns its result',
+      files: { [R]: AUTH + 'export const GET = async (request) => cronAuthFailure(request) && Response.json({ public: true });' },
+    },
+    {
+      // Same defect with ||.
+      name: 'guard result combined with || instead of ??',
+      expect: 'never returns its result',
+      files: { [R]: AUTH + 'export const GET = async (request) => cronAuthFailure(request) || Response.json({ public: true });' },
     },
     {
       // Reviewer bypass: referenced but never invoked.
@@ -545,14 +583,36 @@ function selfTest() {
     }
   }
 
-  // Config-shape rejections.
-  for (const [name, cfg] of [
-    ['missing schedule', { crons: [{ path: P }] }],
-    ['duplicate schedule', { crons: [{ path: P, schedule: '0 9 * * *' }, { path: P, schedule: '0 10 * * *' }] }],
-    ['path traversal segment', { crons: [{ path: '/api/../../../../outside', schedule: '0 9 * * *' }] }],
-  ]) {
-    const failures = validateCrons(cfg, (p) => (p === R ? good : null));
-    if (failures.length === 0) throw new Error(`self-test did not reject: ${name}`);
+  // Config-shape rejections. These asserted only `failures.length > 0` and so
+  // were satisfied by the unrelated "no Route Handler" failure — disabling the
+  // path-traversal rule left --self-test green. They assert specifics now.
+  const configCases = [
+    { name: 'missing schedule', expect: 'missing schedule', cfg: { crons: [{ path: P }] } },
+    {
+      name: 'duplicate schedule',
+      expect: 'scheduled more than once',
+      cfg: { crons: [{ path: P, schedule: '0 9 * * *' }, { path: P, schedule: '0 10 * * *' }] },
+    },
+    {
+      name: 'path traversal segment',
+      expect: 'path traversal segment',
+      cfg: { crons: [{ path: '/api/../../../../outside', schedule: '0 9 * * *' }] },
+    },
+    {
+      name: 'path not under /api/',
+      expect: 'no usable path',
+      cfg: { crons: [{ path: '/not-api/thing', schedule: '0 9 * * *' }] },
+    },
+  ];
+  for (const c of configCases) {
+    const failures = validateCrons(c.cfg, (p) => (p === R ? good : null));
+    if (!failures.some((f) => f.includes(c.expect))) {
+      throw new Error(
+        `self-test did not reject: ${c.name} (expected "${c.expect}", got ${
+          failures.length ? failures.join(' | ') : 'none'
+        })`
+      );
+    }
   }
 
   // Negative controls — each MUST pass, or a failure from this gate means nothing.
@@ -612,14 +672,67 @@ function selfTest() {
     return null;
   });
 
-  return { rejectedCases: mustReject.length + 3, acceptedCases: mustAccept.length };
+  // META-CONTROL — every rule must be covered by at least one DISCRIMINATING
+  // fixture.
+  //
+  // Four review rounds in a row found a rule that could be deleted with
+  // --self-test staying green, each time because some fixture asserted "a
+  // failure happened" rather than "this failure happened", or because no fixture
+  // exercised that rule at all. Patching them one at a time kept missing the
+  // next one. This proves the property directly: disable each rule in turn and
+  // require that some case stops producing its expected failure. If a rule can
+  // be switched off with every assertion still satisfied, that rule is unguarded
+  // and this throws.
+  const allCases = [
+    ...mustReject.map((c) => ({ name: c.name, expect: c.expect, cfg: oneCron, files: c.files })),
+    ...configCases.map((c) => ({ name: c.name, expect: c.expect, cfg: c.cfg, files: { [R]: good } })),
+  ];
+
+  const RULES = [
+    'path-shape',
+    'path-traversal',
+    'schedule',
+    'duplicate',
+    'route-missing',
+    'handler-export',
+    'inline-fail-open',
+    'guard-usage',
+    'stub-graph',
+    ...MODULE_CANDIDATES.map((ext) => `candidate:${ext}`),
+  ];
+
+  for (const rule of RULES) {
+    const disabled = new Set([rule]);
+    const stillCaught = allCases.every((c) => {
+      const failures = validateCrons(
+        c.cfg,
+        (p) => (Object.prototype.hasOwnProperty.call(c.files, p) ? c.files[p] : null),
+        disabled
+      );
+      return failures.some((f) => f.includes(c.expect));
+    });
+    if (stillCaught) {
+      throw new Error(
+        `META-CONTROL FAILED: rule "${rule}" can be disabled with every self-test ` +
+          `assertion still satisfied. It is unguarded — add a fixture that fails ` +
+          `specifically because of it.`
+      );
+    }
+  }
+
+  return {
+    rejectedCases: mustReject.length + configCases.length,
+    acceptedCases: mustAccept.length,
+    rulesProven: RULES.length,
+  };
 }
 
 function main() {
   if (process.argv[2] === '--self-test') {
     const r = selfTest();
     console.log(
-      `Vercel cron validator self-test passed: rejected=${r.rejectedCases} accepted=${r.acceptedCases}`
+      `Vercel cron validator self-test passed: rejected=${r.rejectedCases} ` +
+        `accepted=${r.acceptedCases} rules-proven-guarded=${r.rulesProven}`
     );
     return 0;
   }
