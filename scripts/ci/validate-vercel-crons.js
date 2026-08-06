@@ -242,7 +242,7 @@ function checkGuardUsage(source) {
   const returnedIdentifiers = new Set();
   let calledAtAll = false;
 
-  const visit = (node) => {
+  const visit = (node, ownPathOnly = false) => {
     if (
       ts.isImportDeclaration(node) &&
       ts.isStringLiteral(node.moduleSpecifier) &&
@@ -305,13 +305,37 @@ function checkGuardUsage(source) {
     // cronAuthFailure(r) ?? json()` is valid and was being rejected.
     if (ts.isArrowFunction(node) && !ts.isBlock(node.body)) noteReturned(node.body);
 
-    ts.forEachChild(node, visit);
+    ts.forEachChild(node, (child) => {
+      // Do NOT descend into a nested function when walking the handler's own
+      // path. Restricting collection to top-level GET/POST declarations was not
+      // enough: the walk still recursed into a nested arrow, so a guard returned
+      // from a closure that is never invoked satisfied the rule while GET
+      // returned a public response. A nested function's contents run only if
+      // something calls it, which this does not prove.
+      if (
+        ownPathOnly &&
+        (ts.isFunctionDeclaration(child) ||
+          ts.isFunctionExpression(child) ||
+          ts.isArrowFunction(child))
+      ) {
+        return;
+      }
+      visit(child, ownPathOnly);
+    });
   };
   // Imports live at file scope; usage must live inside a handler body.
   ts.forEachChild(sourceFile, (n) => {
     if (ts.isImportDeclaration(n)) visit(n);
   });
-  handlerBodies.forEach((body) => visit(body));
+  // Walk the handler body but DO NOT descend into nested functions. Restricting
+  // collection to top-level GET/POST declarations was not enough: the walk still
+  // recursed into a nested arrow inside the handler, so a guard returned from a
+  // closure that is never invoked still satisfied the rule while GET returned a
+  // public response. Only the handler's own execution path counts.
+  const visitOwnPath = (node) => {
+    visit(node, true);
+  };
+  handlerBodies.forEach((body) => visitOwnPath(body));
 
   if (canonicalLocalName === null) {
     return `does not import cronAuthFailure from '${CRON_AUTH_MODULE}'.`;
@@ -627,6 +651,27 @@ function selfTest() {
       name: 'guard result combined with || instead of ??',
       expect: 'never returns its result',
       files: { [R]: AUTH + 'export const GET = async (request) => cronAuthFailure(request) || Response.json({ public: true });' },
+    },
+    {
+      // Reviewer bypass: the guard lives in a nested arrow that is never called,
+      // while GET returns a public response. Restricting collection to top-level
+      // declarations was not enough — the walk still descended into it.
+      name: 'guard only inside an unused nested arrow',
+      // The nested function is not walked, so the guard is never seen as called.
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: AUTH + 'export async function GET(request) {\n  const unused = () => cronAuthFailure(request);\n  return Response.json({ public: true });\n}' },
+    },
+    {
+      // Same shape, with the nested function shadowing the guard name via its
+      // own parameter.
+      name: 'guard shadowed by a nested function parameter',
+      expect: 'never calls cronAuthFailure',
+      files: { [R]: AUTH + 'export async function GET(request) {\n  const unused = (cronAuthFailure) => cronAuthFailure(request);\n  return Response.json({ public: true });\n}' },
+    },
+    {
+      name: 'guard returned but discarded by a finally block',
+      expect: 'finally block',
+      files: { [R]: AUTH + 'export async function GET(request) {\n  try {\n    return cronAuthFailure(request);\n  } finally {\n    return Response.json({ public: true });\n  }\n}' },
     },
     {
       // Reviewer bypass: referenced but never invoked.

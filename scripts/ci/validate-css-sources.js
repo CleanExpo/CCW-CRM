@@ -43,9 +43,14 @@ const ENTRY = 'src/app/globals.css';
  */
 const ENTRY_POINT =
   /^src\/app\/(.*\/)?(layout|page|template|error|loading|not-found|forbidden|unauthorized)\.[jt]sx?$/;
-// `default` is deliberately absent: Next resolves it only while constructing
-// an adjacent parallel-route segment, not as a general entry point, and
-// seeding every default.tsx concealed an orphan.
+/**
+ * `default` is a real convention, but ONLY inside a parallel route — a path
+ * containing an `@slot` segment. Next resolves it while constructing an
+ * adjacent parallel segment and loads it as defaultPage. Seeding every
+ * default.tsx concealed an orphan; excluding all of them then falsely
+ * reported a genuine parallel-route stylesheet as dead. Both were wrong.
+ */
+const PARALLEL_DEFAULT = /^src\/app\/(.*\/)?@[^/]+\/(.*\/)?default\.[jt]sx?$/;
 
 /** `global-error` is only a convention at the app root. */
 const ROOT_ONLY_ENTRY = /^src\/app\/global-error\.[jt]sx?$/;
@@ -55,7 +60,11 @@ function isEntryPoint(filePath) {
   // never routes it, so a page there renders for nobody. Seeding it as a root
   // let an orphan under src/app/_anything/ pass — demonstrated on the real tree.
   if (filePath.split('/').some((segment) => segment.startsWith('_'))) return false;
-  return ENTRY_POINT.test(filePath) || ROOT_ONLY_ENTRY.test(filePath);
+  return (
+    ENTRY_POINT.test(filePath) ||
+    ROOT_ONLY_ENTRY.test(filePath) ||
+    PARALLEL_DEFAULT.test(filePath)
+  );
 }
 
 /** Module specifiers this file genuinely imports. */
@@ -487,6 +496,17 @@ function selfTest() {
         [ENTRY]: entryCss,
         [LAYOUT]: `${layoutSrc}\nconst load = (n) => import(\`@/styles/themes/${'${n}'}.css\`);`,
         'src/styles/themes/dark.css': '.d{}',
+      },
+    },
+    {
+      // A parallel-route default IS routable — Next loads it as defaultPage for
+      // the adjacent segment. Excluding every default.tsx falsely killed this.
+      name: 'stylesheet imported by a parallel-route default.tsx',
+      files: {
+        [ENTRY]: entryCss,
+        [LAYOUT]: layoutSrc,
+        'src/app/@slot/default.tsx': "import '@/styles/slot.css';\nexport default () => null;",
+        'src/styles/slot.css': '.s{}',
       },
     },
     {
