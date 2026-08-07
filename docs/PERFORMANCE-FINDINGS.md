@@ -531,10 +531,21 @@ this work. The diagnosis was acted on. The consequence is that the three-stylesh
 2030ms longest chain, and the 2475ms render-delay figure all describe the **pre-#272** build. They
 are kept as the baseline the change should be measured against, and they are **not** current.
 
-**No re-measurement has been run against #272 or #274.** Whether cutting the chain moved LCP is
-unknown and unclaimed, and #274 changes which element LCP even measures — so the two effects will
-land in the same number and cannot be separated by a single re-run. That re-run is the next piece of
-work, and until it happens no score in this document describes production as it stands.
+**Re-measured 2026-08-07 after #274 was live on production** (Cursor, `npm run test:lighthouse`,
+median of 3 simulated-throttle runs against `https://ccw-crm-web.vercel.app`):
+
+| Route | median LCP | LCP element | median FCP | median SI |
+| --- | --- | --- | --- | --- |
+| `/` | **2882ms** (2876 / 2882 / 2949) | hero `<h1>` — "Run quotes…" | 1299ms | 1704ms |
+| `/login` | 2657ms | (login surface) | 1082ms | 1425ms |
+| `/register` | 2681ms | (register surface) | 1397ms | 2799ms |
+
+Pre-#274 median LCP on `/` in the same harness was **2883ms** with the logo **SPAN** as LCP.
+After #274 the number is essentially unchanged, but the **element is honest** (H1). Phase split on
+the median `/` run: TTFB ~632ms (22%), render delay ~2250ms (78%). Live CSS on `/` was still two
+stylesheets (~335KB utilities + ~1.6KB font) until the follow-up public-source split.
+
+The budget (2500ms) remains red. Next measured slice: cut public-route render-blocking CSS bytes.
 
 **A note on comparability, because it will be tempting to ignore.** Every LCP figure above was
 measured while a 2,226px² logo tagline was the credited element. After #274 the hero — an order of
