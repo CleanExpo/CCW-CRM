@@ -132,6 +132,12 @@ Lighthouse against production, measured 2026-08-07 after that deploy: **LCP 3293
 independently corroborating the axe result in both directions. `forced-reflow` no longer appears.
 Evidence and what has been ruled out: `docs/PERFORMANCE-FINDINGS.md`.
 
+Re-measured later the same day after `f4fc4779` (PR #269) deployed: **three blocking failures, down
+from five.** `bf-cache` now passes on all nine runs, the one improvement causally attributable to
+that PR. **LCP did not move** — 3105ms best / 3393ms median on `/`, still failing. `speed-index` is
+no longer reported as failing, but the gate is judging it on its best of three runs; its median on
+`/` is 4451ms against a 3000ms budget. Both are recorded in `docs/PERFORMANCE-FINDINGS.md`.
+
 ---
 
 ## 2. Corrections to the 2026-06-11 revision
@@ -171,7 +177,9 @@ this file claimed both did.
 | Scheduled crons | Production-grade **as of 2026-08-07** | 8 of 17 were 501 stubs and were removed; `validate-vercel-crons.js` blocks their return |
 | Design tokens | Single source **as of 2026-08-07** | `globals.css`; orphaned `design-system.css` deleted. See `docs/design-system.md` |
 | Accessibility | **Passing on the public surface** | The 23 contrast violations are fixed and live: axe found 23 on this URL before the deploy and 0 after, and Lighthouse's `color-contrast` now passes. The authenticated surface stays unmeasured while login is down |
-| Core Web Vitals | **Failing** | LCP 3293ms vs a 2500ms budget, measured 2026-08-07. Cause NOT established: server response is 22ms with zero savings available, so it is not origin latency. The gap is the two seconds between FCP (1268ms) and LCP. See `docs/PERFORMANCE-FINDINGS.md` |
+| Core Web Vitals | **Failing** | LCP 3105ms best / 3393ms median on `/` vs a 2500ms budget, re-measured 2026-08-07 after PR #269. Cause NOT established: server response is 22ms with zero savings available, so it is not origin latency. The gap is the two seconds between FCP (1228ms) and LCP. PR #269 made the app cacheable and fixed `bf-cache`; it did not move LCP, exactly as predicted. See `docs/PERFORMANCE-FINDINGS.md` |
+| Performance gate itself | **Under-reporting** | `lighthouserc.js` sets no `aggregationMethod`, so lhci's `optimistic` default judges each budget on the **best** of three runs. `speed-index` reads green on `/` while its median run is 4451ms against a 3000ms budget. Fix is one line; expect it to turn red |
+| `/api/health` | **Cannot report ill health** | Not on the middleware public allowlist, so an unauthenticated probe gets a 307 to `/login`. `curl -fL` exits 0 against a 200 HTML login page — a monitor following redirects reports this application healthy regardless of its actual state. Pre-existing, not from #269 |
 | Webhook retry, autonomous ops, health-score refresh, quote-expiry alerts, onboarding emails, auto-reorder | **Not built** | Their endpoints returned 501 and were removed. They were never running |
 | AP2 agent payments (10 routes), HeyGen (5 routes) | **Not built** | Hard 501 via `notImplementedResponse` |
 | Marketplace / multi-channel | **Demo-grade** | Ships a "Demo Mode — all channels running with mock data" banner in production |
@@ -217,20 +225,36 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    production. The marketing surface still bypasses the semantic tokens — it renders outside
    `.dark`, so `--muted-foreground` resolves to its light-theme value — and adopting the token
    scope there remains open. Tracked in `docs/design-system.md`; it is a refactor, not a defect.
-3. **Trace the LCP gap, then bring LCP under 2500ms.** Measured 2026-08-07: LCP 3293ms on `/`
-   against a 2500ms budget, Speed Index 4395ms, FCP 1268ms. Origin latency is ruled out — server
-   response is 22ms with zero savings available — as are font loading, JS execution (TBT 19ms) and
-   render-blocking resources. What remains unexplained is the two seconds between first paint and
-   largest paint; `network-dependency-tree-insight` fails, which establishes a critical request chain exists — not
-   that it caused the gap. Start with a trace, and let it name the resource. Evidence and what was ruled out: `docs/PERFORMANCE-FINDINGS.md`. Once green,
-   `lighthouse-agentic.yml` can drop `continue-on-error` and become a real gate.
+3. **Trace the LCP gap, then bring LCP under 2500ms.** Re-measured 2026-08-07 after PR #269: LCP
+   3105ms best / 3393ms median on `/` against a 2500ms budget, FCP 1228ms. Origin latency is ruled
+   out — server response is 22ms with zero savings available — as are font loading and JS execution
+   (TBT 0–13ms). Render-blocking is no longer ruled out: that audit scored 1 before #269 and scores
+   0.5 after, with `overallSavingsMs: 0`. What remains unexplained is the two seconds between first
+   paint and largest paint; `network-dependency-tree-insight` fails, which establishes a critical
+   request chain exists — not that it caused the gap. Start with a trace, and let it name the
+   resource. **Lead, not a cause:** the LCP element is a 157×14px `<span class="block truncate">` in
+   the header nav, painting at 3390ms — a small element that ought to paint early. The traces are
+   already on disk in `.lighthouseci/`; start there rather than arranging a fresh run. Evidence and
+   what was ruled out: `docs/PERFORMANCE-FINDINGS.md`. Once green, `lighthouse-agentic.yml` can drop
+   `continue-on-error` and become a real gate.
 
-3a. **Make the application cacheable** — separate defect, worth fixing on its own merits.
-   `src/app/layout.tsx:18` reads a cookie in the ROOT layout, forcing dynamic rendering on every
-   page including the public marketing site; production serves `/` with
-   `cache-control: private, no-cache, no-store` and `x-vercel-cache: MISS`. This fails `bf-cache`
-   and pays origin compute on every crawler and marketing visit. Its effect on LCP is unquantified
-   and, at 22ms of server time, likely small — do not merge the two pieces of work.
+3a. ~~**Make the application cacheable.**~~ **DONE 2026-08-07** — PR #269, merged as `f4fc4779` and
+   live. Locale resolution moved from the root layout to `src/app/(dashboard)/layout.tsx:23`.
+   Production `/` now serves `cache-control: public, max-age=0, must-revalidate` with
+   `x-nextjs-prerender: 1` and `x-vercel-cache: HIT` on repeat requests; `/dashboard` still
+   307-redirects and did not become static. `bf-cache` passes. As this document predicted, it did
+   not move LCP. One acceptance criterion is still unverified: locale switching on the authenticated
+   surface, which needs a login and is blocked on the production database.
+
+3b. **Set `assert.aggregationMethod: 'median'` in `lighthouserc.js`.** One line. The gate currently
+   judges every budget on the best of three runs, which is how `/` reads green on Speed Index while
+   its median run is 48% over budget. Expect the change to turn `speed-index` red immediately.
+
+3c. **Add `/api/health` to the middleware public allowlist, and answer API routes with a JSON 401
+   rather than a 307 to HTML.** `src/lib/auth/update-session.ts` allowlists `/api/cron`,
+   `/api/auth`, `/api/public` and four OAuth callbacks; the health endpoint is absent, so an
+   external monitor that follows redirects fetches the login page and reports the application
+   healthy. This is the same class of defect PR #268 closed elsewhere and it is still open here.
 4. **Set `STAGING_SSH_HOST`, `STAGING_SSH_USER` and `STAGING_SSH_KEY`** — the staging deploy fails
    on an empty `ssh-keyscan` host, confirmed 2026-08-07 (UNI-2106), and skips its smoke tests as a
    result. Separately, either restore `deployment/scripts/smoke-tests.sh` or remove the workflow
