@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Package, FileText, Award, Wrench, LayoutDashboard, Truck } from 'lucide-react';
 import { CcwLogo } from '@/components/brand/ccw-logo';
+import { Toaster } from '@/components/ui/toast';
 
 export const metadata: Metadata = {
   title: 'Customer Portal — CCW',
@@ -76,6 +77,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       <footer className="border-t bg-white py-4 text-center text-xs text-slate-400">
         CCW Online Pty Ltd — Customer Self-Service Portal
       </footer>
+      <Toaster />
     </div>
   );
 }
