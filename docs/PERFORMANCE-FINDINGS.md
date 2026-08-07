@@ -549,12 +549,17 @@ median of 3 simulated-throttle runs against `https://ccw-crm-web.vercel.app`):
 | `/login` | 2657ms | (login surface) | 1082ms | 1425ms |
 | `/register` | 2681ms | (register surface) | 1397ms | 2799ms |
 
-Pre-#274 median LCP on `/` in the same harness was **2883ms** with the logo **SPAN** as LCP.
-After #274 the number is essentially unchanged, but the **element is honest** (H1). Phase split on
-the median `/` run: TTFB ~632ms (22%), render delay ~2250ms (78%). Live CSS on `/` was still two
-stylesheets (~335KB utilities + ~1.6KB font) until the follow-up public-source split.
+The rest of this subsection restates what `4a178fa9` reported and carries the caveat above; none of
+it is independently established here. As reported: pre-#274 median LCP on `/` in the same harness
+was 2883ms with the logo SPAN as LCP, so after #274 the number would be essentially unchanged while
+the element became the H1; phase split on the median `/` run TTFB ~632ms (22%), render delay
+~2250ms (78%); and live CSS on `/` was still two stylesheets (~335KB utilities + ~1.6KB font) until
+the follow-up public-source split.
 
-The budget (2500ms) remains red. Next measured slice: cut public-route render-blocking CSS bytes.
+If those figures hold, the 2500ms budget is still red — though that conclusion does not depend on
+them alone: the last corroborated Lighthouse run in this document puts `/` at a 3393ms median, well
+over budget, and no artifact since shows otherwise. The next measured slice is cutting public-route
+render-blocking CSS bytes.
 
 **That next slice has since landed, and is NOT in the table above.** PR #276 (`05945597`, "Halve
 public-route CSS: slim Tailwind sources for marketing/auth") merged at 12:17, five minutes after
