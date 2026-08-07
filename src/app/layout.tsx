@@ -3,11 +3,8 @@ import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
 import { Toaster } from '@/components/ui/toast';
 import { defaultLocale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import { Toaster as HotToaster } from 'react-hot-toast';
 import './globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
 
 /**
  * This layout must not read cookies(), headers() or any other dynamic API.
@@ -17,6 +14,11 @@ const inter = Inter({ subsets: ['latin'] });
  * pages, which are then served `no-store` and are never edge-cached. Locale is
  * resolved in `(dashboard)/layout.tsx` instead, where the route is already
  * dynamic because it is behind authentication.
+ *
+ * Inter is intentionally NOT loaded here. Marketing/auth surfaces use
+ * Plus Jakarta Sans; the dashboard loads Inter in its own layout. Loading both
+ * font CSS files from the root forced three render-blocking stylesheets on `/`
+ * and dominated LCP render-delay (traced 2026-08-07).
  */
 
 export const viewport: Viewport = {
@@ -164,7 +166,7 @@ export default function RootLayout({
 
   return (
     <html lang={defaultLocale} suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         <RouteProgressBar />
         {children}
         <Toaster />

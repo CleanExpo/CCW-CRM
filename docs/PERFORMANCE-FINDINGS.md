@@ -9,6 +9,11 @@ below came from a run recorded here.
 > comparison rather than corrected in place. The post-fix numbers, and what did and did not change,
 > are in "After the fix" near the end. Two new defects were found while verifying it, both recorded
 > there.
+>
+> **Three further PRs (#271, #272, #273) merged later the same day, after every measurement in this
+> document was taken.** No number here describes production as it stands. What changed, and which
+> findings it stales, is in "What has landed since these measurements" at the end — read that before
+> acting on any figure above.
 
 **Read the causation section carefully.** An earlier revision of this document asserted a root
 cause it had not established. That is corrected below and the correction is left visible, because
@@ -219,7 +224,11 @@ Recommended fix: set `assert.aggregationMethod: 'median'` in `lighthouserc.js`. 
 `speed-index` red on `/` immediately. That is the point — it is red today and the gate is not saying
 so.
 
-#### Review of the fix in flight — PR #271, `cursor/aaa-honest-gates`
+#### Review of PR #271, `cursor/aaa-honest-gates` — reviewed in flight, since merged
+
+> **#271 merged as `41ab85ae` at 11:27 on 2026-08-07, as-written.** This review was written while
+> the PR was open; the gap it identifies was not addressed before merge, so everything below now
+> describes `main` rather than a proposed change.
 
 That branch fixes this (`316575a3`, "Judge Lighthouse budgets on the median run, not the luckiest
 one"). Reviewed here rather than re-implemented. **The fix is correct but incomplete.**
@@ -254,6 +263,9 @@ assert: {
   assertions: { /* per-assertion overrides as written */ },
 }
 ```
+
+Neither defect is fixed here — but see "What has landed since these measurements" at the end of this
+document, which records what #271 and #272 subsequently did to both.
 
 The companion commit `bd684e30` (`/api/health` exact-match public path) is **correct as written**,
 and deliberately exact-match so `/api/health/deep` is not exposed by prefix. One consequence worth
@@ -368,3 +380,137 @@ server-side defect.
 Lighthouse scoring it 1 before #269. It scores **0.5** after, and it is now the leading candidate
 for the render delay. That entry is annotated in place rather than deleted, and this section
 supersedes it.
+
+**Since acted on.** PR #272 (`c367cb0c`) cut the dual-font CSS chain on the strength of this trace.
+The candidate was pursued; whether it paid off is unmeasured. See the end of this document.
+
+---
+
+## A second, independent trace — run concurrently, kept alongside
+
+The section that follows was written on `main` (PR #273) by a separate session working the same
+question at the same time, and is reproduced here unaltered. It reaches its conclusion by a
+different route: Chrome DevTools protocol under **applied** throttling, where the section above
+uses Lighthouse's **simulated** (Lantern) throttling.
+
+The two are complementary, not contradictory, and that section says so itself. Read together:
+
+- The section above localises the gap to the **render phase** and names the render-blocking
+  stylesheets that sit inside it. That holds under simulated throttling.
+- The section below establishes **which element LCP is credited to**, and shows that under applied
+  throttling FCP and LCP are the same event, because an `opacity: 0` reveal makes the hero
+  ineligible and a 2,226px² logo tagline wins by default.
+
+Both can be true, and the second sharpens the first: the render-delay window is real, but the
+element being measured inside it is a header caption rather than the hero. Neither section is
+deleted in favour of the other.
+
+## The trace decided: LCP is credited to the wrong element
+
+Measured 2026-08-07 against `https://ccw-crm-web.vercel.app` **after** PR #269 (`f4fc4779`) and
+PR #270 (`9317f54f`) — a newer build than the runs recorded above. Method: Chrome DevTools
+protocol, **applied** throttling (4× CPU, Slow 4G, 412×823 mobile viewport), CDN warm
+(`x-vercel-cache: HIT`). Five navigations.
+
+### What was observed
+
+The LCP element is the **logo tagline** — `src/components/brand/ccw-logo.tsx:144`, rendered
+`block truncate font-medium text-[11px] sm:text-xs text-zinc-400`, area **2,226px²**. This is the
+same element the earlier runs named, now traced to its source.
+
+In the same viewport, painted and opaque, sit far larger candidates:
+
+| Element | Area | In SSR HTML? |
+| --- | --- | --- |
+| Hero `<p>` "Replace fragmented spreadsheets…" | 46,185px² | yes |
+| Hero `<h1>` "Run quotes, stock, and fulfilment…" | 40,667px² | yes |
+| Logo tagline `<span>` (**credited as LCP**) | 2,226px² | yes |
+
+A `PerformanceObserver` on `largest-contentful-paint` emitted **exactly one entry** across the
+load — the 2,226px² span. The hero paragraph, twenty-one times larger and present in the
+server-rendered HTML, never became a candidate at all.
+
+### Why — established by controlled experiment, not inference
+
+`src/components/landing/marketing-landing.tsx:154` wraps the entire hero in
+`animate-marketing-reveal`. That keyframe (`src/app/globals.css:592`) begins at **`opacity: 0`**
+and runs 0.75s. Chrome does not treat an element painted at `opacity: 0` as an LCP candidate.
+
+The experiment: same URL, same throttling, injecting
+`.animate-marketing-reveal{animation:none;opacity:1;transform:none}` before first paint and
+changing nothing else.
+
+- Animation **on** (production today): one LCP entry — the 2,226px² span.
+- Animation **off**: two entries — the span, then the hero paragraph at **44,500px²**.
+
+Disabling the reveal is what makes the hero eligible. That is the cause.
+
+### The two-second FCP-to-LCP gap did not reproduce
+
+Under applied throttling, across two clean runs:
+
+| Run | FCP | LCP | LCP element |
+| --- | --- | --- | --- |
+| 4 | 836ms | 836ms | logo tagline, 2,226px² |
+| 5 | 800ms | 800ms | logo tagline, 2,226px² |
+
+FCP and LCP are **the same event**, which follows directly from the section above: the credited
+element paints at first paint, and the hero — which paints later, behind the fade — is never
+counted. There is no gap to explain in these runs.
+
+This does **not** refute the 3293ms figure. That number came from Lighthouse's default *simulated*
+(Lantern) throttling, which models metrics rather than measuring them under applied throttling.
+The two methodologies are not comparable and neither supersedes the other.
+
+### What is NOT established here
+
+- **`npm run test:lighthouse` was not re-run.** No claim is made that any Lighthouse score or
+  budget assertion has changed. The re-baseline against `lighthouserc.js` remains outstanding, and
+  until it runs, the pass/fail table earlier in this document stands as the last real LHCI result.
+- **No claim that this makes the page faster.** Making the hero LCP-eligible will most likely make
+  the *reported* LCP worse, because a larger, later element becomes the candidate. The defect is
+  that the metric currently describes a header caption rather than the hero, so any LCP tuning
+  aimed at today's number is aimed at the wrong element.
+- Runs hit a warm CDN. A cold-cache profile was not measured.
+
+### The actual decision this surfaces
+
+The 0.75s `opacity: 0` reveal delays when a real user sees the hero while simultaneously hiding
+that delay from LCP. Whether to keep it is a design call, not a performance one — but the budget
+in `lighthouserc.js` should not be read as describing hero render time while it stands.
+
+---
+
+## What has landed since these measurements — and what it costs them
+
+Every measurement above was taken against `f4fc4779` (PR #269) or `9317f54f` (PR #270). Three
+further PRs merged to `main` on 2026-08-07 **after** those runs. This section exists so nobody
+reads a number above as describing production today.
+
+| PR | Merged | What it changed | Effect on this document |
+| --- | --- | --- | --- |
+| #271 `41ab85ae` | 11:27 | `lighthouserc.js` median aggregation, `/api/health` on the public allowlist | Both defects recorded below are now **fixed on main** — one of them only partly |
+| #272 `c367cb0c` | 11:34 | Stopped loading Inter from the root layout; preloads Plus Jakarta on marketing | Acts directly on the render-blocking CSS chain traced above |
+| #273 `62fb5248` | 11:45 | Appended the applied-throttling trace reproduced above | Complementary; already reconciled |
+
+**The two defects this document found are no longer open, but one is only half-closed.**
+
+`/api/health` is fixed. #271 added it to the public allowlist as an exact match, exactly as
+reviewed above.
+
+The optimistic-gate defect is **partly** fixed, and the gap identified in the PR #271 review below
+is now a live defect on `main` rather than a comment on a pull request. #271 merged `316575a3`
+as-written: `aggregationMethod: 'median'` on nine enumerated assertions, and **not** at the
+`assert:` level. Every assertion inherited from `preset: 'lighthouse:recommended'` therefore still
+runs on the `optimistic` default today. The one-line amendment proposed below has not been applied.
+`document-latency-insight` on `/` still scores 0.00 on one run in three while the gate reports 1.00.
+
+**The CSS-chain finding was consumed, and its measurements are now stale.** #272 cut the dual-font
+chain this document traced — its comment in `src/app/layout.tsx` cites "traced 2026-08-07", which is
+this work. The diagnosis was acted on. The consequence is that the three-stylesheet table above, the
+2030ms longest chain, and the 2475ms render-delay figure all describe the **pre-#272** build. They
+are kept as the baseline the change should be measured against, and they are **not** current.
+
+**No re-measurement has been run against #272.** Whether cutting the chain moved LCP is unknown and
+unclaimed. That re-run is the next piece of work, and until it happens no scores in this document
+describe production as it stands.

@@ -138,6 +138,13 @@ that PR. **LCP did not move** — 3105ms best / 3393ms median on `/`, still fail
 no longer reported as failing, but the gate is judging it on its best of three runs; its median on
 `/` is 4451ms against a 3000ms budget. Both are recorded in `docs/PERFORMANCE-FINDINGS.md`.
 
+Three further PRs merged later the same day, after those runs: **#271** (`41ab85ae`) made the gate
+median-aggregated and put `/api/health` on the public allowlist, **#272** (`c367cb0c`) cut the
+dual-font CSS chain the trace had localised, and **#273** (`62fb5248`) added an applied-throttling
+trace showing LCP is credited to a 2,226px² logo tagline rather than the hero. **Lighthouse has not
+been re-run against any of them**, so the figures in this section describe the pre-#272 build and
+are a baseline, not current state.
+
 ---
 
 ## 2. Corrections to the 2026-06-11 revision
@@ -177,9 +184,9 @@ this file claimed both did.
 | Scheduled crons | Production-grade **as of 2026-08-07** | 8 of 17 were 501 stubs and were removed; `validate-vercel-crons.js` blocks their return |
 | Design tokens | Single source **as of 2026-08-07** | `globals.css`; orphaned `design-system.css` deleted. See `docs/design-system.md` |
 | Accessibility | **Passing on the public surface** | The 23 contrast violations are fixed and live: axe found 23 on this URL before the deploy and 0 after, and Lighthouse's `color-contrast` now passes. The authenticated surface stays unmeasured while login is down |
-| Core Web Vitals | **Failing** | LCP 3105ms best / 3393ms median on `/` vs a 2500ms budget, re-measured 2026-08-07 after PR #269. Cause NOT established: server response is 22ms with zero savings available, so it is not origin latency. The gap is the two seconds between FCP (1228ms) and LCP. PR #269 made the app cacheable and fixed `bf-cache`; it did not move LCP, exactly as predicted. See `docs/PERFORMANCE-FINDINGS.md` |
-| Performance gate itself | **Under-reporting** | `lighthouserc.js` sets no `aggregationMethod`, so lhci's `optimistic` default judges each budget on the **best** of three runs. `speed-index` reads green on `/` while its median run is 4451ms against a 3000ms budget. Fix is one line; expect it to turn red |
-| `/api/health` | **Cannot report ill health** | Not on the middleware public allowlist, so an unauthenticated probe gets a 307 to `/login`. `curl -fL` exits 0 against a 200 HTML login page — a monitor following redirects reports this application healthy regardless of its actual state. Pre-existing, not from #269 |
+| Core Web Vitals | **Failing as last measured; re-measurement outstanding** | LCP 3105ms best / 3393ms median on `/` vs a 2500ms budget, measured after PR #269. Not origin latency — server response is 22ms with zero savings. The trace localised 73% of LCP to render delay behind three render-blocking stylesheets; PR #272 (`c367cb0c`) then cut that chain, and **nothing has been re-run since**, so whether it still fails is unknown. Separately, PR #273 established the credited LCP element is a 2,226px² logo tagline, not the hero, because an `opacity: 0` reveal makes the hero ineligible — so the budget is not currently measuring hero render time. See `docs/PERFORMANCE-FINDINGS.md` |
+| Performance gate itself | **Partly fixed — preset audits still optimistic** | PR #271 (`41ab85ae`) set `aggregationMethod: 'median'` on nine enumerated assertions, which closes `speed-index`. It did **not** set it at the `assert:` level, so every assertion inherited from `preset: 'lighthouse:recommended'` still runs on lhci's `optimistic` default. `document-latency-insight` on `/` scores 0.00 on one run in three while the gate reports 1.00. Still a one-line fix |
+| `/api/health` | **Fixed 2026-08-07** | PR #271 (`41ab85ae`) added it to the middleware public allowlist as an exact match, so `/api/health/deep` is not exposed by prefix. It previously 307'd to `/login`, and `curl -fL` exited 0 against a 200 HTML page. Expect monitors to begin reporting the ERP unhealthy — the endpoint returns 503 while `hasDatabaseConfig()` is false, which is production's state per Section 0. That is the fix working |
 | Webhook retry, autonomous ops, health-score refresh, quote-expiry alerts, onboarding emails, auto-reorder | **Not built** | Their endpoints returned 501 and were removed. They were never running |
 | AP2 agent payments (10 routes), HeyGen (5 routes) | **Not built** | Hard 501 via `notImplementedResponse` |
 | Marketplace / multi-channel | **Demo-grade** | Ships a "Demo Mode — all channels running with mock data" banner in production |
@@ -245,6 +252,14 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    918ms, so render delay must fall to about 1580ms. Next step is a change measured against this
    baseline, not more diagnosis.
 
+   **The change landed; the measurement did not.** PR #272 (`c367cb0c`) stopped loading Inter from
+   the root layout and preloads Plus Jakarta on marketing surfaces, cutting the chain traced above.
+   Lighthouse has **not** been re-run against it, so the numbers in this item are the pre-#272
+   baseline. **Re-running `npm run test:lighthouse` against `main` is now the outstanding step** —
+   and PR #273 established the credited LCP element is a 2,226px² logo tagline rather than the hero
+   (an `opacity: 0` reveal makes the hero ineligible), so read whatever it reports with that in
+   mind: the budget is not currently measuring hero render time.
+
 3a. ~~**Make the application cacheable.**~~ **DONE 2026-08-07** — PR #269, merged as `f4fc4779` and
    live. Locale resolution moved from the root layout to `src/app/(dashboard)/layout.tsx:23`.
    Production `/` now serves `cache-control: public, max-age=0, must-revalidate` with
@@ -253,15 +268,18 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    not move LCP. One acceptance criterion is still unverified: locale switching on the authenticated
    surface, which needs a login and is blocked on the production database.
 
-3b. **Set `assert.aggregationMethod: 'median'` in `lighthouserc.js`.** One line. The gate currently
-   judges every budget on the best of three runs, which is how `/` reads green on Speed Index while
-   its median run is 48% over budget. Expect the change to turn `speed-index` red immediately.
+3b. **Set `aggregationMethod: 'median'` at the `assert:` level in `lighthouserc.js`.** Still one
+   line, and still open. PR #271 (`41ab85ae`) set it on nine enumerated assertions, which fixed
+   `speed-index`, but not at the `assert:` level — so every assertion inherited from
+   `preset: 'lighthouse:recommended'` is still graded on its best of three runs.
+   `document-latency-insight` on `/` scores 0.00 on one run in three while the gate reports 1.00.
 
-3c. **Add `/api/health` to the middleware public allowlist, and answer API routes with a JSON 401
-   rather than a 307 to HTML.** `src/lib/auth/update-session.ts` allowlists `/api/cron`,
-   `/api/auth`, `/api/public` and four OAuth callbacks; the health endpoint is absent, so an
-   external monitor that follows redirects fetches the login page and reports the application
-   healthy. This is the same class of defect PR #268 closed elsewhere and it is still open here.
+3c. ~~**Add `/api/health` to the middleware public allowlist.**~~ **DONE 2026-08-07** — PR #271
+   (`41ab85ae`), added as an exact match so `/api/health/deep` is not exposed by prefix. Monitors
+   should now start correctly reporting the ERP unhealthy, because the endpoint returns 503 while
+   the production database is unconfigured. **Still open:** the broader shape — every other API
+   route under the middleware matcher answers an unauthenticated caller with a 307 to HTML rather
+   than a JSON 401, so API clients receive a login page where they expect JSON.
 4. **Set `STAGING_SSH_HOST`, `STAGING_SSH_USER` and `STAGING_SSH_KEY`** — the staging deploy fails
    on an empty `ssh-keyscan` host, confirmed 2026-08-07 (UNI-2106), and skips its smoke tests as a
    result. Separately, either restore `deployment/scripts/smoke-tests.sh` or remove the workflow
