@@ -14,7 +14,17 @@ import {
   getCin7CoreCredentials,
   pingCin7Core,
 } from '@/lib/integrations/cin7-core';
+import {
+  healOptixFieldMismatchesFromCatalogs,
+  summarizeFieldHeal,
+} from '@/lib/integrations/cin7-field-heal';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
+import {
+  buildProductFieldMismatchBreakdown,
+  emptyProductFieldMismatchBreakdown,
+  productFieldsMatch,
+  type Cin7ProductFieldMismatchBreakdown,
+} from '@/lib/integrations/cin7-product-heal';
 import {
   buildReferenceExceptionItems,
   buildReferenceExceptionSummary,
@@ -25,7 +35,6 @@ import {
   type Cin7ReferenceExceptionEntity,
   type Cin7ReferenceExceptionSummary,
 } from '@/lib/integrations/cin7-reconciliation-reference';
-import { healOptixStockFieldMismatches } from '@/lib/integrations/cin7-stock-prune';
 import {
   buildSyncCompletenessSummary,
   type Cin7SyncCompletenessRow,
@@ -100,6 +109,8 @@ export type Cin7ReconciliationSnapshot = {
   sync_completeness?: Cin7SyncCompletenessRow[];
   /** When true, UI must not treat exception summary as sign-off clean. */
   acceptance_blocked?: boolean;
+  /** Per-field product mismatch counts (matched SKUs only). */
+  products_field_mismatch_breakdown?: Cin7ProductFieldMismatchBreakdown;
 };
 
 export type Cin7ExceptionEntity =
@@ -400,7 +411,7 @@ export async function buildCin7Reconciliation(
   }
 
   const optixStarted = Date.now();
-  const {
+  let {
     productRows,
     customerRows,
     internalCustomerRows,
@@ -411,32 +422,65 @@ export async function buildCin7Reconciliation(
     customerExtraWithoutId,
     supplierTotal,
     supplierExtraWithoutId,
-    referenceSnapshot: referenceSnapshotInitial,
+    referenceSnapshot,
   } = await optixPromise;
-  let referenceSnapshot = referenceSnapshotInitial;
   const optixMs = Date.now() - optixStarted;
 
-  const optixByVisibility: Record<string, number> = {};
-  const optixStyleCodes = new Set<string>();
-  const optixProductBySku = new Map<
-    string,
-    { name: string; price: number; stock: number; visibility: string; isActive: boolean }
-  >();
+  const rebuildOptixProductMaps = (rows: typeof productRows) => {
+    const byVisibility: Record<string, number> = {};
+    const styleCodes = new Set<string>();
+    const bySku = new Map<
+      string,
+      { name: string; price: number; stock: number; visibility: string; isActive: boolean }
+    >();
+    for (const row of rows) {
+      const visibility =
+        row.cin7Visibility ??
+        (row.category?.includes('·') ? row.category.split('·').pop()?.trim() : 'Unknown') ??
+        'Unknown';
+      byVisibility[visibility] = (byVisibility[visibility] ?? 0) + 1;
+      if (row.cin7StyleCode) styleCodes.add(row.cin7StyleCode);
+      bySku.set(row.sku, {
+        name: row.name,
+        price: Number(row.price),
+        stock: row.stock,
+        visibility,
+        isActive: row.isActive,
+      });
+    }
+    return { byVisibility, styleCodes, bySku };
+  };
 
-  for (const row of productRows) {
-    const visibility =
-      row.cin7Visibility ??
-      (row.category?.includes('·') ? row.category.split('·').pop()?.trim() : 'Unknown') ??
-      'Unknown';
-    optixByVisibility[visibility] = (optixByVisibility[visibility] ?? 0) + 1;
-    if (row.cin7StyleCode) optixStyleCodes.add(row.cin7StyleCode);
-    optixProductBySku.set(row.sku, {
-      name: row.name,
-      price: row.price,
-      stock: row.stock,
-      visibility,
-      isActive: row.isActive,
-    });
+  let {
+    byVisibility: optixByVisibility,
+    styleCodes: optixStyleCodes,
+    bySku: optixProductBySku,
+  } = rebuildOptixProductMaps(productRows);
+
+  // Auto-heal field diffs for products/customers/suppliers/branches/internal/stock
+  // from the live Cin7 catalogs already in memory. Per-entity skips if that slice is dirty.
+  if (source === 'omni' && omniCatalogs) {
+    const healResult = await healOptixFieldMismatchesFromCatalogs(ownerUserId, omniCatalogs);
+    if (healResult.healed_total > 0) {
+      const reloaded = await loadOptixMasterForReconciliation(ownerUserId);
+      productRows = reloaded.productRows;
+      customerRows = reloaded.customerRows;
+      internalCustomerRows = reloaded.internalCustomerRows;
+      internalCustomerCount = reloaded.internalCustomerCount;
+      supplierRows = reloaded.supplierRows;
+      branchRows = reloaded.branchRows;
+      customerTotal = reloaded.customerTotal;
+      customerExtraWithoutId = reloaded.customerExtraWithoutId;
+      supplierTotal = reloaded.supplierTotal;
+      supplierExtraWithoutId = reloaded.supplierExtraWithoutId;
+      referenceSnapshot = reloaded.referenceSnapshot;
+      ({
+        byVisibility: optixByVisibility,
+        styleCodes: optixStyleCodes,
+        bySku: optixProductBySku,
+      } = rebuildOptixProductMaps(productRows));
+      notes.push(summarizeFieldHeal(healResult));
+    }
   }
 
   const optixCustomerById = new Map(
@@ -495,14 +539,37 @@ export async function buildCin7Reconciliation(
   const productExceptions = countExceptions(cin7ProductBySku, optixProductBySku, (sku) => {
     const cin7 = cin7ProductBySku.get(sku)!;
     const optix = optixProductBySku.get(sku)!;
-    return (
-      normalize(optix.name) === normalize(cin7.name) &&
-      Math.abs(optix.price - cin7.price) <= 0.01 &&
-      optix.stock === cin7.stock &&
-      optix.isActive === cin7.isActive &&
-      normalize(optix.visibility) === normalize(cin7.visibility)
-    );
+    return productFieldsMatch({ sku, ...optix }, { sku, ...cin7 });
   });
+
+  const productsFieldMismatchBreakdown = buildProductFieldMismatchBreakdown(
+    new Map(
+      [...cin7ProductBySku.entries()].map(([sku, row]) => [
+        sku,
+        {
+          sku,
+          name: row.name,
+          price: row.price,
+          stock: row.stock,
+          visibility: row.visibility,
+          isActive: row.isActive,
+        },
+      ])
+    ),
+    new Map(
+      [...optixProductBySku.entries()].map(([sku, row]) => [
+        sku,
+        {
+          sku,
+          name: row.name,
+          price: row.price,
+          stock: row.stock,
+          visibility: row.visibility,
+          isActive: row.isActive,
+        },
+      ])
+    )
+  ).breakdown;
 
   const customerExceptions = countExceptions(cin7CustomerById, optixCustomerById, (id) => {
     const cin7 = cin7CustomerById.get(id)!;
@@ -603,26 +670,6 @@ export async function buildCin7Reconciliation(
       omniCatalogs,
       referenceSnapshot
     );
-    // Stock qtys move constantly in Cin7. When keys already match, push live
-    // available/on-hand/incoming onto Optix so recon does not stay stuck on 1 field diff.
-    if (referenceExceptions.stock_levels_field_mismatches > 0) {
-      const { healed } = await healOptixStockFieldMismatches(
-        ownerUserId,
-        omniCatalogs.stockLevels.stockLevels
-      );
-      if (healed > 0) {
-        referenceSnapshot = await loadOptixReferenceSnapshot(ownerUserId);
-        referenceOptix = referenceCountsFromOptixSnapshot(referenceSnapshot);
-        referenceExceptions = await buildReferenceExceptionSummary(
-          ownerUserId,
-          omniCatalogs,
-          referenceSnapshot
-        );
-        notes.push(
-          `Aligned ${healed} stock row${healed === 1 ? '' : 's'} to live Cin7 quantities.`
-        );
-      }
-    }
     notes.push(
       'Warehouses in Cin7 Omni map to Branches; stock levels are per branch from /v1/Stock.'
     );
@@ -724,6 +771,9 @@ export async function buildCin7Reconciliation(
     fetch_meta: fetchMeta,
     notes: uniqueNotes(notes),
     acceptance_blocked: maskExceptions,
+    products_field_mismatch_breakdown: maskExceptions
+      ? emptyProductFieldMismatchBreakdown()
+      : productsFieldMismatchBreakdown,
   };
 
   const syncCompleteness =
