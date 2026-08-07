@@ -589,9 +589,11 @@
   }
 }
 
+/* Transform-only: starting at opacity:0 made the hero ineligible for LCP
+   (Chrome credits the tiny logo tagline instead). Keep motion without lying. */
 @keyframes marketing-reveal {
   from {
-    opacity: 0;
+    opacity: 1;
     transform: translateY(14px);
   }
   to {
@@ -603,10 +605,12 @@
 @media (prefers-reduced-motion: reduce) {
   @keyframes marketing-reveal {
     from {
-      opacity: 0;
+      opacity: 1;
+      transform: none;
     }
     to {
       opacity: 1;
+      transform: none;
     }
   }
 }
