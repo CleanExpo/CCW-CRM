@@ -1,3 +1,4 @@
+import '../globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Package, FileText, Award, Wrench, LayoutDashboard, Truck } from 'lucide-react';
