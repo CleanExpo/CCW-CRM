@@ -81,19 +81,47 @@ module.exports = {
       // Assertions for performance budgets
       preset: 'lighthouse:recommended',
 
+      // AAA honesty: never grade budgets on the best of N runs.
+      // LHCI defaults to aggregationMethod=optimistic, which lets a single lucky
+      // run green-wash LCP/SI while the median still misses the bar (measured
+      // 2026-08-07: gate reported LCP 3105ms while runs were 3105/3393/3853).
       assertions: {
-        // Core Web Vitals
-        'first-contentful-paint': ['error', { maxNumericValue: 2000 }], // FCP < 2s
-        'largest-contentful-paint': ['error', { maxNumericValue: 2500 }], // LCP < 2.5s
-        'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }], // CLS < 0.1
-        'total-blocking-time': ['error', { maxNumericValue: 300 }], // TBT < 300ms
-        'speed-index': ['error', { maxNumericValue: 3000 }], // SI < 3s
+        // Core Web Vitals — median of numberOfRuns must beat the budget
+        'first-contentful-paint': [
+          'error',
+          { maxNumericValue: 2000, aggregationMethod: 'median' },
+        ],
+        'largest-contentful-paint': [
+          'error',
+          { maxNumericValue: 2500, aggregationMethod: 'median' },
+        ],
+        'cumulative-layout-shift': [
+          'error',
+          { maxNumericValue: 0.1, aggregationMethod: 'median' },
+        ],
+        'total-blocking-time': [
+          'error',
+          { maxNumericValue: 300, aggregationMethod: 'median' },
+        ],
+        'speed-index': [
+          'error',
+          { maxNumericValue: 3000, aggregationMethod: 'median' },
+        ],
 
-        // Overall scores (0-1, where 0.9 = 90%)
-        'categories:performance': ['error', { minScore: 0.9 }],
-        'categories:accessibility': ['error', { minScore: 0.9 }],
-        'categories:best-practices': ['error', { minScore: 0.9 }],
-        'categories:seo': ['error', { minScore: 0.9 }],
+        // Overall scores (0-1, where 0.9 = 90%) — median, not best run
+        'categories:performance': [
+          'error',
+          { minScore: 0.9, aggregationMethod: 'median' },
+        ],
+        'categories:accessibility': [
+          'error',
+          { minScore: 0.9, aggregationMethod: 'median' },
+        ],
+        'categories:best-practices': [
+          'error',
+          { minScore: 0.9, aggregationMethod: 'median' },
+        ],
+        'categories:seo': ['error', { minScore: 0.9, aggregationMethod: 'median' }],
 
         // Accessibility
         'color-contrast': 'error',
