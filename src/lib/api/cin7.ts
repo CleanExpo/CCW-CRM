@@ -378,6 +378,52 @@ export async function getCin7Reconciliation(options?: {
   );
 }
 
+/** Push live Cin7 fields onto Optix for all entities with field diffs (matched keys only). */
+export async function healCin7FieldMismatches(options?: {
+  entities?: Array<
+    'products' | 'customers' | 'suppliers' | 'branches' | 'internal-customers' | 'stock'
+  >;
+}): Promise<{
+  healed_total: number;
+  summary: string;
+  by_entity: {
+    products: { healed: number; checked: number };
+    customers: { healed: number; checked: number };
+    suppliers: { healed: number; checked: number };
+    branches: { healed: number; checked: number };
+    internal_customers: { healed: number; checked: number };
+    stock: { healed: number; checked: number };
+  };
+  errors: string[];
+  accepted?: boolean;
+}> {
+  return apiClient.post(
+    '/api/integrations/cin7/field-heal',
+    options?.entities ? { entities: options.entities } : {},
+    undefined,
+    300_000
+  );
+}
+
+/** @deprecated Prefer healCin7FieldMismatches — products-only wrapper. */
+export async function healCin7ProductFieldMismatches(): Promise<{
+  healed: number;
+  checked: number;
+  cin7_skus: number;
+  mismatched_before: number;
+  breakdown_before: {
+    name: number;
+    price: number;
+    stock: number;
+    is_active: number;
+    visibility: number;
+  };
+  errors: string[];
+  accepted?: boolean;
+}> {
+  return apiClient.post('/api/integrations/cin7/product-heal', undefined, undefined, 300_000);
+}
+
 export async function getCin7ExceptionReport(
   entity: import('@/lib/integrations/cin7-reconciliation').Cin7ExceptionEntity,
   limit = 100,
