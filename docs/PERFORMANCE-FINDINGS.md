@@ -3,6 +3,18 @@
 Measured against `https://ccw-crm-web.vercel.app` after commit `95d61d82` deployed. Every number
 below came from a run recorded here.
 
+> **Re-measured 2026-08-07, later the same day, after `f4fc4779` (PR #269) deployed.** The caching
+> fix this document called for has since landed and is live. The "Current state" table and the
+> uncacheable section below describe the **pre-#269** production, and are kept for the before/after
+> comparison rather than corrected in place. The post-fix numbers, and what did and did not change,
+> are in "After the fix" near the end. Two new defects were found while verifying it, both recorded
+> there.
+>
+> **Four further PRs (#271, #272, #273, #274) merged later the same day, after every measurement in
+> this document was taken.** No number here describes production as it stands, and #274 changed
+> which element LCP is even credited to. What changed, and which findings it stales, is in "What has
+> landed since these measurements" at the end — read that before acting on any figure above.
+
 **Read the causation section carefully.** An earlier revision of this document asserted a root
 cause it had not established. That is corrected below and the correction is left visible, because
 this repository has spent an entire branch paying down documentation that outran its evidence.
@@ -133,10 +145,265 @@ Recorded so nobody spends the time again:
   different numbers, so no count is asserted — only that every `@font-face` for both families
   carries `swap`.)
 - **JavaScript execution.** TBT is 0–19ms across all three pages.
-- **Render-blocking resources.** Lighthouse scores this 1.
+- **Render-blocking resources.** Lighthouse scored this 1 pre-#269. **This no longer holds** — see
+  "After the fix". It scores 0.5 post-#269, with `overallSavingsMs: 0`. Back on the table, though
+  the audit itself reports nothing to save.
 - **Server response time.** 22ms, zero savings available.
 
 ---
+
+## After the fix — re-measured 2026-08-07 against `f4fc4779` (PR #269)
+
+The fix called for above landed as PR #269 and is live. `1dafaf64` on `cursor/static-public-routes`
+was squash-merged into `f4fc4779`, which is why the branch commit is not an ancestor of `main`.
+
+### Acceptance criteria from "Fixing it"
+
+| # | Criterion | Result |
+| --- | --- | --- |
+| 1 | Cacheable `cache-control`, `x-vercel-cache: HIT` on repeat | **MET** |
+| 2 | Locale switching still works on the authenticated surface | **NOT VERIFIED — blocked.** Needs a login; production has no database and the operator surface 503s. Credentials are founder-gated |
+| 3 | No route that reads user data became static | **MET** |
+| 4 | LCP re-measured, recorded whether or not it moves | **DONE — it did not move.** See below |
+
+**Criterion 1, measured.** `curl -sI https://ccw-crm-web.vercel.app/` now returns
+`cache-control: public, max-age=0, must-revalidate` with `x-nextjs-prerender: 1` and
+`x-vercel-cache: HIT`, stable `age` across three consecutive requests. `/login` returns HIT,
+`/register` PRERENDER. The `no-store` header quoted earlier in this document is gone.
+
+**Criterion 3, measured two-sided.** The `cookies()` read moved from `src/app/layout.tsx` to
+`src/app/(dashboard)/layout.tsx:23`; the root layout now carries a comment forbidding dynamic APIs.
+Live, `/dashboard` 307-redirects to `/login` and carries **no** `x-nextjs-prerender` header, so it
+did not become static. Only `/`, `/login` and `/register` prerender.
+
+### Criterion 4: the prediction held
+
+This document predicted the caching fix "largely will not" move LCP. It did not.
+
+| Page | LCP before (#268) | LCP after (#269) | Budget |
+| --- | --- | --- | --- |
+| `/` | 3293ms | 3105ms best / 3393ms median | 2500ms |
+| `/login` | 2967ms | 2879ms best / 2952ms median | 2500ms |
+| `/register` | 3071ms | 2880ms best / 2883ms median | 2500ms |
+
+Three runs per page. The shift on `/` is ~190ms against a run-to-run spread of 3105–3853ms on that
+same page, so it is within noise. **LCP still fails on every page.** The FCP-to-LCP gap is
+unexplained and remains the open question.
+
+Blocking assertion failures went from five to three:
+
+- `bf-cache` — **now passes**, score 1 on all nine runs. This is the one improvement causally
+  attributable to #269: the audit failed specifically because `cache-control: no-store` bars a page
+  from the back/forward cache, and that header is gone.
+- `speed-index` — no longer reported as failing, but see the gate defect below before believing it.
+- `largest-contentful-paint`, `legacy-javascript-insight`, `network-dependency-tree-insight` — still
+  failing, unchanged.
+
+### New defect: the performance gate is optimistic, so `speed-index` passes on its best run only
+
+`lighthouserc.js` sets no `aggregationMethod`. The lhci default is `optimistic`
+(`node_modules/@lhci/utils/src/assertions.js:139`), and for a `max*` assertion optimistic takes the
+**lowest** of the runs (same file, line 65). The gate therefore judges a three-run collection by its
+best run.
+
+Proved rather than inferred: lhci reported `largest-contentful-paint actual=3104.61` for `/`, and
+the three observed runs were 3105ms, 3393ms and 3853ms — the reported figure is the minimum, not the
+median.
+
+The consequence is not academic:
+
+| Page | Speed Index best | Speed Index median | Budget | Gate says |
+| --- | --- | --- | --- | --- |
+| `/` | 2868ms | **4451ms** | 3000ms | passes |
+
+`/` exceeds the Speed Index budget by 48% on a typical run and the gate reports it green, because
+one run in three came in under. `largest-contentful-paint` fails anyway — it is over budget even at
+its best — which is why this went unnoticed.
+
+Recommended fix: set `assert.aggregationMethod: 'median'` in `lighthouserc.js`. Expect it to turn
+`speed-index` red on `/` immediately. That is the point — it is red today and the gate is not saying
+so.
+
+#### Review of PR #271, `cursor/aaa-honest-gates` — reviewed in flight, since merged
+
+> **#271 merged as `41ab85ae` at 11:27 on 2026-08-07, as-written.** This review was written while
+> the PR was open; the gap it identifies was not addressed before merge, so everything below now
+> describes `main` rather than a proposed change.
+
+That branch fixes this (`316575a3`, "Judge Lighthouse budgets on the median run, not the luckiest
+one"). Reviewed here rather than re-implemented. **The fix is correct but incomplete.**
+
+It sets `aggregationMethod: 'median'` on nine explicitly-listed assertions. It does not set it at
+the `assert:` level, so every assertion inherited from `preset: 'lighthouse:recommended'` still runs
+on the `optimistic` default. Confirmed from lhci's own source: `assertions.js:426` builds each
+audit's options as `{aggregationMethod, ...assertionOptions}`, so a top-level value propagates to
+all assertions and a per-assertion value overrides it. One line at the `assert:` level covers
+everything; nine per-assertion lines cover nine.
+
+This is a live gap, not a theoretical one. Preset audits whose score genuinely varies run-to-run in
+the 2026-08-07 collection, and which the branch therefore still grades on their best run:
+
+| Audit | URL | Scores across 3 runs | Optimistic reports |
+| --- | --- | --- | --- |
+| `document-latency-insight` | `/` | 0.00, 1.00, 1.00 | 1.00 |
+| `mainthread-work-breakdown` | `/` | 0.50, 1.00, 1.00 | 1.00 |
+| `legacy-javascript-insight` | `/`, `/login`, `/register` | 0.00–0.50 | 0.50 |
+| `interactive` | `/`, `/login` | 0.89–0.96 | best |
+
+`document-latency-insight` is the one to look at: one run in three scores it **zero**, and the gate
+reports 1.00. A branch whose stated purpose is "never grade budgets on the best of N runs" still
+does exactly that for every audit it did not enumerate.
+
+Suggested amendment, one line:
+
+```js
+assert: {
+  preset: 'lighthouse:recommended',
+  aggregationMethod: 'median',   // applies to preset assertions too
+  assertions: { /* per-assertion overrides as written */ },
+}
+```
+
+Neither defect is fixed here — but see "What has landed since these measurements" at the end of this
+document, which records what #271 and #272 subsequently did to both.
+
+The companion commit `bd684e30` (`/api/health` exact-match public path) is **correct as written**,
+and deliberately exact-match so `/api/health/deep` is not exposed by prefix. One consequence worth
+stating before it lands: `src/app/api/health/route.ts` returns **503 `unhealthy`** when
+`hasDatabaseConfig()` is false, which is production's current state. Once this ships, monitors will
+correctly start reporting the ERP as unhealthy. That is the fix working, not a regression — the
+endpoint's whole problem was that it could not report ill health. The payload carries only status,
+timestamp, version, uptime, environment and three booleans, so making it public discloses nothing
+sensitive.
+
+### New defect: `/api/health` redirects to an HTML login page, and naive monitors read it as healthy
+
+Found while checking criterion 3. Not caused by #269 — that PR touched three files
+(`src/app/layout.tsx`, `src/app/(dashboard)/layout.tsx`,
+`src/components/landing/marketing-landing.tsx`) and none of them is the middleware.
+
+`src/middleware.ts` matches every path except static assets, and `updateSession` carries a public
+allowlist containing `/api/cron`, `/api/auth`, `/api/public` and four OAuth callback routes.
+`/api/health` is **not** on it, so an unauthenticated request is answered with
+`NextResponse.redirect` to `/login` rather than a 401.
+
+Measured, with the check a monitor would actually run:
+
+```
+$ curl -sfL -o /dev/null -w "%{http_code} %{url_effective}\n" https://ccw-crm-web.vercel.app/api/health
+200 https://ccw-crm-web.vercel.app/login?redirect=%2Fapi%2Fhealth
+$ echo $?
+0
+```
+
+`curl -f -L` exits 0. Any uptime check that follows redirects and treats a non-error status as
+healthy reports this application healthy by fetching its login page. The endpoint that exists to
+report health cannot currently report ill health from outside.
+
+The broader shape of it: every API route under the matcher answers an unauthenticated caller with a
+307 to HTML instead of a JSON 401, so API clients receive a login page where they expect JSON.
+
+Neither defect is fixed here. Both need their own branch and review — this document is a record of
+what was measured, not a change.
+
+---
+
+## The FCP-to-LCP gap, traced
+
+Earlier revisions of this document said the gap needed "a trace, not another hypothesis". The trace
+was run. It is in the post-#269 lhci artifacts under `.lighthouseci/`, and it answers the question.
+
+### What the trace says
+
+Lighthouse's own LCP phase breakdown for `/`, from the run measuring LCP at 3393ms:
+
+| Phase | Timing | % of LCP |
+| --- | --- | --- |
+| TTFB | 918ms | 27% |
+| Load Delay | 0ms | 0% |
+| Load Time | **0ms** | 0% |
+| Render Delay | **2475ms** | **73%** |
+
+**Load Time is zero.** The LCP element is fetching nothing — it is a text node, and the trace
+confirms no resource load stands between the document arriving and that text being able to paint.
+Nearly three-quarters of LCP is the browser waiting to render something it already has.
+
+### What that eliminates
+
+- **Hydration / client rendering.** Ruled out directly: the LCP string is present in the served
+  HTML. `curl -s https://ccw-crm-web.vercel.app/ | grep -c "Equipment supplier operations"` returns
+  1, in a server-rendered `<span>` inside the header anchor. The element is not waiting on React.
+- **Origin latency**, already ruled out and still ruled out.
+- **Main-thread work.** TBT is 0–13ms post-#269.
+
+### Where the render delay actually sits
+
+The critical request chain, from `network-dependency-tree-insight` (score 0):
+
+| Resource | Size | Chain ends at |
+| --- | --- | --- |
+| the document | 20,994 B | 1133ms |
+| `3m509vc5837_1.css` | **990 B** | **2030ms — longest chain** |
+| `0diq_ubmueqi4.css` | 41,267 B | 1965ms |
+| `1moyu3-vsicou.css` | 935 B | 1644ms |
+
+All three are `<link rel="stylesheet" data-precedence="next">` in `<head>`, confirmed by reading the
+served HTML. All three are render-blocking, and text cannot paint before the stylesheets that might
+restyle it have arrived.
+
+The detail worth noticing: **the longest chain ends on a 990-byte file.** This is not a payload
+problem. Three stylesheets are discovered only after the document parses and then contend under
+Lighthouse's throttling (150ms RTT, 4× CPU), so the cost is serialization and round-trips, not
+bytes. Shrinking the 41KB file would not address it.
+
+The chain completes at 2030ms and the render-delay window runs to 3393ms, so the blocking CSS sits
+squarely inside the phase that dominates LCP.
+
+### What this does NOT establish
+
+Stated explicitly, because this document has twice had to retract a cause it had not proved:
+
+**It is not established that unblocking the CSS brings LCP under 2500ms.** TTFB alone is 918ms
+under throttling, so render delay would have to fall from 2475ms to roughly 1580ms for the page to
+pass. The trace localises the gap to the render phase and identifies the only render-blocking
+resources present; it does not quantify the recovery. The next piece of work is a **change measured
+against this baseline**, not a further diagnosis.
+
+A note on the two TTFB figures, since they look contradictory: `server-response-time` is 22ms, while
+the LCP phase table reports TTFB at 918ms. Both are correct. The first is server processing; the
+second is the full throttled navigation including connection setup at 150ms RTT. Neither is a
+server-side defect.
+
+### Correction this forces
+
+"Render-blocking resources" appears under "Checked and ruled out" above, on the strength of
+Lighthouse scoring it 1 before #269. It scores **0.5** after, and it is now the leading candidate
+for the render delay. That entry is annotated in place rather than deleted, and this section
+supersedes it.
+
+**Since acted on.** PR #272 (`c367cb0c`) cut the dual-font CSS chain on the strength of this trace.
+The candidate was pursued; whether it paid off is unmeasured. See the end of this document.
+
+---
+
+## A second, independent trace — run concurrently, kept alongside
+
+The section that follows was written on `main` (PR #273) by a separate session working the same
+question at the same time, and is reproduced here unaltered. It reaches its conclusion by a
+different route: Chrome DevTools protocol under **applied** throttling, where the section above
+uses Lighthouse's **simulated** (Lantern) throttling.
+
+The two are complementary, not contradictory, and that section says so itself. Read together:
+
+- The section above localises the gap to the **render phase** and names the render-blocking
+  stylesheets that sit inside it. That holds under simulated throttling.
+- The section below establishes **which element LCP is credited to**, and shows that under applied
+  throttling FCP and LCP are the same event, because an `opacity: 0` reveal makes the hero
+  ineligible and a 2,226px² logo tagline wins by default.
+
+Both can be true, and the second sharpens the first: the render-delay window is real, but the
+element being measured inside it is a header caption rather than the hero. Neither section is
+deleted in favour of the other.
 
 ## The trace decided: LCP is credited to the wrong element
 
@@ -230,3 +497,48 @@ another round of CSS-chain guessing aimed at the logo-tagline metric.
    ~3393ms median baseline. Do **not** claim the budget is green without that number.
 2. Expect reported LCP may move (likely up) once the hero is credited — that is honesty, not
    regression theater. Further LCP work then targets the real element.
+
+---
+
+## What has landed since these measurements — and what it costs them
+
+Every measurement above was taken against `f4fc4779` (PR #269) or `9317f54f` (PR #270). Four
+further PRs merged to `main` on 2026-08-07 **after** those runs. This section exists so nobody
+reads a number above as describing production today.
+
+| PR | Merged | What it changed | Effect on this document |
+| --- | --- | --- | --- |
+| #271 `41ab85ae` | 11:27 | `lighthouserc.js` median aggregation, `/api/health` on the public allowlist | Both defects recorded below are now **fixed on main** — one of them only partly |
+| #272 `c367cb0c` | 11:34 | Stopped loading Inter from the root layout; preloads Plus Jakarta on marketing | Acts directly on the render-blocking CSS chain traced above |
+| #273 `62fb5248` | 11:45 | Appended the applied-throttling trace reproduced above | Complementary; already reconciled |
+| #274 `e5e2140d` | 11:57 | Made `marketing-reveal` transform-only, so the hero is LCP-eligible | Changes **which element LCP measures**; every LCP figure above describes the old element |
+
+**The two defects this document found are no longer open, but one is only half-closed.**
+
+`/api/health` is fixed. #271 added it to the public allowlist as an exact match, exactly as
+reviewed above.
+
+The optimistic-gate defect is **partly** fixed, and the gap identified in the PR #271 review below
+is now a live defect on `main` rather than a comment on a pull request. #271 merged `316575a3`
+as-written: `aggregationMethod: 'median'` on nine enumerated assertions, and **not** at the
+`assert:` level. Every assertion inherited from `preset: 'lighthouse:recommended'` therefore still
+runs on the `optimistic` default today. The one-line amendment proposed below has not been applied.
+`document-latency-insight` on `/` still scores 0.00 on one run in three while the gate reports 1.00.
+
+**The CSS-chain finding was consumed, and its measurements are now stale.** #272 cut the dual-font
+chain this document traced — its comment in `src/app/layout.tsx` cites "traced 2026-08-07", which is
+this work. The diagnosis was acted on. The consequence is that the three-stylesheet table above, the
+2030ms longest chain, and the 2475ms render-delay figure all describe the **pre-#272** build. They
+are kept as the baseline the change should be measured against, and they are **not** current.
+
+**No re-measurement has been run against #272 or #274.** Whether cutting the chain moved LCP is
+unknown and unclaimed, and #274 changes which element LCP even measures — so the two effects will
+land in the same number and cannot be separated by a single re-run. That re-run is the next piece of
+work, and until it happens no score in this document describes production as it stands.
+
+**A note on comparability, because it will be tempting to ignore.** Every LCP figure above was
+measured while a 2,226px² logo tagline was the credited element. After #274 the hero — an order of
+magnitude larger and painting later — becomes eligible. A post-#274 LCP that reads *worse* than
+3393ms is therefore not evidence that #272 or #274 regressed anything; it is a different element
+being measured. The honest comparison after this point is against a new post-#274 baseline, not
+against the numbers in this document.
