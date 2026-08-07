@@ -1,6 +1,4 @@
 import { JsonLd } from '@/components/seo/JsonLd';
-import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
-import { Toaster } from '@/components/ui/toast';
 import { defaultLocale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';
 import { Toaster as HotToaster } from 'react-hot-toast';
@@ -23,6 +21,11 @@ import './globals-public.css';
  * Styles: root loads `globals-public.css` (Tailwind sources limited to
  * marketing/auth/public). Authenticated shells import `globals.css` with the
  * full `src` scan so dashboard utilities are not paid for on the public LCP path.
+ *
+ * Chrome: RouteProgressBar (framer-motion) is NOT mounted here — it pulled a
+ * heavy client graph onto `/` before LCP. Progress lives in the dashboard shell.
+ * react-hot-toast stays here because the marketing landing embeds LoginForm.
+ * shadcn Toaster lives in dashboard/portal layouts only.
  */
 
 export const viewport: Viewport = {
@@ -171,9 +174,7 @@ export default function RootLayout({
   return (
     <html lang={defaultLocale} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <RouteProgressBar />
         {children}
-        <Toaster />
         <HotToaster
           position="top-center"
           toastOptions={{
