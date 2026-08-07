@@ -10,7 +10,10 @@ import {
   resolveCin7SyncSource,
 } from '@/lib/integrations/cin7-catalog-fetch';
 import { getCin7CoreCredentials, pingCin7Core } from '@/lib/integrations/cin7-core';
-import { CIN7_MASTER_ENTITY_TYPES } from '@/lib/integrations/cin7-master-entities';
+import {
+  CIN7_MASTER_ENTITY_TYPES,
+  resolveCin7SyncEntityAlias,
+} from '@/lib/integrations/cin7-master-entities';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import type {
   Cin7ExceptionEntity,
@@ -97,15 +100,28 @@ function emptyExceptionsSummary(): Cin7ReconciliationSnapshot['exceptions_summar
 }
 
 export async function getIncompleteSyncEntities(ownerUserId: string): Promise<string[]> {
+  // Include alias rows (inventory/warehouses) so dual tiles cannot disagree with the gate.
+  const aliasExtras = ['inventory', 'warehouses'] as const;
   const runs = await prisma.cin7SyncRun.findMany({
     where: {
       ownerUserId,
-      entityType: { in: [...CIN7_RECON_GATE_ENTITIES] },
+      entityType: { in: [...CIN7_RECON_GATE_ENTITIES, ...aliasExtras] },
     },
     select: { entityType: true, status: true },
   });
   const byType = new Map(runs.map((r) => [r.entityType, r.status]));
-  return CIN7_RECON_GATE_ENTITIES.filter((entity) => byType.get(entity) !== 'complete');
+  return CIN7_RECON_GATE_ENTITIES.filter((entity) => {
+    const canonical = resolveCin7SyncEntityAlias(entity);
+    const status = byType.get(entity) ?? byType.get(canonical);
+    // stock-levels complete if either stock-levels OR inventory is complete (mirrored).
+    if (canonical === 'stock-levels') {
+      return byType.get('stock-levels') !== 'complete' && byType.get('inventory') !== 'complete';
+    }
+    if (canonical === 'branches') {
+      return byType.get('branches') !== 'complete' && byType.get('warehouses') !== 'complete';
+    }
+    return status !== 'complete';
+  });
 }
 
 export async function loadOptixCounts(ownerUserId: string) {
