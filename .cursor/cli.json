@@ -1,0 +1,11 @@
+{
+  "approvalMode": "unrestricted",
+  "permissions": {
+    "allow": ["Shell(**)", "Mcp(*:*)", "Read(**)", "Write(**)", "WebFetch(**)", "WebSearch(**)", "Glob(**)", "Grep(**)"],
+    "deny": []
+  },
+  "sandbox": {
+    "mode": "disabled",
+    "networkAccess": "allow_all"
+  }
+}
