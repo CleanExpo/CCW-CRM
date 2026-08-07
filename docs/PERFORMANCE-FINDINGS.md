@@ -47,10 +47,11 @@ The honest position, stated plainly so nobody acts on a guess.
 explain a 3293ms LCP.
 
 **What remains unexplained:** why the largest text element paints two seconds after the first one.
-`network-dependency-tree-insight` fails, which points at a critical request chain, and Speed Index
-of 4395ms says the page fills in progressively rather than at once. Neither has been traced to a
-specific resource yet. **That tracing is the next piece of work**, and it should start from a
-Lighthouse trace or a WebPageTest filmstrip, not from this document's hypotheses.
+`network-dependency-tree-insight` fails, establishing that a critical request chain exists, and
+Speed Index of 4395ms says the page fills in progressively rather than at once. Neither has been
+traced to a specific resource, and neither has been shown to CAUSE the gap. **That tracing is the
+next piece of work**, and it should start from a Lighthouse trace or a WebPageTest filmstrip and
+let the trace name the resource — not from this document's hypotheses.
 
 ### The correction
 
@@ -111,9 +112,11 @@ review, and a before/after measurement on a preview deployment. Acceptance:
 **`legacy-javascript-insight`** (score 0.5) — one chunk ships polyfills modern browsers do not
 need, ~150ms. `unused-javascript` reports ~450ms available. Bundle work.
 
-**`network-dependency-tree-insight`** (score 0) — a critical request chain. Given the 22ms server
-response and the two-second FCP-to-LCP gap, **this is now the most likely lever on LCP** and should
-be investigated first.
+**`network-dependency-tree-insight`** (score 0) — the audit establishes that a critical request
+chain exists. It does NOT establish that the chain caused the two-second FCP-to-LCP gap, nor that
+shortening it is the highest-leverage fix. Calling it "the most likely lever" was a ranking this
+evidence does not support, and an earlier revision of this file did exactly that. It is a
+reasonable place to point a trace; the trace decides, not this document.
 
 **`render-blocking-resources` passes** (score 1), despite being the usual suspect.
 
