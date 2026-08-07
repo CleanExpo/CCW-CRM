@@ -7,7 +7,9 @@ import { ShadowModeBanner } from '@/components/layout/ShadowModeBanner';
 import { Sidebar } from '@/components/layout/sidebar';
 import { I18nProvider } from '@/components/providers/i18n-provider';
 import { PageTransition } from '@/components/transitions/PageTransition';
+import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
 import { CommandPalette } from '@/components/ui/command-palette';
+import { Toaster } from '@/components/ui/toast';
 import { WebSocketProvider } from '@/contexts/websocket-context';
 import { defaultLocale, isValidLocale, type Locale } from '@/i18n/config';
 import { Inter } from 'next/font/google';
@@ -64,6 +66,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <I18nProvider locale={locale} messages={messages}>
       <WebSocketProvider>
+        <RouteProgressBar />
+        <Toaster />
         {/* Match marketing home: dark zinc/black shell */}
         <div
           className={`${inter.className} dark dashboard-app text-foreground flex h-dvh min-h-0 flex-col overflow-hidden bg-gradient-to-br from-black via-zinc-950 to-black antialiased`}
