@@ -1,7 +1,11 @@
 # Performance findings — measured 2026-08-07
 
 Measured against `https://ccw-crm-web.vercel.app` after commit `95d61d82` deployed. Every number
-below came from a run recorded here, not from an estimate.
+below came from a run recorded here.
+
+**Read the causation section carefully.** An earlier revision of this document asserted a root
+cause it had not established. That is corrected below and the correction is left visible, because
+this repository has spent an entire branch paying down documentation that outran its evidence.
 
 ---
 
@@ -10,11 +14,11 @@ below came from a run recorded here, not from an estimate.
 `npm run test:lighthouse`, mobile emulation with Lighthouse's default throttling
 (150ms RTT, 1638kbps, 4× CPU slowdown):
 
-| Page | LCP | Speed Index | TBT | Performance |
-| --- | --- | --- | --- | --- |
-| `/` | **3293ms** | 4395ms | 19ms | 0.90 |
-| `/login` | 2967ms | 2892ms | 14ms | 0.94 |
-| `/register` | 3071ms | 3277ms | 0ms | 0.93 |
+| Page | FCP | LCP | Speed Index | TBT | Performance |
+| --- | --- | --- | --- | --- | --- |
+| `/` | 1268ms | **3293ms** | 4395ms | 19ms | 0.90 |
+| `/login` | — | 2967ms | 2892ms | 14ms | 0.94 |
+| `/register` | — | 3071ms | 3277ms | 0ms | 0.93 |
 
 Budget in `lighthouserc.js`: LCP ≤ 2500ms, Speed Index ≤ 3000ms, TBT ≤ 300ms, every category ≥ 0.90.
 
@@ -22,99 +26,109 @@ Five assertions fail: `largest-contentful-paint`, `speed-index`, `bf-cache`,
 `legacy-javascript-insight`, `network-dependency-tree-insight`.
 
 `color-contrast` **passed** for the first time — the 2026-08-07 fix is confirmed live by both
-Lighthouse and an independent axe run that found 23 violations on this same URL before the deploy
-and zero after.
+Lighthouse and an independent axe run.
 
 ---
 
-## Root cause: the whole application is uncacheable
+## The LCP cause is NOT established
+
+The honest position, stated plainly so nobody acts on a guess.
+
+**What is measured:**
+
+- `server-response-time` is **22ms**, with `overallSavingsMs: 0` — Lighthouse reports no savings
+  available. The document arrives fast.
+- FCP is **1268ms**; LCP is **3293ms**. Roughly **two seconds elapse between first paint and
+  largest paint**.
+- TBT is 19ms, so main-thread blocking is not it.
+- The LCP element is a text node: `<span class="block truncate font-medium text-[11px] …">`.
+
+**What that rules out:** the LCP gap is not origin response time. A 22ms server response cannot
+explain a 3293ms LCP.
+
+**What remains unexplained:** why the largest text element paints two seconds after the first one.
+`network-dependency-tree-insight` fails, which points at a critical request chain, and Speed Index
+of 4395ms says the page fills in progressively rather than at once. Neither has been traced to a
+specific resource yet. **That tracing is the next piece of work**, and it should start from a
+Lighthouse trace or a WebPageTest filmstrip, not from this document's hypotheses.
+
+### The correction
+
+An earlier revision of this file claimed the uncacheable document explained the LCP, reasoning that
+"an uncacheable document arrives after a full origin render every time". The 22ms
+`server-response-time` measurement refutes that. An independent reviewer caught it. The caching
+problem below is real and worth fixing on its own merits — its contribution to LCP is unquantified
+and, on this evidence, small.
+
+---
+
+## Separate real defect: the application is uncacheable
 
 ```
 $ curl -sI https://ccw-crm-web.vercel.app/
 cache-control: private, no-cache, no-store, max-age=0, must-revalidate
 x-vercel-cache: MISS
-age: 0
 ```
 
-The **public marketing page** is served `no-store` and is never edge-cached. Every visitor and
-every crawler pays a full origin render before any text can paint.
+The **public marketing page** is served `no-store` and is never edge-cached.
 
-The cause is one line:
+The cause is `src/app/layout.tsx:18` — the ROOT layout awaits `cookies()` to resolve locale.
+Reading cookies opts a route into dynamic rendering, and at the root every page in the application
+inherits it, including pages with no personalised content. Confirmed against the installed Next
+16.2.11 rather than from memory.
 
-```ts
-// src/app/layout.tsx:18
-const cookieStore = await cookies();
-```
+**What this actually costs, stated without inflation:**
 
-The ROOT layout reads a cookie to resolve locale. Reading cookies opts a route into dynamic
-rendering, and because this is the root layout, **every page in the application inherits it** —
-including pages with no personalised content at all.
+- `bf-cache` fails. Lighthouse names it: *"Pages whose main resource has cache-control:no-store
+  cannot enter back/forward cache."* Both listed reasons carry `failureType: "Not actionable"`,
+  meaning they are consequences of the header rather than separate defects. Back/forward
+  navigation is slower than it needs to be.
+- Every request runs the origin. At 22ms each that is not a latency problem today, but it is
+  compute paid on every crawler hit and every marketing visit, and it scales with traffic.
+- No CDN caching for a page whose content does not vary by user.
 
-This is not inference. Lighthouse names it directly in the `bf-cache` audit:
+**What it does not demonstrably cost:** the LCP number. See above.
 
-> Pages whose main resource has cache-control:no-store cannot enter back/forward cache.
+### Fixing it
 
-### Why it explains the LCP number
+Resolve locale **below** the root layout so marketing routes can be static and edge-cached, while
+authenticated routes stay dynamic where they need to be.
 
-Every failing LCP element is a **text node**, and TBT is 0–19ms, so JavaScript execution is not the
-bottleneck:
+That changes the rendering mode of every route in a 193-page application — its own branch, its own
+review, and a before/after measurement on a preview deployment. Acceptance:
 
-- `/` → `<span class="block truncate font-medium text-[11px] …">`
-- `/register` → `<p class="text-center text-sm …">`
-
-Both webfonts already ship `font-display: swap` — verified in the served CSS
-(`Inter` and `Plus Jakarta Sans`, two `font-display:swap` declarations each) — so font blocking is
-ruled out. With no blocking script and no blocking font, text LCP is gated on how long the document
-takes to arrive, and an uncacheable document arrives after a full origin render every time.
+1. `curl -sI https://<preview>/` returns a cacheable `cache-control`, and `x-vercel-cache: HIT` on
+   a repeat request to a marketing route.
+2. Locale switching still works on the authenticated surface.
+3. No route that reads user data becomes static.
+4. LCP re-measured — recorded whether or not it moves, since this document's prediction is that it
+   largely will not.
 
 ---
 
-## The fix, and why it is not in this commit
-
-Resolve locale **below** the root layout so the marketing routes can render statically and be edge
-cached, while authenticated routes stay dynamic where they genuinely need to be.
-
-That changes the rendering mode of every route in a 193-page application. It is a real
-architectural change with real blast radius, it deserves its own branch, its own review, and a
-before/after measurement on a preview deployment. Making it as a drive-by alongside a performance
-write-up would be exactly the kind of unreviewed sweeping change this repository has been paying
-down.
-
-Acceptance for that work:
-
-1. `curl -sI https://<preview>/` returns a cacheable `cache-control` and eventually
-   `x-vercel-cache: HIT` on the marketing routes.
-2. LCP on `/` under 2500ms and Speed Index under 3000ms in `npm run test:lighthouse`.
-3. Locale switching still works on the authenticated surface — the cookie must still be honoured
-   where it matters.
-4. No route that reads user data becomes static.
-
----
-
-## The other three failures
-
-**`bf-cache`** — Lighthouse classifies both reasons as `failureType: "Not actionable"`, because
-they are consequences of `no-store`. Fixing the caching above fixes this; there is nothing separate
-to do.
+## The other failures
 
 **`legacy-javascript-insight`** (score 0.5) — one chunk ships polyfills modern browsers do not
-need, worth ~150ms. `unused-javascript` reports ~450ms available. Both are bundle work, and both
-are smaller levers than the caching fix.
+need, ~150ms. `unused-javascript` reports ~450ms available. Bundle work.
 
-**`network-dependency-tree-insight`** — a critical request chain. Largely a symptom of the same
-uncached document; re-measure after the caching change before treating it as separate work.
+**`network-dependency-tree-insight`** (score 0) — a critical request chain. Given the 22ms server
+response and the two-second FCP-to-LCP gap, **this is now the most likely lever on LCP** and should
+be investigated first.
 
-**`render-blocking-resources` passes** (score 1). It is not a problem here despite being the
-usual suspect.
+**`render-blocking-resources` passes** (score 1), despite being the usual suspect.
 
 ---
 
-## What was checked and found NOT to be the problem
+## Checked and ruled out
 
-Recorded so the next person does not spend the time again:
+Recorded so nobody spends the time again:
 
-- **Font loading.** Both families already use `display: 'swap'`, confirmed in the served CSS rather
-  than in the source.
+- **Font loading.** Both `Inter` and `Plus Jakarta Sans` ship `font-display: swap`, verified by
+  reading the **served** CSS rather than the source. The source was a plausible wrong answer: it
+  sets `display: 'swap'` explicitly for one family and passes no `display` option for the other.
+  (An earlier revision quoted an exact count of declarations. Different counting methods gave
+  different numbers, so no count is asserted — only that every `@font-face` for both families
+  carries `swap`.)
 - **JavaScript execution.** TBT is 0–19ms across all three pages.
 - **Render-blocking resources.** Lighthouse scores this 1.
-- **Server response time.** `server-response-time` reports 4ms of available savings.
+- **Server response time.** 22ms, zero savings available.

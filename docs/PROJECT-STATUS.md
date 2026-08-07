@@ -119,9 +119,12 @@ $ npm run test:e2e         desktop: 8 passed, 1 failed (public) / 20 failed (aut
 $ npm run test:lighthouse  FAIL — 6 assertions
 ```
 
-The single public E2E failure is real: 23 nodes on `/` fail WCAG AA colour contrast. The 20
-authenticated failures are all the section-0 blocker — no database, so login 503s. They are correct
-tests reporting a real outage, not flaky tests to quarantine.
+The 20 authenticated failures are all the section-0 blocker — no database, so login 503s. They are
+correct tests reporting a real outage, not flaky tests to quarantine.
+
+The public specs pass. They previously reported 23 nodes on `/` failing WCAG AA colour contrast;
+that was fixed and deployed on 2026-08-07, and re-measured on production at zero. CI now runs the
+public accessibility specs against the candidate on every push (`e2e-public`, blocking).
 
 Lighthouse against production, measured: **LCP 3195ms against a 2500ms budget**, plus
 `color-contrast` at 0 (independently corroborating the axe result), `bf-cache`,
@@ -144,8 +147,10 @@ because two of them were used to justify work.
 Two of its open tasks are also done: `WorkspaceSettings` exists in the schema (TASK-1), and portal
 orders are Prisma-backed (TASK-2).
 
-Its claim that **staging deploy is RED on missing `STAGING_SSH_*` secrets** was not re-verified in
-this pass — treat it as unconfirmed. Note separately that `deploy-staging.yml` and
+Its claim that **staging deploy is RED on missing `STAGING_SSH_*` secrets** is CONFIRMED as of
+2026-08-07: the workflow runs `ssh-keyscan -H  >> ~/.ssh/known_hosts` with an empty host because
+`STAGING_SSH_HOST` is unset, and the Smoke Tests job is skipped as a consequence (UNI-2106). It is
+a missing secret, not a code fault. Note separately that `deploy-staging.yml` and
 `deploy-production.yml` both invoke `./deployment/scripts/smoke-tests.sh`, and `deployment/` does
 not exist in this repo.
 
@@ -163,7 +168,7 @@ not exist in this repo.
 | Scheduled crons | Production-grade **as of 2026-08-07** | 8 of 17 were 501 stubs and were removed; `validate-vercel-crons.js` blocks their return |
 | Design tokens | Single source **as of 2026-08-07** | `globals.css`; orphaned `design-system.css` deleted. See `docs/design-system.md` |
 | Accessibility | **Passing on the public surface** | The 23 contrast violations are fixed and live: axe found 23 on this URL before the deploy and 0 after, and Lighthouse's `color-contrast` now passes. The authenticated surface stays unmeasured while login is down |
-| Core Web Vitals | **Failing** | LCP 3293ms vs a 2500ms budget, measured 2026-08-07. Root cause is the uncacheable root layout — see `docs/PERFORMANCE-FINDINGS.md` |
+| Core Web Vitals | **Failing** | LCP 3293ms vs a 2500ms budget, measured 2026-08-07. Cause NOT established: server response is 22ms with zero savings available, so it is not origin latency. The gap is the two seconds between FCP (1268ms) and LCP. See `docs/PERFORMANCE-FINDINGS.md` |
 | Webhook retry, autonomous ops, health-score refresh, quote-expiry alerts, onboarding emails, auto-reorder | **Not built** | Their endpoints returned 501 and were removed. They were never running |
 | AP2 agent payments (10 routes), HeyGen (5 routes) | **Not built** | Hard 501 via `notImplementedResponse` |
 | Marketplace / multi-channel | **Demo-grade** | Ships a "Demo Mode — all channels running with mock data" banner in production |
@@ -205,18 +210,28 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
 
 1. **Restore the production database connection.** Everything else is blocked behind it. Owner
    action — needs a credential.
-2. **Fix the 23 contrast violations.** Use the `--muted-foreground` token instead of the 165 raw
-   `text-zinc-400/500/600` classes. `npm run test:e2e` names the failing nodes on every run.
-3. **Make the application cacheable, then bring LCP under 2500ms.** Measured 2026-08-07 after the
-   contrast fix deployed: LCP 3293ms on `/` against a 2500ms budget, Speed Index 4395ms.
-   `src/app/layout.tsx:18` reads a cookie in the ROOT layout, which forces dynamic rendering on
-   every page including the public marketing site — production serves `/` with
-   `cache-control: private, no-cache, no-store` and `x-vercel-cache: MISS`. Font loading, JS
-   execution and render-blocking resources were each checked and ruled out. Full evidence in
-   `docs/PERFORMANCE-FINDINGS.md`. Once green, `lighthouse-agentic.yml` can drop
-   `continue-on-error` and become a real gate.
-4. **Re-verify the staging deploy**, and either restore `deployment/scripts/smoke-tests.sh` or
-   remove the workflow steps that call it.
+2. ~~Fix the 23 contrast violations.~~ **DONE 2026-08-07**, deployed and re-measured at zero on
+   production. The marketing surface still bypasses the semantic tokens — it renders outside
+   `.dark`, so `--muted-foreground` resolves to its light-theme value — and adopting the token
+   scope there remains open. Tracked in `docs/design-system.md`; it is a refactor, not a defect.
+3. **Trace the LCP gap, then bring LCP under 2500ms.** Measured 2026-08-07: LCP 3293ms on `/`
+   against a 2500ms budget, Speed Index 4395ms, FCP 1268ms. Origin latency is ruled out — server
+   response is 22ms with zero savings available — as are font loading, JS execution (TBT 19ms) and
+   render-blocking resources. What remains unexplained is the two seconds between first paint and
+   largest paint; `network-dependency-tree-insight` fails, so start there with a trace rather than
+   a hypothesis. Evidence and what was ruled out: `docs/PERFORMANCE-FINDINGS.md`. Once green,
+   `lighthouse-agentic.yml` can drop `continue-on-error` and become a real gate.
+
+3a. **Make the application cacheable** — separate defect, worth fixing on its own merits.
+   `src/app/layout.tsx:18` reads a cookie in the ROOT layout, forcing dynamic rendering on every
+   page including the public marketing site; production serves `/` with
+   `cache-control: private, no-cache, no-store` and `x-vercel-cache: MISS`. This fails `bf-cache`
+   and pays origin compute on every crawler and marketing visit. Its effect on LCP is unquantified
+   and, at 22ms of server time, likely small — do not merge the two pieces of work.
+4. **Set `STAGING_SSH_HOST`, `STAGING_SSH_USER` and `STAGING_SSH_KEY`** — the staging deploy fails
+   on an empty `ssh-keyscan` host, confirmed 2026-08-07 (UNI-2106), and skips its smoke tests as a
+   result. Separately, either restore `deployment/scripts/smoke-tests.sh` or remove the workflow
+   steps that call it, since that path does not exist in this repo.
 5. **Decide the fate of the not-built surface** — AP2, HeyGen, marketplace mock mode, and the four
    `comingSoon` nav items. Shipping a large surface the product cannot stand behind is the main
    thing separating this from a product that demos without caveats.
