@@ -534,6 +534,15 @@ are kept as the baseline the change should be measured against, and they are **n
 **Re-measured 2026-08-07 after #274 was live on production** (Cursor, `npm run test:lighthouse`,
 median of 3 simulated-throttle runs against `https://ccw-crm-web.vercel.app`):
 
+> **Provenance, stated because this document's standard requires it.** This table was recorded by a
+> different session as commit `4a178fa9`, which changed **only this file** — it committed no run
+> artifacts. There is no `.lighthouseci/` directory in this tree, and `git ls-tree -r HEAD --
+> .lighthouseci` returns nothing, so **nothing here corroborates these numbers**. An independent
+> reviewer raised exactly this and was right to. Every other figure in this document is traceable to
+> an artifact; this one is traceable to its author. Treat it as a reported result pending
+> corroboration, and re-run rather than cite it if the number matters. The re-run is outstanding
+> against #276 in any case — see below.
+
 | Route | median LCP | LCP element | median FCP | median SI |
 | --- | --- | --- | --- | --- |
 | `/` | **2882ms** (2876 / 2882 / 2949) | hero `<h1>` — "Run quotes…" | 1299ms | 1704ms |
@@ -558,9 +567,18 @@ An earlier revision of this section said no re-measurement had been run at all. 
 written and is now wrong; the correction is left visible rather than silently swapped, per this
 document's convention.
 
-**A note on comparability, because it will be tempting to ignore.** Every LCP figure above was
-measured while a 2,226px² logo tagline was the credited element. After #274 the hero — an order of
-magnitude larger and painting later — becomes eligible. A post-#274 LCP that reads *worse* than
-3393ms is therefore not evidence that #272 or #274 regressed anything; it is a different element
-being measured. The honest comparison after this point is against a new post-#274 baseline, not
-against the numbers in this document.
+**A note on comparability, because it will be tempting to ignore.** This note was written *before*
+the post-#274 table above existed, and it is scoped to the figures that precede that table — the
+pre-#274 Lighthouse runs, every one of which measured a 2,226px² logo tagline as the credited
+element. It does **not** describe the post-#274 table, which explicitly credits the hero `<h1>`.
+
+The reasoning: after #274 the hero — an order of magnitude larger and painting later — becomes
+eligible, so a post-#274 LCP reading *worse* than the pre-#274 3393ms is not evidence that #272 or
+#274 regressed anything; it is a different element being measured. The honest comparison is against
+a post-#274 baseline, not against the pre-#274 numbers in this document.
+
+**What the post-#274 table did to this prediction.** It expected the element change to make the raw
+comparison meaningless. The reported result is that the two elements score within 1ms of each other
+(2883ms span, 2882ms H1), so the prediction was over-cautious rather than wrong — but that
+conclusion rests entirely on the uncorroborated table above, and inherits its caveat. It is not
+established.
