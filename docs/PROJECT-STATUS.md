@@ -2,7 +2,10 @@
 
 **Document owner:** Engineering
 **Last updated:** 2026-08-07
-**Measured against:** `main` at `8b61de85` (PR #266)
+**Measured against:** most of this document was measured against `main` at `8b61de85` (PR #266).
+The **performance and Core Web Vitals claims are newer** and were measured against `ff36f165`
+(PR #277) on 2026-08-07 — every other section predates that. Each claim carries its own date; where
+they disagree, the dated claim wins.
 **Supersedes:** the 2026-06-11 revision of this file, and with it
 `GO_LIVE_SIGNOFF.md`, `COMPLETION-REPORT.md`, `DEPLOYMENT_ROADMAP_SUMMARY.md`
 

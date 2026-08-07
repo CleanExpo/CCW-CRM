@@ -10,10 +10,12 @@ below came from a run recorded here.
 > are in "After the fix" near the end. Two new defects were found while verifying it, both recorded
 > there.
 >
-> **Four further PRs (#271, #272, #273, #274) merged later the same day, after every measurement in
-> this document was taken.** No number here describes production as it stands, and #274 changed
-> which element LCP is even credited to. What changed, and which findings it stales, is in "What has
-> landed since these measurements" at the end — read that before acting on any figure above.
+> **Six further PRs (#271, #272, #273, #274, #276, #277) merged later the same day.** Every figure
+> in the sections *above* predates them and describes a production that no longer exists — including
+> the LCP element itself, which #274 changed. **For the current state, read "Measured against #277"
+> near the end.** That section is a run executed from this branch against a production deployment
+> verified as `ff36f165`, and it is the only measurement in this document that describes production
+> as it stands. "What has landed since these measurements" records what each PR staled.
 
 **Read the causation section carefully.** An earlier revision of this document asserted a root
 cause it had not established. That is corrected below and the correction is left visible, because
