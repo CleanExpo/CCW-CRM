@@ -7,7 +7,17 @@
 @source "../components/marketing";
 @source "../components/seo";
 @source "../components/transitions";
-@source "../components/ui";
+/* Only the UI primitives public routes actually import — scanning all of
+   components/ui pulled ~20KB of unused utilities into the `/` CSS chunk. */
+@source "../components/ui/badge.tsx";
+@source "../components/ui/bento-grid.tsx";
+@source "../components/ui/button.tsx";
+@source "../components/ui/card.tsx";
+@source "../components/ui/checkbox.tsx";
+@source "../components/ui/form.tsx";
+@source "../components/ui/input.tsx";
+@source "../components/ui/label.tsx";
+@source "../components/ui/toast.tsx";
 @source "./(marketing)";
 @source "./(marketing-pages)";
 @source "./(auth)";
