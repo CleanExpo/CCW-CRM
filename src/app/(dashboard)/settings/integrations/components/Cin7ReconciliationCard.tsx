@@ -13,8 +13,9 @@ import {
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
+import { CIN7_LIVE_RECON_REFRESHED_EVENT } from '@/lib/integrations/cin7-client-sync-scheduler';
 import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Cin7ReconciliationCardProps = {
   isConnected: boolean;
@@ -98,23 +99,40 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   const EXCEPTION_PAGE = 100;
 
   const load = useCallback(
-    async (options?: { force?: boolean; silent?: boolean }) => {
+    async (options?: { force?: boolean; silent?: boolean; mode?: 'live' | 'acceptance' }) => {
       const requestId = ++loadRequestId.current;
       const force = options?.force ?? false;
-      if (force) setLiveLoading(true);
+      const mode = options?.mode;
+      if (force || mode === 'acceptance') setLiveLoading(true);
       else setLoading(true);
       setLoadError(null);
 
       try {
-        const data = await getCin7Reconciliation({ force });
+        const data = await getCin7Reconciliation({ force, mode });
         if (requestId !== loadRequestId.current) return;
         setSnapshot(data);
         if (!options?.silent) {
+          const acceptanceBlocked =
+            data.acceptance_blocked || data.recon_status === 'blocked' || data.incomplete_sync;
           toast({
-            title: force ? 'Live Cin7 reconciliation complete' : 'Reconciliation refreshed',
-            description: data.cache_meta?.from_cache
-              ? `Showing cached counts from ${formatCacheAge(data.cache_meta.cached_at)}. Use live refresh for a fresh Cin7 pull.`
-              : 'Counts updated from Cin7 and Optix.',
+            title:
+              mode === 'acceptance'
+                ? acceptanceBlocked
+                  ? 'Acceptance gate blocked'
+                  : 'Acceptance gate passed'
+                : force
+                  ? 'Live Cin7 reconciliation complete'
+                  : 'Reconciliation refreshed',
+            description:
+              mode === 'acceptance'
+                ? data.blocked_reason ||
+                  (acceptanceBlocked
+                    ? 'Sync or Cin7 snapshot incomplete — not valid for sign-off.'
+                    : 'Fail-closed gate: sync complete and exceptions clean.')
+                : data.cache_meta?.from_cache
+                  ? `Showing cached counts from ${formatCacheAge(data.cache_meta.cached_at)}. Use live refresh for a fresh Cin7 pull.`
+                  : 'Counts updated from Cin7 and Optix.',
+            variant: mode === 'acceptance' && acceptanceBlocked ? 'destructive' : undefined,
           });
         }
       } catch (error: unknown) {
@@ -135,6 +153,19 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     },
     [snapshot, toast]
   );
+
+  // After scheduled sync finishes, apply the live recon it just pulled.
+  useEffect(() => {
+    const onScheduledRecon = (event: Event) => {
+      const detail = (event as CustomEvent<Cin7ReconciliationResponse>).detail;
+      if (detail?.checked_at) {
+        setSnapshot(detail);
+        setLoadError(null);
+      }
+    };
+    window.addEventListener(CIN7_LIVE_RECON_REFRESHED_EVENT, onScheduledRecon);
+    return () => window.removeEventListener(CIN7_LIVE_RECON_REFRESHED_EVENT, onScheduledRecon);
+  }, []);
 
   // Manual refresh only — auto-loading on connect fights sync for Cin7 rate limits
   // and looks like "reloading from scratch" every time status flips.
@@ -208,6 +239,19 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           </Button>
           <Button
             size="sm"
+            variant="default"
+            disabled={!isConnected || isRefreshing}
+            onClick={() => void load({ force: true, mode: 'acceptance' })}
+          >
+            {liveLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <BarChart3 className="mr-2 h-4 w-4" />
+            )}
+            Run acceptance gate
+          </Button>
+          <Button
+            size="sm"
             variant="outline"
             disabled={!isConnected || !snapshot || exceptionsLoading}
             onClick={() => void loadExceptions(exceptionEntity, 0, false)}
@@ -239,16 +283,21 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           </div>
         ) : null}
 
-        {snapshot && snapshot.fetch_meta.errors.length > 0 ? (
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
-            <p className="flex items-start gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+        {snapshot &&
+        (snapshot.fetch_meta.errors.length > 0 ||
+          snapshot.fetch_meta.incomplete ||
+          snapshot.acceptance_blocked) ? (
+          <div className="border-destructive/40 bg-destructive/5 rounded-lg border p-3">
+            <p className="text-destructive flex items-start gap-1.5 text-sm font-medium">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               Cin7 fetch was incomplete — do not use this snapshot for sign-off until a clean live
-              refresh succeeds.
+              refresh succeeds. Exception zeros are blocked while the pull is dirty.
             </p>
-            <p className="text-muted-foreground mt-1 text-xs">
-              {snapshot.fetch_meta.errors.slice(0, 3).join('; ')}
-            </p>
+            {snapshot.fetch_meta.errors.length > 0 ? (
+              <p className="text-muted-foreground mt-1 text-xs">
+                {snapshot.fetch_meta.errors.slice(0, 3).join('; ')}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -373,7 +422,15 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 </>
               ) : null}
 
-              {ex ? (
+              {ex && snapshot.acceptance_blocked ? (
+                <div className="border-border/50 mt-2 space-y-1 border-t pt-2 text-xs">
+                  <p className="text-destructive font-medium">Exception summary unavailable</p>
+                  <p className="text-muted-foreground">
+                    Fail-closed: Cin7 pull was incomplete, so missing/extra/field diffs are not
+                    shown as clean zeros. Re-run Refresh from live Cin7.
+                  </p>
+                </div>
+              ) : ex ? (
                 <div className="border-border/50 mt-2 space-y-1 border-t pt-2 text-xs">
                   <p className="text-muted-foreground font-medium">Exception summary</p>
                   <p>
@@ -431,7 +488,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {snapshot.optix.customers.extra_without_cin7_id} Optix customers have no Cin7 id —
                   these are legacy CRM records. Sync adds Cin7-linked rows; it does not merge or
-                  backfill IDs onto existing Optix-only customers (Phase 1: no merge/delete/cleanse).
+                  backfill IDs onto existing Optix-only customers (Phase 1: no
+                  merge/delete/cleanse).
                 </p>
               ) : null}
 
