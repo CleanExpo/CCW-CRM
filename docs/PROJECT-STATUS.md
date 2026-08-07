@@ -2,10 +2,11 @@
 
 **Document owner:** Engineering
 **Last updated:** 2026-08-07
-**Measured against:** most of this document was measured against `main` at `8b61de85` (PR #266).
-The **performance and Core Web Vitals claims are newer** and were measured against `ff36f165`
-(PR #277) on 2026-08-07 — every other section predates that. Each claim carries its own date; where
-they disagree, the dated claim wins.
+**Measured against:** no single commit. The baseline sweep was `main` at `8b61de85` (PR #266), and
+individual claims have been re-measured since against later commits as the work landed — the newest
+being `ff36f165` (PR #277). **Every claim carries its own date and, where relevant, the PR that
+changed it. That is the authority, not this line**, which cannot be kept accurate in a repository
+merging this fast. Where a claim and any summary disagree, the dated claim wins.
 **Supersedes:** the 2026-06-11 revision of this file, and with it
 `GO_LIVE_SIGNOFF.md`, `COMPLETION-REPORT.md`, `DEPLOYMENT_ROADMAP_SUMMARY.md`
 
