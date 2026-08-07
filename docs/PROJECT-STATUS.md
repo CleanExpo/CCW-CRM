@@ -2,7 +2,11 @@
 
 **Document owner:** Engineering
 **Last updated:** 2026-08-07
-**Measured against:** `main` at `8b61de85` (PR #266)
+**Measured against:** no single commit. The baseline sweep was `main` at `8b61de85` (PR #266), and
+individual claims have been re-measured since against later commits as the work landed — the newest
+being `ff36f165` (PR #277). **Every claim carries its own date and, where relevant, the PR that
+changed it. That is the authority, not this line**, which cannot be kept accurate in a repository
+merging this fast. Where a claim and any summary disagree, the dated claim wins.
 **Supersedes:** the 2026-06-11 revision of this file, and with it
 `GO_LIVE_SIGNOFF.md`, `COMPLETION-REPORT.md`, `DEPLOYMENT_ROADMAP_SUMMARY.md`
 
@@ -138,13 +142,18 @@ that PR. **LCP did not move** — 3105ms best / 3393ms median on `/`, still fail
 no longer reported as failing, but the gate is judging it on its best of three runs; its median on
 `/` is 4451ms against a 3000ms budget. Both are recorded in `docs/PERFORMANCE-FINDINGS.md`.
 
-Four further PRs merged later the same day, after those runs: **#271** (`41ab85ae`) made the gate
+Six further PRs merged later the same day, after those runs: **#271** (`41ab85ae`) made the gate
 median-aggregated and put `/api/health` on the public allowlist, **#272** (`c367cb0c`) cut the
 dual-font CSS chain the trace had localised, **#273** (`62fb5248`) added an applied-throttling trace
-showing LCP is credited to a 2,226px² logo tagline rather than the hero, and **#274** (`e5e2140d`)
-made the reveal transform-only so the hero becomes LCP-eligible. **Lighthouse has not been re-run
-against any of them**, so the figures in this section describe the pre-#272 build and are a
-baseline, not current state — and after #274 they do not even describe the same element.
+showing LCP was credited to a 2,226px² logo tagline rather than the hero, **#274** (`e5e2140d`)
+made the reveal transform-only so the hero became LCP-eligible, **#276** (`05945597`) halved
+public-route CSS, and **#277** (`ff36f165`) made the landing a server component and set median
+aggregation at the `assert:` level.
+
+**The figures in this section are the pre-#272 baseline, not current state.** Current state is a
+re-run against #277: median LCP `/` **2877ms**, `/login` 2605ms, `/register` 2580ms, all still over
+the 2500ms budget, with the hero `<h1>` correctly credited. Details, artifacts and what the run does
+not establish are in `docs/PERFORMANCE-FINDINGS.md`.
 
 ---
 
@@ -185,8 +194,8 @@ this file claimed both did.
 | Scheduled crons | Production-grade **as of 2026-08-07** | 8 of 17 were 501 stubs and were removed; `validate-vercel-crons.js` blocks their return |
 | Design tokens | Single source **as of 2026-08-07** | `globals.css`; orphaned `design-system.css` deleted. See `docs/design-system.md` |
 | Accessibility | **Passing on the public surface** | The 23 contrast violations are fixed and live: axe found 23 on this URL before the deploy and 0 after, and Lighthouse's `color-contrast` now passes. The authenticated surface stays unmeasured while login is down |
-| Core Web Vitals | **Failing as last measured; re-measurement outstanding** | LCP 3105ms best / 3393ms median on `/` vs a 2500ms budget, measured after PR #269. Not origin latency — server response is 22ms with zero savings. The trace localised 73% of LCP to render delay behind three render-blocking stylesheets; PR #272 (`c367cb0c`) then cut that chain, and **nothing has been re-run since**, so whether it still fails is unknown. Separately, PR #273 established the credited LCP element was a 2,226px² logo tagline, not the hero, because an `opacity: 0` reveal made the hero ineligible; PR #274 (`e5e2140d`) made that reveal transform-only, so the hero is now eligible and the metric will describe a different, larger element from here. See `docs/PERFORMANCE-FINDINGS.md` |
-| Performance gate itself | **Partly fixed — preset audits still optimistic** | PR #271 (`41ab85ae`) set `aggregationMethod: 'median'` on nine enumerated assertions, which closes `speed-index`. It did **not** set it at the `assert:` level, so every assertion inherited from `preset: 'lighthouse:recommended'` still runs on lhci's `optimistic` default. `document-latency-insight` on `/` scores 0.00 on one run in three while the gate reports 1.00. Still a one-line fix |
+| Core Web Vitals | **Failing, measured against #277** | Median LCP `/` **2877ms**, `/login` 2605ms, `/register` 2580ms against a 2500ms budget — short by 377ms, 105ms and 80ms. Measured 2026-08-07 12:45 against production, confirmed via the Vercel API to be serving `ff36f165` (PR #277); artifacts in `.lighthouseci/`. Improved from 3393ms across #272, #276 and #277, and the credited element is now the hero `<h1>` rather than a 2,226px² logo tagline (#273 found it, #274 fixed it). Render delay is still **78%** of LCP (2250ms of 2877ms) with TTFB 627ms and TBT under 10ms, so the remainder is neither origin latency nor main-thread work. Three PRs have now cut render-blocking CSS without moving that share. See `docs/PERFORMANCE-FINDINGS.md` |
+| Performance gate itself | **Fixed 2026-08-07** | Closed in two steps. PR #271 (`41ab85ae`) set `aggregationMethod: 'median'` on nine enumerated assertions, which fixed `speed-index` but left every audit inherited from `preset: 'lighthouse:recommended'` on lhci's `optimistic` default — so `document-latency-insight` on `/` could score 0.00 on one run in three while the gate reported 1.00. PR #277 (`ff36f165`) set it at the `assert:` level, which covers the preset audits too. The gate now grades every budget on the median run |
 | `/api/health` | **Fixed 2026-08-07** | PR #271 (`41ab85ae`) added it to the middleware public allowlist as an exact match, so `/api/health/deep` is not exposed by prefix. It previously 307'd to `/login`, and `curl -fL` exited 0 against a 200 HTML page. Expect monitors to begin reporting the ERP unhealthy — the endpoint returns 503 while `hasDatabaseConfig()` is false, which is production's state per Section 0. That is the fix working |
 | Webhook retry, autonomous ops, health-score refresh, quote-expiry alerts, onboarding emails, auto-reorder | **Not built** | Their endpoints returned 501 and were removed. They were never running |
 | AP2 agent payments (10 routes), HeyGen (5 routes) | **Not built** | Hard 501 via `notImplementedResponse` |
@@ -253,17 +262,21 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    918ms, so render delay must fall to about 1580ms. Next step is a change measured against this
    baseline, not more diagnosis.
 
-   **The change landed; the measurement did not.** PR #272 (`c367cb0c`) stopped loading Inter from
-   the root layout and preloads Plus Jakarta on marketing surfaces, cutting the chain traced above.
-   Lighthouse has **not** been re-run against it, so the numbers in this item are the pre-#272
-   baseline. PR #273 then established the credited LCP element was a 2,226px² logo tagline rather
-   than the hero, because an `opacity: 0` reveal made the hero ineligible — and PR #274
-   (`e5e2140d`) made that reveal transform-only, so the hero is now a candidate.
+   **The changes landed and have now been measured.** #272 cut the dual-font chain traced above,
+   #273 established the credited element was a logo tagline rather than the hero, #274 made the
+   reveal transform-only so the hero became eligible, #276 halved public-route CSS, and #277 made
+   the landing a server component.
 
-   **Re-running `npm run test:lighthouse` against `main` is the outstanding step.** Read the result
-   carefully: #272 and #274 land in the same number, and #274 changes which element is measured. A
-   post-#274 LCP worse than 3393ms is a different element, not a regression. Establish a new
-   post-#274 baseline rather than comparing across the change.
+   **Measured against #277 on 2026-08-07: median LCP `/` 2877ms, still 377ms over budget.** The
+   hero `<h1>` is correctly credited. Render delay remains **78%** of LCP (2250ms) with TTFB 627ms
+   and TBT under 10ms.
+
+   **What the numbers now say about the plan.** Three separate PRs have attacked render-blocking
+   CSS and render delay's *share* of LCP has not moved. LCP fell from 3393ms to 2877ms, which is
+   real, but the remaining 2250ms of render delay is neither origin latency nor main-thread work,
+   and the CSS lever has not shifted its proportion. **A fourth CSS cut should be justified by a
+   trace, not by the pattern of the first three.** Note also that PR #278 exists to restore public
+   CSS coverage, suggesting #276/#277 cut further than the public routes could afford.
 
 3a. ~~**Make the application cacheable.**~~ **DONE 2026-08-07** — PR #269, merged as `f4fc4779` and
    live. Locale resolution moved from the root layout to `src/app/(dashboard)/layout.tsx:23`.
@@ -273,11 +286,12 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    not move LCP. One acceptance criterion is still unverified: locale switching on the authenticated
    surface, which needs a login and is blocked on the production database.
 
-3b. **Set `aggregationMethod: 'median'` at the `assert:` level in `lighthouserc.js`.** Still one
-   line, and still open. PR #271 (`41ab85ae`) set it on nine enumerated assertions, which fixed
-   `speed-index`, but not at the `assert:` level — so every assertion inherited from
-   `preset: 'lighthouse:recommended'` is still graded on its best of three runs.
-   `document-latency-insight` on `/` scores 0.00 on one run in three while the gate reports 1.00.
+3b. ~~**Set `aggregationMethod: 'median'` at the `assert:` level in `lighthouserc.js`.**~~
+   **DONE 2026-08-07** — PR #277 (`ff36f165`). PR #271 (`41ab85ae`) had set it on nine enumerated
+   assertions, which fixed `speed-index` but left every audit inherited from
+   `preset: 'lighthouse:recommended'` graded on its best of three runs;
+   `document-latency-insight` on `/` scored 0.00 on one run in three while the gate reported 1.00.
+   #277 added the one line at the `assert:` level, closing it for the preset audits too.
 
 3c. ~~**Add `/api/health` to the middleware public allowlist.**~~ **DONE 2026-08-07** — PR #271
    (`41ab85ae`), added as an exact match so `/api/health/deep` is not exposed by prefix. Monitors
