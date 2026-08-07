@@ -4,6 +4,7 @@
 @source "../components/landing";
 @source "../components/brand";
 @source "../components/auth";
+@source "../components/onboarding";
 @source "../components/marketing";
 @source "../components/seo";
 @source "../components/transitions";
@@ -21,6 +22,12 @@
 @source "./(marketing)";
 @source "./(marketing-pages)";
 @source "./(auth)";
+/* Root-level pages inherit only this stylesheet from app/layout.tsx. Keep each
+   routed source here unless it gains a nested layout that imports globals.css. */
+@source "./dashboard-analytics";
+@source "./demo";
+@source "./design-system";
+@source "./playground";
 @source "./page.tsx";
 @source "./not-found.tsx";
 @source "./layout.tsx";
