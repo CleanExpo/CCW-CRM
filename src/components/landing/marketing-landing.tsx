@@ -6,11 +6,6 @@
  * (header, showcase, FAQ, ambient, login form) stay as client islands.
  */
 import { LoginForm } from '@/components/auth/login-form';
-import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
-import { HeroPremiumShowcase } from '@/components/landing/hero-premium-showcase';
-import { LandingFaq } from '@/components/landing/landing-faq';
-import { LandingOperationsPulsePlaceholder } from '@/components/landing/landing-operations-pulse';
-import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { MarketingFooter } from '@/components/landing/marketing-footer';
 import { MarketingHeader } from '@/components/landing/marketing-header';
@@ -46,8 +41,29 @@ import {
   Warehouse,
   Zap,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
+
+/** Below-fold / decorative client islands — keep out of the hero JS critical path. */
+const MarketingAmbientCanvas = dynamic(
+  () =>
+    import('@/components/landing/marketing-ambient').then((m) => m.MarketingAmbientCanvas),
+  { loading: () => null }
+);
+const HeroPremiumShowcase = dynamic(
+  () =>
+    import('@/components/landing/hero-premium-showcase').then((m) => m.HeroPremiumShowcase),
+  {
+    loading: () => <div className="min-h-[280px] w-full" aria-hidden />,
+  }
+);
+const LandingFaq = dynamic(
+  () => import('@/components/landing/landing-faq').then((m) => m.LandingFaq),
+  {
+    loading: () => <div className="min-h-[200px] w-full" aria-hidden />,
+  }
+);
 
 function LoginFormFallback() {
   return (
@@ -130,10 +146,11 @@ const TESTIMONIALS = [
 ];
 
 export interface MarketingLandingProps {
-  stats: PublicStats | null;
+  /** Streamed stats region (Suspense). Must not block hero HTML. */
+  statsSlot: ReactNode;
 }
 
-export default function MarketingLanding({ stats }: MarketingLandingProps) {
+export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
   return (
     <div
       className={cn(
@@ -224,7 +241,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
             </div>
           </section>
 
-          {stats ? <LiveStatsBar stats={stats} /> : <LandingOperationsPulsePlaceholder />}
+          {statsSlot}
 
           {/* Problem */}
           <section id="problems" className={cn(sectionY, sectionRule, 'relative bg-zinc-950/50')}>
