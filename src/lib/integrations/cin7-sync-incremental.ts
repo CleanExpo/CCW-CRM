@@ -54,7 +54,8 @@ export function decideCin7SyncMode(input: {
   if (input.forceFull) {
     return { mode: 'full', modifiedSince: null };
   }
-  const tolerance = input.shortfallTolerance ?? 5;
+  // Fail-closed: any Optix shortfall vs a known Cin7 total forces a full backfill.
+  const tolerance = input.shortfallTolerance ?? 0;
   const expected = input.expectedSourceCount;
   const optix = input.optixCount;
   if (
@@ -196,6 +197,62 @@ export function floorSyncRecordCount(input: {
   previousFloor?: number;
 }): number {
   return Math.max(0, input.optixCount, input.thisRunProcessed, input.previousFloor ?? 0);
+}
+
+/**
+ * Fail-closed acceptance: empty EOF alone is never enough.
+ * Complete requires no retained sync errors and Optix >= known Cin7 count (tolerance 0).
+ */
+export function assertCin7SyncAcceptance(input: {
+  optixCount: number;
+  cin7Expected: number | null | undefined;
+  syncErrors?: string[] | null;
+  /** Orders are count-only — skip Optix row check. */
+  skipCountCheck?: boolean;
+}): { accepted: boolean; reason: string | null } {
+  const errors = (input.syncErrors ?? []).map((e) => e.trim()).filter(Boolean);
+  if (errors.length > 0) {
+    return {
+      accepted: false,
+      reason: `Acceptance failed: sync errors retained (${errors[0]})`,
+    };
+  }
+  if (input.skipCountCheck) {
+    return { accepted: true, reason: null };
+  }
+  const expected = input.cin7Expected;
+  if (typeof expected === 'number' && expected > 0 && input.optixCount < expected) {
+    return {
+      accepted: false,
+      reason: `Acceptance failed: Optix ${input.optixCount} < Cin7 ${expected}`,
+    };
+  }
+  return { accepted: true, reason: null };
+}
+
+/**
+ * Promote Incomplete → Complete when Optix already matches a known Cin7 floor
+ * (e.g. time-budget pause after data already landed from a prior chunk).
+ */
+export function shouldPromoteCin7SyncComplete(input: {
+  status: string;
+  optixCount: number;
+  cin7Expected: number | null | undefined;
+  syncErrors?: string[] | null;
+  skipCountCheck?: boolean;
+}): boolean {
+  if (input.status === 'complete' || input.status === 'running') return false;
+  const gate = assertCin7SyncAcceptance({
+    optixCount: input.optixCount,
+    cin7Expected: input.cin7Expected,
+    syncErrors: input.syncErrors,
+    skipCountCheck: input.skipCountCheck,
+  });
+  if (!gate.accepted) return false;
+  // Only promote when we have a positive Cin7 floor to compare against
+  // (or skipCountCheck entities like orders).
+  if (input.skipCountCheck) return true;
+  return typeof input.cin7Expected === 'number' && input.cin7Expected > 0;
 }
 
 /**
