@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { CcwLogo } from '@/components/brand/ccw-logo';
 import { buttonVariants } from '@/components/ui/button';
@@ -16,12 +13,14 @@ const NAV = [
   { href: '/contact', label: 'Contact' },
 ] as const;
 
+/**
+ * Server component on purpose. `usePathname` previously forced this header
+ * (and its logo/button graph) into the client bundle on every marketing page,
+ * including `/` before LCP. Active-route chrome is a nicety; LCP is not.
+ */
 export function MarketingHeader() {
-  const pathname = usePathname();
-
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.12] bg-zinc-950/80 backdrop-blur-2xl supports-backdrop-filter:bg-zinc-950/75">
-      {/* Gradient hairline */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent"
         aria-hidden
@@ -39,23 +38,15 @@ export function MarketingHeader() {
           aria-label="Main"
         >
           <div className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.04] p-1.5 shadow-inner shadow-black/20 backdrop-blur-sm">
-            {NAV.map(({ href, label }) => {
-              const active = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    'rounded-full px-3.5 py-2 whitespace-nowrap transition-all duration-200',
-                    active
-                      ? 'bg-gradient-to-r from-sky-500/25 to-indigo-600/25 text-white shadow-sm ring-1 ring-sky-500/30'
-                      : 'text-zinc-400 hover:text-white'
-                  )}
-                >
-                  {label}
-                </Link>
-              );
-            })}
+            {NAV.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-full px-3.5 py-2 whitespace-nowrap text-zinc-400 transition-all duration-200 hover:text-white"
+              >
+                {label}
+              </Link>
+            ))}
           </div>
         </nav>
 
