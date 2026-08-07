@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { buildCin7Reconciliation } from '@/lib/integrations/cin7-reconciliation';
 import {
   getOrBuildReconciliation,
   getReconciliationCacheTtlMs,
 } from '@/lib/integrations/cin7-reconciliation-cache';
+import { runFailClosedReconciliation } from '@/lib/integrations/cin7-reconciliation-job';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
 
@@ -15,8 +16,24 @@ export async function GET(request: NextRequest) {
   }
 
   const force = request.nextUrl.searchParams.get('force') === 'true';
+  const mode = request.nextUrl.searchParams.get('mode')?.trim().toLowerCase();
 
   try {
+    // Sign-off path: DB-backed fail-closed gate (never clean zeros on incomplete sync).
+    if (mode === 'acceptance') {
+      const view = await runFailClosedReconciliation(scope.userId);
+      return NextResponse.json({
+        ...view,
+        cache_meta: {
+          from_cache: false,
+          cached_at: null,
+          ttl_ms: getReconciliationCacheTtlMs(),
+          force_requested: force,
+          mode: 'acceptance',
+        },
+      });
+    }
+
     const result = await getOrBuildReconciliation(
       scope.userId,
       () => buildCin7Reconciliation(scope.userId),
@@ -30,6 +47,7 @@ export async function GET(request: NextRequest) {
         cached_at: result.cached_at,
         ttl_ms: getReconciliationCacheTtlMs(),
         force_requested: force,
+        mode: 'live',
       },
     });
   } catch (error: unknown) {
