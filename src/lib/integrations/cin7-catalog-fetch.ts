@@ -129,8 +129,9 @@ async function paginateUntilDone<T>(input: {
     if (result.total != null && result.total > 0 && sourceRowsFetched >= result.total) {
       break;
     }
-    // Short page is EOF when Total is missing/unreliable.
-    if (result.sourceRowCount < pageSize) break;
+    // Do NOT treat short pages as EOF when Total is missing — truncated catalogs
+    // produce false-clean recon (0 missing/extra against a partial Cin7 pull).
+    // Clean empty page (handled above) is the only Total-less EOF signal.
   }
 
   return { items, pages_fetched: pagesFetched, errors };
@@ -275,7 +276,6 @@ export async function fetchOmniTaxCodeCatalog(
   const codes = new Set<string>();
   const errors: string[] = [];
   let pagesFetched = 0;
-  let stablePages = 0;
   // Prefer a slim field list; fall back to full contact rows if Omni ignores/blank TaxStatus.
   let fields: string | undefined = 'Id,TaxStatus,Type';
 
@@ -298,17 +298,28 @@ export async function fetchOmniTaxCodeCatalog(
       errors.push(`Contacts page ${page}: ${result.error}`);
       // Keep going on transient page errors; empty+error still ends the walk below.
     }
-    if (result.sourceRowCount === 0) break;
-    const before = codes.size;
+    if (result.sourceRowCount === 0) {
+      // Proven end-of-contacts. Soft-stop is only valid once the recon floor is met.
+      if (expectedMin > 0 && codes.size < expectedMin) {
+        errors.push(
+          `Tax codes ended early with ${codes.size} codes; recon expects at least ${expectedMin}.`
+        );
+      }
+      break;
+    }
     for (const row of result.rows) {
       const code = row.taxStatus?.trim();
       if (code) codes.add(code);
     }
-    if (codes.size === before) stablePages += 1;
-    else stablePages = 0;
-    // Soft early-exit only after we already match (or beat) the recon floor.
-    if (expectedMin > 0 && codes.size >= expectedMin && stablePages >= 5) break;
-    if (result.sourceRowCount < pageSize) break;
+    // Never stop mid-book on "stable" pages — rare codes appear late.
+    // Short last page is EOF only when we already meet the recon floor (or none set).
+    if (result.sourceRowCount < pageSize) {
+      if (expectedMin > 0 && codes.size < expectedMin) {
+        // Keep walking if Total-less short page might be a glitch — only stop on empty.
+        continue;
+      }
+      break;
+    }
   }
 
   await entityGap(options);
@@ -568,12 +579,13 @@ export async function fetchAllOmniMasterCatalogsSequential(
   const internalCustomers = {
     contacts: partitioned.internalCustomers,
     pages_fetched: 0,
-    errors: [] as string[],
+    // Same walk as customers — propagate contact-catalog errors (fail-closed).
+    errors: allContacts.errors,
   };
   const suppliers = {
     contacts: partitioned.suppliers,
     pages_fetched: 0,
-    errors: [] as string[],
+    errors: allContacts.errors,
   };
 
   const derived = buildDerivedReferenceFromParts({
