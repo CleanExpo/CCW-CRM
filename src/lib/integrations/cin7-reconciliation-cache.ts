@@ -17,6 +17,8 @@ function inflightKey(ownerUserId: string, force: boolean): string {
 export function isReconciliationSnapshotCacheable(snapshot: Cin7ReconciliationSnapshot): boolean {
   if (snapshot.source === 'none') return false;
   if (snapshot.fetch_meta.errors.length > 0) return false;
+  if (snapshot.fetch_meta.incomplete) return false;
+  if (snapshot.acceptance_blocked) return false;
   return true;
 }
 
