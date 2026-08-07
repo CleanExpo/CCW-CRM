@@ -232,11 +232,18 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    0.5 after, with `overallSavingsMs: 0`. What remains unexplained is the two seconds between first
    paint and largest paint; `network-dependency-tree-insight` fails, which establishes a critical
    request chain exists — not that it caused the gap. Start with a trace, and let it name the
-   resource. **Lead, not a cause:** the LCP element is a 157×14px `<span class="block truncate">` in
-   the header nav, painting at 3390ms — a small element that ought to paint early. The traces are
-   already on disk in `.lighthouseci/`; start there rather than arranging a fresh run. Evidence and
-   what was ruled out: `docs/PERFORMANCE-FINDINGS.md`. Once green, `lighthouse-agentic.yml` can drop
-   `continue-on-error` and become a real gate.
+   resource. **The trace has now been run** — see below; the diagnosis step is done and what remains
+   is a measured change. Evidence and what was ruled out: `docs/PERFORMANCE-FINDINGS.md`. Once green,
+   `lighthouse-agentic.yml` can drop `continue-on-error` and become a real gate.
+
+   **Traced 2026-08-07.** Lighthouse's LCP phase breakdown for `/` is TTFB 918ms (27%), Load Delay
+   0, **Load Time 0**, **Render Delay 2475ms (73%)**. The LCP element fetches nothing, and it is not
+   hydration-gated — the string is in the served HTML. Three render-blocking stylesheets sit in
+   `<head>`, and their critical chain ends at 2030ms, inside the render-delay window. The longest
+   chain ends on a **990-byte** file, so this is request serialization under throttling, not payload
+   size. **Not yet established:** that unblocking them clears the 2500ms budget — TTFB alone is
+   918ms, so render delay must fall to about 1580ms. Next step is a change measured against this
+   baseline, not more diagnosis.
 
 3a. ~~**Make the application cacheable.**~~ **DONE 2026-08-07** — PR #269, merged as `f4fc4779` and
    live. Locale resolution moved from the root layout to `src/app/(dashboard)/layout.tsx:23`.

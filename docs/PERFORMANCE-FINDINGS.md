@@ -248,3 +248,78 @@ The broader shape of it: every API route under the matcher answers an unauthenti
 
 Neither defect is fixed here. Both need their own branch and review — this document is a record of
 what was measured, not a change.
+
+---
+
+## The FCP-to-LCP gap, traced
+
+Earlier revisions of this document said the gap needed "a trace, not another hypothesis". The trace
+was run. It is in the post-#269 lhci artifacts under `.lighthouseci/`, and it answers the question.
+
+### What the trace says
+
+Lighthouse's own LCP phase breakdown for `/`, from the run measuring LCP at 3393ms:
+
+| Phase | Timing | % of LCP |
+| --- | --- | --- |
+| TTFB | 918ms | 27% |
+| Load Delay | 0ms | 0% |
+| Load Time | **0ms** | 0% |
+| Render Delay | **2475ms** | **73%** |
+
+**Load Time is zero.** The LCP element is fetching nothing — it is a text node, and the trace
+confirms no resource load stands between the document arriving and that text being able to paint.
+Nearly three-quarters of LCP is the browser waiting to render something it already has.
+
+### What that eliminates
+
+- **Hydration / client rendering.** Ruled out directly: the LCP string is present in the served
+  HTML. `curl -s https://ccw-crm-web.vercel.app/ | grep -c "Equipment supplier operations"` returns
+  1, in a server-rendered `<span>` inside the header anchor. The element is not waiting on React.
+- **Origin latency**, already ruled out and still ruled out.
+- **Main-thread work.** TBT is 0–13ms post-#269.
+
+### Where the render delay actually sits
+
+The critical request chain, from `network-dependency-tree-insight` (score 0):
+
+| Resource | Size | Chain ends at |
+| --- | --- | --- |
+| the document | 20,994 B | 1133ms |
+| `3m509vc5837_1.css` | **990 B** | **2030ms — longest chain** |
+| `0diq_ubmueqi4.css` | 41,267 B | 1965ms |
+| `1moyu3-vsicou.css` | 935 B | 1644ms |
+
+All three are `<link rel="stylesheet" data-precedence="next">` in `<head>`, confirmed by reading the
+served HTML. All three are render-blocking, and text cannot paint before the stylesheets that might
+restyle it have arrived.
+
+The detail worth noticing: **the longest chain ends on a 990-byte file.** This is not a payload
+problem. Three stylesheets are discovered only after the document parses and then contend under
+Lighthouse's throttling (150ms RTT, 4× CPU), so the cost is serialization and round-trips, not
+bytes. Shrinking the 41KB file would not address it.
+
+The chain completes at 2030ms and the render-delay window runs to 3393ms, so the blocking CSS sits
+squarely inside the phase that dominates LCP.
+
+### What this does NOT establish
+
+Stated explicitly, because this document has twice had to retract a cause it had not proved:
+
+**It is not established that unblocking the CSS brings LCP under 2500ms.** TTFB alone is 918ms
+under throttling, so render delay would have to fall from 2475ms to roughly 1580ms for the page to
+pass. The trace localises the gap to the render phase and identifies the only render-blocking
+resources present; it does not quantify the recovery. The next piece of work is a **change measured
+against this baseline**, not a further diagnosis.
+
+A note on the two TTFB figures, since they look contradictory: `server-response-time` is 22ms, while
+the LCP phase table reports TTFB at 918ms. Both are correct. The first is server processing; the
+second is the full throttled navigation including connection setup at 150ms RTT. Neither is a
+server-side defect.
+
+### Correction this forces
+
+"Render-blocking resources" appears under "Checked and ruled out" above, on the strength of
+Lighthouse scoring it 1 before #269. It scores **0.5** after, and it is now the leading candidate
+for the render delay. That entry is annotated in place rather than deleted, and this section
+supersedes it.
