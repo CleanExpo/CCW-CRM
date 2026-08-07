@@ -9,6 +9,9 @@
 
 export const CIN7_SCHEDULED_SYNC_ENV = 'NEXT_PUBLIC_CIN7_SCHEDULED_SYNC_AT';
 
+/** Browser event after scheduled sync runs a live Cin7 reconciliation pull. */
+export const CIN7_LIVE_RECON_REFRESHED_EVENT = 'cin7:live-recon-refreshed';
+
 export const CIN7_CLIENT_SYNC_ENTITY_ORDER = [
   'products',
   'customers',
