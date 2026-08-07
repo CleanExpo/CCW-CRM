@@ -135,3 +135,79 @@ Recorded so nobody spends the time again:
 - **JavaScript execution.** TBT is 0–19ms across all three pages.
 - **Render-blocking resources.** Lighthouse scores this 1.
 - **Server response time.** 22ms, zero savings available.
+
+---
+
+## The trace decided: LCP is credited to the wrong element
+
+Measured 2026-08-07 against `https://ccw-crm-web.vercel.app` **after** PR #269 (`f4fc4779`) and
+PR #270 (`9317f54f`) — a newer build than the runs recorded above. Method: Chrome DevTools
+protocol, **applied** throttling (4× CPU, Slow 4G, 412×823 mobile viewport), CDN warm
+(`x-vercel-cache: HIT`). Five navigations.
+
+### What was observed
+
+The LCP element is the **logo tagline** — `src/components/brand/ccw-logo.tsx:144`, rendered
+`block truncate font-medium text-[11px] sm:text-xs text-zinc-400`, area **2,226px²**. This is the
+same element the earlier runs named, now traced to its source.
+
+In the same viewport, painted and opaque, sit far larger candidates:
+
+| Element | Area | In SSR HTML? |
+| --- | --- | --- |
+| Hero `<p>` "Replace fragmented spreadsheets…" | 46,185px² | yes |
+| Hero `<h1>` "Run quotes, stock, and fulfilment…" | 40,667px² | yes |
+| Logo tagline `<span>` (**credited as LCP**) | 2,226px² | yes |
+
+A `PerformanceObserver` on `largest-contentful-paint` emitted **exactly one entry** across the
+load — the 2,226px² span. The hero paragraph, twenty-one times larger and present in the
+server-rendered HTML, never became a candidate at all.
+
+### Why — established by controlled experiment, not inference
+
+`src/components/landing/marketing-landing.tsx:154` wraps the entire hero in
+`animate-marketing-reveal`. That keyframe (`src/app/globals.css:592`) begins at **`opacity: 0`**
+and runs 0.75s. Chrome does not treat an element painted at `opacity: 0` as an LCP candidate.
+
+The experiment: same URL, same throttling, injecting
+`.animate-marketing-reveal{animation:none;opacity:1;transform:none}` before first paint and
+changing nothing else.
+
+- Animation **on** (production today): one LCP entry — the 2,226px² span.
+- Animation **off**: two entries — the span, then the hero paragraph at **44,500px²**.
+
+Disabling the reveal is what makes the hero eligible. That is the cause.
+
+### The two-second FCP-to-LCP gap did not reproduce
+
+Under applied throttling, across two clean runs:
+
+| Run | FCP | LCP | LCP element |
+| --- | --- | --- | --- |
+| 4 | 836ms | 836ms | logo tagline, 2,226px² |
+| 5 | 800ms | 800ms | logo tagline, 2,226px² |
+
+FCP and LCP are **the same event**, which follows directly from the section above: the credited
+element paints at first paint, and the hero — which paints later, behind the fade — is never
+counted. There is no gap to explain in these runs.
+
+This does **not** refute the 3293ms figure. That number came from Lighthouse's default *simulated*
+(Lantern) throttling, which models metrics rather than measuring them under applied throttling.
+The two methodologies are not comparable and neither supersedes the other.
+
+### What is NOT established here
+
+- **`npm run test:lighthouse` was not re-run.** No claim is made that any Lighthouse score or
+  budget assertion has changed. The re-baseline against `lighthouserc.js` remains outstanding, and
+  until it runs, the pass/fail table earlier in this document stands as the last real LHCI result.
+- **No claim that this makes the page faster.** Making the hero LCP-eligible will most likely make
+  the *reported* LCP worse, because a larger, later element becomes the candidate. The defect is
+  that the metric currently describes a header caption rather than the hero, so any LCP tuning
+  aimed at today's number is aimed at the wrong element.
+- Runs hit a warm CDN. A cold-cache profile was not measured.
+
+### The actual decision this surfaces
+
+The 0.75s `opacity: 0` reveal delays when a real user sees the hero while simultaneously hiding
+that delay from LCP. Whether to keep it is a design call, not a performance one — but the budget
+in `lighthouserc.js` should not be read as describing hero render time while it stands.
