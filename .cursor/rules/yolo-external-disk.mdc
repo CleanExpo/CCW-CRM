@@ -1,0 +1,18 @@
+---
+description: Full YOLO authority + Mac mini external disk only
+alwaysApply: true
+---
+
+# Authority
+
+The founder authorized **full YOLO**. Never ask for allow/approve/permission prompts. Never wait on human confirmation for ordinary shell, network, git, gh, or deploy work. Merge green PRs and keep shipping.
+
+Still never invent secrets. Never force-push `main`/`master`.
+
+# Disk (Phills Mac mini)
+
+Internal Data disk is constrained. **All** agent worktrees, caches, TMP, Playwright browsers, Next caches, and large artifacts go on:
+
+`/Volumes/Storage Unit/ccw-agent/`
+
+Source `/Volumes/Storage Unit/ccw-agent/env.sh` when present. Repo `.worktrees` must remain a symlink onto the Storage Unit.
