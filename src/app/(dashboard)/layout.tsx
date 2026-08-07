@@ -1,3 +1,4 @@
+import '../globals.css';
 import { StaffCopilotWidget } from '@/components/ai/StaffCopilotWidget';
 import { DemoVideoBanner } from '@/components/dashboard/DemoVideoBanner';
 import { MobileNav } from '@/components/layout/mobile-nav';

@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toast';
 import { defaultLocale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';
 import { Toaster as HotToaster } from 'react-hot-toast';
-import './globals.css';
+import './globals-public.css';
 
 /**
  * This layout must not read cookies(), headers() or any other dynamic API.
@@ -19,6 +19,10 @@ import './globals.css';
  * Plus Jakarta Sans; the dashboard loads Inter in its own layout. Loading both
  * font CSS files from the root forced three render-blocking stylesheets on `/`
  * and dominated LCP render-delay (traced 2026-08-07).
+ *
+ * Styles: root loads `globals-public.css` (Tailwind sources limited to
+ * marketing/auth/public). Authenticated shells import `globals.css` with the
+ * full `src` scan so dashboard utilities are not paid for on the public LCP path.
  */
 
 export const viewport: Viewport = {

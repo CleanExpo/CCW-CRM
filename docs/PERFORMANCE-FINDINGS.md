@@ -547,6 +547,17 @@ stylesheets (~335KB utilities + ~1.6KB font) until the follow-up public-source s
 
 The budget (2500ms) remains red. Next measured slice: cut public-route render-blocking CSS bytes.
 
+**That next slice has since landed, and is NOT in the table above.** PR #276 (`05945597`, "Halve
+public-route CSS: slim Tailwind sources for marketing/auth") merged at 12:17, five minutes after
+this measurement was recorded. The ~335KB utilities stylesheet the note above names as still
+present is exactly what it targets. So the table is the **post-#274, pre-#276** state: honest as to
+element, current as to #274, and already superseded as to CSS bytes. It has not been re-run against
+#276.
+
+An earlier revision of this section said no re-measurement had been run at all. That was true when
+written and is now wrong; the correction is left visible rather than silently swapped, per this
+document's convention.
+
 **A note on comparability, because it will be tempting to ignore.** Every LCP figure above was
 measured while a 2,226px² logo tagline was the credited element. After #274 the hero — an order of
 magnitude larger and painting later — becomes eligible. A post-#274 LCP that reads *worse* than
