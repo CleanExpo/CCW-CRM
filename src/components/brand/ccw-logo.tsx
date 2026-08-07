@@ -88,6 +88,11 @@ export type CcwLogoProps = {
   subtitle?: string;
   className?: string;
   href?: string;
+  /**
+   * Forwarded to `next/link`. Public marketing and auth surfaces pass `false`
+   * so the logo does not prefetch its own route on the LCP path.
+   */
+  prefetch?: boolean;
   /** Light surfaces (portal, supplier) vs dark app shell */
   theme?: 'dark' | 'light';
   idPrefix?: string;
@@ -102,6 +107,7 @@ export function CcwLogo({
   subtitle,
   className,
   href,
+  prefetch,
   theme = 'dark',
   idPrefix,
 }: CcwLogoProps) {
@@ -160,7 +166,7 @@ export function CcwLogo({
 
   if (href) {
     return (
-      <Link href={href} className={rootClass}>
+      <Link href={href} prefetch={prefetch} className={rootClass}>
         {content}
       </Link>
     );
