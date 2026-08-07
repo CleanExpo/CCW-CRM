@@ -4,13 +4,16 @@ import {
   exponentialBackoffMs,
   parseRetryAfterMs,
 } from '@/lib/integrations/cin7-http-retry';
+import { isReconciliationSnapshotCacheable } from '@/lib/integrations/cin7-reconciliation-cache';
 import { getIncompleteSyncEntities } from '@/lib/integrations/cin7-reconciliation-job';
 import { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
 import { resolveSyncStartPage, runPagedSyncEngine } from '@/lib/integrations/cin7-sync-engine';
 import {
+  assertCin7SyncAcceptance,
   buildCin7ModifiedSinceWhere,
   decideCin7SyncMode,
   floorSyncRecordCount,
+  shouldPromoteCin7SyncComplete,
 } from '@/lib/integrations/cin7-sync-incremental';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -373,6 +376,140 @@ describe('additive / incremental sync guards', () => {
       completedAt: null,
     });
     expect(decided.mode).toBe('resume');
+  });
+
+  it('forces full when Optix is short by even 1 row (tolerance 0)', () => {
+    const decided = decideCin7SyncMode({
+      forceFull: false,
+      forceRestart: false,
+      status: 'complete',
+      completedAt: new Date('2026-08-01T00:00:00Z'),
+      optixCount: 10_396,
+      expectedSourceCount: 10_397,
+    });
+    expect(decided.mode).toBe('full');
+  });
+});
+
+describe('fail-closed sync acceptance', () => {
+  it('blocks complete when Optix is below known Cin7 total', () => {
+    const gate = assertCin7SyncAcceptance({
+      optixCount: 9840,
+      cin7Expected: 9845,
+      syncErrors: [],
+    });
+    expect(gate.accepted).toBe(false);
+    expect(gate.reason).toContain('Optix 9840 < Cin7 9845');
+  });
+
+  it('blocks complete when sync errors are retained', () => {
+    const gate = assertCin7SyncAcceptance({
+      optixCount: 9845,
+      cin7Expected: 9845,
+      syncErrors: ['Page 26: Cin7 Omni HTTP 429'],
+    });
+    expect(gate.accepted).toBe(false);
+    expect(gate.reason).toContain('sync errors retained');
+  });
+
+  it('accepts when Optix meets Cin7 and there are no errors', () => {
+    const gate = assertCin7SyncAcceptance({
+      optixCount: 9845,
+      cin7Expected: 9845,
+      syncErrors: [],
+    });
+    expect(gate.accepted).toBe(true);
+    expect(gate.reason).toBeNull();
+  });
+
+  it('promotes incomplete when Optix already matches Cin7 floor', () => {
+    expect(
+      shouldPromoteCin7SyncComplete({
+        status: 'incomplete',
+        optixCount: 10_397,
+        cin7Expected: 10_397,
+        syncErrors: [],
+      })
+    ).toBe(true);
+    expect(
+      shouldPromoteCin7SyncComplete({
+        status: 'complete',
+        optixCount: 10_397,
+        cin7Expected: 10_397,
+        syncErrors: [],
+      })
+    ).toBe(false);
+    expect(
+      shouldPromoteCin7SyncComplete({
+        status: 'incomplete',
+        optixCount: 10_390,
+        cin7Expected: 10_397,
+        syncErrors: [],
+      })
+    ).toBe(false);
+  });
+
+  it('refuses to cache dirty recon snapshots', () => {
+    const clean = {
+      source: 'omni' as const,
+      checked_at: new Date().toISOString(),
+      cin7: {
+        products: { styles: 1, skus: 1, by_visibility: {} },
+        customers: 1,
+        internal_customers: 0,
+        suppliers: 0,
+        branches: 0,
+        reference: null,
+      },
+      optix: {
+        products: { total_cin7_sourced: 1, skus: 1, styles: 1, by_visibility: {} },
+        customers: { total: 1, cin7_linked: 1, extra_without_cin7_id: 0 },
+        internal_customers: 0,
+        suppliers: { total: 0, cin7_linked: 0, extra_without_cin7_id: 0 },
+        branches: { total: 0 },
+        reference: null,
+      },
+      exceptions_summary: {
+        products_missing_in_optix: 0,
+        products_extra_in_optix: 0,
+        products_field_mismatches: 0,
+        customers_missing_in_optix: 0,
+        customers_extra_in_optix: 0,
+        customers_field_mismatches: 0,
+        suppliers_missing_in_optix: 0,
+        suppliers_extra_in_optix: 0,
+        suppliers_field_mismatches: 0,
+        branches_missing_in_optix: 0,
+        branches_extra_in_optix: 0,
+        branches_field_mismatches: 0,
+        internal_customers_missing_in_optix: 0,
+        internal_customers_extra_in_optix: 0,
+        internal_customers_field_mismatches: 0,
+        product_categories_missing_in_optix: 0,
+        product_categories_extra_in_optix: 0,
+        brands_missing_in_optix: 0,
+        brands_extra_in_optix: 0,
+        price_lists_missing_in_optix: 0,
+        price_lists_extra_in_optix: 0,
+        tax_codes_missing_in_optix: 0,
+        tax_codes_extra_in_optix: 0,
+        units_of_measure_missing_in_optix: 0,
+        units_of_measure_extra_in_optix: 0,
+        stock_levels_missing_in_optix: 0,
+        stock_levels_extra_in_optix: 0,
+        stock_levels_field_mismatches: 0,
+      },
+      fetch_meta: { errors: [] as string[] },
+      notes: [] as string[],
+    };
+    expect(isReconciliationSnapshotCacheable(clean)).toBe(true);
+    expect(
+      isReconciliationSnapshotCacheable({
+        ...clean,
+        fetch_meta: { errors: ['Page 26: HTTP 429'], incomplete: true },
+        acceptance_blocked: true,
+      })
+    ).toBe(false);
   });
 });
 
