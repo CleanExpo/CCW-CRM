@@ -211,3 +211,22 @@ The two methodologies are not comparable and neither supersedes the other.
 The 0.75s `opacity: 0` reveal delays when a real user sees the hero while simultaneously hiding
 that delay from LCP. Whether to keep it is a design call, not a performance one — but the budget
 in `lighthouserc.js` should not be read as describing hero render time while it stands.
+
+---
+
+## Fix shipped: transform-only marketing reveal (no `opacity: 0`)
+
+**Change:** `marketing-reveal` in `src/app/globals.css` no longer starts at `opacity: 0`. The
+animation is transform-only (`translateY`), so the hero stays an LCP candidate from first paint
+while the entrance motion remains. Reduced-motion collapses to a no-op.
+
+**Why this shape:** the controlled experiment above proved opacity was the disqualifier. Removing
+opacity from the keyframes is the minimal honest fix — not “disable animation entirely,” and not
+another round of CSS-chain guessing aimed at the logo-tagline metric.
+
+**Still outstanding after this lands on production:**
+
+1. Re-run `npm run test:lighthouse` (median aggregation) and record LCP/SI against the prior
+   ~3393ms median baseline. Do **not** claim the budget is green without that number.
+2. Expect reported LCP may move (likely up) once the hero is credited — that is honesty, not
+   regression theater. Further LCP work then targets the real element.
