@@ -27,14 +27,14 @@ import {
 } from '@/lib/integrations/cin7-reconciliation-reference';
 import { healOptixStockFieldMismatches } from '@/lib/integrations/cin7-stock-prune';
 import {
+  buildSyncCompletenessSummary,
+  type Cin7SyncCompletenessRow,
+} from '@/lib/integrations/cin7-sync-completeness';
+import {
   getCin7PageSize,
   getCin7SyncMaxPages,
   shouldContinueCin7SyncPage,
 } from '@/lib/integrations/cin7-sync-config';
-import {
-  buildSyncCompletenessSummary,
-  type Cin7SyncCompletenessRow,
-} from '@/lib/integrations/cin7-sync-completeness';
 
 const CIN7_PRODUCT_CATEGORY_PREFIX = 'Cin7';
 
@@ -93,9 +93,13 @@ export type Cin7ReconciliationSnapshot = {
     suppliers_pages?: number;
     branches_pages?: number;
     errors: string[];
+    /** True when Cin7 pull was truncated/errored — exception zeros are not trustworthy. */
+    incomplete?: boolean;
   };
   notes: string[];
   sync_completeness?: Cin7SyncCompletenessRow[];
+  /** When true, UI must not treat exception summary as sign-off clean. */
+  acceptance_blocked?: boolean;
 };
 
 export type Cin7ExceptionEntity =
@@ -549,6 +553,18 @@ export async function buildCin7Reconciliation(
   const customerLinked = customerRows.length;
   const supplierLinked = supplierRows.length;
 
+  const catalogFetchIncomplete =
+    fetchErrors.length > 0 ||
+    Boolean(
+      omniCatalogs &&
+      (omniCatalogs.products.errors.length > 0 ||
+        omniCatalogs.customers.errors.length > 0 ||
+        omniCatalogs.suppliers.errors.length > 0 ||
+        omniCatalogs.branches.errors.length > 0 ||
+        omniCatalogs.stockLevels.errors.length > 0 ||
+        omniCatalogs.productCategories.errors.length > 0)
+    );
+
   if (fetchErrors.length > 0) {
     notes.push(`Cin7 fetch warnings: ${fetchErrors.slice(0, 3).join('; ')}`);
   }
@@ -556,7 +572,8 @@ export async function buildCin7Reconciliation(
     'Use the exception report to review individual records — no data is deleted during sync.'
   );
 
-  fetchMeta.errors = fetchErrors;
+  fetchMeta.errors = [...new Set(fetchErrors)];
+  fetchMeta.incomplete = catalogFetchIncomplete || source === 'none';
 
   const emptyReferenceExceptions: Cin7ReferenceExceptionSummary = {
     product_categories_missing_in_optix: 0,
@@ -619,11 +636,21 @@ export async function buildCin7Reconciliation(
       'Cin7 is unreachable — counts below are not valid for acceptance. Reconnect and refresh from live Cin7.'
     );
   }
-  if (fetchErrors.length > 0) {
+  if (catalogFetchIncomplete) {
     notes.push(
       'Cin7 fetch was incomplete — do not use this snapshot for sign-off until a clean live refresh succeeds.'
     );
+    notes.push(
+      'Exception summary is masked while the Cin7 pull is incomplete (fail-closed — zeros would be misleading).'
+    );
   }
+
+  // Fail-closed: never present clean zero exceptions against a truncated Cin7 pull.
+  const maskExceptions = source === 'none' || catalogFetchIncomplete;
+  const blockedReferenceExceptions: Cin7ReferenceExceptionSummary = {
+    ...emptyReferenceExceptions,
+    stock_levels_missing_in_optix: 1,
+  };
 
   const snapshotWithoutCompleteness: Cin7ReconciliationSnapshot = {
     source,
@@ -657,27 +684,46 @@ export async function buildCin7Reconciliation(
       branches: { total: branchRows.length },
       reference: referenceOptix,
     },
-    exceptions_summary: {
-      products_missing_in_optix: source === 'none' ? 0 : productExceptions.missing,
-      products_extra_in_optix: source === 'none' ? 0 : productExceptions.extra,
-      products_field_mismatches: source === 'none' ? 0 : productExceptions.fieldMismatch,
-      customers_missing_in_optix: source === 'none' ? 0 : customerExceptions.missing,
-      customers_extra_in_optix: source === 'none' ? 0 : customerExceptions.extra,
-      customers_field_mismatches: source === 'none' ? 0 : customerExceptions.fieldMismatch,
-      suppliers_missing_in_optix: source === 'none' ? 0 : supplierExceptions.missing,
-      suppliers_extra_in_optix: source === 'none' ? 0 : supplierExceptions.extra,
-      suppliers_field_mismatches: source === 'none' ? 0 : supplierExceptions.fieldMismatch,
-      branches_missing_in_optix: source === 'none' ? 0 : branchExceptions.missing,
-      branches_extra_in_optix: source === 'none' ? 0 : branchExceptions.extra,
-      branches_field_mismatches: source === 'none' ? 0 : branchExceptions.fieldMismatch,
-      internal_customers_missing_in_optix: source === 'none' ? 0 : internalCustomerExceptions.missing,
-      internal_customers_extra_in_optix: source === 'none' ? 0 : internalCustomerExceptions.extra,
-      internal_customers_field_mismatches:
-        source === 'none' ? 0 : internalCustomerExceptions.fieldMismatch,
-      ...(source === 'none' ? emptyReferenceExceptions : referenceExceptions),
-    },
+    exceptions_summary: maskExceptions
+      ? {
+          products_missing_in_optix: 1,
+          products_extra_in_optix: 0,
+          products_field_mismatches: 0,
+          customers_missing_in_optix: 1,
+          customers_extra_in_optix: 0,
+          customers_field_mismatches: 0,
+          suppliers_missing_in_optix: 1,
+          suppliers_extra_in_optix: 0,
+          suppliers_field_mismatches: 0,
+          branches_missing_in_optix: 1,
+          branches_extra_in_optix: 0,
+          branches_field_mismatches: 0,
+          internal_customers_missing_in_optix: 0,
+          internal_customers_extra_in_optix: 0,
+          internal_customers_field_mismatches: 0,
+          ...blockedReferenceExceptions,
+        }
+      : {
+          products_missing_in_optix: productExceptions.missing,
+          products_extra_in_optix: productExceptions.extra,
+          products_field_mismatches: productExceptions.fieldMismatch,
+          customers_missing_in_optix: customerExceptions.missing,
+          customers_extra_in_optix: customerExceptions.extra,
+          customers_field_mismatches: customerExceptions.fieldMismatch,
+          suppliers_missing_in_optix: supplierExceptions.missing,
+          suppliers_extra_in_optix: supplierExceptions.extra,
+          suppliers_field_mismatches: supplierExceptions.fieldMismatch,
+          branches_missing_in_optix: branchExceptions.missing,
+          branches_extra_in_optix: branchExceptions.extra,
+          branches_field_mismatches: branchExceptions.fieldMismatch,
+          internal_customers_missing_in_optix: internalCustomerExceptions.missing,
+          internal_customers_extra_in_optix: internalCustomerExceptions.extra,
+          internal_customers_field_mismatches: internalCustomerExceptions.fieldMismatch,
+          ...referenceExceptions,
+        },
     fetch_meta: fetchMeta,
     notes: uniqueNotes(notes),
+    acceptance_blocked: maskExceptions,
   };
 
   const syncCompleteness =
