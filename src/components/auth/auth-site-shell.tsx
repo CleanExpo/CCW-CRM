@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthHotToaster } from '@/components/auth/auth-hot-toaster';
 import { MarketingAmbientCanvas } from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ export function AuthSiteShell({ children }: { children: React.ReactNode }) {
     >
       <MarketingAmbientCanvas intensity="soft" />
       <main className="relative z-10 min-h-screen">{children}</main>
+      <AuthHotToaster />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { JsonLd } from '@/components/seo/JsonLd';
 import { defaultLocale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';
-import { Toaster as HotToaster } from 'react-hot-toast';
 import './globals-public.css';
 
 /**
@@ -22,9 +21,9 @@ import './globals-public.css';
  * marketing/auth/public). Authenticated shells import `globals.css` with the
  * full `src` scan so dashboard utilities are not paid for on the public LCP path.
  *
- * Chrome: RouteProgressBar (framer-motion) is NOT mounted here — it pulled a
- * heavy client graph onto `/` before LCP. Progress lives in the dashboard shell.
- * react-hot-toast stays here because the marketing landing embeds LoginForm.
+ * Chrome: RouteProgressBar (framer-motion) and react-hot-toast stay off this
+ * root. Progress lives in the dashboard shell; AuthHotToaster mounts with the
+ * login island / auth site shell so `/` does not pay for toast before LCP.
  * shadcn Toaster lives in dashboard/portal layouts only.
  */
 
@@ -175,24 +174,6 @@ export default function RootLayout({
     <html lang={defaultLocale} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         {children}
-        <HotToaster
-          position="top-center"
-          toastOptions={{
-            duration: 4500,
-            style: {
-              background: 'hsl(240 6% 10%)',
-              color: 'hsl(0 0% 98%)',
-              border: '1px solid hsl(0 0% 100% / 0.1)',
-              boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.45)',
-            },
-            success: {
-              iconTheme: { primary: '#22c55e', secondary: '#18181b' },
-            },
-            error: {
-              iconTheme: { primary: '#f87171', secondary: '#18181b' },
-            },
-          }}
-        />
         <JsonLd id="org-schema" data={[orgSchema, websiteSchema]} />
       </body>
     </html>
