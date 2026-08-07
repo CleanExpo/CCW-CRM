@@ -215,9 +215,54 @@ The consequence is not academic:
 one run in three came in under. `largest-contentful-paint` fails anyway — it is over budget even at
 its best — which is why this went unnoticed.
 
-Recommended fix, unshipped and belonging to whoever owns the gate: set
-`assert.aggregationMethod: 'median'` in `lighthouserc.js`. Expect it to turn `speed-index` red on
-`/` immediately. That is the point — it is red today and the gate is not saying so.
+Recommended fix: set `assert.aggregationMethod: 'median'` in `lighthouserc.js`. Expect it to turn
+`speed-index` red on `/` immediately. That is the point — it is red today and the gate is not saying
+so.
+
+#### Review of the fix in flight — PR #271, `cursor/aaa-honest-gates`
+
+That branch fixes this (`316575a3`, "Judge Lighthouse budgets on the median run, not the luckiest
+one"). Reviewed here rather than re-implemented. **The fix is correct but incomplete.**
+
+It sets `aggregationMethod: 'median'` on nine explicitly-listed assertions. It does not set it at
+the `assert:` level, so every assertion inherited from `preset: 'lighthouse:recommended'` still runs
+on the `optimistic` default. Confirmed from lhci's own source: `assertions.js:426` builds each
+audit's options as `{aggregationMethod, ...assertionOptions}`, so a top-level value propagates to
+all assertions and a per-assertion value overrides it. One line at the `assert:` level covers
+everything; nine per-assertion lines cover nine.
+
+This is a live gap, not a theoretical one. Preset audits whose score genuinely varies run-to-run in
+the 2026-08-07 collection, and which the branch therefore still grades on their best run:
+
+| Audit | URL | Scores across 3 runs | Optimistic reports |
+| --- | --- | --- | --- |
+| `document-latency-insight` | `/` | 0.00, 1.00, 1.00 | 1.00 |
+| `mainthread-work-breakdown` | `/` | 0.50, 1.00, 1.00 | 1.00 |
+| `legacy-javascript-insight` | `/`, `/login`, `/register` | 0.00–0.50 | 0.50 |
+| `interactive` | `/`, `/login` | 0.89–0.96 | best |
+
+`document-latency-insight` is the one to look at: one run in three scores it **zero**, and the gate
+reports 1.00. A branch whose stated purpose is "never grade budgets on the best of N runs" still
+does exactly that for every audit it did not enumerate.
+
+Suggested amendment, one line:
+
+```js
+assert: {
+  preset: 'lighthouse:recommended',
+  aggregationMethod: 'median',   // applies to preset assertions too
+  assertions: { /* per-assertion overrides as written */ },
+}
+```
+
+The companion commit `bd684e30` (`/api/health` exact-match public path) is **correct as written**,
+and deliberately exact-match so `/api/health/deep` is not exposed by prefix. One consequence worth
+stating before it lands: `src/app/api/health/route.ts` returns **503 `unhealthy`** when
+`hasDatabaseConfig()` is false, which is production's current state. Once this ships, monitors will
+correctly start reporting the ERP as unhealthy. That is the fix working, not a regression — the
+endpoint's whole problem was that it could not report ill health. The payload carries only status,
+timestamp, version, uptime, environment and three booleans, so making it public discloses nothing
+sensitive.
 
 ### New defect: `/api/health` redirects to an HTML login page, and naive monitors read it as healthy
 
