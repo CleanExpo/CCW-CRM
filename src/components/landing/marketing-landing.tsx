@@ -42,6 +42,16 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
+
+function LoginFormFallback() {
+  return (
+    <div className="flex min-h-[200px] items-center justify-center">
+      <div className="border-primary/40 border-t-primary h-8 w-8 animate-spin rounded-full border-2" />
+    </div>
+  );
+}
+
 const sectionY = 'py-28 md:py-36';
 const sectionRule = 'border-t border-white/[0.08]';
 
@@ -651,7 +661,10 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="bg-zinc-950/60 px-6 pt-8 pb-10 md:px-8">
-                  <LoginForm variant="marketing" />
+                  {/* LoginForm reads useSearchParams; the boundary keeps this page prerenderable. */}
+                  <Suspense fallback={<LoginFormFallback />}>
+                    <LoginForm variant="marketing" />
+                  </Suspense>
                 </CardContent>
               </Card>
             </div>

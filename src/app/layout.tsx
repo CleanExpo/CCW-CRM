@@ -1,49 +1,23 @@
 import { JsonLd } from '@/components/seo/JsonLd';
 import { RouteProgressBar } from '@/components/transitions/RouteProgressBar';
 import { Toaster } from '@/components/ui/toast';
-import { defaultLocale, isValidLocale, type Locale } from '@/i18n/config';
+import { defaultLocale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';
-import { NextIntlClientProvider } from 'next-intl';
 import { Inter } from 'next/font/google';
-import { cookies } from 'next/headers';
 import { Toaster as HotToaster } from 'react-hot-toast';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
 /**
- * Get the current locale from cookies or default to English
+ * This layout must not read cookies(), headers() or any other dynamic API.
+ *
+ * The root layout wraps every route, so a single dynamic read here opts the
+ * whole application out of static rendering — including the public marketing
+ * pages, which are then served `no-store` and are never edge-cached. Locale is
+ * resolved in `(dashboard)/layout.tsx` instead, where the route is already
+ * dynamic because it is behind authentication.
  */
-async function getLocale(): Promise<Locale> {
-  const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('NEXT_LOCALE');
-
-  if (localeCookie?.value && isValidLocale(localeCookie.value)) {
-    return localeCookie.value as Locale;
-  }
-
-  return defaultLocale;
-}
-
-/**
- * Load messages for the current locale
- */
-async function getMessages(locale: Locale): Promise<Record<string, unknown>> {
-  const load = async (code: string): Promise<Record<string, unknown> | undefined> => {
-    try {
-      const mod = await import(`@/i18n/messages/${code}.json`);
-      const data = mod.default;
-      return data && typeof data === 'object' ? (data as Record<string, unknown>) : undefined;
-    } catch {
-      return undefined;
-    }
-  };
-
-  const primary = await load(locale);
-  if (primary) return primary;
-  const fallback = await load('en');
-  return fallback ?? {};
-}
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -117,14 +91,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages(locale);
-
   const orgSchema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': ['Organization', 'LocalBusiness'],
@@ -192,31 +163,29 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={defaultLocale} suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <RouteProgressBar />
-          {children}
-          <Toaster />
-          <HotToaster
-            position="top-center"
-            toastOptions={{
-              duration: 4500,
-              style: {
-                background: 'hsl(240 6% 10%)',
-                color: 'hsl(0 0% 98%)',
-                border: '1px solid hsl(0 0% 100% / 0.1)',
-                boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.45)',
-              },
-              success: {
-                iconTheme: { primary: '#22c55e', secondary: '#18181b' },
-              },
-              error: {
-                iconTheme: { primary: '#f87171', secondary: '#18181b' },
-              },
-            }}
-          />
-        </NextIntlClientProvider>
+        <RouteProgressBar />
+        {children}
+        <Toaster />
+        <HotToaster
+          position="top-center"
+          toastOptions={{
+            duration: 4500,
+            style: {
+              background: 'hsl(240 6% 10%)',
+              color: 'hsl(0 0% 98%)',
+              border: '1px solid hsl(0 0% 100% / 0.1)',
+              boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.45)',
+            },
+            success: {
+              iconTheme: { primary: '#22c55e', secondary: '#18181b' },
+            },
+            error: {
+              iconTheme: { primary: '#f87171', secondary: '#18181b' },
+            },
+          }}
+        />
         <JsonLd id="org-schema" data={[orgSchema, websiteSchema]} />
       </body>
     </html>
