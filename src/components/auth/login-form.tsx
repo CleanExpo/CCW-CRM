@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { AuthHotToaster } from '@/components/auth/auth-hot-toaster';
 import { authApi } from '@/lib/api/auth';
 import toast from 'react-hot-toast';
 
@@ -76,7 +77,9 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
   }
 
   return (
-    <Form {...form}>
+    <>
+      <AuthHotToaster />
+      <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className={isMarketing ? 'space-y-5' : 'space-y-4'}
@@ -221,5 +224,6 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
         </div>
       </form>
     </Form>
+    </>
   );
 }
