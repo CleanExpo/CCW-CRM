@@ -43,21 +43,36 @@ export async function POST(request: NextRequest) {
   }
 
   const live = await prisma.cin7StockLevel.count({ where: { ownerUserId: scope.userId } });
+  const accepted =
+    result.errors.length === 0 && result.missing_in_optix === 0 && result.cin7_keys > 0;
   await prisma.cin7SyncRun.updateMany({
     where: {
       ownerUserId: scope.userId,
       entityType: { in: ['stock-levels', 'inventory'] },
     },
-    data: {
-      recordsProcessed: live,
-      status: 'complete',
-      nextPage: null,
-      failedPage: null,
-      failureReason: null,
-      completedAt: new Date(),
-    },
+    data: accepted
+      ? {
+          recordsProcessed: live,
+          status: 'complete',
+          nextPage: null,
+          failedPage: null,
+          failureReason: null,
+          completedAt: new Date(),
+        }
+      : {
+          recordsProcessed: live,
+          status: 'incomplete',
+          nextPage: 1,
+          failedPage: 1,
+          failureReason:
+            result.errors[0] ??
+            (result.missing_in_optix > 0
+              ? `Stock prune left ${result.missing_in_optix} Cin7 keys missing in Optix.`
+              : 'Stock prune did not accept — Cin7 catalog empty or incomplete.'),
+          completedAt: null,
+        },
   });
   clearCachedReconciliation(scope.userId);
 
-  return NextResponse.json({ ...result, optix_after: live });
+  return NextResponse.json({ ...result, optix_after: live, accepted });
 }
