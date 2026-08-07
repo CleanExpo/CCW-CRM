@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import { Suspense, type ReactNode } from 'react';
 import MarketingLanding from '@/components/landing/marketing-landing';
+import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
+import { LandingOperationsPulsePlaceholder } from '@/components/landing/landing-operations-pulse';
 import { getAppOrigin } from '@/lib/api/backend-url';
-import type { PublicStats } from '@/components/landing/LiveStatsBar';
 
 export const metadata: Metadata = {
   title: 'CCW Online ERP — Operations platform for equipment suppliers',
@@ -33,7 +35,21 @@ async function getPublicStats(): Promise<PublicStats | null> {
   }
 }
 
-export default async function Home() {
+async function HomeStats(): Promise<ReactNode> {
   const stats = await getPublicStats();
-  return <MarketingLanding stats={stats} />;
+  if (!stats) return <LandingOperationsPulsePlaceholder />;
+  return <LiveStatsBar stats={stats} />;
+}
+
+export default function Home() {
+  // Stream the hero shell immediately; stats must not block LCP HTML.
+  return (
+    <MarketingLanding
+      statsSlot={
+        <Suspense fallback={<LandingOperationsPulsePlaceholder />}>
+          <HomeStats />
+        </Suspense>
+      }
+    />
+  );
 }
