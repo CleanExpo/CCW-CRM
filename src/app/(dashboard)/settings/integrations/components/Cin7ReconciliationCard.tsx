@@ -9,12 +9,13 @@ import {
   getCin7ExceptionReport,
   getCin7ExceptionReportExportUrl,
   getCin7Reconciliation,
+  healCin7FieldMismatches,
   type Cin7ExceptionEntity,
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
 import { CIN7_LIVE_RECON_REFRESHED_EVENT } from '@/lib/integrations/cin7-client-sync-scheduler';
-import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw, Wrench } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Cin7ReconciliationCardProps = {
@@ -95,6 +96,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   const [exceptionsLoading, setExceptionsLoading] = useState(false);
   const [exceptionTotal, setExceptionTotal] = useState(0);
   const [exceptionOffset, setExceptionOffset] = useState(0);
+  const [healingFields, setHealingFields] = useState(false);
   const loadRequestId = useRef(0);
   const EXCEPTION_PAGE = 100;
 
@@ -194,8 +196,40 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   };
 
   const ex = snapshot?.exceptions_summary;
-  const isRefreshing = loading || liveLoading;
+  const productFieldBreakdown = snapshot?.products_field_mismatch_breakdown;
+  const fieldDiffTotal =
+    (ex?.products_field_mismatches ?? 0) +
+    (ex?.customers_field_mismatches ?? 0) +
+    (ex?.suppliers_field_mismatches ?? 0) +
+    (ex?.branches_field_mismatches ?? 0) +
+    (ex?.internal_customers_field_mismatches ?? 0) +
+    (ex?.stock_levels_field_mismatches ?? 0);
+  const isRefreshing = loading || liveLoading || healingFields;
   const fromCache = snapshot?.cache_meta?.from_cache;
+
+  const healFieldDiffs = async () => {
+    setHealingFields(true);
+    try {
+      const result = await healCin7FieldMismatches();
+      toast({
+        title:
+          result.healed_total > 0
+            ? `Aligned ${result.healed_total} row${result.healed_total === 1 ? '' : 's'} to Cin7`
+            : 'No field diffs to heal',
+        description: result.summary,
+        variant: result.errors.length > 0 ? 'destructive' : undefined,
+      });
+      await load({ force: true, silent: true });
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Field heal failed',
+        description: error instanceof Error ? error.message : 'Could not heal field diffs',
+      });
+    } finally {
+      setHealingFields(false);
+    }
+  };
 
   return (
     <Card>
@@ -263,6 +297,22 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
             )}
             Load exception report
           </Button>
+          {fieldDiffTotal > 0 && !snapshot?.acceptance_blocked ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!isConnected || isRefreshing}
+              onClick={() => void healFieldDiffs()}
+              title="Push live Cin7 values onto matching Optix rows (products, contacts, branches, stock)"
+            >
+              {healingFields ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Wrench className="mr-2 h-4 w-4" />
+              )}
+              Heal field diffs ({fieldDiffTotal})
+            </Button>
+          ) : null}
         </div>
 
         {loadError ? (
@@ -437,6 +487,14 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                     Products: {ex.products_missing_in_optix} missing · {ex.products_extra_in_optix}{' '}
                     extra · {ex.products_field_mismatches} field diffs
                   </p>
+                  {productFieldBreakdown && ex.products_field_mismatches > 0 ? (
+                    <p className="text-muted-foreground pl-2">
+                      Field diffs by type: stock {productFieldBreakdown.stock} · price{' '}
+                      {productFieldBreakdown.price} · name {productFieldBreakdown.name} · active{' '}
+                      {productFieldBreakdown.is_active} · visibility{' '}
+                      {productFieldBreakdown.visibility}
+                    </p>
+                  ) : null}
                   <p>
                     Customers: {ex.customers_missing_in_optix} missing ·{' '}
                     {ex.customers_extra_in_optix} extra · {ex.customers_field_mismatches} field
