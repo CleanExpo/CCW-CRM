@@ -33,5 +33,12 @@ Exit: critic picks ours blind only when (1) a named URL/resource is identified f
 
 - #12 shipped (PR #269) — cache fixed; LCP did **not** move (median ~3393 vs 2500)
 - #270 docs findings on main
-- Desktop remeasure commit `f52c74ab` (not yet on main) documents optimistic-gate + health false-green
+- Desktop remeasure + **FCP→LCP trace** on `perf/caching-findings` (`1e3d1134`): LCP is 73% render delay; critical chain is three render-blocking Next CSS files (dual fonts + globals)
+- #271 **merged** — median LHCI + `/api/health` public
+- #272 **open** — remove Inter from root; dashboard-only Inter; preload Plus Jakarta (measured change against the trace)
 - #7 still parked
+
+
+## Update
+- PR #271 merged (median LHCI + /api/health)
+- PR #272 open: dual-font CSS chain cut (measured change vs Desktop LCP trace)
