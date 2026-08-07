@@ -349,18 +349,27 @@ export type Cin7ReconciliationResponse =
       cached_at: string | null;
       ttl_ms: number;
       force_requested?: boolean;
+      mode?: 'live' | 'acceptance';
     };
+    recon_status?: string;
+    blocked_reason?: string | null;
+    incomplete_sync?: boolean;
+    cin7_snapshot_complete?: boolean;
+    optix_complete?: boolean;
   };
 
 /**
  * Compare Cin7 live counts with Optix imported master data.
  * Uses a server-side cache by default; pass force=true to pull fresh data from Cin7.
+ * mode=acceptance runs the fail-closed DB gate used for Phase 1 sign-off.
  */
 export async function getCin7Reconciliation(options?: {
   force?: boolean;
+  mode?: 'live' | 'acceptance';
 }): Promise<Cin7ReconciliationResponse> {
   const params = new URLSearchParams();
   if (options?.force) params.set('force', 'true');
+  if (options?.mode) params.set('mode', options.mode);
   const qs = params.toString();
   return apiClient.get(
     `/api/integrations/cin7/reconciliation${qs ? `?${qs}` : ''}`,
