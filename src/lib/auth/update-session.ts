@@ -87,9 +87,16 @@ export async function updateSession(request: NextRequest) {
     '/api/integrations/shopify/callback',
     '/api/integrations/shopify/authorize',
   ];
-  const isPublicPath = publicPaths.some(
-    (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
-  );
+  // Exact-only: do not prefix-match /api/health/deep or /api/health/routes.
+  // Monitors that follow redirects must see real JSON health, not a login HTML 200.
+  const publicExactPaths = new Set(['/api/health']);
+  const isPublicPath =
+    publicExactPaths.has(request.nextUrl.pathname) ||
+    publicPaths.some(
+      (path) =>
+        request.nextUrl.pathname === path ||
+        request.nextUrl.pathname.startsWith(path + '/')
+    );
 
   if (!isPublicPath && !user) {
     const url = request.nextUrl.clone();
