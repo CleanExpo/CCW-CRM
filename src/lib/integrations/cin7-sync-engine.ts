@@ -524,8 +524,8 @@ export async function runPagedSyncEngine(
         continue;
       }
 
-      // Empty pages before Cin7's reported Total → false EOF; keep resumable.
-      if (reportedTotal != null && reportedTotal > 0 && sourceRowsFetched + 5 < reportedTotal) {
+      // Empty pages before Cin7's reported Total → false EOF; keep resumable (strict).
+      if (reportedTotal != null && reportedTotal > 0 && sourceRowsFetched < reportedTotal) {
         const failureReason = `Empty page at ${page} but only fetched ${sourceRowsFetched}/${reportedTotal} source rows — not complete.`;
         const durationMs = Date.now() - startedAt;
         await persistCin7SyncRunCheckpoint({
