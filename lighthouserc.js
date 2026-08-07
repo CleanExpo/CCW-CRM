@@ -85,6 +85,10 @@ module.exports = {
       // LHCI defaults to aggregationMethod=optimistic, which lets a single lucky
       // run green-wash LCP/SI while the median still misses the bar (measured
       // 2026-08-07: gate reported LCP 3105ms while runs were 3105/3393/3853).
+      // Set at assert-level so preset-inherited audits (not just the nine
+      // enumerated below) also use median — #271 left this gap on main.
+      aggregationMethod: 'median',
+
       assertions: {
         // Core Web Vitals — median of numberOfRuns must beat the budget
         'first-contentful-paint': [

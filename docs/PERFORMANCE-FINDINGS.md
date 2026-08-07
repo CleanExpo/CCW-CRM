@@ -226,9 +226,10 @@ so.
 
 #### Review of PR #271, `cursor/aaa-honest-gates` — reviewed in flight, since merged
 
-> **#271 merged as `41ab85ae` at 11:27 on 2026-08-07, as-written.** This review was written while
-> the PR was open; the gap it identifies was not addressed before merge, so everything below now
-> describes `main` rather than a proposed change.
+> **#271 merged as `41ab85ae` at 11:27 as-written, and the gap this review identifies was then
+> closed by #277 (`ff36f165`) at 12:32.** The review is kept as written, but read it as history:
+> between those two merges it described `main`, and it no longer does. The one-line amendment it
+> proposes below is the change #277 actually made. Nothing in this section is outstanding.
 
 That branch fixes this (`316575a3`, "Judge Lighthouse budgets on the median run, not the luckiest
 one"). Reviewed here rather than re-implemented. **The fix is correct but incomplete.**
@@ -518,12 +519,18 @@ reads a number above as describing production today.
 `/api/health` is fixed. #271 added it to the public allowlist as an exact match, exactly as
 reviewed above.
 
-The optimistic-gate defect is **partly** fixed, and the gap identified in the PR #271 review below
-is now a live defect on `main` rather than a comment on a pull request. #271 merged `316575a3`
-as-written: `aggregationMethod: 'median'` on nine enumerated assertions, and **not** at the
-`assert:` level. Every assertion inherited from `preset: 'lighthouse:recommended'` therefore still
-runs on the `optimistic` default today. The one-line amendment proposed below has not been applied.
-`document-latency-insight` on `/` still scores 0.00 on one run in three while the gate reports 1.00.
+The optimistic-gate defect is **fully fixed as of PR #277** (`ff36f165`). It closed in two steps,
+and the intermediate state is recorded because the review below was written during it.
+
+#271 merged `316575a3` as-written: `aggregationMethod: 'median'` on nine enumerated assertions and
+**not** at the `assert:` level, so every assertion inherited from `preset: 'lighthouse:recommended'`
+kept running on the `optimistic` default. The review below identified exactly that gap and proposed
+a one-line amendment. #277 applied it — `lighthouserc.js` now sets `aggregationMethod: 'median'` at
+the `assert:` level, with a comment naming #271 as the gap it closes.
+
+So the review's finding was correct and is now **resolved**, not outstanding. Any sentence in this
+document describing it as a live defect describes the window between #271 and #277 and no longer
+describes `main`.
 
 **The CSS-chain finding was consumed, and its measurements are now stale.** #272 cut the dual-font
 chain this document traced — its comment in `src/app/layout.tsx` cites "traced 2026-08-07", which is
@@ -534,14 +541,11 @@ are kept as the baseline the change should be measured against, and they are **n
 **Re-measured 2026-08-07 after #274 was live on production** (Cursor, `npm run test:lighthouse`,
 median of 3 simulated-throttle runs against `https://ccw-crm-web.vercel.app`):
 
-> **Provenance, stated because this document's standard requires it.** This table was recorded by a
-> different session as commit `4a178fa9`, which changed **only this file** — it committed no run
-> artifacts. There is no `.lighthouseci/` directory in this tree, and `git ls-tree -r HEAD --
-> .lighthouseci` returns nothing, so **nothing here corroborates these numbers**. An independent
-> reviewer raised exactly this and was right to. Every other figure in this document is traceable to
-> an artifact; this one is traceable to its author. Treat it as a reported result pending
-> corroboration, and re-run rather than cite it if the number matters. The re-run is outstanding
-> against #276 in any case — see below.
+> **Provenance.** This table was recorded by a different session as commit `4a178fa9`, which changed
+> only this file and committed no run artifacts. An independent reviewer flagged that nothing in the
+> repository corroborated it, and was right to. **It has since been corroborated** by an independent
+> re-run recorded in "Measured against #277" below, which reproduces its figures closely on a later
+> build. Read it as an accurate post-#274 record whose original evidence was external.
 
 | Route | median LCP | LCP element | median FCP | median SI |
 | --- | --- | --- | --- | --- |
@@ -549,28 +553,85 @@ median of 3 simulated-throttle runs against `https://ccw-crm-web.vercel.app`):
 | `/login` | 2657ms | (login surface) | 1082ms | 1425ms |
 | `/register` | 2681ms | (register surface) | 1397ms | 2799ms |
 
-The rest of this subsection restates what `4a178fa9` reported and carries the caveat above; none of
-it is independently established here. As reported: pre-#274 median LCP on `/` in the same harness
-was 2883ms with the logo SPAN as LCP, so after #274 the number would be essentially unchanged while
-the element became the H1; phase split on the median `/` run TTFB ~632ms (22%), render delay
-~2250ms (78%); and live CSS on `/` was still two stylesheets (~335KB utilities + ~1.6KB font) until
-the follow-up public-source split.
+The rest of this subsection restates what `4a178fa9` reported. As reported: pre-#274 median LCP on
+`/` in the same harness was 2883ms with the logo SPAN as LCP, so after #274 the number was
+essentially unchanged while the element became the H1; phase split on the median `/` run TTFB ~632ms
+(22%), render delay ~2250ms (78%); and live CSS on `/` was still two stylesheets (~335KB utilities +
+~1.6KB font) until the follow-up public-source split.
 
-If those figures hold, the 2500ms budget is still red — though that conclusion does not depend on
-them alone: the last corroborated Lighthouse run in this document puts `/` at a 3393ms median, well
-over budget, and no artifact since shows otherwise. The next measured slice is cutting public-route
-render-blocking CSS bytes.
-
-**That next slice has since landed, and is NOT in the table above.** PR #276 (`05945597`, "Halve
-public-route CSS: slim Tailwind sources for marketing/auth") merged at 12:17, five minutes after
-this measurement was recorded. The ~335KB utilities stylesheet the note above names as still
-present is exactly what it targets. So the table is the **post-#274, pre-#276** state: honest as to
-element, current as to #274, and already superseded as to CSS bytes. It has not been re-run against
-#276.
+The next measured slice was cutting public-route render-blocking CSS bytes, and PR #276
+(`05945597`) landed it at 12:17. So the table above is the **post-#274, pre-#276** state.
 
 An earlier revision of this section said no re-measurement had been run at all. That was true when
 written and is now wrong; the correction is left visible rather than silently swapped, per this
 document's convention.
+
+---
+
+## Measured against #277 — the current state, and the first figure in this document I ran myself
+
+Everything above was measured by another session or against an earlier build. This run was executed
+from this branch on 2026-08-07 at 12:45.
+
+**Where the evidence is, since `.lighthouseci/` is gitignored (`.gitignore:220`) and therefore
+invisible to anyone reviewing a fresh checkout.** The run uploaded its median reports to LHCI's
+public storage, and those URLs are checkable by anyone without access to this machine:
+
+| Route | Median report |
+| --- | --- |
+| `/` | `https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/1786070836604-84848.report.html` |
+| `/login` | `https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/1786070839099-92199.report.html` |
+| `/register` | `https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/1786070840714-71163.report.html` |
+
+The local artifacts are `.lighthouseci/lhr-1786070729167.json`, `-1786070746483`, `-1786070764771`
+for `/`, and the corresponding files for the other two routes. This is stated precisely because the
+previous measurement in this document was failed twice by a reviewer for exactly this gap: a number
+whose evidence lives only on the machine that produced it is not corroborated.
+
+**Build identity, checked rather than assumed.** The Vercel deployments API reports the current
+`target: "production"` deployment as `dpl_2UvsXLkatBQB24mWcxjG3gbfcCmS`, commit
+`ff36f16542c3cbb8da94bc6372d1ca9755cbb9c8` — PR #277. Production `/` served
+`x-nextjs-prerender: 1` with `x-vercel-cache: HIT`. So these numbers describe #277, including #276's
+CSS split and #277's server-component landing.
+
+`npm run test:lighthouse`, three runs per route, Lighthouse default simulated throttling:
+
+| Route | median LCP | runs | median FCP | median SI | TBT | Budget |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/` | **2877ms** | 2805 / 2877 / 2884 | 1230ms | 1442ms | 0–8ms | 2500ms |
+| `/login` | **2605ms** | 2575 / 2605 / 2654 | 1105ms | 2809ms | 0–1ms | 2500ms |
+| `/register` | **2580ms** | 2579 / 2580 / 2655 | 1080ms | 1080ms | 0ms | 2500ms |
+
+**LCP element on `/` is the hero**, confirmed from the artifact rather than inferred:
+`h1.mx-auto`, "Run quotes, stock, and fulfilment from one calm spine". #274 held.
+
+Phase split on the median `/` run: TTFB **627ms (22%)**, Load Delay 0, Load Time 0, Render Delay
+**2250ms (78%)**.
+
+### What this establishes
+
+- **LCP still fails on all three routes**, by 377ms, 105ms and 80ms. The gate is now honest about
+  it: #277 set `aggregationMethod: 'median'` at the `assert:` level, so this run's failure is a
+  median failure, not a lucky-run artifact. `lhci autorun` exited 1.
+- **It corroborates `4a178fa9`.** That table reported 2882ms median with the H1 credited and a
+  627–632ms / 2250ms phase split. This independent run on a later build reproduces it within 5ms.
+  The reviewer was right that it was uncorroborated; it is now corroborated, and it was accurate.
+- **The trajectory is real.** `/` has gone 3293ms (pre-#269) → 3393ms → 2877ms across #272, #276 and
+  #277, while the credited element changed from a 2,226px² logo tagline to the actual hero. The
+  measurement got both faster and more honest, which is the harder combination.
+- **Render delay is still 78% of LCP**, essentially unchanged in proportion. TTFB is 627ms and TBT
+  is near zero, so the remaining 2250ms is neither origin latency nor main-thread work.
+
+### What this does NOT establish
+
+- **Not that any further CSS cut closes the remaining 377ms.** Three PRs have now attacked
+  render-blocking CSS, and render delay's *share* of LCP has not moved. That pattern is worth
+  noticing before a fourth.
+- **Nothing about the authenticated surface.** These are the three public routes; login is still
+  blocked on the production database.
+- PR #278 (`fix: restore public route CSS source coverage`) was open at the time of this run and is
+  not in it — it suggests #276/#277 may have cut CSS the public routes actually needed. If it
+  merges, this table is superseded in turn.
 
 **A note on comparability, because it will be tempting to ignore.** This note was written *before*
 the post-#274 table above existed, and it is scoped to the figures that precede that table — the
@@ -582,8 +643,9 @@ eligible, so a post-#274 LCP reading *worse* than the pre-#274 3393ms is not evi
 #274 regressed anything; it is a different element being measured. The honest comparison is against
 a post-#274 baseline, not against the pre-#274 numbers in this document.
 
-**What the post-#274 table did to this prediction.** It expected the element change to make the raw
-comparison meaningless. The reported result is that the two elements score within 1ms of each other
-(2883ms span, 2882ms H1), so the prediction was over-cautious rather than wrong — but that
-conclusion rests entirely on the uncorroborated table above, and inherits its caveat. It is not
-established.
+**What the measurements did to this prediction.** It expected the element change to make the raw
+comparison meaningless. The result is that the two elements score within 1ms of each other (2883ms
+span, 2882ms H1), and the #277 run reproduces that H1 figure independently at 2877ms. So the
+prediction was over-cautious rather than wrong: the element did change, but the number it produced
+did not, which means the pre- and post-#274 figures happen to be comparable after all. Worth
+recording as a case where the careful position was correct in principle and unnecessary in fact.

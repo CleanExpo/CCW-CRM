@@ -1,5 +1,10 @@
-'use client';
-
+/**
+ * Server component on purpose. The landing page was previously marked
+ * `use client` despite having no hooks, which pulled the entire 600+ line
+ * tree into the client bundle and dominated main-thread time before LCP
+ * (post-#276 LHCI: ~950ms script evaluation on `/`). Interactive pieces
+ * (header, showcase, FAQ, ambient, login form) stay as client islands.
+ */
 import { LoginForm } from '@/components/auth/login-form';
 import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
 import { HeroPremiumShowcase } from '@/components/landing/hero-premium-showcase';
@@ -151,8 +156,10 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
               aria-hidden
             />
             <div className={cn(shell, 'relative flex flex-col items-center')}>
-              <div className="animate-marketing-reveal mx-auto w-full max-w-3xl text-center motion-reduce:animate-none">
-                <div className="flex justify-center">
+              {/* LCP text stays outside animate-marketing-reveal so entrance motion
+                  cannot delay or re-attribute the hero paint. Animate chrome only. */}
+              <div className="mx-auto w-full max-w-3xl text-center">
+                <div className="animate-marketing-reveal flex justify-center motion-reduce:animate-none">
                   <Badge
                     variant="secondary"
                     className="border border-sky-400/40 bg-gradient-to-r from-sky-500/20 to-indigo-500/15 px-5 py-2 text-xs font-semibold text-sky-50 shadow-lg ring-1 shadow-sky-500/15 ring-white/10"
@@ -172,7 +179,7 @@ export default function MarketingLanding({ stats }: MarketingLandingProps) {
                   platform built for Australian cleaning-equipment wholesalers and distributors who
                   move real SKUs.
                 </p>
-                <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap">
+                <div className="animate-marketing-reveal mt-10 flex flex-col items-center justify-center gap-4 motion-reduce:animate-none sm:flex-row sm:flex-wrap">
                   <Button
                     size="lg"
                     className="from-primary shadow-primary/35 h-14 min-w-[200px] rounded-full bg-gradient-to-r to-indigo-500 px-10 text-base font-semibold text-white shadow-xl transition hover:brightness-110"
