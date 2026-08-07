@@ -3,9 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast } from '@/hooks/use-toast';
-import { getCin7SyncLogs, syncCin7EntityUntilComplete, type Cin7SyncLog } from '@/lib/api/cin7';
+import {
+  getCin7Reconciliation,
+  getCin7SyncLogs,
+  syncCin7EntityUntilComplete,
+  type Cin7SyncLog,
+} from '@/lib/api/cin7';
 import {
   CIN7_CLIENT_SYNC_ENTITY_ORDER,
+  CIN7_LIVE_RECON_REFRESHED_EVENT,
   formatCountdownUntil,
   formatScheduledFireAt,
   getCin7ScheduledSyncEnv,
@@ -119,11 +125,42 @@ export function Cin7ScheduledSyncRunner({
         onLogsMayHaveChanged?.();
       }
 
-      toast({
-        title: 'Scheduled Cin7 sync finished',
-        description: outcomes.slice(0, 4).join(' · ') + (outcomes.length > 4 ? ' …' : ''),
-      });
-      setStatusLine('Scheduled sync finished.');
+      // Same as "Refresh from live Cin7" — pull fresh counts after all entities so
+      // Optix vs Cin7 stays consistent without a manual click.
+      setActiveEntity(null);
+      setStatusLine('Refreshing reconciliation from live Cin7…');
+      try {
+        const recon = await getCin7Reconciliation({ force: true });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(CIN7_LIVE_RECON_REFRESHED_EVENT, { detail: recon }));
+        }
+        const blocked =
+          recon.acceptance_blocked ||
+          recon.fetch_meta?.incomplete ||
+          (recon.fetch_meta?.errors?.length ?? 0) > 0;
+        toast({
+          title: blocked
+            ? 'Scheduled sync finished — live recon incomplete'
+            : 'Scheduled sync + live recon finished',
+          description: blocked
+            ? 'Entity sync done, but the Cin7 recon pull had errors. Open reconciliation and refresh again when Cin7 is clear.'
+            : `${outcomes.filter((o) => o.includes('complete')).length}/${outcomes.length} entities complete · live Cin7 counts refreshed.`,
+          variant: blocked ? 'destructive' : undefined,
+        });
+        setStatusLine(
+          blocked
+            ? 'Scheduled sync finished; live recon needs a clean refresh.'
+            : 'Scheduled sync finished; live Cin7 reconciliation refreshed.'
+        );
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        toast({
+          title: 'Scheduled sync finished — live recon failed',
+          description: `Entities synced, but Refresh from live Cin7 failed: ${message}`,
+          variant: 'destructive',
+        });
+        setStatusLine('Scheduled sync finished; live recon failed — refresh manually.');
+      }
     } finally {
       setActiveEntity(null);
       runningRef.current = false;
