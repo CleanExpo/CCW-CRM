@@ -31,6 +31,7 @@ import {
   clearCachedReconciliation,
   getCachedReconciliation,
 } from '@/lib/integrations/cin7-reconciliation-cache';
+import { pruneOptixStockLevelsToCin7 } from '@/lib/integrations/cin7-stock-prune';
 import { getCin7PageSize, getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 import {
   getCin7SyncTimeBudgetMs,
@@ -44,12 +45,14 @@ import {
   tryAcquireCin7SyncRunLock,
 } from '@/lib/integrations/cin7-sync-engine';
 import {
+  assertCin7SyncAcceptance,
   buildCin7ModifiedSinceWhere,
   decideCin7SyncMode,
   entitySupportsModifiedSince,
   expectedCin7CountFromRecon,
   floorSyncRecordCount,
   getOptixEntityRecordCount,
+  shouldPromoteCin7SyncComplete,
 } from '@/lib/integrations/cin7-sync-incremental';
 import {
   batchUpsertBranches,
@@ -354,14 +357,14 @@ export async function POST(
         thisRunProcessed: taxCodes.length,
         previousFloor: optixFloor,
       });
-      // Never report complete when Optix is still short of the recon Cin7 tax-code floor.
-      const underReconFloor =
-        typeof expectedTaxCodes === 'number' && taxCodes.length < expectedTaxCodes;
-      const status = underReconFloor ? 'incomplete' : 'complete';
-      if (underReconFloor) {
-        errors.push(
-          `Tax codes incomplete: found ${taxCodes.length}, recon expects at least ${expectedTaxCodes}.`
-        );
+      const acceptance = assertCin7SyncAcceptance({
+        optixCount: optixAfter,
+        cin7Expected: expectedTaxCodes ?? null,
+        syncErrors: errors,
+      });
+      const status = acceptance.accepted ? 'complete' : 'incomplete';
+      if (!acceptance.accepted && acceptance.reason) {
+        errors.push(acceptance.reason);
       }
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
@@ -369,8 +372,8 @@ export async function POST(
         recordsProcessed,
         pagesFetched,
         lastCommittedPage: Math.max(1, pagesFetched),
-        nextPage: underReconFloor ? 1 : null,
-        failedPage: underReconFloor ? 1 : null,
+        nextPage: acceptance.accepted ? null : 1,
+        failedPage: acceptance.accepted ? null : 1,
         failureReason: errors.length > 0 ? errors.slice(0, 3).join('; ') : null,
         durationMs,
         source: sourceKind,
@@ -381,9 +384,9 @@ export async function POST(
         recordsProcessed,
         durationMs,
         pageSize,
-        complete: status === 'complete',
-        nextPage: underReconFloor ? 1 : null,
-        failedPage: underReconFloor ? 1 : null,
+        complete: acceptance.accepted,
+        nextPage: acceptance.accepted ? null : 1,
+        failedPage: acceptance.accepted ? null : 1,
         syncErrors: errors.slice(0, 20),
         skipped,
         lastCommittedPage: Math.max(1, pagesFetched),
@@ -500,18 +503,18 @@ export async function POST(
         const { rows, total } = await fetchCin7ProductPage(coreCreds, page, pageSize);
         return {
           sourceRowCount: rows.length,
+          total,
           error: undefined,
           persist: async () => {
             cin7SourceStyles += rows.length;
             const n = await batchUpsertProducts(scope.userId, mapCoreProductRows(rows));
-            void total;
             return { recordsProcessed: n };
           },
         };
       };
     } else if (useOmni && omniCreds) {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, skippedInactive, error } = await fetchOmniProductPage(
+        const { rows, sourceRowCount, total, skippedInactive, error } = await fetchOmniProductPage(
           omniCreds,
           page,
           pageSize,
@@ -519,6 +522,7 @@ export async function POST(
         );
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             skipped.inactive_products += skippedInactive;
@@ -585,13 +589,11 @@ export async function POST(
   } else if (entityType === 'branches') {
     if (useOmni && omniCreds) {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, skippedMissingId, error } = await fetchOmniBranchesPage(
-          omniCreds,
-          page,
-          pageSize
-        );
+        const { rows, sourceRowCount, total, skippedMissingId, error } =
+          await fetchOmniBranchesPage(omniCreds, page, pageSize);
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             skipped.missing_cin7_id += skippedMissingId;
@@ -645,13 +647,14 @@ export async function POST(
       hardError = 'Product category sync requires Cin7 Omni (/v1/ProductCategories).';
     } else {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, error } = await fetchOmniProductCategoriesPage(
+        const { rows, sourceRowCount, total, error } = await fetchOmniProductCategoriesPage(
           omniCreds,
           page,
           pageSize
         );
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             const n = await batchUpsertProductCategories(scope.userId, rows);
@@ -669,7 +672,7 @@ export async function POST(
       hardError = `${entityType} sync requires Cin7 Omni.`;
     } else {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, error } = await fetchOmniProductsRawPage(
+        const { rows, sourceRowCount, total, error } = await fetchOmniProductsRawPage(
           omniCreds,
           page,
           pageSize,
@@ -677,6 +680,7 @@ export async function POST(
         );
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             const extracted = extractReferenceDataFromProducts(rows);
@@ -711,7 +715,7 @@ export async function POST(
       hardError = 'Stock level sync requires Cin7 Omni (/v1/Stock).';
     } else {
       fetchPage = async (page) => {
-        const { rows, sourceRowCount, error } = await fetchOmniStockPage(
+        const { rows, sourceRowCount, total, error } = await fetchOmniStockPage(
           omniCreds,
           page,
           pageSize,
@@ -719,6 +723,7 @@ export async function POST(
         );
         return {
           sourceRowCount,
+          total,
           error,
           persist: async () => {
             const n = await batchUpsertStockLevels(scope.userId, mapOmniStockLevelRows(rows));
@@ -832,6 +837,15 @@ export async function POST(
         recordsProcessed: derivedAccum.priceColumns.size,
         syncErrors: [...result.syncErrors, ...customers.errors].slice(0, 20),
       };
+      if (customers.errors.length > 0) {
+        result = {
+          ...result,
+          status: 'incomplete',
+          complete: false,
+          nextPage: result.lastCommittedPage > 0 ? result.lastCommittedPage + 1 : 1,
+          failureReason: `Customer price-column walk incomplete: ${customers.errors.slice(0, 2).join('; ')}`,
+        };
+      }
       if (added > 0) {
         console.log(
           `[Cin7 sync] price-lists: merged ${added} customer price columns → ${derivedAccum.priceColumns.size} total`
@@ -850,9 +864,52 @@ export async function POST(
     }
   }
 
+  // Full stock sync → prune phantoms + heal qty drift before acceptance.
+  if (
+    entityType === 'stock-levels' &&
+    syncMode === 'full' &&
+    result.status === 'complete' &&
+    useOmni &&
+    omniCreds
+  ) {
+    try {
+      const prune = await pruneOptixStockLevelsToCin7(scope.userId, omniCreds, { dryRun: false });
+      if (prune.errors.length > 0 || prune.missing_in_optix > 0) {
+        const reason =
+          prune.errors.length > 0
+            ? `Stock prune incomplete: ${prune.errors.slice(0, 2).join('; ')}`
+            : `Stock prune left ${prune.missing_in_optix} Cin7 keys missing in Optix.`;
+        result = {
+          ...result,
+          status: 'incomplete',
+          complete: false,
+          nextPage: 1,
+          failedPage: 1,
+          failureReason: reason,
+          syncErrors: [...result.syncErrors, reason, ...prune.errors].slice(0, 20),
+        };
+      } else {
+        console.log(
+          `[Cin7 sync] stock-levels: pruned ${prune.deleted} phantoms; cin7_keys=${prune.cin7_keys}`
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      result = {
+        ...result,
+        status: 'incomplete',
+        complete: false,
+        nextPage: 1,
+        failedPage: 1,
+        failureReason: `Stock prune failed: ${message}`,
+        syncErrors: [...result.syncErrors, message].slice(0, 20),
+      };
+    }
+  }
+
   // Authoritative Optix count — never report below existing stored rows (additive sync).
+  let optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
   {
-    const optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
     const floored = floorSyncRecordCount({
       optixCount: optixAfter,
       thisRunProcessed: result.recordsProcessed,
@@ -860,6 +917,57 @@ export async function POST(
     });
     result = { ...result, recordsProcessed: floored };
   }
+
+  // Fail-closed acceptance: Complete only when Optix matches known Cin7 floor + no errors.
+  const cin7Expected =
+    typeof expectedSourceCount === 'number' && expectedSourceCount > 0 ? expectedSourceCount : null;
+  const skipCountCheck = entityType === 'orders';
+  const acceptance = assertCin7SyncAcceptance({
+    optixCount: optixAfter,
+    cin7Expected,
+    syncErrors: result.syncErrors,
+    skipCountCheck,
+  });
+
+  if (result.status === 'complete' && !acceptance.accepted) {
+    result = {
+      ...result,
+      status: 'incomplete',
+      complete: false,
+      nextPage:
+        result.nextPage ?? (result.lastCommittedPage > 0 ? result.lastCommittedPage + 1 : 1),
+      failedPage: result.failedPage ?? 1,
+      failureReason: acceptance.reason,
+      syncErrors: [...result.syncErrors, acceptance.reason ?? 'Acceptance failed'].slice(0, 20),
+    };
+  } else if (
+    shouldPromoteCin7SyncComplete({
+      status: result.status,
+      optixCount: optixAfter,
+      cin7Expected,
+      syncErrors: result.syncErrors,
+      skipCountCheck,
+    })
+  ) {
+    result = {
+      ...result,
+      status: 'complete',
+      complete: true,
+      nextPage: null,
+      failedPage: null,
+      failureReason: null,
+    };
+  }
+
+  optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+  result = {
+    ...result,
+    recordsProcessed: floorSyncRecordCount({
+      optixCount: optixAfter,
+      thisRunProcessed: result.recordsProcessed,
+      previousFloor: optixFloor,
+    }),
+  };
 
   // Attach skipped + source on final checkpoint write.
   await persistCin7SyncRunCheckpoint({
@@ -875,6 +983,37 @@ export async function POST(
     skipped,
     source: sourceKind,
   });
+
+  // Keep alias tiles (inventory ↔ stock-levels, warehouses ↔ branches) in lockstep.
+  const aliasEntity =
+    rawEntityType === 'stock-levels'
+      ? 'inventory'
+      : rawEntityType === 'inventory'
+        ? 'stock-levels'
+        : rawEntityType === 'branches'
+          ? 'warehouses'
+          : rawEntityType === 'warehouses'
+            ? 'branches'
+            : null;
+  if (aliasEntity) {
+    const aliasRun = await loadOrCreateCin7SyncRun({
+      ownerUserId: scope.userId,
+      entityType: aliasEntity,
+    });
+    await persistCin7SyncRunCheckpoint({
+      runId: aliasRun.id,
+      status: result.status,
+      recordsProcessed: result.recordsProcessed,
+      pagesFetched: result.pagesFetched,
+      lastCommittedPage: result.lastCommittedPage,
+      nextPage: result.nextPage,
+      failedPage: result.failedPage,
+      failureReason: result.failureReason,
+      durationMs: result.durationMs,
+      skipped,
+      source: sourceKind,
+    });
+  }
 
   if (skipRecords.length > 0) {
     await prisma.cin7SyncSkipRecord
