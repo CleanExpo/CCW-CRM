@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { useId } from 'react';
 import { cn } from '@/lib/utils';
 
 const MARK_SIZES = {
@@ -14,13 +11,14 @@ const MARK_SIZES = {
 type CcwLogoMarkProps = {
   className?: string;
   size?: keyof typeof MARK_SIZES;
+  /** Override when multiple marks share a page (SVG paint-server ids must be unique). */
+  idPrefix?: string;
 };
 
 /** Premium mark: orbital C with operational tiers — equipment ERP spine. */
-export function CcwLogoMark({ className, size = 'md' }: CcwLogoMarkProps) {
-  const uid = useId().replace(/:/g, '');
-  const gradId = `ccw-logo-grad-${uid}`;
-  const shineId = `ccw-logo-shine-${uid}`;
+export function CcwLogoMark({ className, size = 'md', idPrefix = 'ccw-logo' }: CcwLogoMarkProps) {
+  const gradId = `${idPrefix}-grad`;
+  const shineId = `${idPrefix}-shine`;
 
   return (
     <svg
@@ -59,7 +57,6 @@ export function CcwLogoMark({ className, size = 'md' }: CcwLogoMarkProps) {
         strokeOpacity="0.22"
         fill="none"
       />
-      {/* C arc — brand initial + enclosure */}
       <path
         d="M27.5 11.5C18.5 11.5 13 16.75 13 20.25C13 23.75 18.5 29 27.5 29"
         stroke="white"
@@ -67,11 +64,9 @@ export function CcwLogoMark({ className, size = 'md' }: CcwLogoMarkProps) {
         strokeLinecap="round"
         fill="none"
       />
-      {/* Operational tiers — quotes, inventory, fulfilment */}
       <path d="M16.5 16.25h7.75" stroke="white" strokeWidth="2" strokeLinecap="round" />
       <path d="M16.5 20.25h10.25" stroke="white" strokeWidth="2" strokeLinecap="round" />
       <path d="M16.5 24.25h6.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      {/* Integration hub */}
       <circle cx="28.25" cy="20.25" r="2.1" fill="white" />
       <path
         d="M26.75 20.25h-2.5"
@@ -95,6 +90,7 @@ export type CcwLogoProps = {
   href?: string;
   /** Light surfaces (portal, supplier) vs dark app shell */
   theme?: 'dark' | 'light';
+  idPrefix?: string;
 };
 
 export function CcwLogo({
@@ -107,6 +103,7 @@ export function CcwLogo({
   className,
   href,
   theme = 'dark',
+  idPrefix,
 }: CcwLogoProps) {
   const isLight = theme === 'light';
   const showWordmark = variant !== 'mark';
@@ -114,7 +111,7 @@ export function CcwLogo({
     variant === 'full' && (showTagline ?? true) && (subtitle ?? tagline);
 
   const content = (
-  <>
+    <>
       <span
         className={cn(
           'relative flex shrink-0 items-center justify-center transition duration-300',
@@ -122,7 +119,7 @@ export function CcwLogo({
           !isLight && 'group-hover:scale-[1.03] group-active:scale-[0.98]'
         )}
       >
-        <CcwLogoMark className="h-full w-full" />
+        <CcwLogoMark className="h-full w-full" idPrefix={idPrefix} />
       </span>
       {showWordmark ? (
         <div className="min-w-0 leading-tight">
