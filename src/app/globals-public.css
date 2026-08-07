@@ -1,0 +1,19 @@
+@import "tailwindcss" source(none);
+/* Public/marketing/auth surfaces only — keep this list tight so `/` does not
+   download the dashboard utility set (traced ~335KB render-blocking on prod). */
+@source "../components/landing";
+@source "../components/brand";
+@source "../components/auth";
+@source "../components/marketing";
+@source "../components/seo";
+@source "../components/transitions";
+@source "../components/ui";
+@source "./(marketing)";
+@source "./(marketing-pages)";
+@source "./(auth)";
+@source "./page.tsx";
+@source "./not-found.tsx";
+@source "./layout.tsx";
+@source "./globals-custom.css";
+
+@import "./globals-custom.css";
