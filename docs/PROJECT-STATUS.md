@@ -162,13 +162,13 @@ not exist in this repo.
 | CI quality gate | Production-grade | lint, type-check, coverage, build — all enforced |
 | Scheduled crons | Production-grade **as of 2026-08-07** | 8 of 17 were 501 stubs and were removed; `validate-vercel-crons.js` blocks their return |
 | Design tokens | Single source **as of 2026-08-07** | `globals.css`; orphaned `design-system.css` deleted. See `docs/design-system.md` |
-| Accessibility | **Failing** | 23 contrast violations on `/`; see `docs/design-system.md` |
-| Core Web Vitals | **Failing** | LCP 3195ms vs 2500ms budget |
+| Accessibility | **Passing on the public surface** | The 23 contrast violations are fixed and live: axe found 23 on this URL before the deploy and 0 after, and Lighthouse's `color-contrast` now passes. The authenticated surface stays unmeasured while login is down |
+| Core Web Vitals | **Failing** | LCP 3293ms vs a 2500ms budget, measured 2026-08-07. Root cause is the uncacheable root layout — see `docs/PERFORMANCE-FINDINGS.md` |
 | Webhook retry, autonomous ops, health-score refresh, quote-expiry alerts, onboarding emails, auto-reorder | **Not built** | Their endpoints returned 501 and were removed. They were never running |
 | AP2 agent payments (10 routes), HeyGen (5 routes) | **Not built** | Hard 501 via `notImplementedResponse` |
 | Marketplace / multi-channel | **Demo-grade** | Ships a "Demo Mode — all channels running with mock data" banner in production |
 | Bank Feeds, Workflows, AI Assistant, Billing | **Shipped disabled** | `comingSoon: true` in `src/components/layout/sidebar.tsx` |
-| Staging deploy | Unknown | Previously red; not re-verified. `deployment/` referenced by the workflow does not exist |
+| Staging deploy | **Red, cause confirmed 2026-08-07** | `ssh-keyscan -H  >> ~/.ssh/known_hosts` runs with an EMPTY host because `STAGING_SSH_HOST` is unset (UNI-2106); the Smoke Tests job is skipped as a result. Not a code fault |
 
 ---
 
@@ -207,9 +207,14 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    action — needs a credential.
 2. **Fix the 23 contrast violations.** Use the `--muted-foreground` token instead of the 165 raw
    `text-zinc-400/500/600` classes. `npm run test:e2e` names the failing nodes on every run.
-3. **Bring LCP under 2500ms** and clear the other five Lighthouse failures. Once green,
-   `lighthouse-agentic.yml` can drop `continue-on-error` and become a real gate — it is left
-   non-blocking today only because a red blocking gate gets routed around rather than fixed.
+3. **Make the application cacheable, then bring LCP under 2500ms.** Measured 2026-08-07 after the
+   contrast fix deployed: LCP 3293ms on `/` against a 2500ms budget, Speed Index 4395ms.
+   `src/app/layout.tsx:18` reads a cookie in the ROOT layout, which forces dynamic rendering on
+   every page including the public marketing site — production serves `/` with
+   `cache-control: private, no-cache, no-store` and `x-vercel-cache: MISS`. Font loading, JS
+   execution and render-blocking resources were each checked and ruled out. Full evidence in
+   `docs/PERFORMANCE-FINDINGS.md`. Once green, `lighthouse-agentic.yml` can drop
+   `continue-on-error` and become a real gate.
 4. **Re-verify the staging deploy**, and either restore `deployment/scripts/smoke-tests.sh` or
    remove the workflow steps that call it.
 5. **Decide the fate of the not-built surface** — AP2, HeyGen, marketplace mock mode, and the four
