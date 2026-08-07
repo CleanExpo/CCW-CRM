@@ -138,12 +138,13 @@ that PR. **LCP did not move** — 3105ms best / 3393ms median on `/`, still fail
 no longer reported as failing, but the gate is judging it on its best of three runs; its median on
 `/` is 4451ms against a 3000ms budget. Both are recorded in `docs/PERFORMANCE-FINDINGS.md`.
 
-Three further PRs merged later the same day, after those runs: **#271** (`41ab85ae`) made the gate
+Four further PRs merged later the same day, after those runs: **#271** (`41ab85ae`) made the gate
 median-aggregated and put `/api/health` on the public allowlist, **#272** (`c367cb0c`) cut the
-dual-font CSS chain the trace had localised, and **#273** (`62fb5248`) added an applied-throttling
-trace showing LCP is credited to a 2,226px² logo tagline rather than the hero. **Lighthouse has not
-been re-run against any of them**, so the figures in this section describe the pre-#272 build and
-are a baseline, not current state.
+dual-font CSS chain the trace had localised, **#273** (`62fb5248`) added an applied-throttling trace
+showing LCP is credited to a 2,226px² logo tagline rather than the hero, and **#274** (`e5e2140d`)
+made the reveal transform-only so the hero becomes LCP-eligible. **Lighthouse has not been re-run
+against any of them**, so the figures in this section describe the pre-#272 build and are a
+baseline, not current state — and after #274 they do not even describe the same element.
 
 ---
 
@@ -184,7 +185,7 @@ this file claimed both did.
 | Scheduled crons | Production-grade **as of 2026-08-07** | 8 of 17 were 501 stubs and were removed; `validate-vercel-crons.js` blocks their return |
 | Design tokens | Single source **as of 2026-08-07** | `globals.css`; orphaned `design-system.css` deleted. See `docs/design-system.md` |
 | Accessibility | **Passing on the public surface** | The 23 contrast violations are fixed and live: axe found 23 on this URL before the deploy and 0 after, and Lighthouse's `color-contrast` now passes. The authenticated surface stays unmeasured while login is down |
-| Core Web Vitals | **Failing as last measured; re-measurement outstanding** | LCP 3105ms best / 3393ms median on `/` vs a 2500ms budget, measured after PR #269. Not origin latency — server response is 22ms with zero savings. The trace localised 73% of LCP to render delay behind three render-blocking stylesheets; PR #272 (`c367cb0c`) then cut that chain, and **nothing has been re-run since**, so whether it still fails is unknown. Separately, PR #273 established the credited LCP element is a 2,226px² logo tagline, not the hero, because an `opacity: 0` reveal makes the hero ineligible — so the budget is not currently measuring hero render time. See `docs/PERFORMANCE-FINDINGS.md` |
+| Core Web Vitals | **Failing as last measured; re-measurement outstanding** | LCP 3105ms best / 3393ms median on `/` vs a 2500ms budget, measured after PR #269. Not origin latency — server response is 22ms with zero savings. The trace localised 73% of LCP to render delay behind three render-blocking stylesheets; PR #272 (`c367cb0c`) then cut that chain, and **nothing has been re-run since**, so whether it still fails is unknown. Separately, PR #273 established the credited LCP element was a 2,226px² logo tagline, not the hero, because an `opacity: 0` reveal made the hero ineligible; PR #274 (`e5e2140d`) made that reveal transform-only, so the hero is now eligible and the metric will describe a different, larger element from here. See `docs/PERFORMANCE-FINDINGS.md` |
 | Performance gate itself | **Partly fixed — preset audits still optimistic** | PR #271 (`41ab85ae`) set `aggregationMethod: 'median'` on nine enumerated assertions, which closes `speed-index`. It did **not** set it at the `assert:` level, so every assertion inherited from `preset: 'lighthouse:recommended'` still runs on lhci's `optimistic` default. `document-latency-insight` on `/` scores 0.00 on one run in three while the gate reports 1.00. Still a one-line fix |
 | `/api/health` | **Fixed 2026-08-07** | PR #271 (`41ab85ae`) added it to the middleware public allowlist as an exact match, so `/api/health/deep` is not exposed by prefix. It previously 307'd to `/login`, and `curl -fL` exited 0 against a 200 HTML page. Expect monitors to begin reporting the ERP unhealthy — the endpoint returns 503 while `hasDatabaseConfig()` is false, which is production's state per Section 0. That is the fix working |
 | Webhook retry, autonomous ops, health-score refresh, quote-expiry alerts, onboarding emails, auto-reorder | **Not built** | Their endpoints returned 501 and were removed. They were never running |
@@ -255,10 +256,14 @@ Annotated ARCHIVED and not to be cited as evidence of readiness:
    **The change landed; the measurement did not.** PR #272 (`c367cb0c`) stopped loading Inter from
    the root layout and preloads Plus Jakarta on marketing surfaces, cutting the chain traced above.
    Lighthouse has **not** been re-run against it, so the numbers in this item are the pre-#272
-   baseline. **Re-running `npm run test:lighthouse` against `main` is now the outstanding step** —
-   and PR #273 established the credited LCP element is a 2,226px² logo tagline rather than the hero
-   (an `opacity: 0` reveal makes the hero ineligible), so read whatever it reports with that in
-   mind: the budget is not currently measuring hero render time.
+   baseline. PR #273 then established the credited LCP element was a 2,226px² logo tagline rather
+   than the hero, because an `opacity: 0` reveal made the hero ineligible — and PR #274
+   (`e5e2140d`) made that reveal transform-only, so the hero is now a candidate.
+
+   **Re-running `npm run test:lighthouse` against `main` is the outstanding step.** Read the result
+   carefully: #272 and #274 land in the same number, and #274 changes which element is measured. A
+   post-#274 LCP worse than 3393ms is a different element, not a regression. Establish a new
+   post-#274 baseline rather than comparing across the change.
 
 3a. ~~**Make the application cacheable.**~~ **DONE 2026-08-07** — PR #269, merged as `f4fc4779` and
    live. Locale resolution moved from the root layout to `src/app/(dashboard)/layout.tsx:23`.

@@ -10,10 +10,10 @@ below came from a run recorded here.
 > are in "After the fix" near the end. Two new defects were found while verifying it, both recorded
 > there.
 >
-> **Three further PRs (#271, #272, #273) merged later the same day, after every measurement in this
-> document was taken.** No number here describes production as it stands. What changed, and which
-> findings it stales, is in "What has landed since these measurements" at the end — read that before
-> acting on any figure above.
+> **Four further PRs (#271, #272, #273, #274) merged later the same day, after every measurement in
+> this document was taken.** No number here describes production as it stands, and #274 changed
+> which element LCP is even credited to. What changed, and which findings it stales, is in "What has
+> landed since these measurements" at the end — read that before acting on any figure above.
 
 **Read the causation section carefully.** An earlier revision of this document asserted a root
 cause it had not established. That is corrected below and the correction is left visible, because
@@ -481,9 +481,28 @@ in `lighthouserc.js` should not be read as describing hero render time while it 
 
 ---
 
+## Fix shipped: transform-only marketing reveal (no `opacity: 0`)
+
+**Change:** `marketing-reveal` in `src/app/globals.css` no longer starts at `opacity: 0`. The
+animation is transform-only (`translateY`), so the hero stays an LCP candidate from first paint
+while the entrance motion remains. Reduced-motion collapses to a no-op.
+
+**Why this shape:** the controlled experiment above proved opacity was the disqualifier. Removing
+opacity from the keyframes is the minimal honest fix — not “disable animation entirely,” and not
+another round of CSS-chain guessing aimed at the logo-tagline metric.
+
+**Still outstanding after this lands on production:**
+
+1. Re-run `npm run test:lighthouse` (median aggregation) and record LCP/SI against the prior
+   ~3393ms median baseline. Do **not** claim the budget is green without that number.
+2. Expect reported LCP may move (likely up) once the hero is credited — that is honesty, not
+   regression theater. Further LCP work then targets the real element.
+
+---
+
 ## What has landed since these measurements — and what it costs them
 
-Every measurement above was taken against `f4fc4779` (PR #269) or `9317f54f` (PR #270). Three
+Every measurement above was taken against `f4fc4779` (PR #269) or `9317f54f` (PR #270). Four
 further PRs merged to `main` on 2026-08-07 **after** those runs. This section exists so nobody
 reads a number above as describing production today.
 
@@ -492,6 +511,7 @@ reads a number above as describing production today.
 | #271 `41ab85ae` | 11:27 | `lighthouserc.js` median aggregation, `/api/health` on the public allowlist | Both defects recorded below are now **fixed on main** — one of them only partly |
 | #272 `c367cb0c` | 11:34 | Stopped loading Inter from the root layout; preloads Plus Jakarta on marketing | Acts directly on the render-blocking CSS chain traced above |
 | #273 `62fb5248` | 11:45 | Appended the applied-throttling trace reproduced above | Complementary; already reconciled |
+| #274 `e5e2140d` | 11:57 | Made `marketing-reveal` transform-only, so the hero is LCP-eligible | Changes **which element LCP measures**; every LCP figure above describes the old element |
 
 **The two defects this document found are no longer open, but one is only half-closed.**
 
@@ -511,6 +531,14 @@ this work. The diagnosis was acted on. The consequence is that the three-stylesh
 2030ms longest chain, and the 2475ms render-delay figure all describe the **pre-#272** build. They
 are kept as the baseline the change should be measured against, and they are **not** current.
 
-**No re-measurement has been run against #272.** Whether cutting the chain moved LCP is unknown and
-unclaimed. That re-run is the next piece of work, and until it happens no scores in this document
-describe production as it stands.
+**No re-measurement has been run against #272 or #274.** Whether cutting the chain moved LCP is
+unknown and unclaimed, and #274 changes which element LCP even measures — so the two effects will
+land in the same number and cannot be separated by a single re-run. That re-run is the next piece of
+work, and until it happens no score in this document describes production as it stands.
+
+**A note on comparability, because it will be tempting to ignore.** Every LCP figure above was
+measured while a 2,226px² logo tagline was the credited element. After #274 the hero — an order of
+magnitude larger and painting later — becomes eligible. A post-#274 LCP that reads *worse* than
+3393ms is therefore not evidence that #272 or #274 regressed anything; it is a different element
+being measured. The honest comparison after this point is against a new post-#274 baseline, not
+against the numbers in this document.
