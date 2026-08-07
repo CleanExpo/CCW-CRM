@@ -9,7 +9,13 @@ import { PageTransition } from '@/components/transitions/PageTransition';
 import { CommandPalette } from '@/components/ui/command-palette';
 import { WebSocketProvider } from '@/contexts/websocket-context';
 import { defaultLocale, isValidLocale, type Locale } from '@/i18n/config';
+import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 /**
  * Get the current locale from cookies or default to English.
@@ -58,7 +64,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <I18nProvider locale={locale} messages={messages}>
       <WebSocketProvider>
         {/* Match marketing home: dark zinc/black shell */}
-        <div className="dark dashboard-app text-foreground flex h-dvh min-h-0 flex-col overflow-hidden bg-gradient-to-br from-black via-zinc-950 to-black antialiased">
+        <div
+          className={`${inter.className} dark dashboard-app text-foreground flex h-dvh min-h-0 flex-col overflow-hidden bg-gradient-to-br from-black via-zinc-950 to-black antialiased`}
+        >
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
             {/* Desktop: fixed-height rail — sidebar stays put while main scrolls */}
             <div className="relative hidden min-h-0 w-64 shrink-0 overflow-hidden border-r border-white/10 md:flex">
