@@ -12,6 +12,12 @@ export default defineConfig({
       '**/.next/**',
       '**/e2e/**',
       '**/CCW-CRM/**',
+      // Agent worktrees are checkouts of this same repo living inside it, so
+      // their copies of every test file get collected alongside the real ones
+      // and any failure there reds this checkout's suite. `.worktrees` is a
+      // symlink to the external drive's worktree root, which vitest follows.
+      '**/.claude/worktrees/**',
+      '**/.worktrees/**',
     ],
     coverage: {
       // Scoped to src/lib because that is where the suite actually reaches.
