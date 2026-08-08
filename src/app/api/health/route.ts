@@ -38,17 +38,50 @@ const startTime = Date.now();
 /** A hung database must not hang the health check that reports on it. */
 const DB_PROBE_TIMEOUT_MS = 5_000;
 
+/** Distinguishes our own timeout from a driver failure without parsing messages. */
+class ProbeTimeoutError extends Error {
+  constructor() {
+    super("probe timeout");
+    this.name = "ProbeTimeoutError";
+  }
+}
+
 /**
- * Identify the failure without leaking it. Prisma's message embeds the host,
- * and a driver error can carry the whole connection string, so only the error
- * code or constructor name crosses this boundary.
+ * Shapes safe to echo from a PUBLIC, UNAUTHENTICATED endpoint.
+ *
+ * ALLOW-LIST, deliberately, not a deny-list. An earlier revision returned
+ * `error.code` verbatim whenever it was a non-empty string, assuming only the
+ * message could carry secrets. That is false — nothing stops a driver, adapter
+ * or proxy putting connection-string material in `code` or `name`, and review
+ * demonstrated it by throwing `{ code: 'postgresql://postgres:...@host/db' }`
+ * and reading the DSN straight out of this endpoint's JSON.
+ */
+const SAFE_CODE_PATTERNS = [
+  /^P\d{4}$/, // Prisma, e.g. P1001
+  /^[0-9A-Z]{5}$/, // SQLSTATE, e.g. 08006
+  /^E[A-Z]{2,15}$/, // Node syscall, e.g. ECONNREFUSED
+];
+
+/** Error class names: letters only, so no DSN punctuation can survive. */
+const SAFE_NAME_PATTERN = /^[A-Za-z]{1,64}$/;
+
+/**
+ * Identify the failure without leaking it. Anything not matching a known-safe
+ * shape collapses to a fixed token — an unrecognised value is dropped, never
+ * passed through.
  */
 function describeFailure(error: unknown): string {
+  if (error instanceof ProbeTimeoutError) return "ProbeTimeout";
+
   if (typeof error === "object" && error !== null) {
     const code = (error as { code?: unknown }).code;
-    if (typeof code === "string" && code.length > 0) return code;
+    if (typeof code === "string" && SAFE_CODE_PATTERNS.some((pattern) => pattern.test(code))) {
+      return code;
+    }
     const name = (error as { name?: unknown }).name;
-    if (typeof name === "string" && name.length > 0) return name;
+    if (typeof name === "string" && SAFE_NAME_PATTERN.test(name)) {
+      return name;
+    }
   }
   return "UnknownError";
 }
@@ -61,7 +94,7 @@ async function probeDatabase(): Promise<HealthResponse["database"]> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const timeout = new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => reject(new Error("ProbeTimeout")), DB_PROBE_TIMEOUT_MS);
+      timer = setTimeout(() => reject(new ProbeTimeoutError()), DB_PROBE_TIMEOUT_MS);
     });
     // Cheapest round trip that proves the connection is live, not merely configured.
     await Promise.race([prisma.$queryRaw`SELECT 1`, timeout]);

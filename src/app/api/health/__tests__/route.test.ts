@@ -81,6 +81,60 @@ describe('GET /api/health', () => {
     expect(serialised).toContain('P1001');
   });
 
+  // The P0 found in review: `error.code` was echoed verbatim whenever it was a
+  // non-empty string, so DSN material placed in `code` (not just the message)
+  // reached this public, unauthenticated endpoint. Only known-safe shapes are
+  // echoed now; anything else is dropped.
+  const DSN = 'postgresql://postgres:hunter2@db.example.supabase.co:6543/postgres';
+
+  it('drops a connection string planted in error.code', async () => {
+    hasDatabaseConfig.mockReturnValue(true);
+    queryRaw.mockRejectedValue(Object.assign(new Error('boom'), { code: DSN }));
+
+    const response = await GET();
+    const serialised = JSON.stringify(await response.json());
+
+    expect(serialised).not.toContain('hunter2');
+    expect(serialised).not.toContain('postgresql://');
+    expect(serialised).not.toContain('supabase.co');
+  });
+
+  it('drops a connection string planted in error.name', async () => {
+    hasDatabaseConfig.mockReturnValue(true);
+    const failure = new Error('boom');
+    failure.name = DSN;
+    queryRaw.mockRejectedValue(failure);
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(body.database.error).toBe('UnknownError');
+    expect(JSON.stringify(body)).not.toContain('hunter2');
+  });
+
+  it('falls back when both code and name are hostile', async () => {
+    hasDatabaseConfig.mockReturnValue(true);
+    const failure = new Error(DSN);
+    failure.name = DSN;
+    queryRaw.mockRejectedValue(Object.assign(failure, { code: DSN }));
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(body.database.error).toBe('UnknownError');
+    expect(JSON.stringify(body)).not.toContain('postgresql://');
+  });
+
+  it('still echoes genuinely diagnostic codes', async () => {
+    hasDatabaseConfig.mockReturnValue(true);
+    queryRaw.mockRejectedValue(Object.assign(new Error('boom'), { code: 'ECONNREFUSED' }));
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(body.database.error).toBe('ECONNREFUSED');
+  });
+
   it('reports the failure class when the error carries no code', async () => {
     hasDatabaseConfig.mockReturnValue(true);
     const failure = new Error('socket hang up');
