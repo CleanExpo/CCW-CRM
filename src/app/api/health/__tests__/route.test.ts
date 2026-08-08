@@ -125,6 +125,25 @@ describe('GET /api/health', () => {
     expect(JSON.stringify(body)).not.toContain('postgresql://');
   });
 
+  // The P1 found in the second review: shape-matching is not recognition. A
+  // value that merely LOOKS like a code — 'TOKEN' fits the SQLSTATE shape,
+  // 'LettersOnlySecret' fits the name shape — was still echoed publicly.
+  it.each([
+    ['code', { code: 'TOKEN' }],
+    ['code', { code: 'ABCDE' }],
+    ['name', { name: 'LettersOnlySecret' }],
+  ])('drops safe-shaped but unrecognised secrets in error.%s', async (_field, props) => {
+    hasDatabaseConfig.mockReturnValue(true);
+    const failure = new Error('boom');
+    if ('name' in props && props.name) failure.name = props.name;
+    queryRaw.mockRejectedValue(Object.assign(failure, props));
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(body.database.error).toBe('UnknownError');
+  });
+
   it('still echoes genuinely diagnostic codes', async () => {
     hasDatabaseConfig.mockReturnValue(true);
     queryRaw.mockRejectedValue(Object.assign(new Error('boom'), { code: 'ECONNREFUSED' }));

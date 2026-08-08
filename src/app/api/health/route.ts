@@ -47,39 +47,62 @@ class ProbeTimeoutError extends Error {
 }
 
 /**
- * Shapes safe to echo from a PUBLIC, UNAUTHENTICATED endpoint.
+ * The exact set of identifiers this PUBLIC, UNAUTHENTICATED endpoint may echo.
  *
- * ALLOW-LIST, deliberately, not a deny-list. An earlier revision returned
- * `error.code` verbatim whenever it was a non-empty string, assuming only the
- * message could carry secrets. That is false — nothing stops a driver, adapter
- * or proxy putting connection-string material in `code` or `name`, and review
- * demonstrated it by throwing `{ code: 'postgresql://postgres:...@host/db' }`
- * and reading the DSN straight out of this endpoint's JSON.
+ * Two earlier revisions of this function were wrong in the same direction, and
+ * the second is the instructive one:
+ *
+ *   1. It returned `error.code` verbatim for any non-empty string. A DSN placed
+ *      in `code` was disclosed in full.
+ *   2. It then allowed anything MATCHING A SAFE SHAPE. That is still a
+ *      pass-through: `code: 'TOKEN'` and `name: 'LettersOnlySecret'` both
+ *      satisfy the patterns and were disclosed. Rejecting punctuation is not
+ *      the same as recognising a value.
+ *
+ * So membership, not resemblance. An identifier is echoed only if it is one we
+ * put on this list ourselves; everything else becomes `UnknownError`. The full
+ * error is logged server-side, so nothing diagnostic is lost — it just stops
+ * being world-readable.
  */
-const SAFE_CODE_PATTERNS = [
-  /^P\d{4}$/, // Prisma, e.g. P1001
-  /^[0-9A-Z]{5}$/, // SQLSTATE, e.g. 08006
-  /^E[A-Z]{2,15}$/, // Node syscall, e.g. ECONNREFUSED
-];
-
-/** Error class names: letters only, so no DSN punctuation can survive. */
-const SAFE_NAME_PATTERN = /^[A-Za-z]{1,64}$/;
+const PUBLIC_ERROR_IDENTIFIERS: ReadonlySet<string> = new Set([
+  // Prisma connection/initialisation failures — the ones an operator acts on.
+  "P1000", // authentication failed
+  "P1001", // can't reach database server
+  "P1002", // server reached but timed out
+  "P1003", // database does not exist
+  "P1008", // operation timed out
+  "P1010", // access denied for user
+  "P1011", // error opening a TLS connection
+  "P1017", // server closed the connection
+  "P2024", // connection pool timeout
+  // Node syscall failures surfaced by the driver.
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "ENOTFOUND",
+  "ECONNRESET",
+  "EHOSTUNREACH",
+  "EPIPE",
+  // Trusted error classes, when no code is present.
+  "PrismaClientInitializationError",
+  "PrismaClientKnownRequestError",
+  "PrismaClientRustPanicError",
+  "DriverAdapterError",
+]);
 
 /**
- * Identify the failure without leaking it. Anything not matching a known-safe
- * shape collapses to a fixed token — an unrecognised value is dropped, never
- * passed through.
+ * Identify the failure without leaking it. Unrecognised identifiers are
+ * dropped, never passed through.
  */
 function describeFailure(error: unknown): string {
   if (error instanceof ProbeTimeoutError) return "ProbeTimeout";
 
   if (typeof error === "object" && error !== null) {
     const code = (error as { code?: unknown }).code;
-    if (typeof code === "string" && SAFE_CODE_PATTERNS.some((pattern) => pattern.test(code))) {
+    if (typeof code === "string" && PUBLIC_ERROR_IDENTIFIERS.has(code)) {
       return code;
     }
     const name = (error as { name?: unknown }).name;
-    if (typeof name === "string" && SAFE_NAME_PATTERN.test(name)) {
+    if (typeof name === "string" && PUBLIC_ERROR_IDENTIFIERS.has(name)) {
       return name;
     }
   }
@@ -100,6 +123,8 @@ async function probeDatabase(): Promise<HealthResponse["database"]> {
     await Promise.race([prisma.$queryRaw`SELECT 1`, timeout]);
     return { configured: true, reachable: true };
   } catch (error) {
+    // Full detail stays server-side; only a recognised identifier goes public.
+    console.error("[health] database probe failed", error);
     return { configured: true, reachable: false, error: describeFailure(error) };
   } finally {
     if (timer) clearTimeout(timer);
