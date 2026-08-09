@@ -7,10 +7,15 @@ tmpclaude-*
 # DIRECTORY, so a `!` negation beneath `.claude/` can never match. Excluding the CONTENTS
 # keeps the directory traversable, which is what makes the negations below bite.
 #
-# The agent definitions and settings this project OWNS are tracked, because `~/.claude`
-# does not exist on a GitHub runner. Without this, `scripts/ci/validate-agents.js` passes
-# on every push while measuring nothing — it exits 0 when `.claude/agents/` is absent, and
-# on a runner it was always absent.
+# The agent definitions and settings this project OWNS are tracked so they are IN THE COMMIT.
+# `scripts/ci/validate-agents.js` reads the repository-local `.claude/agents/`. At `b059c8f7`,
+# this work's base commit, `git ls-files .claude` returned 0 — so any checkout of it, CI included,
+# had no agents to validate, and the old validator exited 0 there having read nothing. It now
+# exits 1 instead.
+#
+# Note that `.gitignore` does not untrack what is already tracked: earlier commits (e.g.
+# `729d8583`) carried 21 agent definitions under this same `.claude/` exclusion. The negations
+# below are what let these paths be ADDED again after they were removed.
 #
 # Everything else under `.claude/` stays ignored, including `worktrees/` (agent checkouts
 # of this same repo) and `settings.local.json` (machine-local overrides).
