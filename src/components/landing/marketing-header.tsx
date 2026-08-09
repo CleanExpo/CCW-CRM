@@ -1,8 +1,7 @@
-import Link from 'next/link';
-import { LogIn } from 'lucide-react';
 import { CcwLogo } from '@/components/brand/ccw-logo';
-import { cn } from '@/lib/utils';
 import { marketingShell } from '@/components/landing/marketing-shell';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const NAV = [
   { href: '/product', label: 'Product' },
@@ -13,55 +12,46 @@ const NAV = [
 ] as const;
 
 /**
- * Server component on purpose. `usePathname` previously forced this header
- * (and its logo/button graph) into the client bundle on every marketing page,
- * including `/` before LCP. Active-route chrome is a nicety; LCP is not.
- * Do not call `buttonVariants` here — that helper is client-bound.
+ * Server component — keep out of the client bundle for LCP.
+ * Single-row editorial nav (no pill cluster).
  */
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.12] bg-zinc-950/80 backdrop-blur-2xl supports-backdrop-filter:bg-zinc-950/75">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent"
-        aria-hidden
-      />
+    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#050508]/80 backdrop-blur-xl supports-backdrop-filter:bg-[#050508]/70">
       <div
         className={cn(
           marketingShell,
-          'flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between md:gap-6 md:py-4'
+          'flex h-16 items-center justify-between gap-6 md:h-[4.25rem]'
         )}
       >
         <CcwLogo href="/" variant="full" size="md" />
 
         <nav
-          className="flex flex-wrap items-center justify-center gap-1.5 text-sm font-semibold md:flex-1 md:justify-center"
+          className="hidden items-center gap-5 text-[13px] font-medium tracking-wide text-zinc-400 md:flex lg:gap-7"
           aria-label="Main"
         >
-          <div className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.04] p-1.5 shadow-inner shadow-black/20 backdrop-blur-sm">
-            {NAV.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-full px-3.5 py-2 whitespace-nowrap text-zinc-400 transition-all duration-200 hover:text-white"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+          {NAV.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="transition-colors duration-200 hover:text-white"
+            >
+              {label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 md:justify-end">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link
             href="/register"
-            className="inline-flex min-h-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.03] px-4 text-sm font-semibold text-zinc-200 transition hover:border-white/25 hover:bg-white/[0.07] hover:text-white"
+            className="hidden min-h-9 items-center justify-center px-3 text-[13px] font-medium text-zinc-300 transition hover:text-white sm:inline-flex"
           >
             Sign up
           </Link>
           <Link
             href="/login"
-            className="from-primary inline-flex min-h-9 min-w-[7.5rem] items-center justify-center gap-2 rounded-full bg-gradient-to-r to-indigo-500 px-5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 ring-1 ring-white/15 transition hover:brightness-110"
+            className="inline-flex min-h-9 items-center justify-center bg-sky-500 px-4 text-[13px] font-semibold text-zinc-950 transition hover:bg-sky-400 sm:px-5"
           >
-            <LogIn className="h-4 w-4 shrink-0" aria-hidden />
             Log in
           </Link>
         </div>
