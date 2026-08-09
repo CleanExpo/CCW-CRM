@@ -4,6 +4,7 @@ import {
   sleepForRetry,
   type Cin7HttpRetryResult,
 } from '@/lib/integrations/cin7-http-retry';
+import { parseCin7OmniListResponse } from '@/lib/integrations/cin7-omni-list';
 import type { NextRequest } from 'next/server';
 
 const OMNI_API_BASE = 'https://api.cin7.com/api';
@@ -127,46 +128,8 @@ export async function cin7OmniGet<T>(
 
 /** Omni list responses may be a raw array or an envelope with Total + array key. */
 function parseOmniListEnvelope(raw: unknown): { rows: unknown[]; total: number | null } {
-  if (Array.isArray(raw)) {
-    // Cin7 Omni often returns a bare array with no Total — caller must paginate by page size.
-    return { rows: raw, total: null };
-  }
-  if (raw && typeof raw === 'object') {
-    const o = raw as Record<string, unknown>;
-    const total =
-      typeof o.Total === 'number'
-        ? o.Total
-        : typeof o.total === 'number'
-          ? o.total
-          : typeof o.TotalRecords === 'number'
-            ? o.TotalRecords
-            : 0;
-    const listKeys = [
-      'Products',
-      'products',
-      'Contacts',
-      'contacts',
-      'Branches',
-      'branches',
-      'ProductCategories',
-      'productCategories',
-      'Stock',
-      'stock',
-      'SalesOrders',
-      'salesOrders',
-      'Data',
-      'data',
-      'Items',
-      'items',
-    ];
-    for (const k of listKeys) {
-      const arr = o[k];
-      if (Array.isArray(arr)) {
-        return { rows: arr, total: total > 0 ? total : null };
-      }
-    }
-  }
-  return { rows: [], total: null };
+  const parsed = parseCin7OmniListResponse(raw);
+  return { rows: parsed.rows, total: parsed.total };
 }
 
 /** Lightweight connectivity check (read-only friendly). */
