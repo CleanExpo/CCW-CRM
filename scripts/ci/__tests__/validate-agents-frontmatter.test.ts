@@ -13,6 +13,10 @@ import { join, resolve } from 'node:path';
 // Every frontmatter case below is written LITERALLY. Nothing is generated from the parser's own
 // rules; a fixture derived from the implementation passes whatever the implementation says.
 const SCRIPT = resolve(__dirname, '..', 'validate-agents.js');
+// The fixture tree lives outside the repo, so `require('js-yaml')` inside the copied script has
+// nothing to walk up to. NODE_PATH points it at the real dependencies instead of putting fixture
+// directories inside the working tree, which would leave litter that dirties `git status`.
+const REPO_NODE_MODULES = resolve(__dirname, '..', '..', '..', 'node_modules');
 
 describe('validate-agents.js frontmatter contract', () => {
   let root: string;
@@ -32,6 +36,7 @@ describe('validate-agents.js frontmatter contract', () => {
     if (body !== undefined) writeFileSync(join(root, '.claude', 'agents', 'probe.md'), body);
     return spawnSync(process.execPath, [join(root, 'scripts', 'ci', 'validate-agents.js')], {
       encoding: 'utf8',
+      env: { ...process.env, NODE_PATH: REPO_NODE_MODULES },
     }).status;
   };
 
@@ -62,8 +67,38 @@ describe('validate-agents.js frontmatter contract', () => {
     ['no frontmatter', 'just a body\n'],
     ['unclosed frontmatter', '---\nname: n\ndescription: d\n'],
     ['unterminated quote', '---\nname: "unterminated\ndescription: d\n---\nb\n'],
+    // YAML has many ways to write "nothing" that a hand parser reads as text.
+    ['an explicit !!null tag', '---\nname: !!null\ndescription: !!null\n---\nb\n'],
+    ['a bare anchor', '---\nname: &a\ndescription: &b\n---\nb\n'],
+    ['an alias to an empty scalar', '---\nname: &a\ndescription: *a\n---\nb\n'],
+    ['an empty folded scalar', '---\nname: >\ndescription: >\n---\nb\n'],
+    ['an empty literal scalar', '---\nname: |\ndescription: |\n---\nb\n'],
+    ['a flow sequence', '---\nname: []\ndescription: []\n---\nb\n'],
+    ['a flow mapping', '---\nname: {}\ndescription: {}\n---\nb\n'],
+    ['a non-mapping document', '---\n- just\n- a list\n---\nb\n'],
+    ['tab-indented invalid YAML', '---\nname: n\n\tdescription: d\n---\nb\n'],
+    ['junk after a quoted scalar', '---\nname: "n" junk\ndescription: d\n---\nb\n'],
   ])('rejects %s', (_label, body) => {
     expect(run(body)).toBe(1);
+  });
+
+  // Each required field is pinned SEPARATELY. Every fixture above invalidates name and
+  // description together, so dropping `description` from the production required-field list left
+  // all of them green — the suite could not tell the two checks apart. These can.
+  it('rejects a valid name with an empty description', () => {
+    expect(run('---\nname: real\ndescription: ""\n---\nb\n')).toBe(1);
+  });
+
+  it('rejects a valid description with an empty name', () => {
+    expect(run('---\nname: ""\ndescription: A real description.\n---\nb\n')).toBe(1);
+  });
+
+  it('rejects a file missing the description key entirely', () => {
+    expect(run('---\nname: real\n---\nb\n')).toBe(1);
+  });
+
+  it('rejects a file missing the name key entirely', () => {
+    expect(run('---\ndescription: A real description.\n---\nb\n')).toBe(1);
   });
 
   // Equally important: the strict parser must not reject legitimate files. A gate that cries wolf
@@ -76,6 +111,14 @@ describe('validate-agents.js frontmatter contract', () => {
     ['a trailing comment', '---\nname: real\ndescription: Valid # note\n---\nb\n'],
     ['a comment line', '---\n# comment\nname: real\ndescription: Valid.\n---\nb\n'],
     ['trailing spaces on the fence', '---\nname: real\ndescription: Valid.\n---   \nb\n'],
+    // False rejections matter as much as false accepts: a gate that fails valid work gets
+    // switched off, which lands where a gate that never fires does. Both of these were rejected
+    // by the hand parser — the CRLF one would have failed any Windows contributor's file.
+    ['CRLF line endings', '---\r\nname: real\r\ndescription: Valid.\r\n---\r\nb\r\n'],
+    ['a quoted key', '---\n"name": real\n"description": Valid.\n---\nb\n'],
+    ['a folded scalar with content', '---\nname: real\ndescription: >\n  A real folded description.\n---\nb\n'],
+    ['a literal scalar with content', '---\nname: real\ndescription: |\n  A real literal description.\n---\nb\n'],
+    ['extra keys beyond the required two', '---\nname: real\ndescription: Valid.\ntools: Read, Bash\n---\nb\n'],
   ])('accepts %s', (_label, body) => {
     expect(run(body)).toBe(0);
   });

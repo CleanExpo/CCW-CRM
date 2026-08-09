@@ -13,72 +13,55 @@ function walk(dir) {
     .readdirSync(dir, { withFileTypes: true })
     .flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
-// This is NOT a YAML parser and does not try to be one. Three review rounds found three ways to
-// get a semantically empty value past it — `""`, then `null`/`~`, then a trailing comment, an
-// uppercase `NULL` and a bare `name:`. Each patch bought the next variant, because a permissive
-// parser's failure mode is to ACCEPT what it did not understand.
+// Frontmatter is parsed with js-yaml, not by hand.
 //
-// So the rule is inverted: this validates one narrow contract — `name` and `description` must be
-// non-empty scalars — and REJECTS anything it cannot read confidently. A false rejection is a
-// loud, immediate build failure someone fixes in a minute. A false acceptance is a gate that
-// silently stops working, which is the entire defect this file exists to close.
+// Five review rounds broke the hand parser five different ways. The first four were values that
+// LOOKED empty and were accepted — `""`, `null`, `~`, `NULL`, a trailing comment, a bare key. The
+// fifth added `!!null`, anchors, aliases, empty folded (`>`) and literal (`|`) scalars, `[]` and
+// `{}` — and, worse, two FALSE REJECTIONS: a quoted `"name":` key and any file with CRLF line
+// endings, which would fail a Windows contributor's perfectly valid definition.
 //
-// js-yaml was the obvious alternative and was deliberately not used: it is present only as a
-// transitive dependency, and declaring it rewrote `libc` platform hints throughout
-// package-lock.json on this npm version — real risk to CI platform resolution, for a 40-line
-// contract.
+// That is the lesson: a hand parser loses on both sides at once. Tightening it to stop the false
+// accepts produced false rejects, and a gate that cries wolf gets switched off, which lands
+// exactly where a gate that never fires does. Only a real parser resolves both.
+//
+// `js-yaml` was already present in package-lock.json as a dev dependency (4.1.1, with argparse),
+// so declaring it is a two-line change to package.json and the lockfile's root devDependencies —
+// no `npm install`, and none of the `libc` platform-hint churn that made an earlier attempt at
+// this look risky. That churn came from running install on npm 10 against a lockfile written by
+// npm 11; it was never inherent to the dependency.
+const yaml = require('js-yaml');
 
-// A UTF-8 BOM before the opening fence made `^---` fail, rejecting a valid file. Strip it.
-const stripBOM = (s) => (s.charCodeAt(0) === 0xfeff ? s.slice(1) : s);
+// A UTF-8 BOM before the opening fence stops `^---` matching, and CRLF leaves a stray \r on every
+// line. Both are properties of how the file was SAVED, not of what it says.
+const normaliseText = (s) => (s.charCodeAt(0) === 0xfeff ? s.slice(1) : s).replace(/\r\n/g, '\n');
 
-// YAML's ways of spelling "no value", case-insensitively.
-const NULLISH = new Set(['', '~', 'null']);
+// The required fields must be non-empty STRINGS. js-yaml resolves `!!null`, `~`, `null` and an
+// empty `>`/`|` block to null or '', and `[]`/`{}` to collections — none of which name anything,
+// so all of them fail this test rather than needing a special case each.
+const isNamed = (v) => typeof v === 'string' && v.trim() !== '';
 
-// Returns the scalar, or null when the value is absent, empty, or something this parser will not
-// vouch for. Callers treat null as a failure — never as "probably fine".
-function scalar(raw) {
-  let v = raw.trim();
+// Returns { fields } on a clean parse, { error } otherwise. Anything unreadable is an error, never
+// a pass: duplicate keys are ambiguous (first-wins and last-wins disagree about `name: real`
+// followed by `name:`), and a malformed document is not a valid one.
+function parseFM(raw) {
+  const text = normaliseText(raw);
+  // The closing fence must be exactly `---` on its own line. A prefix match let `---oops` close
+  // the block, so a malformed document read as a well-formed one.
+  const m = text.match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/);
+  if (!m) return { error: 'no readable YAML frontmatter (missing or malformed --- fences)' };
 
-  if (v.startsWith('"') || v.startsWith("'")) {
-    // A quoted scalar: take exactly what is inside the matching close quote. Anything after it
-    // (a comment, stray text) is ignored, but an unterminated quote is a reject.
-    const q = v[0];
-    const end = v.indexOf(q, 1);
-    if (end === -1) return null;
-    v = v.slice(1, end).trim();
-  } else {
-    // An unquoted scalar ends at a comment. ` #` starts one; a bare `#` in the middle of a word
-    // does not, which is why the space is required.
-    const hash = v.search(/(^|\s)#/);
-    if (hash !== -1) v = v.slice(0, hash).trim();
+  let doc;
+  try {
+    doc = yaml.load(m[1], { json: false, onWarning: null });
+  } catch (e) {
+    return { error: `invalid YAML frontmatter: ${e.reason || e.message}` };
   }
-
-  return NULLISH.has(v.toLowerCase()) ? null : v;
-}
-
-function parseFM(c) {
-  // The closing fence must be EXACTLY `---` on its own line. The previous pattern matched a
-  // prefix, so `---oops` closed the block and the file validated — a malformed document read as
-  // a well-formed one.
-  const m = stripBOM(c).match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/);
-  if (!m) return null;
-
-  const out = {};
-  const duplicates = [];
-  for (const line of m[1].split('\n')) {
-    if (!line.trim() || line.trimStart().startsWith('#')) continue;
-    const colon = line.indexOf(':');
-    if (colon === -1) continue;
-    const key = line.slice(0, colon).trim();
-    if (!key) continue;
-    // A repeated key is AMBIGUOUS — first-wins and last-wins disagree, and `name: real` followed
-    // by `name:` reads as valid under one and empty under the other. Rejecting is the only answer
-    // that cannot be gamed: otherwise a real value can be shadowed, or an empty one rescued,
-    // depending on which rule the reader assumes.
-    if (key in out) duplicates.push(key);
-    else out[key] = scalar(line.slice(colon + 1));
+  // js-yaml throws on duplicate keys under the default schema, so the catch above covers them.
+  if (doc === null || typeof doc !== 'object' || Array.isArray(doc)) {
+    return { error: 'frontmatter is not a key/value mapping' };
   }
-  return { fields: out, duplicates };
+  return { fields: doc };
 }
 
 console.log('\n🔍 Validating agent frontmatter...\n');
@@ -100,18 +83,13 @@ walk(AGENTS_DIR)
     checked++;
     const parsed = parseFM(fs.readFileSync(f, 'utf8'));
     const rel = path.relative(ROOT, f);
-    if (!parsed) {
-      console.error(`  ❌ ${rel}: no readable YAML frontmatter (missing or malformed --- fences)`);
-      errors++;
-      return;
-    }
-    if (parsed.duplicates.length) {
-      console.error(`  ❌ ${rel}: duplicate key(s) ${[...new Set(parsed.duplicates)].join(', ')}`);
+    if (parsed.error) {
+      console.error(`  ❌ ${rel}: ${parsed.error}`);
       errors++;
       return;
     }
     const fm = parsed.fields;
-    const missing = ['name', 'description'].filter((k) => !fm[k]);
+    const missing = ['name', 'description'].filter((k) => !isNamed(fm[k]));
     missing.length
       ? (console.error(`  ❌ ${rel}: missing ${missing.join(', ')}`), errors++)
       : console.log(`  ✅ ${rel}`);
