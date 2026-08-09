@@ -26,39 +26,31 @@ export function MarketingAmbientCanvas({
       className={cn('pointer-events-none fixed inset-0 z-0 overflow-hidden', className)}
       aria-hidden
     >
-      <div className="absolute inset-0 bg-[#030306]" />
+      <div className="absolute inset-0 bg-[#050508]" />
 
-      {/* Primary glow — top center */}
+      {/* Primary glow — restrained sky wash */}
       <div
         className={cn(
-          'absolute left-1/2 -translate-x-1/2 bg-[radial-gradient(ellipse_95%_65%_at_50%_-8%,rgba(56,189,248,0.2),transparent_58%)]',
-          soft ? 'top-0 h-[55%] w-[130%] opacity-70' : 'top-0 h-[65%] w-[150%] opacity-100'
+          'absolute left-1/2 -translate-x-1/2 bg-[radial-gradient(ellipse_90%_55%_at_50%_-8%,rgba(14,165,233,0.14),transparent_60%)]',
+          soft ? 'top-0 h-[50%] w-[120%] opacity-60' : 'top-0 h-[58%] w-[140%] opacity-90'
         )}
       />
 
-      {/* Secondary — indigo / violet pockets */}
+      {/* Secondary depth — cool zinc, not violet */}
       <div
         className={cn(
-          'absolute rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.14),transparent_62%)] blur-3xl',
-          'animate-landing-drift opacity-50',
-          soft ? 'top-[18%] -right-[25%] h-[45%] w-[45%]' : 'top-[12%] -right-[18%] h-[58%] w-[58%]'
+          'absolute rounded-full bg-[radial-gradient(circle,rgba(161,161,170,0.08),transparent_62%)] blur-3xl',
+          'animate-landing-drift opacity-40',
+          soft ? 'top-[20%] -right-[28%] h-[40%] w-[40%]' : 'top-[14%] -right-[20%] h-[50%] w-[50%]'
         )}
-        style={{ animationDuration: '36s' }}
+        style={{ animationDuration: '40s' }}
       />
       <div
         className={cn(
-          'absolute rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.12),transparent_58%)] blur-3xl',
+          'absolute rounded-full bg-[radial-gradient(circle,rgba(14,165,233,0.08),transparent_58%)] blur-3xl',
           soft
-            ? '-bottom-[8%] -left-[12%] h-[38%] w-[38%] opacity-60'
-            : '-bottom-[12%] -left-[8%] h-[48%] w-[48%] opacity-80'
-        )}
-      />
-
-      {/* Conic wash — very slow */}
-      <div
-        className={cn(
-          'absolute -inset-[35%] rounded-full bg-[conic-gradient(from_200deg_at_50%_50%,hsl(var(--primary)/0.12)_0deg,transparent_100deg,hsl(var(--accent)/0.08)_200deg,transparent_300deg)] opacity-40 blur-3xl',
-          'animate-landing-aurora'
+            ? '-bottom-[8%] -left-[12%] h-[34%] w-[34%] opacity-50'
+            : '-bottom-[12%] -left-[8%] h-[42%] w-[42%] opacity-70'
         )}
       />
 
