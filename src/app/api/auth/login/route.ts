@@ -1,7 +1,8 @@
 import { findAppUserByEmail, updateLastLogin } from '@/lib/auth/app-user-repo';
 import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
-import { signTokenPair } from '@/lib/auth/jwt-tokens';
+import { signMfaChallengeToken, signTokenPair } from '@/lib/auth/jwt-tokens';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
+import { roleRequiresMfa } from '@/lib/auth/mfa-totp';
 import { verifyPassword } from '@/lib/auth/password';
 import { loginBodySchema } from '@/lib/auth/schemas';
 import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
@@ -26,6 +27,27 @@ export async function POST(request: NextRequest) {
     const ok = await verifyPassword(parsed.data.password, row.passwordHash);
     if (!ok) {
       return jsonDetail('Invalid email or password', 401);
+    }
+
+    const mfaRequired = roleRequiresMfa(row.role, row.isAdmin);
+
+    if (row.totpEnabled) {
+      const mfa_token = await signMfaChallengeToken(row.id, row.email, 'verify');
+      return jsonOk({
+        mfa_required: true,
+        mfa_token,
+        user: { id: row.id, email: row.email },
+      });
+    }
+
+    if (mfaRequired) {
+      const mfa_token = await signMfaChallengeToken(row.id, row.email, 'enroll');
+      return jsonOk({
+        mfa_enrollment_required: true,
+        mfa_token,
+        user: { id: row.id, email: row.email },
+        detail: 'Multi-factor authentication must be set up before access is granted.',
+      });
     }
 
     await updateLastLogin(row.id);
