@@ -1,8 +1,5 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import {
-  healOptixFieldMismatchesFromLiveCin7,
-  summarizeFieldHeal,
-} from '@/lib/integrations/cin7-field-heal';
+import { runAuditedFieldHeal } from '@/lib/integrations/cin7-heal-audit';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,7 +8,7 @@ export const maxDuration = 300;
 
 /**
  * @deprecated Prefer POST /api/integrations/cin7/field-heal.
- * Kept as a thin products-only wrapper.
+ * Products-only explicit heal with audit log.
  */
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -23,7 +20,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: 'Cin7 Omni is not reachable.' }, { status: 401 });
   }
 
-  const result = await healOptixFieldMismatchesFromLiveCin7(scope.userId, omniCreds, {
+  const result = await runAuditedFieldHeal({
+    ownerUserId: scope.userId,
+    actorUserId: scope.userId,
+    omniCreds,
     entities: ['products'],
   });
   const products = result.by_entity.products;
@@ -40,9 +40,10 @@ export async function POST(request: NextRequest) {
     checked: products.checked,
     cin7_skus: products.checked,
     mismatched_before: products.healed,
-    breakdown_before: { name: 0, price: 0, stock: 0, is_active: 0, visibility: 0 },
+    audit_run_id: result.audit_run_id,
     errors: result.errors,
-    summary: summarizeFieldHeal(result),
+    summary: result.summary,
     accepted: result.errors.length === 0,
+    reversible: true,
   });
 }
