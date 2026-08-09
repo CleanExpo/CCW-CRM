@@ -356,6 +356,9 @@ export type Cin7ReconciliationResponse =
     incomplete_sync?: boolean;
     cin7_snapshot_complete?: boolean;
     optix_complete?: boolean;
+    recon_run_id?: string | null;
+    read_only?: boolean;
+    owner_scope_note?: string;
   };
 
 /**
@@ -378,7 +381,7 @@ export async function getCin7Reconciliation(options?: {
   );
 }
 
-/** Push live Cin7 fields onto Optix for all entities with field diffs (matched keys only). */
+/** Explicit field heal (audited + reversible). Never runs inside reconciliation. */
 export async function healCin7FieldMismatches(options?: {
   entities?: Array<
     'products' | 'customers' | 'suppliers' | 'branches' | 'internal-customers' | 'stock'
@@ -386,6 +389,7 @@ export async function healCin7FieldMismatches(options?: {
 }): Promise<{
   healed_total: number;
   summary: string;
+  audit_run_id: string;
   by_entity: {
     products: { healed: number; checked: number };
     customers: { healed: number; checked: number };
@@ -396,6 +400,7 @@ export async function healCin7FieldMismatches(options?: {
   };
   errors: string[];
   accepted?: boolean;
+  reversible?: boolean;
 }> {
   return apiClient.post(
     '/api/integrations/cin7/field-heal',
@@ -403,6 +408,60 @@ export async function healCin7FieldMismatches(options?: {
     undefined,
     300_000
   );
+}
+
+/** Preview (default) or apply stock surplus prune (audited + reversible on apply). */
+export async function pruneCin7StockSurplus(options?: { dryRun?: boolean }): Promise<{
+  audit_run_id: string | null;
+  cin7_keys: number;
+  optix_before: number;
+  deleted: number;
+  missing_in_optix: number;
+  errors: string[];
+  dry_run: boolean;
+  optix_after?: number;
+  accepted?: boolean;
+  reversible?: boolean;
+}> {
+  const dryRun = options?.dryRun !== false;
+  if (dryRun) {
+    return apiClient.get('/api/integrations/cin7/stock-prune?dry_run=true', undefined, 300_000);
+  }
+  return apiClient.post('/api/integrations/cin7/stock-prune', {}, undefined, 300_000);
+}
+
+export async function revertCin7HealAudit(auditRunId: string): Promise<{
+  reverted: number;
+  action_type: string;
+  accepted?: boolean;
+}> {
+  return apiClient.post(
+    '/api/integrations/cin7/heal-audit/revert',
+    { audit_run_id: auditRunId },
+    undefined,
+    300_000
+  );
+}
+
+export async function listCin7ReconHistory(limit = 20): Promise<{
+  owner_user_id: string;
+  note: string;
+  items: Array<{
+    id: string;
+    mode: string;
+    status: string;
+    checked_at: string;
+    immutable: boolean;
+    missing_count: number;
+    extra_count: number;
+    field_mismatch_count: number;
+    products_cin7: number | null;
+    products_optix: number | null;
+    stock_cin7: number | null;
+    stock_optix: number | null;
+  }>;
+}> {
+  return apiClient.get(`/api/integrations/cin7/reconciliation/history?limit=${limit}`);
 }
 
 /** @deprecated Prefer healCin7FieldMismatches — products-only wrapper. */
