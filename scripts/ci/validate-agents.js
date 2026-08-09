@@ -13,6 +13,22 @@ function walk(dir) {
     .readdirSync(dir, { withFileTypes: true })
     .flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
+// This is a hand parser, not a YAML parser, so it hands back RAW TEXT. `description: ""` arrives
+// as the two-character string `""`, which is truthy — so a `!value` check passed a field that is
+// semantically empty. Same for `''`, `null` and `~`. That was a third route to a vacuous pass:
+// the file has the required keys, the validator reports success, and nothing was actually named.
+// Normalising here means the emptiness test below asks about the VALUE, not about whether some
+// characters were present.
+function normalise(raw) {
+  let v = raw.trim();
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+    v = v.slice(1, -1).trim();
+  }
+  // YAML's ways of spelling "no value".
+  if (v === 'null' || v === '~') return '';
+  return v;
+}
+
 function parseFM(c) {
   const m = c.match(/^---\s*\n([\s\S]*?)\n---/);
   if (!m) return null;
@@ -22,7 +38,7 @@ function parseFM(c) {
       .filter((l) => l.includes(':'))
       .map((l) => {
         const [k, ...v] = l.split(':');
-        return [k.trim(), v.join(':').trim()];
+        return [k.trim(), normalise(v.join(':'))];
       })
   );
 }

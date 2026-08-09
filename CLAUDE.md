@@ -63,7 +63,9 @@ git -C /Users/phill-mac/CCW-CRM worktree list
 ```
 
 Work in a dedicated worktree created **outside** the repository, on persistent storage. **Never
-under `/tmp`** — it is swept, and roughly 2.5G of evidence was lost that way on 2026-08-07.
+under `/tmp`** — it is swept, and worktrees and review evidence were lost that way on 2026-08-07.
+(An earlier draft put a "2.5G" figure on that loss. No measurement supporting it exists, so the
+number is gone; the rule does not need it.)
 
 ## Credentials
 
@@ -91,6 +93,12 @@ production-ready" — none of which survived measurement. So:
 
 ## Agents
 
-`.claude/agents/` holds this project's own agent definitions and **is tracked**, because
-`~/.claude` does not exist on a CI runner. Everything else under `.claude/` stays ignored,
-including `worktrees/` and `settings.local.json`.
+**Two** paths under `.claude/` are tracked, because `~/.claude` does not exist on a CI runner:
+
+- `.claude/agents/` — this project's own agent definitions. `scripts/ci/validate-agents.js` reads
+  them, and it **fails** if the directory is missing or empty, so deleting or re-ignoring them
+  breaks the build rather than silently disabling the check.
+- `.claude/settings.json` — project settings.
+
+Everything else under `.claude/` stays ignored, including `worktrees/`, `skills/` and
+`settings.local.json`. Confirm with `git check-ignore -v <path>` rather than assuming.
