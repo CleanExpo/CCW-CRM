@@ -101,6 +101,28 @@ describe('validate-agents.js frontmatter contract', () => {
     expect(run('---\ndescription: A real description.\n---\nb\n')).toBe(1);
   });
 
+  // The contract is a non-empty STRING, not merely a truthy value. YAML resolves these to a
+  // number, a boolean and a Date — all truthy, none of them a name or a description. Without
+  // these, relaxing `isNamed` to accept any truthy scalar passed the whole suite.
+  //
+  // Rejecting them is deliberate rather than incidental: an agent whose name is `123` is almost
+  // certainly a mistake, and the fix — quote it — is obvious from the error. A validator that
+  // silently accepted a Date as a description would be back to reporting success over something
+  // that names nothing.
+  it.each([
+    ['an unquoted integer', '---\nname: 123\ndescription: 456\n---\nb\n'],
+    ['an unquoted float', '---\nname: 1.5\ndescription: 2.5\n---\nb\n'],
+    ['an unquoted boolean', '---\nname: true\ndescription: false\n---\nb\n'],
+    ['an unquoted date', '---\nname: 2026-08-09\ndescription: 2026-08-09\n---\nb\n'],
+  ])('rejects %s as a required field', (_label, body) => {
+    expect(run(body)).toBe(1);
+  });
+
+  // ...and the quoted forms of the same values are legitimate, so they must still pass.
+  it('accepts those same values when quoted as strings', () => {
+    expect(run('---\nname: "123"\ndescription: "true"\n---\nb\n')).toBe(0);
+  });
+
   // Equally important: the strict parser must not reject legitimate files. A gate that cries wolf
   // gets disabled, which lands in the same place as a gate that never fires.
   it.each([
