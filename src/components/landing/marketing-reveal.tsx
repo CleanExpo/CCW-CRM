@@ -53,6 +53,12 @@ export function MarketingReveal({
   return (
     <Tag
       ref={ref}
+      // Makes the revealed state observable from outside React. The accessibility gate has to
+      // know whether this content is actually visible before it scans: axe-core treats an
+      // `opacity: 0` ancestor as hidden, so scanning before the effect runs examines nothing and
+      // reports a clean page. Without a signal to wait on, that gate goes quietly blind on a
+      // slow-hydrating runner — the exact failure the reduced-motion case exists to prevent.
+      data-revealed={visible ? 'true' : 'false'}
       className={cn(
         'transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
         visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
