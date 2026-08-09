@@ -127,3 +127,40 @@ export async function verifyAccessJwt(token: string): Promise<{
     return null;
   }
 }
+
+/** Short-lived challenge token issued after password check, before MFA completes. */
+export async function signMfaChallengeToken(
+  userId: string,
+  email: string,
+  purpose: 'verify' | 'enroll'
+): Promise<string> {
+  const secret = getJwtSecret();
+  if (!secret) throw new Error('JWT_SECRET is not configured');
+  return new SignJWT({ email, typ: 'mfa_pending', purpose })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .sign(secret);
+}
+
+export async function verifyMfaChallengeToken(token: string): Promise<{
+  sub: string;
+  email: string;
+  purpose: 'verify' | 'enroll';
+} | null> {
+  const secret = getJwtSecret();
+  if (!secret) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
+    if (payload.typ !== 'mfa_pending') return null;
+    const sub = typeof payload.sub === 'string' ? payload.sub : '';
+    const email = typeof payload.email === 'string' ? payload.email : '';
+    const purpose =
+      payload.purpose === 'enroll' ? 'enroll' : payload.purpose === 'verify' ? 'verify' : null;
+    if (!sub || !email || !purpose) return null;
+    return { sub, email, purpose };
+  } catch {
+    return null;
+  }
+}
