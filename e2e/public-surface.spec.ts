@@ -61,6 +61,21 @@ for (const route of PUBLIC_ROUTES) {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(route.path, { waitUntil: 'domcontentloaded' });
 
+      // Scanning before hydration would defeat the entire point of this case: the reveals would
+      // still be `opacity: 0`, axe would treat them as hidden, and the test would report a clean
+      // page having examined nothing. `domcontentloaded` does not wait for React, so on a slow
+      // runner that race is real. Wait for the component to publish its revealed state, and FAIL
+      // if it never does — a gate that cannot see must say so, not pass.
+      const reveals = page.locator('[data-revealed]');
+      const revealCount = await reveals.count();
+      if (revealCount > 0) {
+        await expect(
+          page.locator('[data-revealed="true"]').first(),
+          `${route.path} has ${revealCount} reveal(s) but none became visible under reduced ` +
+            `motion — axe would have scanned hidden content and passed vacuously`
+        ).toBeAttached({ timeout: 15_000 });
+      }
+
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
