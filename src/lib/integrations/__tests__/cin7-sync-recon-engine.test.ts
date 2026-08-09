@@ -12,6 +12,7 @@ import {
   assertCin7SyncAcceptance,
   buildCin7ModifiedSinceWhere,
   decideCin7SyncMode,
+  finalizeSyncRecordCount,
   floorSyncRecordCount,
   shouldPromoteCin7SyncComplete,
 } from '@/lib/integrations/cin7-sync-incremental';
@@ -329,6 +330,22 @@ describe('additive / incremental sync guards', () => {
     expect(
       floorSyncRecordCount({ optixCount: 9900, thisRunProcessed: 100, previousFloor: 9842 })
     ).toBe(9900);
+  });
+
+  it('finalizes Recent sync to live Optix after prune (count may drop)', () => {
+    expect(
+      finalizeSyncRecordCount({
+        optixCount: 9847,
+        thisRunProcessed: 9854,
+      })
+    ).toBe(9847);
+    expect(
+      finalizeSyncRecordCount({
+        optixCount: 0,
+        thisRunProcessed: 12,
+        countOnly: true,
+      })
+    ).toBe(12);
   });
 
   it('uses incremental mode after a successful complete sync', () => {
