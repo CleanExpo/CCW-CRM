@@ -97,6 +97,8 @@ export interface MarkInvoicePaidRequest {
   amount: number;
   paid_at?: string | null;
   payment_method?: string | null;
+  /** Required for offline mark-paid (EFT/cash/cheque audit trail). */
+  reference?: string | null;
 }
 
 export interface InvoiceSyncResponse {
