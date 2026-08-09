@@ -15,11 +15,15 @@ vi.mock('@/lib/auth/password', () => ({
   hashPassword: vi.fn().mockResolvedValue('hashed'),
 }));
 
+// A module factory replaces the module, so every export the routes import must be listed. The
+// register route gained `signMfaChallengeToken` in a7f4d1db; without it the call was undefined
+// and the route returned 503 for reasons unrelated to what this file asserts.
 vi.mock('@/lib/auth/jwt-tokens', () => ({
   signTokenPair: vi.fn().mockResolvedValue({
     access_token: 'access',
     refresh_token: 'refresh',
   }),
+  signMfaChallengeToken: vi.fn().mockResolvedValue('mfa-challenge'),
 }));
 
 vi.mock('@/lib/auth/session-cookies', () => ({

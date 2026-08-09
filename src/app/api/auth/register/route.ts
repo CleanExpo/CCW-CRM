@@ -36,6 +36,15 @@ export async function POST(request: NextRequest) {
       role: 'member',
     });
 
+    // Privilege telemetry, deliberately non-identifying: role and admin flag only, never the
+    // email. It is emitted here so BOTH exits below are covered — the MFA-enrollment path added
+    // in a7f4d1db returned early and dropped this call, which removed the only signal that says
+    // what privilege a registration actually persisted.
+    console.info('[auth/register] registration completed', {
+      role: row.role,
+      is_admin: row.isAdmin,
+    });
+
     if (roleRequiresMfa(row.role, row.isAdmin)) {
       const mfa_token = await signMfaChallengeToken(row.id, row.email, 'enroll');
       return jsonOk({
