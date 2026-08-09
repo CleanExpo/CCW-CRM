@@ -32,6 +32,10 @@ import {
   getCachedReconciliation,
 } from '@/lib/integrations/cin7-reconciliation-cache';
 import { pruneOptixStockLevelsToCin7 } from '@/lib/integrations/cin7-stock-prune';
+import {
+  buildShortSyncIncompleteMessage,
+  resolveCin7ExpectedCount,
+} from '@/lib/integrations/cin7-sync-adaptive';
 import { getCin7PageSize, getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 import {
   getCin7SyncTimeBudgetMs,
@@ -50,6 +54,7 @@ import {
   decideCin7SyncMode,
   entitySupportsModifiedSince,
   expectedCin7CountFromRecon,
+  finalizeSyncRecordCount,
   floorSyncRecordCount,
   getOptixEntityRecordCount,
   shouldPromoteCin7SyncComplete,
@@ -97,6 +102,8 @@ function jsonSyncResult(input: {
   skipped: SyncSkipped;
   cin7SourceStyles?: number;
   lastCommittedPage?: number;
+  cin7Count?: number | null;
+  completenessMessage?: string | null;
 }) {
   return NextResponse.json({
     status: input.status,
@@ -110,6 +117,8 @@ function jsonSyncResult(input: {
     failed_page: input.failedPage,
     last_committed_page: input.lastCommittedPage,
     sync_errors: input.syncErrors.length > 0 ? input.syncErrors.slice(0, 20) : undefined,
+    cin7_count: input.cin7Count ?? undefined,
+    completeness_message: input.completenessMessage ?? undefined,
   });
 }
 
@@ -326,6 +335,11 @@ export async function POST(
           thisRunProcessed: 0,
           previousFloor: optixFloor,
         });
+        const shortMsg = buildShortSyncIncompleteMessage({
+          synced: floored,
+          expected: expectedTaxCodes ?? null,
+          reason: errors.slice(0, 3).join('; '),
+        });
         await persistCin7SyncRunCheckpoint({
           runId: run.id,
           status: 'incomplete',
@@ -334,7 +348,7 @@ export async function POST(
           lastCommittedPage: 0,
           nextPage: 1,
           failedPage: 1,
-          failureReason: errors.slice(0, 3).join('; '),
+          failureReason: shortMsg,
           durationMs,
           source: sourceKind,
         });
@@ -348,6 +362,8 @@ export async function POST(
           failedPage: 1,
           syncErrors: errors.slice(0, 20),
           skipped,
+          cin7Count: expectedTaxCodes ?? null,
+          completenessMessage: shortMsg,
         });
       }
       await batchUpsertTaxCodes(scope.userId, taxCodes);
@@ -366,6 +382,13 @@ export async function POST(
       if (!acceptance.accepted && acceptance.reason) {
         errors.push(acceptance.reason);
       }
+      const shortMsg = acceptance.accepted
+        ? null
+        : buildShortSyncIncompleteMessage({
+            synced: recordsProcessed,
+            expected: expectedTaxCodes ?? null,
+            reason: acceptance.reason ?? errors.slice(0, 3).join('; '),
+          });
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
         status,
@@ -374,7 +397,7 @@ export async function POST(
         lastCommittedPage: Math.max(1, pagesFetched),
         nextPage: acceptance.accepted ? null : 1,
         failedPage: acceptance.accepted ? null : 1,
-        failureReason: errors.length > 0 ? errors.slice(0, 3).join('; ') : null,
+        failureReason: shortMsg,
         durationMs,
         source: sourceKind,
       });
@@ -390,10 +413,17 @@ export async function POST(
         syncErrors: errors.slice(0, 20),
         skipped,
         lastCommittedPage: Math.max(1, pagesFetched),
+        cin7Count: expectedTaxCodes ?? null,
+        completenessMessage: shortMsg,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const durationMs = Date.now() - startedAt;
+      const shortMsg = buildShortSyncIncompleteMessage({
+        synced: optixFloor,
+        expected: expectedSourceCount,
+        reason: message,
+      });
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
         status: 'incomplete',
@@ -402,7 +432,7 @@ export async function POST(
         lastCommittedPage: 0,
         nextPage: 1,
         failedPage: 1,
-        failureReason: message,
+        failureReason: shortMsg,
         durationMs,
         source: sourceKind,
       });
@@ -416,6 +446,8 @@ export async function POST(
         failedPage: 1,
         syncErrors: [message],
         skipped,
+        cin7Count: expectedSourceCount,
+        completenessMessage: shortMsg,
       });
     }
   }
@@ -889,8 +921,14 @@ export async function POST(
           syncErrors: [...result.syncErrors, reason, ...prune.errors].slice(0, 20),
         };
       } else {
+        // Prune may delete surplus rows — Recent sync must show Optix after prune, not pre-prune.
+        const liveAfterPrune = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+        result = {
+          ...result,
+          recordsProcessed: liveAfterPrune,
+        };
         console.log(
-          `[Cin7 sync] stock-levels: pruned ${prune.deleted} phantoms; cin7_keys=${prune.cin7_keys}`
+          `[Cin7 sync] stock-levels: pruned ${prune.deleted} phantoms; cin7_keys=${prune.cin7_keys}; optix=${liveAfterPrune}`
         );
       }
     } catch (error) {
@@ -907,21 +945,23 @@ export async function POST(
     }
   }
 
-  // Authoritative Optix count — never report below existing stored rows (additive sync).
+  // Authoritative Optix count for the final ledger (may drop after stock prune).
   let optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
+  const skipCountCheck = entityType === 'orders';
   {
-    const floored = floorSyncRecordCount({
-      optixCount: optixAfter,
-      thisRunProcessed: result.recordsProcessed,
-      previousFloor: optixFloor,
-    });
-    result = { ...result, recordsProcessed: floored };
+    result = {
+      ...result,
+      recordsProcessed: finalizeSyncRecordCount({
+        optixCount: optixAfter,
+        thisRunProcessed: result.recordsProcessed,
+        countOnly: skipCountCheck,
+      }),
+    };
   }
 
   // Fail-closed acceptance: Complete only when Optix matches known Cin7 floor + no errors.
-  const cin7Expected =
-    typeof expectedSourceCount === 'number' && expectedSourceCount > 0 ? expectedSourceCount : null;
-  const skipCountCheck = entityType === 'orders';
+  // Prefer max(recon cache, live envelope Total) so count checks work for both response shapes.
+  const cin7Expected = resolveCin7ExpectedCount(expectedSourceCount, result.reportedTotal);
   const acceptance = assertCin7SyncAcceptance({
     optixCount: optixAfter,
     cin7Expected,
@@ -930,6 +970,11 @@ export async function POST(
   });
 
   if (result.status === 'complete' && !acceptance.accepted) {
+    const shortReason = buildShortSyncIncompleteMessage({
+      synced: optixAfter,
+      expected: cin7Expected,
+      reason: acceptance.reason,
+    });
     result = {
       ...result,
       status: 'incomplete',
@@ -937,7 +982,7 @@ export async function POST(
       nextPage:
         result.nextPage ?? (result.lastCommittedPage > 0 ? result.lastCommittedPage + 1 : 1),
       failedPage: result.failedPage ?? 1,
-      failureReason: acceptance.reason,
+      failureReason: shortReason,
       syncErrors: [...result.syncErrors, acceptance.reason ?? 'Acceptance failed'].slice(0, 20),
     };
   } else if (
@@ -962,12 +1007,24 @@ export async function POST(
   optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
   result = {
     ...result,
-    recordsProcessed: floorSyncRecordCount({
+    recordsProcessed: finalizeSyncRecordCount({
       optixCount: optixAfter,
       thisRunProcessed: result.recordsProcessed,
-      previousFloor: optixFloor,
+      countOnly: skipCountCheck,
     }),
   };
+
+  // Always persist a short incompleteness line when still short of Cin7 / paused.
+  if (result.status !== 'complete' || result.complete === false) {
+    result = {
+      ...result,
+      failureReason: buildShortSyncIncompleteMessage({
+        synced: result.recordsProcessed,
+        expected: cin7Expected,
+        reason: result.failureReason,
+      }),
+    };
+  }
 
   // Attach skipped + source on final checkpoint write.
   await persistCin7SyncRunCheckpoint({
@@ -1055,5 +1112,8 @@ export async function POST(
     skipped,
     cin7SourceStyles,
     lastCommittedPage: result.lastCommittedPage,
+    cin7Count: cin7Expected,
+    completenessMessage:
+      result.status !== 'complete' || result.complete === false ? result.failureReason : null,
   });
 }
