@@ -1,15 +1,135 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { User, Lock, Bell, Shield, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { authApi, type MfaStatus } from '@/lib/api/auth';
 import { settingsApi } from '@/lib/api/settings';
+import { Bell, Loader2, Lock, Shield, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+function MfaSettingsRow() {
+  const { toast } = useToast();
+  const [status, setStatus] = useState<MfaStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [setup, setSetup] = useState<{
+    secret: string;
+    recovery_codes: string[];
+  } | null>(null);
+  const [code, setCode] = useState('');
+
+  useEffect(() => {
+    void authApi
+      .getMfaStatus()
+      .then(setStatus)
+      .catch(() => setStatus(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function startSetup() {
+    setBusy(true);
+    try {
+      const result = await authApi.setupMfa();
+      setSetup({ secret: result.secret, recovery_codes: result.recovery_codes });
+      toast({
+        title: 'Authenticator setup started',
+        description: 'Save recovery codes, then confirm.',
+      });
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not start MFA setup',
+        description: error instanceof Error ? error.message : 'Try again',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmSetup() {
+    setBusy(true);
+    try {
+      await authApi.confirmMfa({ code });
+      setSetup(null);
+      setCode('');
+      setStatus(await authApi.getMfaStatus());
+      toast({
+        title: 'MFA enabled',
+        description: 'Your account now requires an authenticator code at sign-in.',
+      });
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid code',
+        description: error instanceof Error ? error.message : 'Try again',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Checking MFA status…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <Label>Two-Factor Authentication</Label>
+          <p className="text-muted-foreground text-sm">
+            {status?.enabled
+              ? `Enabled${status.verified_at ? ` · since ${new Date(status.verified_at).toLocaleDateString()}` : ''}. ${status.recovery_codes_remaining} recovery codes left.`
+              : status?.enforced
+                ? 'Required for all Optix accounts. Enable an authenticator app to stay signed in on next login.'
+                : 'Add an authenticator app for stronger account security.'}
+          </p>
+        </div>
+        {!status?.enabled && !setup ? (
+          <Button variant="outline" disabled={busy} onClick={() => void startSetup()}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enable 2FA'}
+          </Button>
+        ) : null}
+        {status?.enabled ? (
+          <Button variant="outline" disabled>
+            MFA on
+          </Button>
+        ) : null}
+      </div>
+      {setup ? (
+        <div className="space-y-2 rounded-md border p-3">
+          <p className="font-mono text-xs break-all">Secret: {setup.secret}</p>
+          <ul className="grid grid-cols-2 gap-1 font-mono text-xs">
+            {setup.recovery_codes.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+          <div className="flex gap-2">
+            <Input
+              placeholder="6-digit code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="max-w-[160px]"
+            />
+            <Button disabled={busy || code.trim().length < 6} onClick={() => void confirmSetup()}>
+              Confirm
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default function AccountSettingsPage() {
   const { toast } = useToast();
@@ -328,17 +448,7 @@ export default function AccountSettingsPage() {
           <CardDescription>Additional security settings for your account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Two-Factor Authentication</Label>
-              <p className="text-muted-foreground text-sm">
-                Add an extra layer of security (Coming soon)
-              </p>
-            </div>
-            <Button variant="outline" disabled>
-              Enable 2FA
-            </Button>
-          </div>
+          <MfaSettingsRow />
 
           <Separator />
 
