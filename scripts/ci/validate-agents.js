@@ -13,34 +13,72 @@ function walk(dir) {
     .readdirSync(dir, { withFileTypes: true })
     .flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
-// This is a hand parser, not a YAML parser, so it hands back RAW TEXT. `description: ""` arrives
-// as the two-character string `""`, which is truthy — so a `!value` check passed a field that is
-// semantically empty. Same for `''`, `null` and `~`. That was a third route to a vacuous pass:
-// the file has the required keys, the validator reports success, and nothing was actually named.
-// Normalising here means the emptiness test below asks about the VALUE, not about whether some
-// characters were present.
-function normalise(raw) {
+// This is NOT a YAML parser and does not try to be one. Three review rounds found three ways to
+// get a semantically empty value past it — `""`, then `null`/`~`, then a trailing comment, an
+// uppercase `NULL` and a bare `name:`. Each patch bought the next variant, because a permissive
+// parser's failure mode is to ACCEPT what it did not understand.
+//
+// So the rule is inverted: this validates one narrow contract — `name` and `description` must be
+// non-empty scalars — and REJECTS anything it cannot read confidently. A false rejection is a
+// loud, immediate build failure someone fixes in a minute. A false acceptance is a gate that
+// silently stops working, which is the entire defect this file exists to close.
+//
+// js-yaml was the obvious alternative and was deliberately not used: it is present only as a
+// transitive dependency, and declaring it rewrote `libc` platform hints throughout
+// package-lock.json on this npm version — real risk to CI platform resolution, for a 40-line
+// contract.
+
+// A UTF-8 BOM before the opening fence made `^---` fail, rejecting a valid file. Strip it.
+const stripBOM = (s) => (s.charCodeAt(0) === 0xfeff ? s.slice(1) : s);
+
+// YAML's ways of spelling "no value", case-insensitively.
+const NULLISH = new Set(['', '~', 'null']);
+
+// Returns the scalar, or null when the value is absent, empty, or something this parser will not
+// vouch for. Callers treat null as a failure — never as "probably fine".
+function scalar(raw) {
   let v = raw.trim();
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    v = v.slice(1, -1).trim();
+
+  if (v.startsWith('"') || v.startsWith("'")) {
+    // A quoted scalar: take exactly what is inside the matching close quote. Anything after it
+    // (a comment, stray text) is ignored, but an unterminated quote is a reject.
+    const q = v[0];
+    const end = v.indexOf(q, 1);
+    if (end === -1) return null;
+    v = v.slice(1, end).trim();
+  } else {
+    // An unquoted scalar ends at a comment. ` #` starts one; a bare `#` in the middle of a word
+    // does not, which is why the space is required.
+    const hash = v.search(/(^|\s)#/);
+    if (hash !== -1) v = v.slice(0, hash).trim();
   }
-  // YAML's ways of spelling "no value".
-  if (v === 'null' || v === '~') return '';
-  return v;
+
+  return NULLISH.has(v.toLowerCase()) ? null : v;
 }
 
 function parseFM(c) {
-  const m = c.match(/^---\s*\n([\s\S]*?)\n---/);
+  // The closing fence must be EXACTLY `---` on its own line. The previous pattern matched a
+  // prefix, so `---oops` closed the block and the file validated — a malformed document read as
+  // a well-formed one.
+  const m = stripBOM(c).match(/^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/);
   if (!m) return null;
-  return Object.fromEntries(
-    m[1]
-      .split('\n')
-      .filter((l) => l.includes(':'))
-      .map((l) => {
-        const [k, ...v] = l.split(':');
-        return [k.trim(), normalise(v.join(':'))];
-      })
-  );
+
+  const out = {};
+  const duplicates = [];
+  for (const line of m[1].split('\n')) {
+    if (!line.trim() || line.trimStart().startsWith('#')) continue;
+    const colon = line.indexOf(':');
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    if (!key) continue;
+    // A repeated key is AMBIGUOUS — first-wins and last-wins disagree, and `name: real` followed
+    // by `name:` reads as valid under one and empty under the other. Rejecting is the only answer
+    // that cannot be gamed: otherwise a real value can be shadowed, or an empty one rescued,
+    // depending on which rule the reader assumes.
+    if (key in out) duplicates.push(key);
+    else out[key] = scalar(line.slice(colon + 1));
+  }
+  return { fields: out, duplicates };
 }
 
 console.log('\n🔍 Validating agent frontmatter...\n');
@@ -60,13 +98,19 @@ walk(AGENTS_DIR)
   .filter((f) => f.endsWith('.md'))
   .forEach((f) => {
     checked++;
-    const fm = parseFM(fs.readFileSync(f, 'utf8'));
+    const parsed = parseFM(fs.readFileSync(f, 'utf8'));
     const rel = path.relative(ROOT, f);
-    if (!fm) {
-      console.error(`  ❌ ${rel}: No YAML frontmatter`);
+    if (!parsed) {
+      console.error(`  ❌ ${rel}: no readable YAML frontmatter (missing or malformed --- fences)`);
       errors++;
       return;
     }
+    if (parsed.duplicates.length) {
+      console.error(`  ❌ ${rel}: duplicate key(s) ${[...new Set(parsed.duplicates)].join(', ')}`);
+      errors++;
+      return;
+    }
+    const fm = parsed.fields;
     const missing = ['name', 'description'].filter((k) => !fm[k]);
     missing.length
       ? (console.error(`  ❌ ${rel}: missing ${missing.join(', ')}`), errors++)
