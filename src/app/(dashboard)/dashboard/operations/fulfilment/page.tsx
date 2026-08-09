@@ -1,17 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  OperationsPageHeader,
+  OperationsPageLayout,
+} from '@/components/operations/OperationsPageHeader';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +16,16 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { PackageCheck, RefreshCw, Plus } from 'lucide-react';
 import {
   cin7FulfilmentApi,
   type Cin7Fulfilment,
@@ -31,18 +33,16 @@ import {
   type Cin7Payment,
   type FulfilmentStatus,
 } from '@/lib/api/cin7-fulfilment';
-import { cn } from '@/lib/utils';
-import {
-  OperationsPageHeader,
-  OperationsPageLayout,
-} from '@/components/operations/OperationsPageHeader';
 import {
   fulfilmentStatusTone,
   invoiceStatusTone,
-  paymentStatusTone,
   opTableWrapClass,
   opTabsListClass,
+  paymentStatusTone,
 } from '@/lib/operations/ui';
+import { cn } from '@/lib/utils';
+import { PackageCheck, Plus, RefreshCw } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Demo fallback data
@@ -314,11 +314,16 @@ interface MarkPaidDialogProps {
 function MarkPaidDialog({ invoice, onClose, onPaid }: MarkPaidDialogProps) {
   const { toast } = useToast();
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('');
+  const [method, setMethod] = useState('bank_transfer');
+  const [reference, setReference] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (invoice) setAmount(invoice.amount);
+    if (invoice) {
+      setAmount(invoice.amount);
+      setMethod('bank_transfer');
+      setReference('');
+    }
   }, [invoice]);
 
   async function handleSubmit() {
@@ -332,19 +337,28 @@ function MarkPaidDialog({ invoice, onClose, onPaid }: MarkPaidDialogProps) {
       });
       return;
     }
+    if (!reference.trim()) {
+      toast({
+        title: 'Validation error',
+        description: 'Reference is required for offline payments (audit trail)',
+        variant: 'destructive',
+      });
+      return;
+    }
     setLoading(true);
     try {
       const updated = await cin7FulfilmentApi.markInvoicePaid(invoice.id, {
         amount: parsedAmount,
-        payment_method: method || null,
+        payment_method: method || 'bank_transfer',
+        reference: reference.trim(),
       });
       toast({ title: 'Invoice marked as paid', description: `Invoice ${invoice.invoice_number}` });
       onPaid(updated);
       onClose();
-    } catch {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: 'Failed to mark invoice as paid',
+        description: error instanceof Error ? error.message : 'Failed to mark invoice as paid',
         variant: 'destructive',
       });
     } finally {
@@ -361,10 +375,10 @@ function MarkPaidDialog({ invoice, onClose, onPaid }: MarkPaidDialogProps) {
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Mark Invoice as Paid</DialogTitle>
+          <DialogTitle>Mark Invoice as Paid (offline)</DialogTitle>
           <DialogDescription>
             {invoice
-              ? `Invoice ${invoice.invoice_number} — ${invoice.currency} ${invoice.amount}`
+              ? `Invoice ${invoice.invoice_number} — ${invoice.currency} ${invoice.amount}. Card payments must come from Stripe webhooks.`
               : ''}
           </DialogDescription>
         </DialogHeader>
@@ -382,11 +396,25 @@ function MarkPaidDialog({ invoice, onClose, onPaid }: MarkPaidDialogProps) {
           </div>
           <div className="space-y-1">
             <Label htmlFor="pay-method">Payment Method</Label>
-            <Input
+            <select
               id="pay-method"
-              placeholder="e.g. Bank Transfer, Credit Card"
+              className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
               value={method}
               onChange={(e) => setMethod(e.target.value)}
+            >
+              <option value="bank_transfer">Bank Transfer / EFT</option>
+              <option value="cash">Cash</option>
+              <option value="check">Cheque</option>
+              <option value="other">Other (offline)</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="pay-ref">Reference</Label>
+            <Input
+              id="pay-ref"
+              placeholder="EFT receipt / cheque # / bank reference"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
             />
           </div>
         </div>
@@ -432,10 +460,15 @@ export default function OrderFulfilmentPage() {
       setFulfilments(fRes.status === 'fulfilled' ? fRes.value.items : []);
       setInvoices(iRes.status === 'fulfilled' ? iRes.value.items : []);
       setPayments(pRes.status === 'fulfilled' ? pRes.value.items : []);
-      if (fRes.status !== 'fulfilled' || iRes.status !== 'fulfilled' || pRes.status !== 'fulfilled') {
+      if (
+        fRes.status !== 'fulfilled' ||
+        iRes.status !== 'fulfilled' ||
+        pRes.status !== 'fulfilled'
+      ) {
         toast({
           title: 'Partial data unavailable',
-          description: 'Some fulfilment data could not be loaded. Please verify integration settings.',
+          description:
+            'Some fulfilment data could not be loaded. Please verify integration settings.',
           variant: 'destructive',
         });
       }
@@ -509,7 +542,7 @@ export default function OrderFulfilmentPage() {
         {/* ---- Fulfilments tab ---- */}
         <TabsContent value="fulfilments" className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground text-sm dark:text-foreground/70">
+            <p className="text-muted-foreground dark:text-foreground/70 text-sm">
               {loading ? 'Loading…' : `${fulfilments.length} fulfilment record(s)`}
             </p>
             <Button size="sm" onClick={() => setNewFulfilmentOpen(true)}>
@@ -536,7 +569,7 @@ export default function OrderFulfilmentPage() {
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                      className="text-muted-foreground dark:text-foreground/65 py-10 text-center"
                     >
                       Loading fulfilments…
                     </TableCell>
@@ -545,7 +578,7 @@ export default function OrderFulfilmentPage() {
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                      className="text-muted-foreground dark:text-foreground/65 py-10 text-center"
                     >
                       No fulfilments yet. Create one from a sales order mapping ID.
                     </TableCell>
@@ -601,7 +634,7 @@ export default function OrderFulfilmentPage() {
         {/* ---- Invoices tab ---- */}
         <TabsContent value="invoices" className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground text-sm dark:text-foreground/70">
+            <p className="text-muted-foreground dark:text-foreground/70 text-sm">
               {loading ? 'Loading…' : `${invoices.length} invoice(s)`}
             </p>
             <Button
@@ -632,7 +665,7 @@ export default function OrderFulfilmentPage() {
                   <TableRow>
                     <TableCell
                       colSpan={6}
-                      className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                      className="text-muted-foreground dark:text-foreground/65 py-10 text-center"
                     >
                       Loading invoices…
                     </TableCell>
@@ -641,7 +674,7 @@ export default function OrderFulfilmentPage() {
                   <TableRow>
                     <TableCell
                       colSpan={6}
-                      className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                      className="text-muted-foreground dark:text-foreground/65 py-10 text-center"
                     >
                       No invoices yet. Sync pulls draft invoices from recent orders.
                     </TableCell>
@@ -692,7 +725,7 @@ export default function OrderFulfilmentPage() {
         {/* ---- Payments tab ---- */}
         <TabsContent value="payments" className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-sm dark:text-foreground/70">
+            <p className="text-muted-foreground dark:text-foreground/70 text-sm">
               {loading ? 'Loading…' : `${payments.length} payment(s)`}
             </p>
           </div>
@@ -713,7 +746,7 @@ export default function OrderFulfilmentPage() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                      className="text-muted-foreground dark:text-foreground/65 py-10 text-center"
                     >
                       Loading payments…
                     </TableCell>
@@ -722,7 +755,7 @@ export default function OrderFulfilmentPage() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-muted-foreground py-10 text-center dark:text-foreground/65"
+                      className="text-muted-foreground dark:text-foreground/65 py-10 text-center"
                     >
                       No payments recorded yet.
                     </TableCell>
