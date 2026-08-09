@@ -190,8 +190,9 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
           variant: rateLimited ? 'destructive' : 'default',
           title: rateLimited ? 'Cin7 rate-limited — sync incomplete' : 'Sync incomplete',
           description:
+            result.completeness_message ||
             result.sync_errors?.slice(0, 2).join(' ') ||
-            `${label} paused at ${count.toLocaleString()} records. Click Continue to resume — progress is saved.`,
+            `${label} paused at ${count.toLocaleString()} records. Click Continue to finish.`,
         });
       } else {
         toast({
@@ -344,29 +345,35 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
                 displayStatus === 'complete'
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-amber-600 dark:text-amber-400';
+              const shortMsg =
+                displayStatus === 'incomplete' && log?.error_message ? log.error_message : null;
               return (
-                <li
-                  key={key}
-                  className="flex items-center justify-between gap-2 text-xs tabular-nums"
-                >
-                  <span className="text-muted-foreground shrink-0 font-medium">{label}</span>
-                  <span className="text-right">
-                    {isSyncing ? (
-                      <span className="text-amber-600 dark:text-amber-400">Syncing…</span>
-                    ) : (
-                      <>
-                        <span className={`font-medium capitalize ${statusTone}`}>
-                          {displayStatus}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {' · '}
-                          {count.toLocaleString()}
-                          {' · '}
-                          {formatLogTime(log?.synced_at)}
-                        </span>
-                      </>
-                    )}
-                  </span>
+                <li key={key} className="space-y-0.5 text-xs tabular-nums">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground shrink-0 font-medium">{label}</span>
+                    <span className="text-right">
+                      {isSyncing ? (
+                        <span className="text-amber-600 dark:text-amber-400">Syncing…</span>
+                      ) : (
+                        <>
+                          <span className={`font-medium capitalize ${statusTone}`}>
+                            {displayStatus}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {' · '}
+                            {count.toLocaleString()}
+                            {' · '}
+                            {formatLogTime(log?.synced_at)}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  {shortMsg && !isSyncing ? (
+                    <p className="text-[11px] leading-snug text-amber-700/90 dark:text-amber-400/90">
+                      {shortMsg}
+                    </p>
+                  ) : null}
                 </li>
               );
             })}
