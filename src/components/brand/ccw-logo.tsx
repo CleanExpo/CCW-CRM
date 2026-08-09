@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 const MARK_SIZES = {
   xs: 'h-7 w-7',
   sm: 'h-8 w-8',
-  md: 'h-10 w-10',
-  lg: 'h-12 w-12',
+  md: 'h-9 w-9',
+  lg: 'h-11 w-11',
 } as const;
 
 type CcwLogoMarkProps = {
@@ -15,10 +15,10 @@ type CcwLogoMarkProps = {
   idPrefix?: string;
 };
 
-/** Premium mark: orbital C with operational tiers — equipment ERP spine. */
+/** Clean monogram: open C with a live ops node — sky → indigo. */
 export function CcwLogoMark({ className, size = 'md', idPrefix = 'ccw-logo' }: CcwLogoMarkProps) {
   const gradId = `${idPrefix}-grad`;
-  const shineId = `${idPrefix}-shine`;
+  const glowId = `${idPrefix}-glow`;
 
   return (
     <svg
@@ -29,52 +29,48 @@ export function CcwLogoMark({ className, size = 'md', idPrefix = 'ccw-logo' }: C
       aria-hidden
     >
       <defs>
-        <linearGradient id={gradId} x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7dd3fc" />
-          <stop offset="0.45" stopColor="#0ea5e9" />
-          <stop offset="1" stopColor="#4f46e5" />
+        <linearGradient id={gradId} x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#38bdf8" />
+          <stop offset="0.55" stopColor="#0ea5e9" />
+          <stop offset="1" stopColor="#4338ca" />
         </linearGradient>
-        <linearGradient id={shineId} x1="8" y1="6" x2="28" y2="22" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffffff" stopOpacity="0.45" />
+        <radialGradient
+          id={glowId}
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(14 12) rotate(90) scale(22)"
+        >
+          <stop stopColor="#ffffff" stopOpacity="0.28" />
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-        </linearGradient>
+        </radialGradient>
       </defs>
-      <rect width="40" height="40" rx="11" fill={`url(#${gradId})`} />
-      <rect
-        width="40"
-        height="40"
-        rx="11"
-        fill={`url(#${shineId})`}
-        className="pointer-events-none"
-      />
+
+      <rect width="40" height="40" rx="10" fill={`url(#${gradId})`} />
+      <rect width="40" height="40" rx="10" fill={`url(#${glowId})`} />
       <rect
         x="0.5"
         y="0.5"
         width="39"
         height="39"
-        rx="10.5"
+        rx="9.5"
         stroke="white"
-        strokeOpacity="0.22"
+        strokeOpacity="0.2"
         fill="none"
       />
+
+      {/* Open C — single confident stroke */}
       <path
-        d="M27.5 11.5C18.5 11.5 13 16.75 13 20.25C13 23.75 18.5 29 27.5 29"
+        d="M27.25 12.5C19.2 12.5 13.75 16.85 13.75 20.5C13.75 24.15 19.2 28.5 27.25 28.5"
         stroke="white"
-        strokeWidth="2.35"
+        strokeWidth="2.75"
         strokeLinecap="round"
         fill="none"
       />
-      <path d="M16.5 16.25h7.75" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M16.5 20.25h10.25" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M16.5 24.25h6.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="28.25" cy="20.25" r="2.1" fill="white" />
-      <path
-        d="M26.75 20.25h-2.5"
-        stroke="white"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeOpacity="0.85"
-      />
+      {/* Live ops node at the aperture */}
+      <circle cx="27.5" cy="20.5" r="2.35" fill="white" />
+      <circle cx="27.5" cy="20.5" r="3.6" stroke="white" strokeOpacity="0.35" fill="none" />
     </svg>
   );
 }
@@ -122,17 +118,17 @@ export function CcwLogo({
         <CcwLogoMark className="h-full w-full" idPrefix={idPrefix} />
       </span>
       {showWordmark ? (
-        <div className="min-w-0 leading-tight">
+        <div className="min-w-0 leading-none">
           <span
             className={cn(
-              'block truncate font-bold tracking-tight',
-              size === 'xs' && 'text-sm',
-              size === 'sm' && 'text-sm',
-              size === 'md' && 'text-base sm:text-lg',
-              size === 'lg' && 'text-lg sm:text-xl',
+              'block truncate tracking-[-0.03em]',
+              size === 'xs' && 'text-[13px] font-semibold',
+              size === 'sm' && 'text-sm font-semibold',
+              size === 'md' && 'text-[15px] font-semibold sm:text-base',
+              size === 'lg' && 'text-lg font-semibold sm:text-xl',
               isLight
                 ? 'text-slate-900'
-                : 'text-zinc-100 transition-colors group-hover:text-white'
+                : 'text-zinc-50 transition-colors group-hover:text-white'
             )}
           >
             {title}
@@ -140,9 +136,9 @@ export function CcwLogo({
           {showSub ? (
             <span
               className={cn(
-                'block truncate font-medium',
-                size === 'lg' ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-xs',
-                isLight ? 'text-slate-500' : 'text-zinc-400'
+                'mt-1 block truncate font-medium tracking-wide',
+                size === 'lg' ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-[11px]',
+                isLight ? 'text-slate-500' : 'text-zinc-500'
               )}
             >
               {subtitle ?? tagline}
@@ -154,7 +150,7 @@ export function CcwLogo({
   );
 
   const rootClass = cn(
-    'group inline-flex min-w-0 items-center gap-2.5 font-semibold',
+    'group inline-flex min-w-0 items-center gap-2.5',
     className
   );
 
