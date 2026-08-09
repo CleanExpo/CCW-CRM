@@ -185,6 +185,10 @@ export type Cin7SyncResult = {
   failed_page?: number | null;
   last_committed_page?: number;
   sync_errors?: string[];
+  /** Live / recon Cin7 expected count when known. */
+  cin7_count?: number;
+  /** Short per-entity line when sync is short of Cin7 — click Continue. */
+  completeness_message?: string;
 };
 
 export type Cin7SyncEntityType =
