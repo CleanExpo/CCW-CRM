@@ -1,18 +1,11 @@
 'use client';
 
-import { useId } from 'react';
-import {
-  BarChart3,
-  FileText,
-  Package,
-  Radio,
-  Sparkles,
-  Truck,
-  Warehouse,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BarChart3, FileText, Package, Radio, Sparkles, Truck, Warehouse } from 'lucide-react';
+import { useId } from 'react';
 
-const floatCard = 'animate-landing-float rounded-2xl border border-white/10 bg-zinc-900/90 p-4 shadow-[0_0_40px_-12px_rgba(99,102,241,0.35)] backdrop-blur-md';
+const floatCard =
+  'animate-landing-float rounded-2xl border border-white/10 bg-zinc-900/90 p-4 shadow-[0_0_40px_-12px_rgba(99,102,241,0.35)] backdrop-blur-md';
 
 /**
  * Premium hero centerpiece: hub-and-spoke operations diagram, glass layers, ambient motion.
@@ -28,7 +21,7 @@ export function HeroPremiumShowcase() {
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-[-20%] animate-landing-drift rounded-full bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.15),transparent_45%),radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.12),transparent_40%)] opacity-60"
+        className="animate-landing-drift pointer-events-none absolute inset-[-20%] rounded-full bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.15),transparent_45%),radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.12),transparent_40%)] opacity-60"
         style={{ animationDuration: '28s' }}
         aria-hidden
       />
@@ -44,7 +37,7 @@ export function HeroPremiumShowcase() {
       {/* Main glass stage */}
       <div className="border-border/80 relative z-10 w-full overflow-hidden rounded-[2rem] border bg-gradient-to-b from-zinc-900/95 via-zinc-950/98 to-black shadow-[0_32px_120px_-24px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.06)_inset] ring-1 ring-white/10 backdrop-blur-xl">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-        <div className="from-primary/8 via-transparent to-accent/10 pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-gradient-to-br blur-2xl" />
+        <div className="from-primary/8 to-accent/10 pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-gradient-to-br via-transparent blur-2xl" />
 
         <div className="relative flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-stretch md:gap-8 md:p-10">
           {/* SVG hub */}
@@ -110,18 +103,39 @@ export function HeroPremiumShowcase() {
                 />
               ))}
               {/* core ring */}
-              <circle cx="200" cy="160" r="62" stroke="white" strokeOpacity="0.08" strokeWidth="1" />
-              <circle cx="200" cy="160" r="52" stroke={`url(#${uid}-line)`} strokeOpacity="0.35" strokeWidth="1" />
-              <circle cx="200" cy="160" r="44" fill="hsl(var(--card))" stroke="white" strokeOpacity="0.12" />
+              <circle
+                cx="200"
+                cy="160"
+                r="62"
+                stroke="white"
+                strokeOpacity="0.08"
+                strokeWidth="1"
+              />
+              <circle
+                cx="200"
+                cy="160"
+                r="52"
+                stroke={`url(#${uid}-line)`}
+                strokeOpacity="0.35"
+                strokeWidth="1"
+              />
+              <circle
+                cx="200"
+                cy="160"
+                r="44"
+                fill="hsl(var(--card))"
+                stroke="white"
+                strokeOpacity="0.12"
+              />
               <circle cx="200" cy="160" r="38" fill={`url(#${uid}-core)`} fillOpacity="0.22" />
             </svg>
 
             {/* Floating metric chips */}
             <div
-              className={cn(floatCard, 'absolute left-0 top-[6%] max-w-[140px] sm:left-[2%]')}
+              className={cn(floatCard, 'absolute top-[6%] left-0 max-w-[140px] sm:left-[2%]')}
               style={{ animationDelay: '0s' }}
             >
-              <div className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest">
+              <div className="text-primary mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
                 <Radio className="h-3 w-3" />
                 Live
               </div>
@@ -129,10 +143,10 @@ export function HeroPremiumShowcase() {
               <p className="text-xs text-zinc-300">Single thread of truth</p>
             </div>
             <div
-              className={cn(floatCard, 'absolute bottom-[8%] right-0 max-w-[150px] sm:right-[2%]')}
+              className={cn(floatCard, 'absolute right-0 bottom-[8%] max-w-[150px] sm:right-[2%]')}
               style={{ animationDelay: '0.6s' }}
             >
-              <div className="text-accent mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest">
+              <div className="text-accent mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase">
                 <Warehouse className="h-3 w-3" />
                 Stock
               </div>
@@ -144,7 +158,7 @@ export function HeroPremiumShowcase() {
           {/* Right stack — product UI abstraction */}
           <div className="border-border/60 flex w-full flex-col justify-center gap-4 rounded-2xl border bg-black/40 p-5 md:max-w-[280px] md:border-l md:bg-zinc-950/50">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-300">
+              <span className="text-[10px] font-semibold tracking-widest text-zinc-300 uppercase">
                 Command view
               </span>
               <Sparkles className="text-primary h-4 w-4 opacity-90" />
@@ -158,27 +172,29 @@ export function HeroPremiumShowcase() {
               ].map((row) => {
                 const RowIcon = row.icon;
                 return (
-                <div
-                  key={row.label}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.04]"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <RowIcon className={cn('h-4 w-4', row.tone)} />
-                      <span className="text-sm font-medium text-zinc-200">{row.label}</span>
+                  <div
+                    key={row.label}
+                    className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.04]"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <RowIcon className={cn('h-4 w-4', row.tone)} />
+                        <span className="text-sm font-medium text-zinc-200">{row.label}</span>
+                      </div>
+                      <span className={cn('text-[10px] font-semibold uppercase', row.tone)}>
+                        On track
+                      </span>
                     </div>
-                    <span className={cn('text-[10px] font-semibold uppercase', row.tone)}>On track</span>
+                    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                      <div
+                        className={cn(
+                          'from-primary to-accent h-full rounded-full bg-gradient-to-r opacity-90',
+                          row.bar
+                        )}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-                    <div
-                      className={cn(
-                        'h-full rounded-full bg-gradient-to-r from-primary to-accent opacity-90',
-                        row.bar
-                      )}
-                    />
-                  </div>
-                </div>
-              );
+                );
               })}
             </div>
             <p className="border-t border-white/[0.06] pt-3 text-center text-[11px] leading-relaxed text-zinc-300">
