@@ -669,6 +669,24 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                   {note}
                 </p>
               ))}
+
+              {snapshot.sync_completeness?.some((row) => row.likely_incomplete) ? (
+                <div className="border-border/50 space-y-1 border-t pt-2">
+                  <p className="text-muted-foreground text-[11px] font-medium">
+                    Sync short vs Cin7 — click Continue on that entity
+                  </p>
+                  {snapshot.sync_completeness
+                    .filter((row) => row.likely_incomplete)
+                    .map((row) => (
+                      <p
+                        key={row.entity}
+                        className="text-[11px] leading-snug text-amber-700/90 dark:text-amber-400/90"
+                      >
+                        {row.label}: {row.note ?? 'Incomplete — click Continue to finish.'}
+                      </p>
+                    ))}
+                </div>
+              ) : null}
             </div>
 
             <Tabs
