@@ -56,8 +56,17 @@ const isNamed = (v) => typeof v === 'string' && v.trim() !== '';
 // convention, not something the loader enforces, and a CI gate that fails a build over a
 // convention it cannot cite in code is how this one check produced three false-rejection
 // defects in a row. Style belongs in review; this gate asserts only what would actually break.
+// The colon test runs on the NFKC-NORMALISED string because that is what the loader does:
+// `name.normalize('NFKC').includes(':')`. A fullwidth colon (U+FF1A `：`) normalises to `:`, so a
+// raw-string check passed a name the runtime refuses — the gate certifying something that cannot
+// load, one more time.
+//
+// The leading-hyphen test stays on the RAW string, deliberately. That rule exists because YAML
+// reads `- x` as a list item, and YAML's parser sees the bytes as written; a fullwidth hyphen is
+// not a list marker. Normalising there would invent a rule nothing enforces, which is the trap
+// this check has already fallen into three times.
 const isValidName = (v) =>
-  typeof v === 'string' && v !== '' && !v.startsWith('-') && !v.includes(':');
+  typeof v === 'string' && v !== '' && !v.startsWith('-') && !v.normalize('NFKC').includes(':');
 
 // Returns { fields } on a clean parse, { error } otherwise. Anything unreadable is an error, never
 // a pass: duplicate keys are ambiguous (first-wins and last-wins disagree about `name: real`

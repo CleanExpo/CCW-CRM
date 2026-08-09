@@ -178,6 +178,10 @@ describe('validate-agents.js frontmatter contract', () => {
   it.each([
     ['a leading hyphen', '---\nname: "-ccw"\ndescription: Valid.\n---\nb\n'],
     ['an embedded colon', '---\nname: "ccw:builder"\ndescription: Valid.\n---\nb\n'],
+    // The loader tests `name.normalize('NFKC').includes(':')`. A fullwidth colon (U+FF1A)
+    // normalises to a plain one, so a raw-string check let this through — a name the runtime
+    // refuses, certified as valid.
+    ['a fullwidth colon', '---\nname: "ccw：builder"\ndescription: Valid.\n---\nb\n'],
   ])('rejects a name with %s', (_label, body) => {
     expect(run(body)).toBe(1);
   });
@@ -235,6 +239,10 @@ describe('validate-agents.js frontmatter contract', () => {
     ['trailing spaces on the opening fence', '---  \nname: real\ndescription: Valid.\n---\nb\n'],
     ['a tab after the opening fence', '---\t\nname: real\ndescription: Valid.\n---\nb\n'],
     ['whitespace after both fences', '--- \nname: real\ndescription: Valid.\n--- \nb\n'],
+    // The `(?:\n|$)` branch accepts a closing fence at end of file — a real implemented path that
+    // no fixture exercised, so narrowing it to `\n` left the suite green.
+    ['a closing fence at end of file', '---\nname: real\ndescription: Valid.\n---'],
+    ['a closing fence at EOF with trailing spaces', '---\nname: real\ndescription: Valid.\n---  '],
     // False rejections matter as much as false accepts: a gate that fails valid work gets
     // switched off, which lands where a gate that never fires does. Both of these were rejected
     // by the hand parser — the CRLF one would have failed any Windows contributor's file.
