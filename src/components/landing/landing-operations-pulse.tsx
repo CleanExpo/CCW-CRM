@@ -1,8 +1,8 @@
 'use client';
 
-import { Activity, Layers3, Radio, Sparkles } from 'lucide-react';
 import { marketingShell } from '@/components/landing/marketing-shell';
 import { cn } from '@/lib/utils';
+import { Activity, Layers3, Radio, Sparkles } from 'lucide-react';
 
 const PREVIEW_METRICS = [
   { label: 'Products', short: 'SKU catalog' },
@@ -32,7 +32,7 @@ export function LandingOperationsPulsePlaceholder() {
           <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-sky-500/10 via-transparent to-indigo-600/10 blur-2xl md:-inset-8" />
           <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-zinc-900/90 via-zinc-950/95 to-black p-1 shadow-[0_40px_100px_-48px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.06]">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-            <div className="relative px-6 pb-8 pt-10 sm:px-10 sm:pb-10 sm:pt-12">
+            <div className="relative px-6 pt-10 pb-8 sm:px-10 sm:pt-12 sm:pb-10">
               <div className="mb-8 flex flex-col items-center text-center sm:mb-10">
                 <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-emerald-200/95 uppercase">
                   <span className="relative flex h-2 w-2">
@@ -41,7 +41,10 @@ export function LandingOperationsPulsePlaceholder() {
                   </span>
                   System pulse
                 </span>
-                <p id="ops-pulse-heading" className="mt-4 max-w-lg text-lg font-semibold tracking-tight text-white md:text-xl">
+                <p
+                  id="ops-pulse-heading"
+                  className="mt-4 max-w-lg text-lg font-semibold tracking-tight text-white md:text-xl"
+                >
                   One spine—catalog, orders, and branches—kept in sync
                 </p>
                 <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-400">
@@ -71,7 +74,7 @@ export function LandingOperationsPulsePlaceholder() {
         </div>
 
         {/* Preview metric strip — same grid rhythm as LiveStatsBar, placeholder for later */}
-        <div className="relative mx-auto mt-14 max-w-[min(94vw,1728px)] md:mt-16">
+        <div className="relative mt-14 w-full md:mt-16">
           <div className="mb-6 flex items-center justify-center gap-2">
             <Sparkles className="h-4 w-4 text-sky-400/80" aria-hidden />
             <p className="text-center text-[11px] font-bold tracking-[0.28em] text-zinc-400 uppercase">
@@ -82,7 +85,7 @@ export function LandingOperationsPulsePlaceholder() {
             {PREVIEW_METRICS.map(({ label, short }) => (
               <div
                 key={label}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-4 text-center shadow-inner shadow-black/40 ring-1 ring-white/[0.04] transition hover:border-sky-500/20 hover:bg-zinc-900/70"
+                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/50 p-4 text-center shadow-inner ring-1 shadow-black/40 ring-white/[0.04] transition hover:border-sky-500/20 hover:bg-zinc-900/70"
               >
                 <div
                   className="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
@@ -93,8 +96,8 @@ export function LandingOperationsPulsePlaceholder() {
                 />
                 <div className="relative">
                   <div className="shimmer mx-auto mb-3 h-8 w-16 overflow-hidden rounded-md opacity-60" />
-                  <div className="font-mono text-lg font-bold tabular-nums text-zinc-400">—</div>
-                  <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  <div className="font-mono text-lg font-bold text-zinc-400 tabular-nums">—</div>
+                  <div className="mt-2 text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
                     {label}
                   </div>
                   <div className="mt-0.5 text-[10px] text-zinc-400">{short}</div>
@@ -107,8 +110,8 @@ export function LandingOperationsPulsePlaceholder() {
             <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-zinc-400">
               /api/public/stats
             </code>{' '}
-            — this strip will animate with real products, customers, orders, and revenue the same way
-            your team sees them inside the app.
+            — this strip will animate with real products, customers, orders, and revenue the same
+            way your team sees them inside the app.
           </p>
         </div>
       </div>
@@ -235,13 +238,7 @@ function OperationsPulseGraphic({ className }: { className?: string }) {
       <circle cx="360" cy="120" r="6" fill="rgb(56, 189, 248)" filter={`url(#${uid}-glow)`} />
 
       {/* Flow label */}
-      <text
-        x="360"
-        y="248"
-        textAnchor="middle"
-        fill="rgb(113 113 122)"
-        style={{ fontSize: 10 }}
-      >
+      <text x="360" y="248" textAnchor="middle" fill="rgb(113 113 122)" style={{ fontSize: 10 }}>
         Data flows through one spine — metrics reflect real operational load
       </text>
     </svg>
