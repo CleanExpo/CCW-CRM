@@ -93,7 +93,7 @@ production-ready" — none of which survived measurement. So:
 
 ## Agents
 
-**Two** paths under `.claude/` are tracked, because `~/.claude` does not exist on a CI runner:
+**Two** paths under `.claude/` are tracked, so that they exist in the commit a CI job checks out:
 
 - `.claude/agents/` — this project's own agent definitions. `scripts/ci/validate-agents.js` reads
   them, and it **fails** if the directory is missing or empty, so deleting or re-ignoring them

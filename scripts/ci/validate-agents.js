@@ -30,10 +30,11 @@ function parseFM(c) {
 console.log('\n🔍 Validating agent frontmatter...\n');
 
 // A missing directory is a FAILURE, not a skip. This used to `process.exit(0)` with a warning,
-// which made the whole gate fail-open: `.gitignore` excluded `.claude/`, `~/.claude` does not
-// exist on a CI runner, so the directory was ALWAYS absent there and this validator passed on
-// every push while reading nothing. Tracking the agents fixes today's checkout; exiting non-zero
-// here is what stops the vacuum returning the moment someone re-ignores or deletes them.
+// which made the whole gate fail-open: `AGENTS_DIR` is repository-local, `.gitignore` excluded
+// `.claude/`, so the agent files were absent from every COMMIT — and a CI job checks out the
+// commit. The directory was therefore always missing there and this validator passed on every
+// push while reading nothing. Tracking the agents fixes today's checkout; exiting non-zero here
+// is what stops the vacuum returning the moment someone re-ignores or deletes them.
 if (!fs.existsSync(AGENTS_DIR)) {
   console.error('  ❌ .claude/agents/ not found. It is tracked — a missing directory means it was');
   console.error('     deleted or re-ignored, which silently disables this check.');
