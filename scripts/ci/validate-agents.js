@@ -43,30 +43,21 @@ const normaliseText = (s) => (s.charCodeAt(0) === 0xfeff ? s.slice(1) : s).repla
 // so all of them fail this test rather than needing a special case each.
 const isNamed = (v) => typeof v === 'string' && v.trim() !== '';
 
-// `name` is not free text — Claude Code treats it as a unique identifier, and the agent is
-// addressed by it. Checking only that it is a non-empty string let this gate pass `name: "123"`,
-// which the consumer rejects: a validator that green-lights a definition the actual runtime will
-// not load is worse than no validator, because it certifies the wrong thing.
+// This enforces ONLY what the loader enforces, and deliberately nothing more.
 //
-// The documented contract: 3-50 characters of lowercase letters, digits and hyphens, with the
-// FIRST and LAST characters alphanumeric. Read the regex as those three rules in order.
+// Three successive versions of this check each invented a different identifier contract —
+// letter-first; then 3-50 characters with alphanumeric ends; then a widened variant — and each
+// rejected names that Claude Code's own parseAgentFromMarkdown accepts. Review adjudicated it
+// against the installed 2.1.224 implementation: there is no length limit, and any non-empty
+// string is accepted except one beginning with a hyphen (parsed as a YAML list item) or
+// containing a colon (reserved for plugin namespacing).
 //
-// Two earlier versions were wrong in opposite directions, which is worth recording because the
-// pull is real. `/^[a-z][a-z0-9-]*$/` enforced only the first character and accepted `a`,
-// `agent-` and a 51-character name. Tightening it to require a LETTER first then over-corrected
-// and rejected `4-eng`, which Claude Code's loader accepts — a false rejection entrenched by a
-// test asserting it.
-//
-// The rule is alphanumeric-first, not letter-first. That means a name like `123` satisfies the
-// identifier form; it is still rejected when written unquoted, because YAML resolves it to a
-// Number and `isNamed` requires a string. The value must be a string AND match this form.
-//
-// The value is tested UNTRIMMED on purpose. The earlier version trimmed first, so
-// `name: "  ccw-builder  "` passed while the identifier the consumer actually receives has
-// spaces in it. Trimming here would hide a real difference between what is written and what is
-// used; the author should fix the file instead.
-const AGENT_NAME = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
-const isValidName = (v) => typeof v === 'string' && AGENT_NAME.test(v);
+// The documentation additionally DESCRIBES names as lowercase letters and hyphens. That is a
+// convention, not something the loader enforces, and a CI gate that fails a build over a
+// convention it cannot cite in code is how this one check produced three false-rejection
+// defects in a row. Style belongs in review; this gate asserts only what would actually break.
+const isValidName = (v) =>
+  typeof v === 'string' && v !== '' && !v.startsWith('-') && !v.includes(':');
 
 // Returns { fields } on a clean parse, { error } otherwise. Anything unreadable is an error, never
 // a pass: duplicate keys are ambiguous (first-wins and last-wins disagree about `name: real`
@@ -124,8 +115,8 @@ walk(AGENTS_DIR)
     }
     if (!isValidName(fm.name)) {
       console.error(
-        `  ❌ ${rel}: name "${fm.name}" is not a valid agent identifier ` +
-          '(3-50 chars of lowercase letters, digits and hyphens; first and last must be alphanumeric)'
+        `  ❌ ${rel}: name "${fm.name}" cannot be loaded — a name must not begin with a hyphen ` +
+          '(YAML reads it as a list item) or contain a colon (reserved for plugin namespacing)'
       );
       errors++;
       return;

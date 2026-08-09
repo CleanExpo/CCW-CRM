@@ -170,60 +170,40 @@ describe('validate-agents.js frontmatter contract', () => {
     expect(run(body)).toBe(1);
   });
 
-  // `name` is an IDENTIFIER, not free text — Claude Code addresses the agent by it. An earlier
-  // revision of this suite pinned `name: "123"` as ACCEPTED, on the reasoning that quoting makes
-  // it a string. It does, and the string is still not a valid agent name: that fixture certified
-  // a definition the actual runtime rejects, which is worse than no check at all.
+  // ONLY the two rules the loader actually enforces are asserted here. Three earlier revisions
+  // pinned invented contracts — letter-first, then 3-50 characters, then a widened variant —
+  // and each locked in a false rejection of names Claude Code loads fine. Review adjudicated it
+  // against the installed parseAgentFromMarkdown: no length limit, any non-empty string except a
+  // leading hyphen or an embedded colon.
   it.each([
-    ['capitals', '---\nname: CCW-Builder\ndescription: Valid.\n---\nb\n'],
-    ['a space', '---\nname: ccw builder\ndescription: Valid.\n---\nb\n'],
-    ['an underscore', '---\nname: ccw_builder\ndescription: Valid.\n---\nb\n'],
-    ['a slash', '---\nname: ccw/builder\ndescription: Valid.\n---\nb\n'],
-    ['a trailing hyphen', '---\nname: ccw-\ndescription: Valid.\n---\nb\n'],
-    ['one character', '---\nname: a\ndescription: Valid.\n---\nb\n'],
-    ['two characters', '---\nname: ab\ndescription: Valid.\n---\nb\n'],
-    ['leading whitespace', '---\nname: "  ccw-builder"\ndescription: Valid.\n---\nb\n'],
-    ['trailing whitespace', '---\nname: "ccw-builder  "\ndescription: Valid.\n---\nb\n'],
+    ['a leading hyphen', '---\nname: "-ccw"\ndescription: Valid.\n---\nb\n'],
+    ['an embedded colon', '---\nname: "ccw:builder"\ndescription: Valid.\n---\nb\n'],
   ])('rejects a name with %s', (_label, body) => {
     expect(run(body)).toBe(1);
   });
 
-  // The contract is 3-50 characters. Both boundaries are pinned in both directions, because an
-  // off-by-one in either quantifier is exactly the kind of error a single-sided test misses.
-  it('rejects a 51-character name', () => {
-    expect(run(`---\nname: ${'a'.repeat(51)}\ndescription: Valid.\n---\nb\n`)).toBe(1);
-  });
-
-  it('accepts the 3-character minimum', () => {
-    expect(run('---\nname: abc\ndescription: Valid.\n---\nb\n')).toBe(0);
-  });
-
-  it('accepts the 50-character maximum', () => {
-    expect(run(`---\nname: ${'a'.repeat(50)}\ndescription: Valid.\n---\nb\n`)).toBe(0);
-  });
-
-  // The description is free text and must stay that way — only `name` is constrained.
-  it('accepts a hyphenated name with digits and a free-text description', () => {
-    expect(run('---\nname: haiku-4-5\ndescription: "Anything: goes, here #1."\n---\nb\n')).toBe(0);
-  });
-
-  // The rule is ALPHANUMERIC-first, not letter-first. An earlier revision required a letter and
-  // rejected `4-eng`, which Claude Code's loader accepts — and a test here asserted that false
-  // rejection was correct, which is how a wrong contract gets locked in. Both directions of the
-  // over-correction are now pinned as accepted.
+  // These are all LOADER-VALID. Every one was rejected by at least one earlier revision of this
+  // gate, so they are pinned as accepted to stop a fourth invented contract creeping back in.
   it.each([
+    ['one character', '---\nname: a\ndescription: Valid.\n---\nb\n'],
+    ['two characters', '---\nname: ab\ndescription: Valid.\n---\nb\n'],
     ['a leading digit', '---\nname: 4-eng\ndescription: Valid.\n---\nb\n'],
     ['an all-digit quoted name', '---\nname: "123"\ndescription: Valid.\n---\nb\n'],
-  ])('accepts a name with %s', (_label, body) => {
+    ['a trailing hyphen', '---\nname: ccw-\ndescription: Valid.\n---\nb\n'],
+    ['capitals', '---\nname: CCW-Builder\ndescription: Valid.\n---\nb\n'],
+    ['an underscore', '---\nname: ccw_builder\ndescription: Valid.\n---\nb\n'],
+    ['digits and hyphens', '---\nname: haiku-4-5\ndescription: "Anything: goes #1."\n---\nb\n'],
+  ])('accepts the loader-valid name with %s', (_label, body) => {
     expect(run(body)).toBe(0);
   });
 
-  // ...but an UNQUOTED 123 is still rejected, for a different reason: YAML resolves it to a
-  // Number, and the value must be a string before its shape is ever considered. Keeping both
-  // cases stops a future fix collapsing the two rules into one.
+  // An UNQUOTED 123 is still rejected, for a different reason entirely: YAML resolves it to a
+  // Number, and the value must be a STRING before any name rule applies. Keeping the quoted and
+  // unquoted cases apart stops a later fix collapsing two independent rules into one.
   it('still rejects an unquoted all-digit name as a non-string', () => {
     expect(run('---\nname: 123\ndescription: Valid.\n---\nb\n')).toBe(1);
   });
+
 
   // `description` has no shape rule, so its ONLY protection is the string requirement in
   // `isNamed`. Every other non-string fixture pairs a bad description with a bad name, and the
@@ -247,7 +227,14 @@ describe('validate-agents.js frontmatter contract', () => {
     ['a mid-word hash', '---\nname: real\ndescription: Issue #42 tracked\n---\nb\n'],
     ['a trailing comment', '---\nname: real\ndescription: Valid # note\n---\nb\n'],
     ['a comment line', '---\n# comment\nname: real\ndescription: Valid.\n---\nb\n'],
-    ['trailing spaces on the fence', '---\nname: real\ndescription: Valid.\n---   \nb\n'],
+    ['trailing spaces on the closing fence', '---\nname: real\ndescription: Valid.\n---   \nb\n'],
+    // The parser deliberately allows horizontal whitespace after BOTH fences, but only the
+    // closing one was covered. Narrowing the opening expression back to `^---\n` reintroduced a
+    // false rejection with the whole suite still green — an implemented valid-input path that
+    // nothing was holding in place.
+    ['trailing spaces on the opening fence', '---  \nname: real\ndescription: Valid.\n---\nb\n'],
+    ['a tab after the opening fence', '---\t\nname: real\ndescription: Valid.\n---\nb\n'],
+    ['whitespace after both fences', '--- \nname: real\ndescription: Valid.\n--- \nb\n'],
     // False rejections matter as much as false accepts: a gate that fails valid work gets
     // switched off, which lands where a gate that never fires does. Both of these were rejected
     // by the hand parser — the CRLF one would have failed any Windows contributor's file.
