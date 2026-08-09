@@ -12,10 +12,16 @@ Before any `git push`, `gh pr create`, `gh pr ready` or `gh pr merge`, the chang
 complete local definition of done (below) and an independent review bound to the **exact final
 commit**. A PASS for an earlier SHA is not a PASS for this one.
 
-**Opening a pull request here is effectively authorising its merge.** PR #281 was undrafted by
-someone else and automerged while its author was still working. Open one only when it is ready
-to land, keep it draft until remote checks for that exact SHA are green, and never open a stream
-of replacement PRs for the same scope — update the one coherent branch.
+**Treat opening a pull request as authorising its merge.** A PR that is visible is a PR someone
+can merge, and you will not be there to object. Open one only when it is ready to land, keep it
+draft until remote checks for that exact SHA are green, and never open a stream of replacement
+PRs for the same scope — update the one coherent branch.
+
+That rule stands on the risk itself, not on an anecdote. An earlier draft of this file justified
+it with a specific claim about PR #281 being undrafted by someone else and automerged; checking
+`gh pr view 281` showed `autoMergeRequest: null` with the same account opening and merging it, so
+the claim was false and has been removed. Its presence here was the failure the next section
+describes — a story repeated until it sounded like a measurement.
 
 Never use `--no-verify`, never force push, and never set a release-gate override variable.
 
@@ -41,9 +47,11 @@ The seven validators are not optional extras — `.github/workflows/boardroom-ci
 its `validate` and `security` jobs and they block the deploy gate. A definition of done that
 stops at `build` sends you into CI believing you are green.
 
-**A green suite is not evidence the data layer works.** The tests run without a database; the
-DB-backed ones skip silently when `TEST_DATABASE_URL` is unset. Silence has two causes — nothing
-was wrong, and nothing was checked — and they read identically.
+**A green suite is not evidence the data layer works.** The tests run without a database.
+`src/lib/auth/__tests__/registration-postgres-concurrency.test.ts` gates on `TEST_DATABASE_URL`
+and skips silently when it is unset — that is the one file, and it is why a clean run reports
+one skipped file and two skipped tests. Silence has two causes, nothing was wrong and nothing was
+checked, and they read identically.
 
 ## Worktrees
 
@@ -78,8 +86,8 @@ production-ready" — none of which survived measurement. So:
   a clean system.
 - **A prior document's figure is evidence of a prior measurement, not of current state.** Dated
   status documents in `docs/` go stale; re-measure rather than quoting them.
-- `.lighthouseci/` is gitignored, so cite **uploaded** LHCI report URLs, never local artifacts.
-  An independent reviewer failed PR #281 twice on exactly this.
+- `.lighthouseci/` is gitignored (`.gitignore:234`), so a path into it is unreadable by anyone but
+  you. Cite **uploaded** LHCI report URLs, never local artifacts.
 
 ## Agents
 

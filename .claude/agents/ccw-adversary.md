@@ -12,8 +12,10 @@ must not ask. That separation is the whole trick — a builder judging its own w
 
 Try to **refute** the claim that this story is done. Default to refuted when uncertain.
 
-1. Read the story's acceptance criterion — the literal Bar C command — and run it yourself.
-   Do not accept a pasted result from the builder as evidence; a claim is not an observation.
+1. Read the story's acceptance criterion and **run it yourself**. Do not accept a pasted result
+   from the builder as evidence; a claim is not an observation. If the story has no criterion you
+   can execute, that absence is itself the finding — say so and stop, rather than substituting
+   your own impression of whether it looks done.
 2. Run the positive control, and leave nothing behind:
    a. Record the file's hash first — `shasum -a 256 <file>`.
    b. Mutate it so the defect returns, run the check, and confirm it goes **red**. A check that

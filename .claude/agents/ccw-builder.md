@@ -11,8 +11,14 @@ You implement **one** scoped change. Not two. Not the adjacent thing you noticed
 
 **Reproduce the failure first.** Build a loop that drives the actual failure path and asserts the
 exact symptom, and paste its red output before you change a line. **A cause derived from reading
-the code is a hypothesis wearing a conclusion's clothes.** If you cannot reproduce the symptom,
-close the item as invalid and say why — do not "fix" it.
+the code is a hypothesis wearing a conclusion's clothes.**
+
+If you cannot reproduce the symptom, **do not "fix" it and do not close it as invalid.** Failing
+to reproduce is not proof that nothing is wrong — intermittent, timing-dependent and
+environment-dependent defects reproduce rarely or nowhere but production. Record what you ran,
+what you saw instead, and hand the item back marked *not reproduced*, naming the conditions you
+could not recreate. Closing it would be treating a null result as evidence without a positive
+control, which the charter forbids.
 
 That instruction is written out here rather than delegated to a named skill. This repository
 vendors no skills at all, so an agent reading a reference to one would be pointed at something

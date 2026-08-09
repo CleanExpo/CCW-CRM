@@ -28,9 +28,16 @@ function parseFM(c) {
 }
 
 console.log('\n🔍 Validating agent frontmatter...\n');
+
+// A missing directory is a FAILURE, not a skip. This used to `process.exit(0)` with a warning,
+// which made the gate fail-open: `.claude/` was gitignored, so on a CI runner the directory was
+// always absent and this validator passed on every push while reading nothing. Tracking the
+// agents fixes today's checkout; exiting non-zero here is what stops the vacuum returning the
+// moment someone re-ignores the directory or deletes its contents.
 if (!fs.existsSync(AGENTS_DIR)) {
-  console.warn('⚠️  .claude/agents/ not found — skipping');
-  process.exit(0);
+  console.error('  ❌ .claude/agents/ not found. It is tracked — a missing directory means it was');
+  console.error('     deleted or re-ignored, which silently disables this check.');
+  process.exit(1);
 }
 
 walk(AGENTS_DIR)
@@ -49,5 +56,12 @@ walk(AGENTS_DIR)
       ? (console.error(`  ❌ ${rel}: missing ${missing.join(', ')}`), errors++)
       : console.log(`  ✅ ${rel}`);
   });
+// An EMPTY directory is the same fail-open by another route: `checked` stays 0, `errors` stays 0,
+// and a validator that read nothing reports success. Zero agents is never a valid state here.
+if (checked === 0) {
+  console.error('  ❌ .claude/agents/ contains no agent definitions. Nothing was validated.');
+  process.exit(1);
+}
+
 console.log(`\nChecked ${checked} agents. ${errors ? `❌ ${errors} error(s)` : '✅ All passed'}\n`);
 process.exit(errors ? 1 : 0);
