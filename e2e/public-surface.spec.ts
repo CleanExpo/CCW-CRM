@@ -68,6 +68,20 @@ for (const route of PUBLIC_ROUTES) {
       // if it never does — a gate that cannot see must say so, not pass.
       const reveals = page.locator('[data-revealed]');
       const revealCount = await reveals.count();
+
+      // The `revealCount > 0` branch below would otherwise disable itself in silence: rename or
+      // drop `data-revealed` and the wait simply stops happening, axe goes back to scanning
+      // hidden content, and this case returns to the vacuous pass it was written to prevent —
+      // the same defect one level up. Landing is known to render reveals, so pin it. The other
+      // public routes genuinely have none, which is why the skip is conditional rather than gone.
+      if (route.name === 'landing') {
+        expect(
+          revealCount,
+          `${route.path} rendered no [data-revealed] elements — the reveal contract this test ` +
+            `depends on is gone, so the hydration wait below would silently never run`
+        ).toBeGreaterThan(0);
+      }
+
       if (revealCount > 0) {
         await expect(
           page.locator('[data-revealed="true"]').first(),
