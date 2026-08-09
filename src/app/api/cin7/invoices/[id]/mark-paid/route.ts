@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { prisma } from '@/lib/db/prisma';
+import { assertManualPaymentMethodAllowed } from '@/lib/payments/offline-payment-methods';
+import { NextRequest, NextResponse } from 'next/server';
 
 function rowToApi(inv: {
   id: string;
@@ -34,10 +35,7 @@ function rowToApi(inv: {
   };
 }
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const scope = await requireAuthScope(request);
     if (!scope) {
@@ -49,7 +47,25 @@ export async function PATCH(
       amount?: number;
       paid_at?: string | null;
       payment_method?: string | null;
+      reference?: string | null;
     };
+
+    const methodCheck = assertManualPaymentMethodAllowed(
+      String(body.payment_method ?? 'bank_transfer')
+    );
+    if (!methodCheck.ok) {
+      return NextResponse.json({ detail: methodCheck.detail }, { status: 400 });
+    }
+    const reference = body.reference?.trim() || null;
+    if (!reference) {
+      return NextResponse.json(
+        {
+          detail:
+            'reference is required when marking a sales invoice paid offline (EFT/cash/cheque audit trail). Card payments must come from Stripe webhooks.',
+        },
+        { status: 400 }
+      );
+    }
 
     const paidAt = body.paid_at ? new Date(body.paid_at) : new Date();
 
@@ -74,12 +90,14 @@ export async function PATCH(
           salesInvoiceId: inv.id,
           cin7InvoiceId: inv.cin7InvoiceId,
           cin7PaymentId: `PAY-${Date.now()}`,
-          paymentMethod: body.payment_method ?? 'card',
+          paymentMethod: methodCheck.method,
           amount: body.amount ?? inv.amount,
           currency: inv.currency,
           paymentDate: paidAt,
-          reference: inv.invoiceNumber,
+          reference,
           status: 'completed',
+          source: 'manual',
+          createdByUserId: scope.userId,
         },
       });
 
