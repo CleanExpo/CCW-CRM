@@ -1,7 +1,8 @@
 import { findAppUserByEmail, insertAppUser } from '@/lib/auth/app-user-repo';
 import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
-import { signTokenPair } from '@/lib/auth/jwt-tokens';
+import { signMfaChallengeToken, signTokenPair } from '@/lib/auth/jwt-tokens';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
+import { roleRequiresMfa } from '@/lib/auth/mfa-totp';
 import { hashPassword } from '@/lib/auth/password';
 import { registerBodySchema } from '@/lib/auth/schemas';
 import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
@@ -35,11 +36,17 @@ export async function POST(request: NextRequest) {
       role: 'member',
     });
 
+    if (roleRequiresMfa(row.role, row.isAdmin)) {
+      const mfa_token = await signMfaChallengeToken(row.id, row.email, 'enroll');
+      return jsonOk({
+        user: mapAppUserRowToPublic(row),
+        message: 'Account created. Set up multi-factor authentication to continue.',
+        mfa_enrollment_required: true,
+        mfa_token,
+      });
+    }
+
     const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
-    console.info('[auth/register] registration completed', {
-      role: row.role,
-      is_admin: row.isAdmin,
-    });
     const response = jsonOk({
       user: mapAppUserRowToPublic(row),
       message: 'User registered successfully',
