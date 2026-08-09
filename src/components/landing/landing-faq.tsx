@@ -19,11 +19,11 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: 'Where is our data hosted?',
-    a: 'Architecture documentation describes PostgreSQL on Supabase in the Asia-Pacific region (Sydney) for Australian operators. Confirm retention, backups, and compliance with your implementation lead before go-live.',
+    a: 'Architecture documentation describes PostgreSQL in the Asia-Pacific region for Australian operators. Confirm retention, backups, and compliance with your implementation lead before go-live.',
   },
   {
     q: 'Do we get training and support?',
-    a: 'User guides cover core modules (products, customers, orders, quotes). Training audits call out role-specific quick starts and future in-app discovery for AI-assisted workflows. Enterprise-style runbooks support operations and incidents.',
+    a: 'User guides cover core modules (products, customers, orders, quotes). Training focuses on role-specific quick starts and discoverable in-app assistance. Enterprise-style runbooks support operations and incidents.',
   },
   {
     q: 'Can we start with a subset of modules?',
@@ -35,30 +35,23 @@ export function LandingFaq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="mx-auto max-w-3xl divide-y divide-white/[0.06] border-y border-white/[0.06]">
       {FAQ_ITEMS.map((item, i) => {
         const isOpen = open === i;
         const num = String(i + 1).padStart(2, '0');
         return (
-          <div
-            key={item.q}
-            className={cn(
-              'group/card overflow-hidden rounded-2xl border border-white/[0.1] bg-zinc-900/35 shadow-md backdrop-blur-md transition-all duration-300',
-              isOpen &&
-                'border-sky-500/35 bg-zinc-900/75 shadow-xl ring-1 shadow-sky-950/40 ring-sky-500/20'
-            )}
-          >
+          <div key={item.q}>
             <button
               type="button"
               onClick={() => setOpen(isOpen ? null : i)}
-              className="flex w-full items-start gap-4 px-6 py-5 text-left transition-colors hover:bg-white/[0.03] md:gap-5 md:px-8 md:py-6"
+              className="flex w-full items-start gap-4 py-5 text-left transition-colors hover:bg-white/[0.02] md:gap-6 md:py-6"
               aria-expanded={isOpen}
               aria-controls={`faq-panel-${i}`}
               id={`faq-trigger-${i}`}
             >
               <span
                 className={cn(
-                  'mt-0.5 shrink-0 text-[11px] font-bold tracking-widest text-zinc-400 tabular-nums transition-colors md:text-xs',
+                  'mt-0.5 shrink-0 text-[12px] font-semibold tracking-widest text-zinc-600 tabular-nums',
                   isOpen && 'text-sky-400/90'
                 )}
                 aria-hidden
@@ -68,15 +61,13 @@ export function LandingFaq() {
               <span className="min-w-0 flex-1 pr-2 text-base leading-snug font-semibold tracking-tight text-white md:text-lg">
                 {item.q}
               </span>
-              <span
+              <ChevronDown
                 className={cn(
-                  'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-zinc-400 transition-all duration-300',
-                  'group-hover/card:border-white/15 group-hover/card:bg-white/[0.07] group-hover/card:text-zinc-200',
-                  isOpen && 'rotate-180 border-sky-500/30 bg-sky-500/15 text-sky-200'
+                  'mt-1 h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-300',
+                  isOpen && 'rotate-180 text-sky-300'
                 )}
-              >
-                <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-              </span>
+                strokeWidth={2}
+              />
             </button>
             <div
               id={`faq-panel-${i}`}
@@ -88,11 +79,9 @@ export function LandingFaq() {
               )}
             >
               <div className="min-h-0 overflow-hidden">
-                <div className="border-t border-white/[0.08] bg-gradient-to-b from-white/[0.02] to-transparent px-6 pt-5 pb-7 md:px-8 md:pt-6 md:pb-8">
-                  <p className="text-sm leading-relaxed text-zinc-300 md:text-base md:leading-relaxed">
-                    {item.a}
-                  </p>
-                </div>
+                <p className="max-w-2xl pb-6 pl-10 text-sm leading-relaxed text-zinc-400 md:pl-12 md:text-[15px]">
+                  {item.a}
+                </p>
               </div>
             </div>
           </div>
