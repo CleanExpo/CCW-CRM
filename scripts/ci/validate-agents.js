@@ -46,11 +46,20 @@ const isNamed = (v) => typeof v === 'string' && v.trim() !== '';
 // which the consumer rejects: a validator that green-lights a definition the actual runtime will
 // not load is worse than no validator, because it certifies the wrong thing.
 //
-// The documented form is lowercase letters and hyphens. Digits are permitted here because names
-// like `haiku-4-5` are legitimate in practice and rejecting them would be a false failure; the
-// leading character must still be a letter, which is what excludes `123`.
-const AGENT_NAME = /^[a-z][a-z0-9-]*$/;
-const isValidName = (v) => isNamed(v) && AGENT_NAME.test(v.trim());
+// The documented contract: 3-50 characters, lowercase letters, interior digits and hyphens, a
+// LETTER first and an ALPHANUMERIC last. Read the regex as those four rules in order.
+//
+// An earlier version was `/^[a-z][a-z0-9-]*$/`, which enforced only the first character. It
+// accepted `a`, `agent-` and a 51-character name — all malformed under the contract this gate
+// claims to enforce, which is the same "certifies the wrong thing" defect that made the previous
+// version accept `name: "123"`.
+//
+// The value is tested UNTRIMMED on purpose. The earlier version trimmed first, so
+// `name: "  ccw-builder  "` passed while the identifier the consumer actually receives has
+// spaces in it. Trimming here would hide a real difference between what is written and what is
+// used; the author should fix the file instead.
+const AGENT_NAME = /^[a-z][a-z0-9-]{1,48}[a-z0-9]$/;
+const isValidName = (v) => typeof v === 'string' && AGENT_NAME.test(v);
 
 // Returns { fields } on a clean parse, { error } otherwise. Anything unreadable is an error, never
 // a pass: duplicate keys are ambiguous (first-wins and last-wins disagree about `name: real`

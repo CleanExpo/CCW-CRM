@@ -158,8 +158,27 @@ describe('validate-agents.js frontmatter contract', () => {
     ['a space', '---\nname: ccw builder\ndescription: Valid.\n---\nb\n'],
     ['an underscore', '---\nname: ccw_builder\ndescription: Valid.\n---\nb\n'],
     ['a slash', '---\nname: ccw/builder\ndescription: Valid.\n---\nb\n'],
+    ['a trailing hyphen', '---\nname: ccw-\ndescription: Valid.\n---\nb\n'],
+    ['one character', '---\nname: a\ndescription: Valid.\n---\nb\n'],
+    ['two characters', '---\nname: ab\ndescription: Valid.\n---\nb\n'],
+    ['leading whitespace', '---\nname: "  ccw-builder"\ndescription: Valid.\n---\nb\n'],
+    ['trailing whitespace', '---\nname: "ccw-builder  "\ndescription: Valid.\n---\nb\n'],
   ])('rejects a name with %s', (_label, body) => {
     expect(run(body)).toBe(1);
+  });
+
+  // The contract is 3-50 characters. Both boundaries are pinned in both directions, because an
+  // off-by-one in either quantifier is exactly the kind of error a single-sided test misses.
+  it('rejects a 51-character name', () => {
+    expect(run(`---\nname: ${'a'.repeat(51)}\ndescription: Valid.\n---\nb\n`)).toBe(1);
+  });
+
+  it('accepts the 3-character minimum', () => {
+    expect(run('---\nname: abc\ndescription: Valid.\n---\nb\n')).toBe(0);
+  });
+
+  it('accepts the 50-character maximum', () => {
+    expect(run(`---\nname: ${'a'.repeat(50)}\ndescription: Valid.\n---\nb\n`)).toBe(0);
   });
 
   // The description is free text and must stay that way — only `name` is constrained.
