@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
 import type { Cin7ReconciliationSnapshot } from '@/lib/integrations/cin7-reconciliation';
+import { buildShortSyncIncompleteMessage } from '@/lib/integrations/cin7-sync-adaptive';
 
 export type Cin7SyncCompletenessRow = {
   entity: string;
@@ -185,17 +186,29 @@ export async function buildSyncCompletenessSummary(
       const minExpected = Math.floor(cin7Count * (1 - tolerance));
       if (optixCount < minExpected) {
         likelyIncomplete = true;
-        note = `Optix has ${optixCount.toLocaleString()} linked records but Cin7 has ~${cin7Count.toLocaleString()}. Re-run sync (resume if timed out).`;
+        note = buildShortSyncIncompleteMessage({
+          synced: optixCount,
+          expected: cin7Count,
+        });
       }
     } else if (cin7Count != null && cin7Count > 0 && run == null) {
       likelyIncomplete = true;
-      note = 'No recent sync run found for this entity.';
+      note = 'No recent sync — click Sync to fetch.';
     }
 
-    if (run && run.durationMs >= getSyncTimeBudgetWarningMs()) {
-      note = note
-        ? `${note} Last run used ${Math.round(run.durationMs / 1000)}s — may have hit the time limit.`
-        : `Last run used ${Math.round(run.durationMs / 1000)}s — may have hit the time limit; use resume if counts are short.`;
+    if (
+      !likelyIncomplete &&
+      run &&
+      run.durationMs >= getSyncTimeBudgetWarningMs() &&
+      cin7Count != null &&
+      (optixCount ?? 0) < cin7Count
+    ) {
+      likelyIncomplete = true;
+      note = buildShortSyncIncompleteMessage({
+        synced: optixCount ?? lastSyncRecords ?? 0,
+        expected: cin7Count,
+        reason: 'Time budget exceeded; resume from next_page.',
+      });
     }
 
     return {
