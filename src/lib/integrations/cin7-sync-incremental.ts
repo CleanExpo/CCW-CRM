@@ -188,8 +188,8 @@ export async function getOptixEntityRecordCount(
 }
 
 /**
- * Floored record count for sync history / checkpoints.
- * Never report below current Optix rows (or a previous floor).
+ * Floored record count while a sync chunk is still running.
+ * Never report below current Optix rows (or a previous floor) mid-run.
  */
 export function floorSyncRecordCount(input: {
   optixCount: number;
@@ -197,6 +197,23 @@ export function floorSyncRecordCount(input: {
   previousFloor?: number;
 }): number {
   return Math.max(0, input.optixCount, input.thisRunProcessed, input.previousFloor ?? 0);
+}
+
+/**
+ * Final / display count for Recent sync.
+ * Optix SQL is authoritative — after stock prune (or other deletes) the count may go down.
+ * Orders have no Optix rows; keep the Cin7-reported run counter.
+ */
+export function finalizeSyncRecordCount(input: {
+  optixCount: number;
+  thisRunProcessed: number;
+  /** When true, ignore Optix (orders count-only). */
+  countOnly?: boolean;
+}): number {
+  if (input.countOnly) {
+    return Math.max(0, input.thisRunProcessed);
+  }
+  return Math.max(0, input.optixCount);
 }
 
 /**
