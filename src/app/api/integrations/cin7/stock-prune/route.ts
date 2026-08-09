@@ -1,15 +1,16 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
+import { runAuditedStockPrune } from '@/lib/integrations/cin7-heal-audit';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
-import { pruneOptixStockLevelsToCin7 } from '@/lib/integrations/cin7-stock-prune';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
 
 /**
- * Align Optix stock rows to live Cin7 /v1/Stock (source of truth).
- * GET ?dry_run=true → preview deletes. POST → apply prune.
+ * Explicit stock surplus prune (Cin7 source of truth).
+ * Not part of reconciliation reporting. POST writes an audit log for revert.
+ * GET → dry-run preview only.
  */
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -20,9 +21,13 @@ export async function GET(request: NextRequest) {
   if (!omniCreds || !(await pingCin7Omni(omniCreds))) {
     return NextResponse.json({ detail: 'Cin7 Omni is not reachable.' }, { status: 401 });
   }
-  const dryRun = request.nextUrl.searchParams.get('dry_run') !== 'false';
-  const result = await pruneOptixStockLevelsToCin7(scope.userId, omniCreds, { dryRun: true });
-  return NextResponse.json(result);
+  const result = await runAuditedStockPrune({
+    ownerUserId: scope.userId,
+    actorUserId: scope.userId,
+    omniCreds,
+    dryRun: true,
+  });
+  return NextResponse.json({ ...result, explicit_action: true });
 }
 
 export async function POST(request: NextRequest) {
@@ -34,7 +39,14 @@ export async function POST(request: NextRequest) {
   if (!omniCreds || !(await pingCin7Omni(omniCreds))) {
     return NextResponse.json({ detail: 'Cin7 Omni is not reachable.' }, { status: 401 });
   }
-  const result = await pruneOptixStockLevelsToCin7(scope.userId, omniCreds, { dryRun: false });
+
+  const result = await runAuditedStockPrune({
+    ownerUserId: scope.userId,
+    actorUserId: scope.userId,
+    omniCreds,
+    dryRun: false,
+  });
+
   if (result.errors.length > 0 && result.deleted === 0 && result.cin7_keys === 0) {
     return NextResponse.json(
       { detail: 'Cin7 stock catalog incomplete — prune aborted.', ...result },
@@ -74,5 +86,11 @@ export async function POST(request: NextRequest) {
   });
   clearCachedReconciliation(scope.userId);
 
-  return NextResponse.json({ ...result, optix_after: live, accepted });
+  return NextResponse.json({
+    ...result,
+    optix_after: live,
+    accepted,
+    explicit_action: true,
+    reversible: true,
+  });
 }
