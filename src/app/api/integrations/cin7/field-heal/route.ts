@@ -1,9 +1,6 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import {
-  healOptixFieldMismatchesFromLiveCin7,
-  summarizeFieldHeal,
-  type Cin7FieldHealEntity,
-} from '@/lib/integrations/cin7-field-heal';
+import type { Cin7FieldHealEntity } from '@/lib/integrations/cin7-field-heal';
+import { runAuditedFieldHeal } from '@/lib/integrations/cin7-heal-audit';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,8 +17,8 @@ const VALID_ENTITIES = new Set<Cin7FieldHealEntity>([
 ]);
 
 /**
- * Align Optix field diffs to live Cin7 for products, customers, suppliers,
- * branches, internal customers, and stock (matched keys only).
+ * Explicit Optix field repair from live Cin7 — NOT part of reconciliation.
+ * Writes an audit log with before/after payloads for revert.
  */
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
@@ -35,9 +32,7 @@ export async function POST(request: NextRequest) {
 
   let entities: Cin7FieldHealEntity[] | undefined;
   try {
-    const body = (await request.json().catch(() => null)) as {
-      entities?: unknown;
-    } | null;
+    const body = (await request.json().catch(() => null)) as { entities?: unknown } | null;
     if (Array.isArray(body?.entities)) {
       entities = body.entities.filter(
         (e): e is Cin7FieldHealEntity =>
@@ -49,7 +44,10 @@ export async function POST(request: NextRequest) {
     entities = undefined;
   }
 
-  const result = await healOptixFieldMismatchesFromLiveCin7(scope.userId, omniCreds, {
+  const result = await runAuditedFieldHeal({
+    ownerUserId: scope.userId,
+    actorUserId: scope.userId,
+    omniCreds,
     entities,
   });
 
@@ -60,7 +58,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         detail: 'Cin7 catalogs incomplete — field heal aborted.',
-        summary: summarizeFieldHeal(result),
         ...result,
       },
       { status: 502 }
@@ -70,7 +67,8 @@ export async function POST(request: NextRequest) {
   clearCachedReconciliation(scope.userId);
   return NextResponse.json({
     ...result,
-    summary: summarizeFieldHeal(result),
     accepted: result.errors.length === 0,
+    explicit_action: true,
+    reversible: true,
   });
 }
