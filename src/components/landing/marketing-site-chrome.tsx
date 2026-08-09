@@ -11,7 +11,7 @@ export default function MarketingSiteChrome({ children }: { children: React.Reac
     <div
       className={cn(
         marketingFont.className,
-        'dark text-foreground selection:bg-primary/30 relative min-h-screen scroll-smooth bg-[#030306] antialiased selection:text-white'
+        'dark text-foreground relative min-h-screen scroll-smooth bg-[#050508] antialiased selection:bg-sky-500/25 selection:text-white'
       )}
     >
       <MarketingAmbientCanvas />
