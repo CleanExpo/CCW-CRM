@@ -22,9 +22,13 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  user: User;
+  access_token?: string;
+  token_type?: string;
+  user?: User;
+  mfa_required?: boolean;
+  mfa_enrollment_required?: boolean;
+  mfa_token?: string;
+  detail?: string;
 }
 
 export interface RegisterRequest {
@@ -40,6 +44,13 @@ export interface RegisterResponse {
   token_type?: string;
 }
 
+export interface MfaStatus {
+  enabled: boolean;
+  verified_at: string | null;
+  enforced: boolean;
+  recovery_codes_remaining: number;
+}
+
 async function readAuthError(res: Response): Promise<string> {
   const err = await res.json().catch(() => ({}));
   return (
@@ -47,6 +58,17 @@ async function readAuthError(res: Response): Promise<string> {
     (err as { error?: string }).error ||
     `Request failed (${res.status})`
   );
+}
+
+function storeAccessToken(accessToken: string, rememberMe: boolean) {
+  if (typeof window === 'undefined') return;
+  if (rememberMe) {
+    localStorage.setItem('auth_token', accessToken);
+    sessionStorage.removeItem('auth_token');
+  } else {
+    sessionStorage.setItem('auth_token', accessToken);
+    localStorage.removeItem('auth_token');
+  }
 }
 
 export const authApi = {
@@ -68,17 +90,76 @@ export const authApi = {
 
     const response: LoginResponse = await res.json();
 
-    if (response.access_token && typeof window !== 'undefined') {
-      if (rememberMe) {
-        localStorage.setItem('auth_token', response.access_token);
-        sessionStorage.removeItem('auth_token');
-      } else {
-        sessionStorage.setItem('auth_token', response.access_token);
-        localStorage.removeItem('auth_token');
-      }
+    if (response.access_token) {
+      storeAccessToken(response.access_token, rememberMe);
     }
 
     return response;
+  },
+
+  async verifyMfa(input: {
+    mfa_token: string;
+    code: string;
+    rememberMe?: boolean;
+  }): Promise<LoginResponse> {
+    const res = await fetch('/api/auth/mfa/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mfa_token: input.mfa_token, code: input.code }),
+    });
+    if (!res.ok) throw new Error(await readAuthError(res));
+    const response: LoginResponse = await res.json();
+    if (response.access_token) {
+      storeAccessToken(response.access_token, input.rememberMe ?? true);
+    }
+    return response;
+  },
+
+  async setupMfa(mfa_token?: string): Promise<{
+    otpauth_uri: string;
+    secret: string;
+    recovery_codes: string[];
+    detail?: string;
+  }> {
+    const res = await fetch('/api/auth/mfa/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(mfa_token ? { mfa_token } : {}),
+    });
+    if (!res.ok) throw new Error(await readAuthError(res));
+    return res.json();
+  },
+
+  async confirmMfa(input: {
+    code: string;
+    mfa_token?: string;
+    rememberMe?: boolean;
+  }): Promise<LoginResponse & { enabled?: boolean }> {
+    const res = await fetch('/api/auth/mfa/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        code: input.code,
+        ...(input.mfa_token ? { mfa_token: input.mfa_token } : {}),
+      }),
+    });
+    if (!res.ok) throw new Error(await readAuthError(res));
+    const response = await res.json();
+    if (response.access_token) {
+      storeAccessToken(response.access_token, input.rememberMe ?? true);
+    }
+    return response;
+  },
+
+  async getMfaStatus(): Promise<MfaStatus> {
+    const res = await fetch('/api/auth/mfa/status', {
+      method: 'GET',
+      credentials: 'same-origin',
+    });
+    if (!res.ok) throw new Error(await readAuthError(res));
+    return res.json();
   },
 
   async register(data: RegisterRequest): Promise<RegisterResponse> {
@@ -155,10 +236,7 @@ export const authApi = {
     return res.json();
   },
 
-  async changePassword(
-    currentPassword: string,
-    newPassword: string
-  ): Promise<{ message: string }> {
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
     const res = await fetch('/api/auth/change-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
