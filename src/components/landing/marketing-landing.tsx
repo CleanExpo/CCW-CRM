@@ -215,7 +215,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                         className="grid grid-cols-[3rem_1fr] gap-4 py-7 md:grid-cols-[4rem_1fr] md:gap-8"
                       >
                         <span
-                          className="text-2xl font-semibold text-zinc-600 tabular-nums md:text-3xl"
+                          className="text-2xl font-semibold text-zinc-500 tabular-nums md:text-3xl"
                           style={display}
                         >
                           {item.n}
@@ -274,7 +274,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
               </MarketingReveal>
 
               <MarketingReveal delayMs={120}>
-                <p className="mt-10 max-w-2xl text-sm leading-relaxed text-zinc-500">
+                <p className="mt-10 max-w-2xl text-sm leading-relaxed text-zinc-400">
                   Designed for Australian wholesale operations—confirm hosting, retention, and
                   compliance with your rollout team before go-live.
                 </p>
@@ -298,7 +298,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                   <MarketingReveal key={cap.n} delayMs={i * 40}>
                     <article className="grid gap-6 border-b border-white/[0.06] py-10 md:grid-cols-[5rem_1fr_auto] md:gap-10 md:py-12">
                       <span
-                        className="text-3xl font-semibold text-zinc-700 tabular-nums"
+                        className="text-3xl font-semibold text-zinc-500 tabular-nums"
                         style={display}
                       >
                         {cap.n}
@@ -311,7 +311,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                           {cap.title}
                         </h3>
                         <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">{cap.body}</p>
-                        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-zinc-500">
+                        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-zinc-400">
                           {cap.points.map((p) => (
                             <li key={p} className="flex items-center gap-2">
                               <span className="h-px w-3 bg-sky-500/70" aria-hidden />
@@ -354,21 +354,24 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                 />
                 <ol className="space-y-10 md:space-y-12">
                   {STEPS.map((step, i) => (
-                    <MarketingReveal key={step.n} delayMs={i * 50}>
-                      <li className="relative grid gap-4 pl-12 md:grid-cols-[8rem_1fr] md:gap-10 md:pl-16">
-                        <span
-                          className="absolute top-1 left-0 flex h-9 w-9 items-center justify-center border border-sky-500/40 bg-[#08080c] text-[12px] font-semibold text-sky-300 tabular-nums"
-                          style={display}
-                        >
-                          {step.n}
-                        </span>
-                        <h3 className="text-lg font-semibold text-white md:text-xl" style={display}>
-                          {step.title}
-                        </h3>
-                        <p className="max-w-lg text-[15px] leading-relaxed text-zinc-400">
-                          {step.body}
-                        </p>
-                      </li>
+                    <MarketingReveal
+                      key={step.n}
+                      as="li"
+                      delayMs={i * 50}
+                      className="relative grid gap-4 pl-12 md:grid-cols-[8rem_1fr] md:gap-10 md:pl-16"
+                    >
+                      <span
+                        className="absolute top-1 left-0 flex h-9 w-9 items-center justify-center border border-sky-500/40 bg-[#08080c] text-[12px] font-semibold text-sky-300 tabular-nums"
+                        style={display}
+                      >
+                        {step.n}
+                      </span>
+                      <h3 className="text-lg font-semibold text-white md:text-xl" style={display}>
+                        {step.title}
+                      </h3>
+                      <p className="max-w-lg text-[15px] leading-relaxed text-zinc-400">
+                        {step.body}
+                      </p>
                     </MarketingReveal>
                   ))}
                 </ol>
@@ -393,7 +396,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                       “The win isn’t more features—it’s fewer places to look when a customer asks
                       about a delivery date or a back-order.”
                     </p>
-                    <footer className="mt-5 text-sm text-zinc-500">
+                    <footer className="mt-5 text-sm text-zinc-400">
                       Pattern from multi-branch wholesale operations · illustrative
                     </footer>
                   </blockquote>
@@ -408,7 +411,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                     { k: 'Integrations', v: 'Cin7 · Xero · Shopify path' },
                   ].map((item) => (
                     <div key={item.k} className="bg-[#050508] px-6 py-8">
-                      <dt className="text-[12px] font-semibold tracking-[0.16em] text-zinc-500 uppercase">
+                      <dt className="text-[12px] font-semibold tracking-[0.16em] text-zinc-400 uppercase">
                         {item.k}
                       </dt>
                       <dd className="mt-3 text-lg font-semibold text-white" style={display}>
@@ -486,7 +489,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                     <h3 className="text-lg font-semibold text-white" style={display}>
                       Sign in
                     </h3>
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-zinc-400">
                       Use your company email for your organisation workspace.
                     </p>
                     <div className="mt-6">

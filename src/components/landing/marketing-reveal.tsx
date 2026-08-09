@@ -8,14 +8,26 @@ type MarketingRevealProps = {
   className?: string;
   /** Delay in ms after enter — keep short. */
   delayMs?: number;
+  /**
+   * Element to render. Use `li` when the reveal sits directly inside a list: a
+   * wrapper `div` between `ol` and `li` looks identical but breaks list
+   * semantics, so screen readers stop announcing the item count. axe reports it
+   * as `list` + `listitem`.
+   */
+  as?: 'div' | 'li';
 };
 
 /**
  * Below-fold reveal only. Transform + opacity after intersection —
  * never wrap the LCP hero headline in this.
  */
-export function MarketingReveal({ children, className, delayMs = 0 }: MarketingRevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
+export function MarketingReveal({
+  children,
+  className,
+  delayMs = 0,
+  as: Tag = 'div',
+}: MarketingRevealProps) {
+  const ref = useRef<HTMLDivElement & HTMLLIElement>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -39,7 +51,7 @@ export function MarketingReveal({ children, className, delayMs = 0 }: MarketingR
   }, []);
 
   return (
-    <div
+    <Tag
       ref={ref}
       className={cn(
         'transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
@@ -49,6 +61,6 @@ export function MarketingReveal({ children, className, delayMs = 0 }: MarketingR
       style={delayMs ? { transitionDelay: `${delayMs}ms` } : undefined}
     >
       {children}
-    </div>
+    </Tag>
   );
 }

@@ -96,7 +96,7 @@ export function MarketingFooter() {
             >
               sales@ccwequipment.com.au
             </a>
-            <p className="mt-3 text-[12px] tracking-wide text-zinc-500">
+            <p className="mt-3 text-[12px] tracking-wide text-zinc-400">
               Brisbane · Sydney · Melbourne
             </p>
           </div>
@@ -107,7 +107,7 @@ export function MarketingFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col gap-4 border-t border-white/[0.06] py-6 text-[12px] text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 border-t border-white/[0.06] py-6 text-[12px] text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; {year} CCW Equipment Suppliers. All rights reserved.</p>
           <p className="tracking-wide" style={display}>
             Built for distributors · AU
@@ -127,7 +127,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold tracking-[0.2em] text-zinc-500 uppercase">{title}</p>
+      <p className="text-[11px] font-semibold tracking-[0.2em] text-zinc-400 uppercase">{title}</p>
       <ul className="mt-5 space-y-3">
         {links.map((l) => (
           <li key={l.href}>

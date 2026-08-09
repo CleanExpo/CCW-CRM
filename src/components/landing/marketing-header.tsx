@@ -131,7 +131,7 @@ export function MarketingHeader() {
         <div
           className={cn(
             marketingShell,
-            'flex h-8 items-center justify-between text-[11px] tracking-wide text-zinc-500'
+            'flex h-8 items-center justify-between text-[11px] tracking-wide text-zinc-400'
           )}
         >
           <p style={display} className="font-medium tracking-[0.14em] uppercase">

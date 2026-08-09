@@ -50,7 +50,9 @@ export function LiveStatsBar({ stats }: LiveStatsBarProps) {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/50 motion-reduce:animate-none" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           </span>
-          <span className="text-[11px] font-semibold tracking-[0.22em] text-zinc-500 uppercase">
+          {/* zinc-400, not zinc-500: at 11px on this #08080c band zinc-500 measures 4.14:1
+              against the 4.5:1 WCAG AA minimum, which fails the public-surface axe gate. */}
+          <span className="text-[11px] font-semibold tracking-[0.22em] text-zinc-400 uppercase">
             Live platform data
           </span>
         </div>
@@ -73,7 +75,7 @@ export function LiveStatsBar({ stats }: LiveStatsBarProps) {
                 >
                   {display}
                 </div>
-                <div className="mt-2 text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
+                <div className="mt-2 text-[11px] font-medium tracking-wide text-zinc-400 uppercase">
                   {item.label}
                 </div>
               </div>

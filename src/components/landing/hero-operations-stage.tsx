@@ -71,20 +71,20 @@ export function HeroOperationsStage() {
               <span className="h-2 w-2 rounded-full bg-white/15" />
               <span className="h-2 w-2 rounded-full bg-white/15" />
             </div>
-            <p className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">
+            <p className="text-[11px] font-medium tracking-wide text-zinc-400 uppercase">
               CCW Online · Operations
             </p>
           </div>
-          <p className="hidden text-[11px] text-zinc-500 sm:block">Australia · Live workspace</p>
+          <p className="hidden text-[11px] text-zinc-400 sm:block">Australia · Live workspace</p>
         </div>
 
         <div className="grid xl:grid-cols-[168px_1fr]">
           {/* Rail — only when the stage has horizontal room */}
           <aside className="hidden border-r border-white/[0.06] bg-black/40 p-4 xl:block">
-            <p className="text-[10px] font-semibold tracking-[0.18em] text-zinc-600 uppercase">
+            <p className="text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase">
               Workspace
             </p>
-            <ul className="mt-4 space-y-1 text-[13px] text-zinc-500">
+            <ul className="mt-4 space-y-1 text-[13px] text-zinc-400">
               {['Dashboard', 'Quotes', 'Orders', 'Inventory', 'Customers', 'Finance'].map(
                 (item, i) => (
                   <li
@@ -119,7 +119,7 @@ export function HeroOperationsStage() {
                     'px-3.5 py-2 text-[13px] font-medium transition-colors',
                     active === i
                       ? 'bg-sky-500/15 text-sky-200'
-                      : 'text-zinc-500 hover:text-zinc-200'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   )}
                 >
                   {v.label}
@@ -140,7 +140,7 @@ export function HeroOperationsStage() {
                   >
                     {view.title}
                   </h3>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-500">
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-zinc-400">
                     {view.meta.map((m) => (
                       <span key={m}>{m}</span>
                     ))}
@@ -153,7 +153,7 @@ export function HeroOperationsStage() {
               </div>
 
               <div className="mt-6 overflow-hidden border border-white/[0.06]">
-                <div className="grid grid-cols-[1fr_2fr_0.7fr_1fr] gap-2 border-b border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[10px] font-semibold tracking-[0.14em] text-zinc-600 uppercase sm:px-4">
+                <div className="grid grid-cols-[1fr_2fr_0.7fr_1fr] gap-2 border-b border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[10px] font-semibold tracking-[0.14em] text-zinc-400 uppercase sm:px-4">
                   <span>Code</span>
                   <span>Line</span>
                   <span className="text-right">Qty</span>
@@ -179,7 +179,7 @@ export function HeroOperationsStage() {
                 <div className="h-px flex-1 overflow-hidden bg-white/[0.06]">
                   <div className="animate-marketing-progress h-px w-2/3 bg-gradient-to-r from-sky-500/80 to-transparent motion-reduce:animate-none" />
                 </div>
-                <span className="text-[11px] text-zinc-500 tabular-nums">Pipeline 67%</span>
+                <span className="text-[11px] text-zinc-400 tabular-nums">Pipeline 67%</span>
               </div>
             </div>
           </div>
