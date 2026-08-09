@@ -27,9 +27,29 @@ model AppUser {
   lastLoginAt            DateTime? @map("last_login_at")
   passwordResetTokenHash String?   @map("password_reset_token_hash")
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+  /// TOTP MFA enabled after first successful verify.
+  totpEnabled            Boolean   @default(false) @map("totp_enabled")
+  /// AES-256-GCM encrypted TOTP shared secret (never store plaintext).
+  totpSecretEncrypted    String?   @map("totp_secret_encrypted")
+  totpVerifiedAt         DateTime? @map("totp_verified_at")
+
+  mfaRecoveryCodes AppUserMfaRecoveryCode[]
 
   @@index([workspaceId])
   @@map("app_users")
+}
+
+model AppUserMfaRecoveryCode {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("app_user_mfa_recovery_codes")
 }
 
 model Customer {
@@ -483,6 +503,11 @@ model InvoicePayment {
   paymentMethod   String   @map("payment_method")
   referenceNumber String?  @map("reference_number")
   notes           String?
+  /// manual | stripe | bank_recon — card/Stripe paid only via stripe webhook.
+  source          String   @default("manual")
+  /// Stripe event id for idempotent webhook application.
+  stripeEventId   String?  @unique @map("stripe_event_id")
+  createdByUserId String?  @map("created_by_user_id") @db.Uuid
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -748,6 +773,10 @@ model Cin7ReconRun {
   ownerUserId          String    @map("owner_user_id") @db.Uuid
   /// blocked | running | complete | failed
   status               String
+  /// live (read-only measurement) | acceptance (fail-closed gate)
+  mode                 String    @default("acceptance")
+  /// When true, this row is an immutable sign-off artifact (never overwrite).
+  immutable            Boolean   @default(true)
   blockedReason        String?   @map("blocked_reason") @db.Text
   optixComplete        Boolean   @map("optix_complete") @default(false)
   cin7Complete         Boolean   @map("cin7_complete") @default(false)
@@ -766,7 +795,48 @@ model Cin7ReconRun {
 
   @@index([ownerUserId, checkedAt(sort: Desc)])
   @@index([ownerUserId, status])
+  @@index([ownerUserId, mode, checkedAt(sort: Desc)])
   @@map("cin7_recon_runs")
+}
+
+/// Explicit repair action log (field heal / stock prune) — separate from reconciliation.
+model Cin7HealAuditRun {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerUserId     String    @map("owner_user_id") @db.Uuid
+  /// field_heal | stock_prune
+  actionType      String    @map("action_type")
+  /// applied | reverted | failed
+  status          String
+  createdByUserId String?   @map("created_by_user_id") @db.Uuid
+  healedTotal     Int       @map("healed_total") @default(0)
+  deletedTotal    Int       @map("deleted_total") @default(0)
+  summary         Json?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  revertedAt      DateTime? @map("reverted_at")
+  revertedByUserId String?  @map("reverted_by_user_id") @db.Uuid
+
+  rows Cin7HealAuditRow[]
+
+  @@index([ownerUserId, createdAt(sort: Desc)])
+  @@map("cin7_heal_audit_runs")
+}
+
+model Cin7HealAuditRow {
+  id         String    @id @default(uuid()) @db.Uuid
+  healRunId  String    @map("heal_run_id") @db.Uuid
+  ownerUserId String   @map("owner_user_id") @db.Uuid
+  entityType String    @map("entity_type")
+  recordKey  String    @map("record_key")
+  beforeJson Json      @map("before_json")
+  afterJson  Json?     @map("after_json")
+  revertedAt DateTime? @map("reverted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  healRun Cin7HealAuditRun @relation(fields: [healRunId], references: [id], onDelete: Cascade)
+
+  @@index([healRunId])
+  @@index([ownerUserId, entityType])
+  @@map("cin7_heal_audit_rows")
 }
 
 /// Durable Cin7 catalog keys/counts captured only after a complete Cin7 pull.
@@ -1301,6 +1371,10 @@ model SalesPayment {
   paymentDate    DateTime? @map("payment_date") @db.Date
   reference      String?
   status         String
+  /// manual | stripe — card/Stripe paid only via stripe webhook.
+  source         String    @default("manual")
+  stripeEventId  String?   @unique @map("stripe_event_id")
+  createdByUserId String?  @map("created_by_user_id") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at")
 
   invoice SalesInvoice? @relation(fields: [salesInvoiceId], references: [id], onDelete: SetNull)
