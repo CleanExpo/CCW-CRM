@@ -15,6 +15,10 @@ import {
   type Cin7OmniProductCategoryRow,
   type Cin7OmniStockLevelRow,
 } from '@/lib/integrations/cin7-omni';
+import {
+  resolveAdaptiveEntityGapMs,
+  resolveAdaptivePageGapMs,
+} from '@/lib/integrations/cin7-sync-adaptive';
 import { CIN7_SYNC_SAFETY_MAX_PAGES, getCin7PageSize } from '@/lib/integrations/cin7-sync-config';
 
 export type Cin7CatalogFetchMeta = {
@@ -92,11 +96,19 @@ async function paginateUntilDone<T>(input: {
   let pagesFetched = 0;
   let emptyRetries = 0;
   let sourceRowsFetched = 0;
+  let reportedTotal: number | null = null;
   const maxEmptyRetries = 4;
 
   for (let page = 1; page <= maxPages; page += 1) {
-    if (page > 1 && pageGapMs > 0) {
-      await sleep(pageGapMs);
+    const adaptiveGap = resolveAdaptivePageGapMs({
+      configuredGapMs: pageGapMs,
+      nextPage: page,
+      pageSize,
+      reportedTotal,
+      sourceRowsFetchedSoFar: sourceRowsFetched,
+    });
+    if (adaptiveGap > 0) {
+      await sleep(adaptiveGap);
     }
     const result = await input.fetchPage(page);
     pagesFetched = page;
@@ -124,9 +136,12 @@ async function paginateUntilDone<T>(input: {
     emptyRetries = 0;
     items.push(...result.items);
     sourceRowsFetched += result.sourceRowCount;
+    if (typeof result.total === 'number' && result.total > 0) {
+      reportedTotal = Math.max(reportedTotal ?? 0, result.total);
+    }
 
     // Prefer authoritative Total when Cin7 provides it.
-    if (result.total != null && result.total > 0 && sourceRowsFetched >= result.total) {
+    if (reportedTotal != null && reportedTotal > 0 && sourceRowsFetched >= reportedTotal) {
       break;
     }
     // Do NOT treat short pages as EOF when Total is missing — truncated catalogs
@@ -145,8 +160,15 @@ function resolveEntityGap(options?: Cin7CatalogFetchOptions): number {
   return options?.entityGapMs ?? getCatalogEntityGapMs();
 }
 
-async function entityGap(options?: Cin7CatalogFetchOptions): Promise<void> {
-  const ms = resolveEntityGap(options);
+async function entityGap(
+  options?: Cin7CatalogFetchOptions,
+  previousEntitySourceRows?: number | null
+): Promise<void> {
+  const ms = resolveAdaptiveEntityGapMs({
+    configuredGapMs: resolveEntityGap(options),
+    previousEntitySourceRows,
+    pageSize: getCin7PageSize(),
+  });
   if (ms > 0) await sleep(ms);
 }
 
@@ -276,11 +298,20 @@ export async function fetchOmniTaxCodeCatalog(
   const codes = new Set<string>();
   const errors: string[] = [];
   let pagesFetched = 0;
+  let sourceRowsFetched = 0;
+  let reportedTotal: number | null = null;
   // Prefer a slim field list; fall back to full contact rows if Omni ignores/blank TaxStatus.
   let fields: string | undefined = 'Id,TaxStatus,Type';
 
   for (let page = 1; page <= maxPages; page += 1) {
-    if (page > 1 && pageGapMs > 0) await sleep(pageGapMs);
+    const adaptiveGap = resolveAdaptivePageGapMs({
+      configuredGapMs: pageGapMs,
+      nextPage: page,
+      pageSize,
+      reportedTotal,
+      sourceRowsFetchedSoFar: sourceRowsFetched,
+    });
+    if (adaptiveGap > 0) await sleep(adaptiveGap);
     await options?.onPage?.(page);
     // Unfiltered walk — same completeness as recon (type= filter under-counts).
     let result = await fetchOmniContactsPage(creds, page, pageSize, { fields });
@@ -307,6 +338,10 @@ export async function fetchOmniTaxCodeCatalog(
       }
       break;
     }
+    sourceRowsFetched += result.sourceRowCount;
+    if (typeof result.total === 'number' && result.total > 0) {
+      reportedTotal = Math.max(reportedTotal ?? 0, result.total);
+    }
     for (const row of result.rows) {
       const code = row.taxStatus?.trim();
       if (code) codes.add(code);
@@ -322,7 +357,7 @@ export async function fetchOmniTaxCodeCatalog(
     }
   }
 
-  await entityGap(options);
+  await entityGap(options, sourceRowsFetched);
   const branches = await fetchFullOmniBranchCatalog(creds, undefined, options);
   for (const b of branches.branches) {
     const code = b.taxStatus?.trim();
@@ -503,9 +538,9 @@ export async function fetchDerivedReferenceCatalog(
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7DerivedReferenceCatalog & Cin7CatalogFetchMeta> {
   const rawProducts = await fetchFullOmniProductsRawCatalog(creds, undefined, options);
-  await entityGap(options);
+  await entityGap(options, rawProducts.styles.length);
   const allContacts = await fetchFullOmniAllContacts(creds, undefined, options);
-  await entityGap(options);
+  await entityGap(options, allContacts.contacts.length);
   const branches = await fetchFullOmniBranchCatalog(creds, undefined, options);
   const partitioned = partitionOmniContactsByType(allContacts.contacts);
 
