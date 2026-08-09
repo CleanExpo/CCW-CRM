@@ -31,37 +31,78 @@ log_error() {
 # Configuration
 BACKUP_TYPE="${1:-full}"  # full or incremental
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="/opt/ccw-online-erp/config"
-BACKUP_DIR="/opt/ccw-online-erp/backups/database"
-LOG_FILE="/var/log/ccw-backup.log"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# Prefer repo-local paths; fall back to legacy /opt layout when present.
+CONFIG_DIR="${BACKUP_CONFIG_DIR:-$REPO_ROOT/config}"
+if [ ! -d "$CONFIG_DIR" ] && [ -d "/opt/ccw-online-erp/config" ]; then
+    CONFIG_DIR="/opt/ccw-online-erp/config"
+fi
+BACKUP_DIR="${BACKUP_ROOT:-$REPO_ROOT/backups/database}"
+LOG_FILE="${BACKUP_LOG_FILE:-$REPO_ROOT/backups/ccw-backup.log}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DATE_PATH=$(date +%Y/%m/%d)
 
 # Load configuration (if exists)
 if [ -f "$CONFIG_DIR/.backup.env" ]; then
+    # shellcheck disable=SC1091
     source "$CONFIG_DIR/.backup.env"
 else
     log_warn "Backup configuration file not found: $CONFIG_DIR/.backup.env"
     log_warn "Using default configuration"
 fi
 
-# Database configuration
+# Database configuration (Supabase: use direct port 5432, not pooler 6543)
 DB_NAME="${DB_NAME:-ccw_production}"
 DB_USER="${DB_USER:-ccw_user}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 
-# S3 configuration
-S3_BUCKET="${S3_BUCKET:-s3://ccw-online-erp-backups}"
+# S3 configuration — Australian region for Optix production residency
+export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+S3_BUCKET="${S3_BUCKET:-s3://ccw-online-erp-backups-ap-southeast-2}"
 USE_S3="${USE_S3:-true}"
+# Server-side encryption on upload (in addition to client-side GPG)
+S3_SSE="${S3_SSE:-AES256}"
 
-# Encryption
+# Encryption (required for Toby security control — GPG AES-256 at rest)
 ENCRYPTION_ENABLED="${ENCRYPTION_ENABLED:-true}"
 BACKUP_ENCRYPTION_KEY="${BACKUP_ENCRYPTION_KEY:-}"
 
 # Retention
 FULL_RETENTION_DAYS="${FULL_RETENTION_DAYS:-30}"
 INCREMENTAL_RETENTION_DAYS="${INCREMENTAL_RETENTION_DAYS:-7}"
+
+encrypt_file() {
+    local src="$1"
+    if [ "$ENCRYPTION_ENABLED" != "true" ]; then
+        echo "$src"
+        return 0
+    fi
+    if [ -z "$BACKUP_ENCRYPTION_KEY" ]; then
+        log_error "BACKUP_ENCRYPTION_KEY not set"
+        exit 1
+    fi
+    if gpg --symmetric --cipher-algo AES256 --batch --yes \
+        --passphrase "$BACKUP_ENCRYPTION_KEY" \
+        --output "${src}.gpg" \
+        "$src"; then
+        rm -f "$src"
+        echo "${src}.gpg"
+    else
+        log_error "Encryption failed for $src"
+        exit 1
+    fi
+}
+
+s3_cp() {
+    local src="$1"
+    local dest="$2"
+    local storage_class="${3:-STANDARD}"
+    aws s3 cp "$src" "$dest" \
+        --region "$AWS_DEFAULT_REGION" \
+        --sse "$S3_SSE" \
+        --storage-class "$storage_class"
+}
 
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"/{full,incremental,wal}
@@ -137,21 +178,12 @@ backup_full() {
     COMPRESSED_SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
     log_info "Backup size (after compression): $COMPRESSED_SIZE"
 
-    # Encrypt backup
+    # Encrypt backup (AES-256 via GPG — required)
     if [ "$ENCRYPTION_ENABLED" = "true" ]; then
-        log_info "Encrypting backup..."
-        if gpg --symmetric --cipher-algo AES256 --batch --yes \
-            --passphrase "$BACKUP_ENCRYPTION_KEY" \
-            --output "${BACKUP_PATH}.gpg" \
-            "$BACKUP_PATH"; then
-            rm "$BACKUP_PATH"  # Remove unencrypted file
-            BACKUP_PATH="${BACKUP_PATH}.gpg"
-            BACKUP_FILE="${BACKUP_FILE}.gpg"
-            log_info "Backup encrypted successfully"
-        else
-            log_error "Encryption failed"
-            exit 1
-        fi
+        log_info "Encrypting backup (AES-256)..."
+        BACKUP_PATH="$(encrypt_file "$BACKUP_PATH")"
+        BACKUP_FILE="$(basename "$BACKUP_PATH")"
+        log_info "Backup encrypted successfully"
     fi
 
     FINAL_SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
@@ -162,22 +194,17 @@ backup_full() {
     echo "$CHECKSUM  $BACKUP_FILE" > "${BACKUP_PATH}.sha256"
     log_info "Checksum: $CHECKSUM"
 
-    # Upload to S3 (if enabled)
+    # Upload to S3 (if enabled) — TLS in transit + SSE at rest
     if [ "$USE_S3" = "true" ]; then
-        log_info "Uploading backup to S3..."
+        log_info "Uploading backup to S3 ($AWS_DEFAULT_REGION, SSE=$S3_SSE)..."
         S3_PATH="$S3_BUCKET/database/full/$BACKUP_FILE"
 
-        if aws s3 cp "$BACKUP_PATH" "$S3_PATH" --storage-class STANDARD; then
+        if s3_cp "$BACKUP_PATH" "$S3_PATH" STANDARD; then
             log_info "Backup uploaded to S3: $S3_PATH"
+            s3_cp "${BACKUP_PATH}.sha256" "${S3_PATH}.sha256" STANDARD
 
-            # Upload checksum file
-            aws s3 cp "${BACKUP_PATH}.sha256" "${S3_PATH}.sha256" --storage-class STANDARD
-
-            # Verify upload
-            if aws s3 ls "$S3_PATH" > /dev/null 2>&1; then
+            if aws s3 ls "$S3_PATH" --region "$AWS_DEFAULT_REGION" > /dev/null 2>&1; then
                 log_info "S3 upload verified"
-
-                # Remove local backup (optional - configure via env var)
                 if [ "${KEEP_LOCAL_BACKUP:-false}" != "true" ]; then
                     rm "$BACKUP_PATH" "${BACKUP_PATH}.sha256"
                     log_info "Local backup removed (uploaded to S3)"
@@ -228,14 +255,14 @@ backup_incremental() {
     for WAL_FILE in $WAL_FILES; do
         WAL_BASENAME=$(basename "$WAL_FILE")
 
-        # Copy and compress WAL file
+        # Copy, compress, and encrypt WAL file
         if gzip -c "$WAL_FILE" > "$WAL_BACKUP_DIR/${WAL_BASENAME}.gz"; then
+            WAL_PATH="$(encrypt_file "$WAL_BACKUP_DIR/${WAL_BASENAME}.gz")"
             ARCHIVED_COUNT=$((ARCHIVED_COUNT + 1))
 
-            # Upload to S3 (if enabled)
             if [ "$USE_S3" = "true" ]; then
-                S3_PATH="$S3_BUCKET/database/wal/$DATE_PATH/${WAL_BASENAME}.gz"
-                aws s3 cp "$WAL_BACKUP_DIR/${WAL_BASENAME}.gz" "$S3_PATH" --storage-class STANDARD_IA > /dev/null 2>&1
+                S3_PATH="$S3_BUCKET/database/wal/$DATE_PATH/$(basename "$WAL_PATH")"
+                s3_cp "$WAL_PATH" "$S3_PATH" STANDARD_IA > /dev/null 2>&1 || true
             fi
         fi
     done
@@ -257,13 +284,14 @@ backup_logical_incremental() {
     # Export tables with recent changes (example: last 2 hours)
     if pg_dump -Fc -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" \
         --exclude-table-data='translations' | gzip > "$BACKUP_PATH"; then
-        log_info "Incremental dump created: $(du -h "$BACKUP_PATH" | cut -f1)"
+        BACKUP_PATH="$(encrypt_file "$BACKUP_PATH")"
+        BACKUP_FILE="$(basename "$BACKUP_PATH")"
+        log_info "Incremental dump created+encrypted: $(du -h "$BACKUP_PATH" | cut -f1)"
 
-        # Upload to S3 (if enabled)
         if [ "$USE_S3" = "true" ]; then
             S3_PATH="$S3_BUCKET/database/incremental/$DATE_PATH/$BACKUP_FILE"
-            aws s3 cp "$BACKUP_PATH" "$S3_PATH" --storage-class STANDARD_IA
-            log_info "Incremental backup uploaded to S3"
+            s3_cp "$BACKUP_PATH" "$S3_PATH" STANDARD_IA
+            log_info "Incremental backup uploaded to S3 ($AWS_DEFAULT_REGION)"
         fi
     else
         log_error "Incremental dump failed"
