@@ -105,7 +105,12 @@ describe('client requirement checklist (static)', () => {
     );
     expect(src).not.toContain('cleanupCin7DuplicateCustomers');
     expect(src).not.toContain('Remove duplicate customers');
-    expect(src).toContain('No data is deleted');
+    // The card used to say "No data is deleted". That is no longer TRUE of the card as a whole —
+    // it now offers an audited, reversible surplus-stock prune that does delete rows — so the
+    // assertion tracks the narrower claim the card actually makes: the REPORT is read-only, and
+    // repair is a separate explicit action. Asserting the old sentence would force the UI back to
+    // a statement contradicted by its own buttons.
+    expect(src).toContain('This report does not heal, align, or delete Optix');
   });
 
   it('sync route imports full-catalog source resolver', async () => {
