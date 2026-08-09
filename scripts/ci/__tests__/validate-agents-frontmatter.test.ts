@@ -51,6 +51,35 @@ describe('validate-agents.js frontmatter contract', () => {
     expect(run()).toBe(1);
   });
 
+  // The walk is RECURSIVE — Claude Code scans `.claude/agents` recursively, and this validator
+  // implements that. Every other fixture here is top-level, so replacing the directory branch of
+  // the walk with `[]` left the whole suite green: nested agents could stop being validated
+  // entirely and nothing would notice. These two pin the recursion in both directions.
+  const writeNested = (body: string) => {
+    const dir = join(root, '.claude', 'agents', 'nested', 'deeper');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'nested-agent.md'), body);
+  };
+
+  it('validates an agent in a nested subdirectory', () => {
+    writeNested('---\nname: nested-agent\ndescription: Valid.\n---\nb\n');
+    expect(run('---\nname: top-agent\ndescription: Valid.\n---\nb\n')).toBe(0);
+  });
+
+  it('fails on a BROKEN agent in a nested subdirectory when the top level is fine', () => {
+    writeNested('---\nname: nested-agent\ndescription: ""\n---\nb\n');
+    expect(run('---\nname: top-agent\ndescription: Valid.\n---\nb\n')).toBe(1);
+  });
+
+  // Deliberately a VALID nested agent with nothing at the top level. If the walk stopped
+  // recursing, `checked` would be 0 and the empty-directory guard would exit 1 — so this test
+  // would still "pass" if it expected 1, for entirely the wrong reason. Expecting 0 is what makes
+  // it discriminate: only a genuinely recursive walk finds this file and reports success.
+  it('finds a valid agent that exists ONLY in a subdirectory', () => {
+    writeNested('---\nname: nested-agent\ndescription: Valid.\n---\nb\n');
+    expect(run()).toBe(0);
+  });
+
   it.each([
     ['double-quoted empty', '---\nname: ""\ndescription: ""\n---\nb\n'],
     ['single-quoted empty', "---\nname: ''\ndescription: ''\n---\nb\n"],
@@ -118,9 +147,24 @@ describe('validate-agents.js frontmatter contract', () => {
     expect(run(body)).toBe(1);
   });
 
-  // ...and the quoted forms of the same values are legitimate, so they must still pass.
-  it('accepts those same values when quoted as strings', () => {
-    expect(run('---\nname: "123"\ndescription: "true"\n---\nb\n')).toBe(0);
+  // `name` is an IDENTIFIER, not free text — Claude Code addresses the agent by it. An earlier
+  // revision of this suite pinned `name: "123"` as ACCEPTED, on the reasoning that quoting makes
+  // it a string. It does, and the string is still not a valid agent name: that fixture certified
+  // a definition the actual runtime rejects, which is worse than no check at all.
+  it.each([
+    ['a quoted number', '---\nname: "123"\ndescription: Valid.\n---\nb\n'],
+    ['a leading digit', '---\nname: 4-eng\ndescription: Valid.\n---\nb\n'],
+    ['capitals', '---\nname: CCW-Builder\ndescription: Valid.\n---\nb\n'],
+    ['a space', '---\nname: ccw builder\ndescription: Valid.\n---\nb\n'],
+    ['an underscore', '---\nname: ccw_builder\ndescription: Valid.\n---\nb\n'],
+    ['a slash', '---\nname: ccw/builder\ndescription: Valid.\n---\nb\n'],
+  ])('rejects a name with %s', (_label, body) => {
+    expect(run(body)).toBe(1);
+  });
+
+  // The description is free text and must stay that way — only `name` is constrained.
+  it('accepts a hyphenated name with digits and a free-text description', () => {
+    expect(run('---\nname: haiku-4-5\ndescription: "Anything: goes, here #1."\n---\nb\n')).toBe(0);
   });
 
   // Equally important: the strict parser must not reject legitimate files. A gate that cries wolf

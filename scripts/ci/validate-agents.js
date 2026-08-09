@@ -41,6 +41,17 @@ const normaliseText = (s) => (s.charCodeAt(0) === 0xfeff ? s.slice(1) : s).repla
 // so all of them fail this test rather than needing a special case each.
 const isNamed = (v) => typeof v === 'string' && v.trim() !== '';
 
+// `name` is not free text — Claude Code treats it as a unique identifier, and the agent is
+// addressed by it. Checking only that it is a non-empty string let this gate pass `name: "123"`,
+// which the consumer rejects: a validator that green-lights a definition the actual runtime will
+// not load is worse than no validator, because it certifies the wrong thing.
+//
+// The documented form is lowercase letters and hyphens. Digits are permitted here because names
+// like `haiku-4-5` are legitimate in practice and rejecting them would be a false failure; the
+// leading character must still be a letter, which is what excludes `123`.
+const AGENT_NAME = /^[a-z][a-z0-9-]*$/;
+const isValidName = (v) => isNamed(v) && AGENT_NAME.test(v.trim());
+
 // Returns { fields } on a clean parse, { error } otherwise. Anything unreadable is an error, never
 // a pass: duplicate keys are ambiguous (first-wins and last-wins disagree about `name: real`
 // followed by `name:`), and a malformed document is not a valid one.
@@ -90,9 +101,20 @@ walk(AGENTS_DIR)
     }
     const fm = parsed.fields;
     const missing = ['name', 'description'].filter((k) => !isNamed(fm[k]));
-    missing.length
-      ? (console.error(`  ❌ ${rel}: missing ${missing.join(', ')}`), errors++)
-      : console.log(`  ✅ ${rel}`);
+    if (missing.length) {
+      console.error(`  ❌ ${rel}: missing ${missing.join(', ')}`);
+      errors++;
+      return;
+    }
+    if (!isValidName(fm.name)) {
+      console.error(
+        `  ❌ ${rel}: name "${fm.name}" is not a valid agent identifier ` +
+          '(lowercase letters, digits and hyphens, starting with a letter)'
+      );
+      errors++;
+      return;
+    }
+    console.log(`  ✅ ${rel}`);
   });
 // An EMPTY directory is the same fail-open by another route: `checked` stays 0, `errors` stays 0,
 // and a validator that read nothing reports success. Zero agents is never a valid state here.
