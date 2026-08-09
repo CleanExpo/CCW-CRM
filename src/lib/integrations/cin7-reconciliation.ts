@@ -14,10 +14,6 @@ import {
   getCin7CoreCredentials,
   pingCin7Core,
 } from '@/lib/integrations/cin7-core';
-import {
-  healOptixFieldMismatchesFromCatalogs,
-  summarizeFieldHeal,
-} from '@/lib/integrations/cin7-field-heal';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import {
   buildProductFieldMismatchBreakdown,
@@ -451,37 +447,17 @@ export async function buildCin7Reconciliation(
     return { byVisibility, styleCodes, bySku };
   };
 
-  let {
+  const {
     byVisibility: optixByVisibility,
     styleCodes: optixStyleCodes,
     bySku: optixProductBySku,
   } = rebuildOptixProductMaps(productRows);
 
-  // Auto-heal field diffs for products/customers/suppliers/branches/internal/stock
-  // from the live Cin7 catalogs already in memory. Per-entity skips if that slice is dirty.
-  if (source === 'omni' && omniCatalogs) {
-    const healResult = await healOptixFieldMismatchesFromCatalogs(ownerUserId, omniCatalogs);
-    if (healResult.healed_total > 0) {
-      const reloaded = await loadOptixMasterForReconciliation(ownerUserId);
-      productRows = reloaded.productRows;
-      customerRows = reloaded.customerRows;
-      internalCustomerRows = reloaded.internalCustomerRows;
-      internalCustomerCount = reloaded.internalCustomerCount;
-      supplierRows = reloaded.supplierRows;
-      branchRows = reloaded.branchRows;
-      customerTotal = reloaded.customerTotal;
-      customerExtraWithoutId = reloaded.customerExtraWithoutId;
-      supplierTotal = reloaded.supplierTotal;
-      supplierExtraWithoutId = reloaded.supplierExtraWithoutId;
-      referenceSnapshot = reloaded.referenceSnapshot;
-      ({
-        byVisibility: optixByVisibility,
-        styleCodes: optixStyleCodes,
-        bySku: optixProductBySku,
-      } = rebuildOptixProductMaps(productRows));
-      notes.push(summarizeFieldHeal(healResult));
-    }
-  }
+  // READ-ONLY measurement path (Toby precondition): never write Optix from recon.
+  // Field heal / stock prune are separate explicit actions with their own audit logs.
+  notes.push(
+    'This reconciliation is read-only. It does not align, heal, or delete Optix data. Use “Apply field heal” or “Prune surplus stock” for repairs — those are separate, logged actions.'
+  );
 
   const optixCustomerById = new Map(
     customerRows
