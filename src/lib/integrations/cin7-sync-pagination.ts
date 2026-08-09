@@ -1,4 +1,5 @@
 import { getCatalogPageGapMs } from '@/lib/integrations/cin7-catalog-fetch';
+import { resolveAdaptivePageGapMs } from '@/lib/integrations/cin7-sync-adaptive';
 import {
   CIN7_SYNC_SAFETY_MAX_PAGES,
   getCin7PageSize,
@@ -63,6 +64,7 @@ export async function runPagedOmniSync<T>(input: {
   let complete = false;
   let timedOut = false;
   let nextPage: number | null = null;
+  let sourceRowsFetched = 0;
   /** Last empty page was after a fetch error — do not treat as end-of-catalog. */
   let emptyAfterFetchError = false;
 
@@ -78,8 +80,15 @@ export async function runPagedOmniSync<T>(input: {
       break;
     }
 
-    if (page > startPage && pageGapMs > 0) {
-      await sleep(pageGapMs);
+    const adaptiveGap = resolveAdaptivePageGapMs({
+      configuredGapMs: pageGapMs,
+      nextPage: page,
+      pageSize,
+      reportedTotal: null,
+      sourceRowsFetchedSoFar: sourceRowsFetched,
+    });
+    if (adaptiveGap > 0) {
+      await sleep(adaptiveGap);
     }
 
     const result = await input.fetchPage(page);
@@ -114,6 +123,7 @@ export async function runPagedOmniSync<T>(input: {
 
     emptyRetries = 0;
     emptyAfterFetchError = false;
+    sourceRowsFetched += result.sourceRowCount;
     if (result.meta && input.onPageMeta) {
       input.onPageMeta(result.meta);
     }
