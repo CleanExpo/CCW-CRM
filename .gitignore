@@ -8,10 +8,10 @@ tmpclaude-*
 # keeps the directory traversable, which is what makes the negations below bite.
 #
 # The agent definitions and settings this project OWNS are tracked so they are IN THE COMMIT.
-# `scripts/ci/validate-agents.js` reads the repository-local `.claude/agents/`. It USED TO exit 0
-# when that directory was absent; while these files were ignored they were absent from every
-# commit, so a CI checkout had nothing to validate and the gate reported success while measuring
-# nothing on every run of `boardroom-ci.yml`. It now exits 1 instead.
+# `scripts/ci/validate-agents.js` reads the repository-local `.claude/agents/`. While these files
+# were ignored they were absent from every commit, so a CI checkout had nothing to validate:
+# whenever the old validator reached its missing-directory path it exited 0 having read nothing.
+# It now exits 1 instead.
 #
 # Everything else under `.claude/` stays ignored, including `worktrees/` (agent checkouts
 # of this same repo) and `settings.local.json` (machine-local overrides).
