@@ -2,7 +2,6 @@
  * Premium marketing home — server component.
  * Hero LCP text stays outside client reveal wrappers.
  */
-import { LoginForm } from '@/components/auth/login-form';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { MarketingFooter } from '@/components/landing/marketing-footer';
 import { MarketingHeader } from '@/components/landing/marketing-header';
@@ -48,6 +47,12 @@ function LoginFormFallback() {
     </div>
   );
 }
+
+/** Client-only — avoids SSR mismatch when browser tooling mutates the form DOM. */
+const LoginForm = dynamic(
+  () => import('@/components/auth/login-form').then((m) => m.LoginForm),
+  { ssr: false, loading: () => <LoginFormFallback /> }
+)
 
 const display: React.CSSProperties = {
   fontFamily: 'var(--font-marketing-display), var(--font-marketing-body), sans-serif',
