@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
 
 type MarketingPublicHeroProps = {
   kicker: string;
@@ -29,25 +29,15 @@ export function MarketingPublicHero({
         className
       )}
     >
-      <div
-        className={cn(
-          'mb-5 inline-flex items-center gap-2',
-          align === 'center' && 'justify-center'
-        )}
+      <p className="mb-4 text-[12px] font-semibold tracking-[0.22em] text-sky-400/90 uppercase">
+        {kicker}
+      </p>
+      <h1
+        className="text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.08] font-semibold tracking-tight text-balance text-white"
+        style={{
+          fontFamily: 'var(--font-marketing-display), var(--font-marketing-body), sans-serif',
+        }}
       >
-        <span
-          className="h-px w-8 bg-gradient-to-r from-transparent to-sky-400/80"
-          aria-hidden
-        />
-        <p className="text-xs font-bold tracking-[0.22em] text-sky-300/95 uppercase sm:text-sm">
-          {kicker}
-        </p>
-        <span
-          className="h-px w-8 bg-gradient-to-l from-transparent to-indigo-400/70"
-          aria-hidden
-        />
-      </div>
-      <h1 className="text-4xl font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-[3rem] md:leading-[1.08]">
         {title}
       </h1>
       {description ? (
@@ -60,7 +50,9 @@ export function MarketingPublicHero({
           {description}
         </div>
       ) : null}
-      {children ? <div className={cn('mt-10', align === 'center' && 'flex justify-center')}>{children}</div> : null}
+      {children ? (
+        <div className={cn('mt-10', align === 'center' && 'flex justify-center')}>{children}</div>
+      ) : null}
     </div>
   );
 }
