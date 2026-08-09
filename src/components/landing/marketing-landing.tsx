@@ -1,63 +1,39 @@
 /**
- * Server component on purpose. The landing page was previously marked
- * `use client` despite having no hooks, which pulled the entire 600+ line
- * tree into the client bundle and dominated main-thread time before LCP
- * (post-#276 LHCI: ~950ms script evaluation on `/`). Interactive pieces
- * (header, showcase, FAQ, ambient, login form) stay as client islands.
+ * Premium marketing home — server component.
+ * Hero LCP text stays outside client reveal wrappers.
  */
 import { LoginForm } from '@/components/auth/login-form';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { MarketingFooter } from '@/components/landing/marketing-footer';
 import { MarketingHeader } from '@/components/landing/marketing-header';
+import { MarketingReveal } from '@/components/landing/marketing-reveal';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
-import { marketingShell as shell } from '@/components/landing/marketing-shell';
-import { Badge } from '@/components/ui/badge';
 import {
-  BentoCard,
-  BentoCardDescription,
-  BentoCardHeader,
-  BentoCardTitle,
-  BentoGrid,
-} from '@/components/ui/bento-grid';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+  marketingSectionRule as sectionRule,
+  marketingSectionY as sectionY,
+  marketingShell as shell,
+  marketingShellWide as shellWide,
+} from '@/components/landing/marketing-shell';
 import { cn } from '@/lib/utils';
-import {
-  ArrowRight,
-  CheckCircle2,
-  FileSpreadsheet,
-  FileText,
-  Landmark,
-  Link2,
-  LogIn,
-  MapPin,
-  Package,
-  ShieldCheck,
-  Sparkles,
-  Timer,
-  TrendingUp,
-  Truck,
-  Users,
-  Warehouse,
-  Zap,
-} from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense, type ReactNode } from 'react';
 
-/** Below-fold / decorative client islands — keep out of the hero JS critical path. */
 const MarketingAmbientCanvas = dynamic(
-  () =>
-    import('@/components/landing/marketing-ambient').then((m) => m.MarketingAmbientCanvas),
+  () => import('@/components/landing/marketing-ambient').then((m) => m.MarketingAmbientCanvas),
   { loading: () => null }
 );
-const HeroPremiumShowcase = dynamic(
-  () =>
-    import('@/components/landing/hero-premium-showcase').then((m) => m.HeroPremiumShowcase),
+
+const HeroOperationsStage = dynamic(
+  () => import('@/components/landing/hero-operations-stage').then((m) => m.HeroOperationsStage),
   {
-    loading: () => <div className="min-h-[280px] w-full" aria-hidden />,
+    loading: () => (
+      <div className="min-h-[320px] w-full border border-white/[0.06] bg-[#0a0a0e]" aria-hidden />
+    ),
   }
 );
+
 const LandingFaq = dynamic(
   () => import('@/components/landing/landing-faq').then((m) => m.LandingFaq),
   {
@@ -68,85 +44,84 @@ const LandingFaq = dynamic(
 function LoginFormFallback() {
   return (
     <div className="flex min-h-[200px] items-center justify-center">
-      <div className="border-primary/40 border-t-primary h-8 w-8 animate-spin rounded-full border-2" />
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/30 border-t-sky-400" />
     </div>
   );
 }
 
-const sectionY = 'py-28 md:py-36';
-const sectionRule = 'border-t border-white/[0.08]';
+const display: React.CSSProperties = {
+  fontFamily: 'var(--font-marketing-display), var(--font-marketing-body), sans-serif',
+};
 
-const TRUST_PILLS = [
-  'Inventory-aware operations',
-  'Quote-to-cash clarity',
-  'Australia-ready posture',
-  'Role-based access design',
+const FRICTIONS = [
+  {
+    n: '01',
+    title: 'Spreadsheets as system of record',
+    body: 'Orders, stock, and customer context live in files nobody trusts after lunch.',
+  },
+  {
+    n: '02',
+    title: 'Tools that ignore the floor',
+    body: 'Generic CRM never learned quotes, branches, receiving, or finance hand-offs.',
+  },
+  {
+    n: '03',
+    title: 'Integrations that almost sync',
+    body: 'Inventory, accounting, and commerce drift until every meeting becomes reconciliation.',
+  },
 ];
 
-const PROBLEMS = [
+const CAPABILITIES = [
   {
-    icon: FileSpreadsheet,
-    title: 'Truth lives in spreadsheets',
-    body: 'Orders, stock, and customer context split across files and inboxes—slowing everyone down and inviting costly mistakes.',
+    n: '01',
+    title: 'Quote to cash, one thread',
+    body: 'Quotes, orders, and fulfilment status stay linked—so sales, warehouse, and finance stop arguing about which file is real.',
+    points: ['Guided quoting', 'Order conversion', 'Margin you can explain'],
   },
   {
-    icon: Timer,
-    title: 'Teams ramp too slowly',
-    body: 'Generic tools do not match how equipment suppliers actually work: quotes, branches, receiving, and finance hand-offs.',
+    n: '02',
+    title: 'Inventory built for distributors',
+    body: 'Stock, transfers, purchase orders, and receiving that match how goods actually move across Australian branches.',
+    points: ['Branch visibility', 'Transfers & alerts', 'Procurement flow'],
   },
   {
-    icon: Link2,
-    title: 'Integrations stay “almost” live',
-    body: 'Inventory, accounting, and e-commerce drift apart when systems are not orchestrated around one operational core.',
+    n: '03',
+    title: 'Finance hand-offs without theatre',
+    body: 'Invoices and reconciliation themes designed to land in accounting—connectors as a roadmap, not a footnote.',
+    points: ['Audit-minded trails', 'Xero-ready path', 'Clear cutovers'],
+  },
+  {
+    n: '04',
+    title: 'Assist where work already happens',
+    body: 'Embedded help inside quotes, inventory, and service—not a disconnected chat novelty.',
+    points: ['In-context assists', 'Role-aware training', 'Governance first'],
   },
 ];
 
 const STEPS = [
   {
-    step: '01',
-    title: 'Map your workflows',
-    body: 'Align quotes, fulfilment, and finance with how your branches already run—no forced rip-and-replace fantasy.',
+    n: '01',
+    title: 'Map the work',
+    body: 'Align quotes, fulfilment, and finance to how your branches already run.',
   },
   {
-    step: '02',
+    n: '02',
     title: 'Connect the stack',
-    body: 'Bring inventory, accounting, and commerce signals into one place so decisions are based on current reality.',
+    body: 'Bring inventory, accounting, and commerce into one operational picture.',
   },
   {
-    step: '03',
+    n: '03',
     title: 'Train by role',
-    body: 'Equip sales, warehouse, finance, and service with paths that respect their day-one jobs—not a single generic manual.',
+    body: 'Sales, warehouse, finance, and service each get a path that respects day-one jobs.',
   },
   {
-    step: '04',
-    title: 'Operate with confidence',
-    body: 'Dashboards, alerts, and runbooks help you catch issues early and keep leadership visibility honest.',
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    quote:
-      'We stopped re-keying the same order details three times. The hand-off from quote to warehouse is finally legible to everyone on the floor.',
-    name: 'Operations lead',
-    detail: 'National cleaning equipment distributor (Australia)',
-  },
-  {
-    quote:
-      'Finance cares about audit trails; sales cares about speed. Having one spine for customers, orders, and stock reduced support noise dramatically.',
-    name: 'Head of finance & IT',
-    detail: 'Multi-branch wholesale supplier',
-  },
-  {
-    quote:
-      'The win was not “more features”—it was fewer places to look when a customer calls about a delivery date or a back-order.',
-    name: 'Customer service manager',
-    detail: 'Equipment import & distribution',
+    n: '04',
+    title: 'Operate with clarity',
+    body: 'Dashboards and runbooks that keep leadership visibility honest.',
   },
 ];
 
 export interface MarketingLandingProps {
-  /** Streamed stats region (Suspense). Must not block hero HTML. */
   statsSlot: ReactNode;
 }
 
@@ -155,542 +130,381 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
     <div
       className={cn(
         marketingFont.className,
-        'dark text-foreground selection:bg-primary/30 relative min-h-screen scroll-smooth bg-[#030306] antialiased selection:text-white'
+        'dark relative min-h-screen scroll-smooth bg-[#050508] text-zinc-100 antialiased selection:bg-sky-500/25 selection:text-white'
       )}
     >
       <MarketingAmbientCanvas />
       <div className="relative z-10">
         <MarketingHeader />
         <main>
-          {/* Hero — single centered column + showcase below */}
-          <section className="relative overflow-hidden pt-20 pb-12 md:pt-28 md:pb-16 lg:pt-32 lg:pb-20">
+          {/* ─── HERO ─── */}
+          <section className="relative overflow-hidden">
             <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_55%_at_50%_-15%,hsl(var(--primary)/0.14),transparent_58%),radial-gradient(ellipse_50%_40%_at_80%_30%,hsl(var(--accent)/0.08),transparent_50%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-10%,rgba(14,165,233,0.12),transparent_55%)]"
               aria-hidden
             />
             <div
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.028)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_90%_70%_at_50%_0%,black,transparent_75%)] bg-[length:64px_64px] opacity-[0.35]"
+              className="pointer-events-none absolute inset-0 opacity-[0.35]"
+              style={{
+                backgroundImage:
+                  'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+                backgroundSize: '72px 72px',
+                maskImage: 'radial-gradient(ellipse 80% 70% at 50% 0%, black, transparent 75%)',
+              }}
               aria-hidden
             />
-            <div className={cn(shell, 'relative flex flex-col items-center')}>
-              {/* LCP text stays outside animate-marketing-reveal so entrance motion
-                  cannot delay or re-attribute the hero paint. Animate chrome only. */}
-              <div className="mx-auto w-full max-w-3xl text-center">
-                <div className="animate-marketing-reveal flex justify-center motion-reduce:animate-none">
-                  <Badge
-                    variant="secondary"
-                    className="border border-sky-400/40 bg-gradient-to-r from-sky-500/20 to-indigo-500/15 px-5 py-2 text-xs font-semibold text-sky-50 shadow-lg ring-1 shadow-sky-500/15 ring-white/10"
+
+            <div
+              className={cn(shellWide, 'relative pt-12 pb-12 md:pt-16 md:pb-16 lg:pt-20 lg:pb-20')}
+            >
+              <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.18fr)] lg:gap-12 xl:gap-14">
+                <div className="max-w-xl lg:pt-2">
+                  <p
+                    className="text-[11px] font-semibold tracking-[0.28em] text-sky-400/90 uppercase sm:text-xs"
+                    style={display}
                   >
-                    <Sparkles className="mr-2 h-3.5 w-3.5 text-sky-300" />
-                    ERP &amp; CRM for equipment suppliers
-                  </Badge>
-                </div>
-                <h1 className="mx-auto mt-8 max-w-[22ch] text-4xl leading-[1.06] font-extrabold tracking-tight text-balance text-white sm:text-5xl md:text-6xl md:leading-[1.05] lg:text-[3.35rem] lg:leading-[1.02]">
-                  Run quotes, stock, and fulfilment from{' '}
-                  <span className="bg-gradient-to-r from-sky-200 via-cyan-100 to-indigo-300 bg-clip-text text-transparent">
-                    one calm spine
-                  </span>
-                </h1>
-                <p className="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-pretty text-zinc-400 md:text-lg md:leading-relaxed">
-                  Replace fragmented spreadsheets and disconnected tools with a single operations
-                  platform built for Australian cleaning-equipment wholesalers and distributors who
-                  move real SKUs.
-                </p>
-                <div className="animate-marketing-reveal mt-10 flex flex-col items-center justify-center gap-4 motion-reduce:animate-none sm:flex-row sm:flex-wrap">
-                  <Button
-                    size="lg"
-                    className="from-primary shadow-primary/35 h-14 min-w-[200px] rounded-full bg-gradient-to-r to-indigo-500 px-10 text-base font-semibold text-white shadow-xl transition hover:brightness-110"
-                    asChild
+                    CCW Online
+                  </p>
+
+                  <h1
+                    className="mt-4 text-[clamp(2.1rem,4.6vw,3.65rem)] leading-[1.02] font-semibold tracking-tight text-white"
+                    style={display}
                   >
-                    <Link href="/login">
-                      Start with your team
+                    Operations software for equipment suppliers
+                  </h1>
+
+                  <p className="mt-5 text-base leading-relaxed text-zinc-400 md:text-lg">
+                    Quotes, stock, and fulfilment in one system—built for Australian wholesalers who
+                    move real SKUs, not slides.
+                  </p>
+
+                  <div className="mt-8 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/login"
+                      className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
+                    >
+                      Enter workspace
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-14 min-w-[200px] rounded-full border-white/20 bg-white/[0.05] px-8 text-base font-semibold text-white backdrop-blur-md hover:border-white/30 hover:bg-white/[0.1]"
-                    asChild
-                  >
-                    <Link href="/features">Explore capabilities</Link>
-                  </Button>
-                </div>
-                <div className="mt-12 flex flex-wrap justify-center gap-2.5">
-                  {TRUST_PILLS.map((t) => (
-                    <span
-                      key={t}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-zinc-950/70 px-4 py-2 text-xs font-medium text-zinc-300 shadow-inner shadow-black/20 backdrop-blur-md"
+                    <Link
+                      href="/product"
+                      className="inline-flex h-12 items-center justify-center border border-white/20 px-7 text-[15px] font-semibold text-white transition hover:bg-white/[0.06]"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400/90" />
-                      {t}
-                    </span>
-                  ))}
-                </div>
+                      See the product
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </div>
               </div>
 
-              <div className="relative mt-16 w-full max-w-[min(100%,960px)] md:mt-20 lg:mt-28">
-                <div className="mb-8 flex flex-col items-center gap-2">
-                  <span className="text-[11px] font-bold tracking-[0.32em] text-zinc-400 uppercase">
-                    Operations at a glance
-                  </span>
-                  <div className="h-px w-16 bg-gradient-to-r from-transparent via-sky-500/50 to-transparent" />
+                {/* Dominant product plane — shares the first viewport on large screens */}
+                <div className="min-w-0 lg:-mr-2 xl:-mr-4">
+                  <HeroOperationsStage />
                 </div>
-                <HeroPremiumShowcase />
               </div>
             </div>
           </section>
 
           {statsSlot}
 
-          {/* Problem */}
-          <section id="problems" className={cn(sectionY, sectionRule, 'relative bg-zinc-950/50')}>
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_100%,rgba(99,102,241,0.06),transparent_55%)]" />
-            <div className={cn(shell, 'relative')}>
+          {/* ─── FRICTION ─── */}
+          <section id="problems" className={cn(sectionY, sectionRule)}>
+            <div className={shell}>
+              <MarketingReveal>
+                <div className="grid gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
               <MarketingSectionHeading
-                kicker="The cost of fragmentation"
-                title="Your team is not slow—your systems are noisy"
-                description="Equipment suppliers win on trust, delivery dates, and margin. None of that survives when every department maintains its own shadow copy of the truth."
-              />
-              <div className="mt-20 grid gap-6 md:grid-cols-3 md:gap-8">
-                {PROBLEMS.map(({ icon: Icon, title, body }) => (
-                  <div
-                    key={title}
-                    className="group relative overflow-hidden rounded-3xl border border-white/[0.09] bg-gradient-to-b from-zinc-900/95 via-zinc-950/90 to-black p-8 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.9)] ring-1 ring-white/[0.04] transition-all duration-500 hover:border-sky-500/25 hover:shadow-[0_0_60px_-20px_rgba(56,189,248,0.18)]"
-                  >
-                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.04)_0%,transparent_42%)] opacity-40" />
-                    <div className="from-primary/[0.12] absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    <div className="relative">
-                      <div className="mb-6 inline-flex rounded-2xl border border-sky-400/45 bg-gradient-to-br from-sky-500/25 to-sky-600/10 p-4 shadow-[0_0_32px_-8px_rgba(56,189,248,0.4)] ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-[1.04]">
-                        <Icon className="h-7 w-7 text-sky-50" strokeWidth={2} />
-                      </div>
-                      <h3 className="text-lg font-bold tracking-tight text-white">{title}</h3>
-                      <p className="mt-4 text-sm leading-relaxed text-zinc-400 md:text-[15px]">
-                        {body}
+                    index="01 — Pressure"
+                    title="Your team isn’t slow. Your systems are noisy."
+                    description="Equipment suppliers win on delivery dates, trust, and margin. None of that survives when every department keeps its own shadow copy of the truth."
+                  />
+                  <ol className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
+                    {FRICTIONS.map((item) => (
+                      <li
+                        key={item.n}
+                        className="grid grid-cols-[3rem_1fr] gap-4 py-7 md:grid-cols-[4rem_1fr] md:gap-8"
+                      >
+                        <span
+                          className="text-2xl font-semibold text-zinc-600 tabular-nums md:text-3xl"
+                          style={display}
+                        >
+                          {item.n}
+                        </span>
+                        <div>
+                          <h3
+                            className="text-lg font-semibold text-white md:text-xl"
+                            style={display}
+                          >
+                            {item.title}
+                          </h3>
+                          <p className="mt-2 max-w-md text-[15px] leading-relaxed text-zinc-400">
+                            {item.body}
                       </p>
                     </div>
-                  </div>
+                      </li>
                 ))}
+                  </ol>
               </div>
+              </MarketingReveal>
             </div>
           </section>
 
-          {/* Solution */}
-          <section
-            id="solution"
-            className={cn(
-              sectionY,
-              sectionRule,
-              'relative bg-gradient-to-b from-black via-zinc-950/90 to-[#030306]'
-            )}
-          >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_0%_50%,rgba(56,189,248,0.05),transparent_50%)]" />
-            <div
-              className={cn(shell, 'relative grid gap-16 lg:grid-cols-2 lg:items-center lg:gap-20')}
-            >
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="h-px w-8 bg-gradient-to-r from-sky-400/80 to-transparent" />
-                  <p className="text-xs font-bold tracking-[0.22em] text-sky-300 uppercase">
-                    Platform story
-                  </p>
-                </div>
-                <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-balance text-white sm:text-4xl md:text-[2.65rem] md:leading-tight">
-                  One operations hub—not another silo
-                </h2>
-                <p className="mt-6 text-lg leading-relaxed text-zinc-400 md:text-xl">
-                  CCW Online ERP is designed to unify catalog, customers, quotes, orders, and
-                  warehouse-heavy workflows while leaving room for the integrations you already
-                  depend on—inventory bridges, accounting, and commerce—so leadership sees one
-                  coherent picture.
-                </p>
-                <ul className="mt-12 space-y-6">
+          {/* ─── SYSTEM ─── */}
+          <section id="solution" className={cn(sectionY, sectionRule, 'relative bg-[#08080c]')}>
+            <div className={shell}>
+              <MarketingReveal>
+                <MarketingSectionHeading
+                  index="02 — System"
+                  title="One operational spine—not another silo"
+                  description="CCW Online unifies catalog, customers, quotes, orders, and warehouse work while leaving room for Cin7, Xero, and Shopify—so leadership sees one coherent picture."
+                />
+              </MarketingReveal>
+
+              <MarketingReveal delayMs={80}>
+                <div className="mt-14 grid gap-px overflow-hidden border border-white/[0.06] bg-white/[0.06] sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    'Dashboards, reporting, and alerts tuned for operational clarity—not vanity charts.',
-                    'Deep integration roadmap: inventory systems, Xero-style accounting, Shopify-style commerce.',
-                    'AI-assisted workflows where they earn trust: embedded assists, not gimmick chat-only UX.',
-                    'Governance primitives: RBAC, audit-minded patterns, and production runbooks as first-class docs.',
-                  ].map((line) => (
-                    <li
-                      key={line}
-                      className="flex gap-4 text-sm leading-relaxed text-zinc-400 md:text-[15px]"
+                    { label: 'Sales', detail: 'Quotes & conversion' },
+                    { label: 'Warehouse', detail: 'Stock & transfers' },
+                    { label: 'Finance', detail: 'Invoices & trails' },
+                    { label: 'Service', detail: 'Customer history' },
+                  ].map((cell) => (
+                    <div
+                      key={cell.label}
+                      className="bg-[#08080c] px-6 py-8 transition-colors hover:bg-[#0c0c12]"
                     >
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500/15 ring-1 ring-sky-500/30">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-sky-300" />
-                      </span>
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.12] bg-gradient-to-br from-zinc-900/98 via-zinc-950 to-black p-8 shadow-[0_32px_100px_-40px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.07] backdrop-blur-sm md:p-10">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                <div className="from-primary/25 to-accent/5 pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-gradient-to-br blur-3xl" />
-                <div className="relative space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-xl border border-sky-400/45 bg-sky-500/20 p-3 shadow-[0_0_20px_-6px_rgba(56,189,248,0.35)] ring-1 ring-white/10">
-                      <ShieldCheck className="h-8 w-8 text-sky-100" strokeWidth={2} />
-                    </div>
-                    <div>
-                      <p className="text-base font-bold text-white">Built for serious operations</p>
-                      <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-                        Security audits, disaster recovery, and deployment runbooks in the
-                        documentation set.
+                      <p className="text-[12px] font-semibold tracking-[0.16em] text-sky-400/80 uppercase">
+                        {cell.label}
                       </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      {
-                        icon: Warehouse,
-                        label: 'Warehouse',
-                        sub: 'Receiving & stock health',
-                        accent: 'text-teal-400',
-                      },
-                      {
-                        icon: Truck,
-                        label: 'Fulfilment',
-                        sub: 'Branches & transfers',
-                        accent: 'text-violet-400',
-                      },
-                      {
-                        icon: Users,
-                        label: 'Customers',
-                        sub: 'Contacts & history',
-                        accent: 'text-sky-400',
-                      },
-                      {
-                        icon: Zap,
-                        label: 'AI roadmap',
-                        sub: 'Surface wins in-product',
-                        accent: 'text-amber-400',
-                      },
-                    ].map(({ icon: Icon, label, sub, accent }) => (
-                      <div
-                        key={label}
-                        className="group/tile rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition-all hover:border-white/[0.15] hover:bg-white/[0.05]"
-                      >
-                        <Icon
-                          className={cn(
-                            'mb-2 h-5 w-5 transition-transform group-hover/tile:scale-110',
-                            accent
-                          )}
-                        />
-                        <p className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
-                          {label}
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-zinc-100">{sub}</p>
+                      <p className="mt-3 text-xl font-semibold text-white" style={display}>
+                        {cell.detail}
+                      </p>
                       </div>
                     ))}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.08] pt-5 text-xs leading-relaxed text-zinc-400">
-                    <MapPin className="h-4 w-4 shrink-0 text-sky-400" />
-                    <span>
-                      Designed with Australian wholesale operations in mind—validate hosting &amp;
-                      compliance with your rollout team.
-                    </span>
-                  </div>
                 </div>
-              </div>
+              </MarketingReveal>
+
+              <MarketingReveal delayMs={120}>
+                <p className="mt-10 max-w-2xl text-sm leading-relaxed text-zinc-500">
+                  Designed for Australian wholesale operations—confirm hosting, retention, and
+                  compliance with your rollout team before go-live.
+                </p>
+              </MarketingReveal>
             </div>
           </section>
 
-          {/* Features */}
+          {/* ─── CAPABILITIES ─── */}
           <section id="features" className={cn(sectionY, sectionRule)}>
             <div className={shell}>
+              <MarketingReveal>
               <MarketingSectionHeading
-                kicker="Capabilities"
-                title="Everything your floor and front office argue about—addressed in one place"
-                description="Feature depth grows with your business. Start where the pain is loudest; expand when your team is ready—not when a vendor forces a big-bang cutover."
-              />
-              <BentoGrid columns={3} gap="lg" className="mt-16">
-                <BentoCard
-                  span={2}
-                  variant="elevated"
-                  className="relative overflow-hidden border-white/10 bg-zinc-900/55 p-8 shadow-xl ring-1 ring-white/[0.04] md:p-10"
-                >
-                  <div className="pointer-events-none absolute top-0 -right-24 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
-                  <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-                    <div className="flex shrink-0 gap-2 sm:gap-3">
-                      {[
-                        { Icon: FileText, label: 'Quote' },
-                        { Icon: Package, label: 'Order' },
-                        { Icon: TrendingUp, label: 'Cash' },
-                      ].map(({ Icon, label }, idx) => (
-                        <div key={label} className="flex items-center gap-2 sm:gap-3">
-                          {idx > 0 ? (
-                            <ArrowRight
-                              className="hidden h-4 w-4 text-zinc-600 sm:block"
-                              aria-hidden
-                            />
-                          ) : null}
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/15 shadow-[0_0_24px_-8px_rgba(56,189,248,0.4)] ring-1 ring-white/10 sm:h-16 sm:w-16">
-                              <Icon
-                                className="h-7 w-7 text-sky-100 sm:h-8 sm:w-8"
-                                strokeWidth={2}
-                                aria-hidden
-                              />
-                            </div>
-                            <span className="text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
-                              {label}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <BentoCardHeader className="min-w-0 flex-1 space-y-3 text-left">
-                      <BentoCardTitle className="text-xl text-white sm:text-2xl">
-                        Quote-to-cash you can defend
-                      </BentoCardTitle>
-                      <BentoCardDescription className="text-base leading-relaxed text-zinc-300">
-                        Quotes, orders, line items, and fulfilment status linked so sales,
-                        warehouse, and finance stop debating which spreadsheet is the real one.
-                      </BentoCardDescription>
-                    </BentoCardHeader>
-                  </div>
-                  <div className="relative mt-10 grid gap-3 sm:grid-cols-3">
-                    {[
-                      { label: 'Guided quoting', sub: 'Templates & guardrails' },
-                      { label: 'Order conversion', sub: 'One source of truth' },
-                      { label: 'Revenue visibility', sub: 'Margin you can explain' },
-                    ].map(({ label, sub }) => (
-                      <div
-                        key={label}
-                        className="group/pill rounded-xl border border-white/10 bg-white/[0.04] px-4 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400/45 hover:bg-sky-500/12 hover:shadow-[0_12px_40px_-16px_rgba(56,189,248,0.25)]"
+                  index="03 — Capabilities"
+                  title="What the floor and front office actually fight about"
+                  description="Start where the pain is loudest. Expand when the team is ready—not when a vendor forces a big-bang cutover."
+                />
+              </MarketingReveal>
+
+              <div className="mt-16 space-y-0 border-t border-white/[0.06]">
+                {CAPABILITIES.map((cap, i) => (
+                  <MarketingReveal key={cap.n} delayMs={i * 40}>
+                    <article className="grid gap-6 border-b border-white/[0.06] py-10 md:grid-cols-[5rem_1fr_auto] md:gap-10 md:py-12">
+                      <span
+                        className="text-3xl font-semibold text-zinc-700 tabular-nums"
+                        style={display}
                       >
-                        <span className="block text-sm font-bold text-white">{label}</span>
-                        <span className="mt-1.5 block text-[11px] leading-tight font-medium text-zinc-400 transition-colors group-hover/pill:text-zinc-200">
-                          {sub}
+                        {cap.n}
                         </span>
+                      <div className="max-w-xl">
+                        <h3
+                          className="text-xl font-semibold text-white md:text-2xl"
+                          style={display}
+                        >
+                          {cap.title}
+                        </h3>
+                        <p className="mt-3 text-[15px] leading-relaxed text-zinc-400">{cap.body}</p>
+                        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-zinc-500">
+                          {cap.points.map((p) => (
+                            <li key={p} className="flex items-center gap-2">
+                              <span className="h-px w-3 bg-sky-500/70" aria-hidden />
+                              {p}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
+                      <div className="hidden items-start md:flex">
+                        <Link
+                          href="/features"
+                          className="inline-flex items-center gap-1 text-[13px] font-medium text-zinc-400 transition hover:text-sky-300"
+                        >
+                          Details
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                    </article>
+                  </MarketingReveal>
                     ))}
                   </div>
-                </BentoCard>
-
-                <BentoCard
-                  variant="elevated"
-                  className="relative overflow-hidden border-white/10 bg-zinc-950/85 p-8 shadow-lg ring-1 ring-white/[0.04] md:p-10"
-                >
-                  <div className="pointer-events-none absolute -top-10 -left-10 h-32 w-32 rounded-full bg-teal-500/10 blur-2xl" />
-                  <div className="relative mb-6 inline-flex rounded-2xl border border-teal-400/35 bg-teal-500/15 p-4 shadow-[0_0_28px_-10px_rgba(45,212,191,0.35)] ring-1 ring-white/10">
-                    <Warehouse className="h-8 w-8 text-teal-100" strokeWidth={2} aria-hidden />
-                  </div>
-                  <BentoCardHeader className="space-y-3 text-left">
-                    <BentoCardTitle className="text-white">
-                      Inventory &amp; procurement
-                    </BentoCardTitle>
-                    <BentoCardDescription className="text-[15px] leading-relaxed text-zinc-300">
-                      Stock, transfers, purchase orders, and receiving workflows aligned to how
-                      distributors actually move goods.
-                    </BentoCardDescription>
-                  </BentoCardHeader>
-                </BentoCard>
-
-                <BentoCard
-                  variant="elevated"
-                  className="relative overflow-hidden border-white/10 bg-zinc-950/85 p-8 shadow-lg ring-1 ring-white/[0.04] md:p-10"
-                >
-                  <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-violet-500/10 blur-2xl" />
-                  <div className="relative mb-6 inline-flex rounded-2xl border border-violet-400/35 bg-violet-500/15 p-4 shadow-[0_0_28px_-10px_rgba(167,139,250,0.35)] ring-1 ring-white/10">
-                    <Landmark className="h-8 w-8 text-violet-100" strokeWidth={2} aria-hidden />
-                  </div>
-                  <BentoCardHeader className="space-y-3 text-left">
-                    <BentoCardTitle className="text-white">Finance hand-offs</BentoCardTitle>
-                    <BentoCardDescription className="text-[15px] leading-relaxed text-zinc-300">
-                      Invoices, reconciliation themes, and accounting connectors—documented as a
-                      roadmap, not a footnote.
-                    </BentoCardDescription>
-                  </BentoCardHeader>
-                </BentoCard>
-
-                <BentoCard
-                  span={2}
-                  variant="elevated"
-                  glowOnHover
-                  className="relative col-span-1 overflow-hidden border border-violet-500/20 bg-zinc-950/90 p-8 shadow-xl ring-1 ring-violet-500/15 md:col-span-2 md:p-10"
-                >
-                  <div className="pointer-events-none absolute -top-28 -right-24 h-72 w-72 rounded-full bg-gradient-to-br from-sky-500/25 via-indigo-600/20 to-violet-600/15 blur-3xl" />
-                  <div className="pointer-events-none absolute bottom-0 left-1/4 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
-                  <div className="relative flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-                    <div className="shrink-0">
-                      <div className="inline-flex rounded-2xl border border-sky-400/45 bg-gradient-to-br from-sky-500/25 to-indigo-600/25 p-4 shadow-[0_0_32px_-8px_rgba(56,189,248,0.45)] ring-2 ring-white/15">
-                        <Sparkles className="h-9 w-9 text-white" strokeWidth={2} aria-hidden />
-                      </div>
-                    </div>
-                    <BentoCardHeader className="min-w-0 flex-1 space-y-3 text-left">
-                      <BentoCardTitle className="text-xl text-white sm:text-2xl">
-                        AI where it earns trust
-                      </BentoCardTitle>
-                      <BentoCardDescription className="text-base leading-relaxed text-zinc-300">
-                        Agents and copilots are designed to assist inside real tasks—quotes,
-                        inventory, service—not as a disconnected novelty. Training strategy focuses
-                        on discoverability and adoption, not checkbox demos.
-                      </BentoCardDescription>
-                    </BentoCardHeader>
-                  </div>
-                  <div className="relative mt-8 flex flex-wrap gap-2 border-t border-white/[0.08] pt-6">
-                    {[
-                      'In-context assists',
-                      'Inventory-aware prompts',
-                      'Governance-first rollout',
-                    ].map((chip) => (
-                      <Badge
-                        key={chip}
-                        variant="outline"
-                        className="border-white/15 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-zinc-200 backdrop-blur-sm"
-                      >
-                        {chip}
-                      </Badge>
-                    ))}
-                  </div>
-                </BentoCard>
-              </BentoGrid>
             </div>
           </section>
 
-          {/* How */}
-          <section id="how" className={cn(sectionY, sectionRule, 'bg-zinc-950/50')}>
+          {/* ─── ROLLOUT ─── */}
+          <section id="how" className={cn(sectionY, sectionRule, 'bg-[#08080c]')}>
             <div className={shell}>
+              <MarketingReveal>
               <MarketingSectionHeading
-                kicker="How it works"
-                title="A disciplined rollout—not a miracle weekend migration"
-              />
-              <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-                {STEPS.map((s) => (
-                  <div
-                    key={s.step}
-                    className="hover:border-primary/25 hover:shadow-primary/5 relative rounded-2xl border border-white/[0.08] bg-black/50 p-7 shadow-md transition-all hover:shadow-lg"
-                  >
-                    <span className="text-5xl leading-none font-black text-sky-500/80 tabular-nums">
-                      {s.step}
+                  index="04 — Rollout"
+                  title="A disciplined path—not a miracle weekend"
+                  description="Four stages. Same spine. No theatre."
+                />
+              </MarketingReveal>
+
+              <div className="relative mt-16">
+                <div
+                  className="pointer-events-none absolute top-0 bottom-0 left-[1.15rem] w-px bg-gradient-to-b from-sky-500/50 via-white/10 to-transparent md:left-[1.35rem]"
+                  aria-hidden
+                />
+                <ol className="space-y-10 md:space-y-12">
+                  {STEPS.map((step, i) => (
+                    <MarketingReveal key={step.n} delayMs={i * 50}>
+                      <li className="relative grid gap-4 pl-12 md:grid-cols-[8rem_1fr] md:gap-10 md:pl-16">
+                        <span
+                          className="absolute top-1 left-0 flex h-9 w-9 items-center justify-center border border-sky-500/40 bg-[#08080c] text-[12px] font-semibold text-sky-300 tabular-nums"
+                          style={display}
+                        >
+                          {step.n}
                     </span>
-                    <h3 className="mt-4 text-lg font-bold text-white">{s.title}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-zinc-300">{s.body}</p>
-                  </div>
-                ))}
+                        <h3 className="text-lg font-semibold text-white md:text-xl" style={display}>
+                          {step.title}
+                        </h3>
+                        <p className="max-w-lg text-[15px] leading-relaxed text-zinc-400">
+                          {step.body}
+                        </p>
+                      </li>
+                    </MarketingReveal>
+                  ))}
+                </ol>
               </div>
             </div>
           </section>
 
-          {/* Testimonials */}
+          {/* ─── OUTCOMES ─── */}
           <section className={cn(sectionY, sectionRule)}>
             <div className={shell}>
+              <MarketingReveal>
+                <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-end lg:gap-20">
               <MarketingSectionHeading
-                kicker="Proof tone"
-                title="Written for operators—not slide decks"
-                description="Illustrative quotes based on common wholesale pain patterns; not attributed to specific named customers."
-              />
-              <div className="mt-16 grid gap-6 md:grid-cols-3 md:gap-8">
-                {TESTIMONIALS.map((t) => (
-                  <blockquote
-                    key={t.name}
-                    className="flex flex-col rounded-2xl border border-white/[0.08] bg-gradient-to-b from-zinc-900/80 to-black p-8 shadow-lg"
-                  >
-                    <p className="grow text-sm leading-relaxed text-zinc-200 md:text-[15px]">
-                      &ldquo;{t.quote}&rdquo;
+                    index="05 — Outcomes"
+                    title="Built for operators who measure work, not slides"
+                  />
+                  <blockquote className="border-l-2 border-sky-500/60 pl-6 md:pl-8">
+                    <p
+                      className="text-xl leading-snug font-medium text-zinc-100 md:text-2xl md:leading-snug"
+                      style={display}
+                    >
+                      “The win isn’t more features—it’s fewer places to look when a customer asks
+                      about a delivery date or a back-order.”
                     </p>
-                    <footer className="mt-8 border-t border-white/[0.08] pt-5">
-                      <p className="text-sm font-bold text-white">{t.name}</p>
-                      <p className="mt-1 text-xs text-zinc-400">{t.detail}</p>
+                    <footer className="mt-5 text-sm text-zinc-500">
+                      Pattern from multi-branch wholesale operations · illustrative
                     </footer>
                   </blockquote>
-                ))}
-              </div>
+                </div>
+              </MarketingReveal>
+
+              <MarketingReveal delayMs={80}>
+                <dl className="mt-16 grid gap-px overflow-hidden border border-white/[0.06] bg-white/[0.06] sm:grid-cols-3">
+                  {[
+                    { k: 'One spine', v: 'Quotes · stock · fulfilment' },
+                    { k: 'AU-ready', v: 'Built for local wholesale ops' },
+                    { k: 'Integrations', v: 'Cin7 · Xero · Shopify path' },
+                  ].map((item) => (
+                    <div key={item.k} className="bg-[#050508] px-6 py-8">
+                      <dt className="text-[12px] font-semibold tracking-[0.16em] text-zinc-500 uppercase">
+                        {item.k}
+                      </dt>
+                      <dd className="mt-3 text-lg font-semibold text-white" style={display}>
+                        {item.v}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </MarketingReveal>
             </div>
           </section>
 
-          {/* FAQ */}
-          <section id="faq" className={cn(sectionY, sectionRule, 'bg-zinc-950/60')}>
+          {/* ─── FAQ ─── */}
+          <section id="faq" className={cn(sectionY, sectionRule, 'bg-[#08080c]')}>
             <div className={shell}>
+              <MarketingReveal>
               <MarketingSectionHeading
-                kicker="FAQ"
+                  index="06 — FAQ"
                 title="Straight answers for buyers"
-                description="Still evaluating? Start here—then talk to us about your branches, SKUs, and integrations."
+                  description="Still evaluating? Start here—then talk to us about branches, SKUs, and integrations."
+                  align="center"
+                  className="mx-auto"
               />
-              <div className="mt-16 md:mt-20">
+              </MarketingReveal>
+              <div className="mt-14 md:mt-16">
                 <LandingFaq />
               </div>
             </div>
           </section>
 
-          {/* Final CTA */}
-          <section
-            className={cn(sectionY, 'relative overflow-hidden border-t border-white/[0.08]')}
-          >
-            <div
-              className="from-primary to-accent pointer-events-none absolute inset-0 bg-gradient-to-br via-indigo-600 opacity-95"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_120%,rgba(0,0,0,0.35),transparent)]"
-              aria-hidden
-            />
-            <div className={cn(shell, 'relative text-center')}>
-              <h2 className="text-3xl font-extrabold tracking-tight text-balance text-white sm:text-4xl md:text-[2.5rem]">
-                Ready to give your team one spine for operations?
-              </h2>
-              <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/90 md:text-xl">
-                Sign in to your workspace, or bring stakeholders to walk the modules that matter
-                most—quotes, inventory, fulfilment, and finance—without drowning in jargon.
-              </p>
-              <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  className="h-14 rounded-xl px-10 text-base font-semibold shadow-xl"
-                  asChild
-                >
-                  <Link href="/login">
-                    Sign in to CCW Online
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 rounded-xl border-white/40 bg-white/10 px-10 text-base font-semibold text-white backdrop-blur-md hover:bg-white/20"
-                  asChild
-                >
-                  <Link href="/pricing">View pricing</Link>
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          {/* Sign in */}
+          {/* ─── CLOSE + SIGN IN ─── */}
           <section
             id="signin"
-            className={cn(sectionRule, 'relative bg-black pt-16 pb-24 md:pt-20 md:pb-28')}
+            className={cn(sectionY, 'relative overflow-hidden border-t border-white/[0.06]')}
           >
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px max-w-xl bg-gradient-to-r from-transparent via-sky-500/40 to-transparent"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_100%,rgba(14,165,233,0.14),transparent_60%)]"
               aria-hidden
             />
-            <div className={cn(shell, 'max-w-lg')}>
-              <Card className="relative overflow-hidden border-white/10 bg-zinc-950/95 shadow-2xl ring-1 shadow-black/50 ring-white/10">
-                <div
-                  className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500/80 via-indigo-500 to-violet-500 opacity-90"
-                  aria-hidden
-                />
-                <CardHeader className="space-y-1 border-b border-white/[0.07] bg-gradient-to-b from-zinc-900/80 to-zinc-950/40 px-8 pt-10 pb-8 text-center">
-                  <div className="mx-auto mb-3 w-fit rounded-2xl border border-sky-400/45 bg-sky-500/15 p-3 shadow-[0_0_28px_-8px_rgba(56,189,248,0.45)] ring-1 ring-white/15">
-                    <LogIn className="h-6 w-6 text-sky-100" strokeWidth={2} />
+            <div className={cn(shell, 'relative')}>
+              <MarketingReveal>
+                <div className="grid items-start gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+                  <div>
+                    <p className="text-[12px] font-semibold tracking-[0.22em] text-sky-400/90 uppercase">
+                      Next step
+                    </p>
+                    <h2
+                      className="mt-4 max-w-[14ch] text-[clamp(2rem,4vw,3.25rem)] leading-[1.05] font-semibold tracking-tight text-white"
+                      style={display}
+                    >
+                      Give your team one place to run the day
+              </h2>
+                    <p className="mt-5 max-w-md text-base leading-relaxed text-zinc-400">
+                      Sign in to your workspace, or walk stakeholders through quotes, inventory, and
+                      fulfilment without drowning in jargon.
+                    </p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      <Link
+                        href="/login"
+                        className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
+                      >
+                        Sign in
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                      <Link
+                        href="/pricing"
+                        className="inline-flex h-12 items-center justify-center border border-white/20 px-7 text-[15px] font-semibold text-white transition hover:bg-white/[0.06]"
+                      >
+                        View pricing
+                      </Link>
+            </div>
                   </div>
-                  <CardTitle className="text-2xl font-bold tracking-tight text-white">
+
+                  <div className="border border-white/[0.08] bg-[#0a0a0e] p-6 sm:p-8">
+                    <h3 className="text-lg font-semibold text-white" style={display}>
                     Sign in
-                  </CardTitle>
-                  <CardDescription className="text-base leading-relaxed text-zinc-300">
-                    Access your organisation workspace with your company email.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="bg-zinc-950/60 px-6 pt-8 pb-10 md:px-8">
-                  {/* LoginForm reads useSearchParams; the boundary keeps this page prerenderable. */}
+                    </h3>
+                    <p className="mt-1 text-sm text-zinc-500">
+                      Use your company email for your organisation workspace.
+                    </p>
+                    <div className="mt-6">
                   <Suspense fallback={<LoginFormFallback />}>
                     <LoginForm variant="marketing" />
                   </Suspense>
-                </CardContent>
-              </Card>
+                    </div>
+                  </div>
+                </div>
+              </MarketingReveal>
             </div>
           </section>
         </main>
