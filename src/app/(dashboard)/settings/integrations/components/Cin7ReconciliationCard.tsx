@@ -10,12 +10,23 @@ import {
   getCin7ExceptionReportExportUrl,
   getCin7Reconciliation,
   healCin7FieldMismatches,
+  listCin7ReconHistory,
+  pruneCin7StockSurplus,
   type Cin7ExceptionEntity,
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
 import { CIN7_LIVE_RECON_REFRESHED_EVENT } from '@/lib/integrations/cin7-client-sync-scheduler';
-import { AlertTriangle, BarChart3, FileWarning, Loader2, RefreshCw, Wrench } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  FileWarning,
+  History,
+  Loader2,
+  RefreshCw,
+  Scissors,
+  Wrench,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Cin7ReconciliationCardProps = {
@@ -97,6 +108,11 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   const [exceptionTotal, setExceptionTotal] = useState(0);
   const [exceptionOffset, setExceptionOffset] = useState(0);
   const [healingFields, setHealingFields] = useState(false);
+  const [pruningStock, setPruningStock] = useState(false);
+  const [history, setHistory] = useState<Awaited<ReturnType<typeof listCin7ReconHistory>>['items']>(
+    []
+  );
+  const [lastHealAuditId, setLastHealAuditId] = useState<string | null>(null);
   const loadRequestId = useRef(0);
   const EXCEPTION_PAGE = 100;
 
@@ -113,6 +129,11 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         const data = await getCin7Reconciliation({ force, mode });
         if (requestId !== loadRequestId.current) return;
         setSnapshot(data);
+        if (force || mode === 'acceptance') {
+          void listCin7ReconHistory(8)
+            .then((h) => setHistory(h.items))
+            .catch(() => undefined);
+        }
         if (!options?.silent) {
           const acceptanceBlocked =
             data.acceptance_blocked || data.recon_status === 'blocked' || data.incomplete_sync;
@@ -204,19 +225,25 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     (ex?.branches_field_mismatches ?? 0) +
     (ex?.internal_customers_field_mismatches ?? 0) +
     (ex?.stock_levels_field_mismatches ?? 0);
-  const isRefreshing = loading || liveLoading || healingFields;
+  const stockExtra = ex?.stock_levels_extra_in_optix ?? 0;
+  const isRefreshing = loading || liveLoading || healingFields || pruningStock;
   const fromCache = snapshot?.cache_meta?.from_cache;
 
   const healFieldDiffs = async () => {
+    const ok = window.confirm(
+      'Apply field heal?\n\nThis is a separate repair action (not part of the report). It overwrites matching Optix fields from live Cin7 and writes an audit log that can be reverted.'
+    );
+    if (!ok) return;
     setHealingFields(true);
     try {
       const result = await healCin7FieldMismatches();
+      setLastHealAuditId(result.audit_run_id);
       toast({
         title:
           result.healed_total > 0
-            ? `Aligned ${result.healed_total} row${result.healed_total === 1 ? '' : 's'} to Cin7`
+            ? `Field heal applied (${result.healed_total} rows)`
             : 'No field diffs to heal',
-        description: result.summary,
+        description: `${result.summary} Audit: ${result.audit_run_id}`,
         variant: result.errors.length > 0 ? 'destructive' : undefined,
       });
       await load({ force: true, silent: true });
@@ -231,6 +258,35 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     }
   };
 
+  const pruneSurplusStock = async () => {
+    setPruningStock(true);
+    try {
+      const preview = await pruneCin7StockSurplus({ dryRun: true });
+      const ok = window.confirm(
+        `Prune surplus stock?\n\nDry-run: ${preview.deleted} Optix rows are absent from Cin7 (Optix ${preview.optix_before} · Cin7 ${preview.cin7_keys}).\n\nThis is a separate logged action — not reconciliation. Deleted rows are stored in the audit log for revert.`
+      );
+      if (!ok) return;
+      const result = await pruneCin7StockSurplus({ dryRun: false });
+      if (result.audit_run_id) setLastHealAuditId(result.audit_run_id);
+      toast({
+        title: `Pruned ${result.deleted} surplus stock row${result.deleted === 1 ? '' : 's'}`,
+        description: result.audit_run_id
+          ? `Audit: ${result.audit_run_id}. Re-run live recon to measure.`
+          : 'Re-run live recon to measure.',
+        variant: result.errors.length > 0 ? 'destructive' : undefined,
+      });
+      await load({ force: true, silent: true });
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Stock prune failed',
+        description: error instanceof Error ? error.message : 'Could not prune surplus stock',
+      });
+    } finally {
+      setPruningStock(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -239,11 +295,18 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           Master data reconciliation
         </CardTitle>
         <CardDescription>
-          Cin7 is the source of truth. Compare live counts, then review the exception report for
-          individual records. No data is deleted during this phase.
+          Read-only measurement against Cin7. This report does not heal, align, or delete Optix
+          data. Sign-off uses stored immutable snapshots for this account only.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="bg-muted/40 rounded-lg border px-3 py-2 text-xs leading-relaxed">
+          <p className="font-medium">Account-scoped ledger</p>
+          <p className="text-muted-foreground mt-0.5">
+            Sync runs and reconciliation are stored per Optix account. Two users on the same URL can
+            see different last-sync times and counts — that is expected, not a shared global ledger.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -303,17 +366,67 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               variant="secondary"
               disabled={!isConnected || isRefreshing}
               onClick={() => void healFieldDiffs()}
-              title="Push live Cin7 values onto matching Optix rows (products, contacts, branches, stock)"
+              title="Separate audited repair — does not run inside the report"
             >
               {healingFields ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Wrench className="mr-2 h-4 w-4" />
               )}
-              Heal field diffs ({fieldDiffTotal})
+              Apply field heal ({fieldDiffTotal})
+            </Button>
+          ) : null}
+          {stockExtra > 0 && !snapshot?.acceptance_blocked ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!isConnected || isRefreshing}
+              onClick={() => void pruneSurplusStock()}
+              title="Separate audited prune of Optix stock rows absent from Cin7"
+            >
+              {pruningStock ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Scissors className="mr-2 h-4 w-4" />
+              )}
+              Prune surplus stock ({stockExtra})
             </Button>
           ) : null}
         </div>
+
+        {snapshot?.read_only ? (
+          <p className="text-muted-foreground text-xs">
+            Read-only report
+            {snapshot.recon_run_id ? ` · snapshot ${snapshot.recon_run_id.slice(0, 8)}…` : null}
+            {lastHealAuditId ? ` · last repair audit ${lastHealAuditId.slice(0, 8)}…` : null}
+          </p>
+        ) : null}
+
+        {history.length > 0 ? (
+          <div className="rounded-lg border p-3">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium">
+              <History className="h-3.5 w-3.5" />
+              Stored snapshots (this account)
+            </p>
+            <ul className="space-y-1 text-xs">
+              {history.map((item) => (
+                <li
+                  key={item.id}
+                  className="text-muted-foreground border-border/40 flex flex-wrap justify-between gap-2 border-b py-1 last:border-0"
+                >
+                  <span>
+                    {new Date(item.checked_at).toLocaleString()} · {item.mode} · {item.status}
+                  </span>
+                  <span className="tabular-nums">
+                    SKU {item.products_cin7 ?? '—'}/{item.products_optix ?? '—'} · stock{' '}
+                    {item.stock_cin7 ?? '—'}/{item.stock_optix ?? '—'} · field{' '}
+                    {item.field_mismatch_count} · extra {item.extra_count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {loadError ? (
           <p className="flex items-start gap-1.5 text-sm text-amber-600 dark:text-amber-400">
