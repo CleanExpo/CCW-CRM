@@ -1,0 +1,23 @@
+{
+  "Rules": [
+    {
+      "ID": "optix-full-backups-au",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "database/full/" },
+      "Transitions": [{ "Days": 30, "StorageClass": "GLACIER" }],
+      "Expiration": { "Days": 120 }
+    },
+    {
+      "ID": "optix-incremental-backups-au",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "database/incremental/" },
+      "Expiration": { "Days": 7 }
+    },
+    {
+      "ID": "optix-wal-backups-au",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "database/wal/" },
+      "Expiration": { "Days": 7 }
+    }
+  ]
+}
