@@ -2,7 +2,21 @@
 tmpclaude-*
 
 # Agent / planning trees removed from version control (recreate locally if needed)
-.claude/
+#
+# `.claude/*` rather than `.claude/` on purpose: git does not descend into an excluded
+# DIRECTORY, so a `!` negation beneath `.claude/` can never match. Excluding the CONTENTS
+# keeps the directory traversable, which is what makes the negations below bite.
+#
+# The agent definitions and settings this project OWNS are tracked, because `~/.claude`
+# does not exist on a GitHub runner. Without this, `scripts/ci/validate-agents.js` passes
+# on every push while measuring nothing — it exits 0 when `.claude/agents/` is absent, and
+# on a runner it was always absent.
+#
+# Everything else under `.claude/` stays ignored, including `worktrees/` (agent checkouts
+# of this same repo) and `settings.local.json` (machine-local overrides).
+.claude/*
+!.claude/agents/
+!.claude/settings.json
 .docs/
 .journeys/
 .planning/

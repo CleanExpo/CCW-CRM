@@ -1,0 +1,3 @@
+{
+  "_comment": "Project settings for Claude Code. No hooks are registered here deliberately: this repo's rules are enforced by the CI gates in .github/workflows/boardroom-ci.yml and documented in CLAUDE.md, not by a client-side hook that only exists on whichever machine happens to have it."
+}
