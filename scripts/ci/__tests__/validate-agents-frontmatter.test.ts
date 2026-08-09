@@ -80,6 +80,29 @@ describe('validate-agents.js frontmatter contract', () => {
     expect(run()).toBe(0);
   });
 
+  // `name` is a UNIQUE identifier. Claude Code detects duplicates and loads exactly one
+  // definition, so a validator that checks each file in isolation certifies a second agent that
+  // is silently shadowed and never runs.
+  it('fails on two agents sharing a name in the same directory', () => {
+    writeFileSync(
+      join(root, '.claude', 'agents', 'other.md'),
+      '---\nname: top-agent\ndescription: A duplicate.\n---\nb\n'
+    );
+    expect(run('---\nname: top-agent\ndescription: Valid.\n---\nb\n')).toBe(1);
+  });
+
+  // The walk is recursive, so the duplicate need not be a sibling — this is the case the
+  // reviewer demonstrated passing.
+  it('fails on a duplicate name hiding in a subdirectory', () => {
+    writeNested('---\nname: top-agent\ndescription: A nested duplicate.\n---\nb\n');
+    expect(run('---\nname: top-agent\ndescription: Valid.\n---\nb\n')).toBe(1);
+  });
+
+  it('accepts two agents with different names across directories', () => {
+    writeNested('---\nname: nested-agent\ndescription: Valid.\n---\nb\n');
+    expect(run('---\nname: top-agent\ndescription: Valid.\n---\nb\n')).toBe(0);
+  });
+
   it.each([
     ['double-quoted empty', '---\nname: ""\ndescription: ""\n---\nb\n'],
     ['single-quoted empty', "---\nname: ''\ndescription: ''\n---\nb\n"],
@@ -152,8 +175,6 @@ describe('validate-agents.js frontmatter contract', () => {
   // it a string. It does, and the string is still not a valid agent name: that fixture certified
   // a definition the actual runtime rejects, which is worse than no check at all.
   it.each([
-    ['a quoted number', '---\nname: "123"\ndescription: Valid.\n---\nb\n'],
-    ['a leading digit', '---\nname: 4-eng\ndescription: Valid.\n---\nb\n'],
     ['capitals', '---\nname: CCW-Builder\ndescription: Valid.\n---\nb\n'],
     ['a space', '---\nname: ccw builder\ndescription: Valid.\n---\nb\n'],
     ['an underscore', '---\nname: ccw_builder\ndescription: Valid.\n---\nb\n'],
@@ -184,6 +205,37 @@ describe('validate-agents.js frontmatter contract', () => {
   // The description is free text and must stay that way — only `name` is constrained.
   it('accepts a hyphenated name with digits and a free-text description', () => {
     expect(run('---\nname: haiku-4-5\ndescription: "Anything: goes, here #1."\n---\nb\n')).toBe(0);
+  });
+
+  // The rule is ALPHANUMERIC-first, not letter-first. An earlier revision required a letter and
+  // rejected `4-eng`, which Claude Code's loader accepts — and a test here asserted that false
+  // rejection was correct, which is how a wrong contract gets locked in. Both directions of the
+  // over-correction are now pinned as accepted.
+  it.each([
+    ['a leading digit', '---\nname: 4-eng\ndescription: Valid.\n---\nb\n'],
+    ['an all-digit quoted name', '---\nname: "123"\ndescription: Valid.\n---\nb\n'],
+  ])('accepts a name with %s', (_label, body) => {
+    expect(run(body)).toBe(0);
+  });
+
+  // ...but an UNQUOTED 123 is still rejected, for a different reason: YAML resolves it to a
+  // Number, and the value must be a string before its shape is ever considered. Keeping both
+  // cases stops a future fix collapsing the two rules into one.
+  it('still rejects an unquoted all-digit name as a non-string', () => {
+    expect(run('---\nname: 123\ndescription: Valid.\n---\nb\n')).toBe(1);
+  });
+
+  // `description` has no shape rule, so its ONLY protection is the string requirement in
+  // `isNamed`. Every other non-string fixture pairs a bad description with a bad name, and the
+  // name's identifier check fails first — masking whether the description rule works at all.
+  // My own mutation control found this: weakening `isNamed` to stringify its input left the whole
+  // suite green. These pin the description separately, with a valid name alongside.
+  it.each([
+    ['a number', '---\nname: real-agent\ndescription: 123\n---\nb\n'],
+    ['a boolean', '---\nname: real-agent\ndescription: true\n---\nb\n'],
+    ['a date', '---\nname: real-agent\ndescription: 2026-08-09\n---\nb\n'],
+  ])('rejects a description that YAML resolves to %s', (_label, body) => {
+    expect(run(body)).toBe(1);
   });
 
   // Equally important: the strict parser must not reject legitimate files. A gate that cries wolf

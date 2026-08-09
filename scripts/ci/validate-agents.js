@@ -6,6 +6,8 @@ const ROOT = path.resolve(__dirname, '../..');
 const AGENTS_DIR = path.join(ROOT, '.claude', 'agents');
 let errors = 0,
   checked = 0;
+// name -> the file that claimed it first, so the duplicate error can name both.
+const seenNames = new Map();
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -46,19 +48,24 @@ const isNamed = (v) => typeof v === 'string' && v.trim() !== '';
 // which the consumer rejects: a validator that green-lights a definition the actual runtime will
 // not load is worse than no validator, because it certifies the wrong thing.
 //
-// The documented contract: 3-50 characters, lowercase letters, interior digits and hyphens, a
-// LETTER first and an ALPHANUMERIC last. Read the regex as those four rules in order.
+// The documented contract: 3-50 characters of lowercase letters, digits and hyphens, with the
+// FIRST and LAST characters alphanumeric. Read the regex as those three rules in order.
 //
-// An earlier version was `/^[a-z][a-z0-9-]*$/`, which enforced only the first character. It
-// accepted `a`, `agent-` and a 51-character name — all malformed under the contract this gate
-// claims to enforce, which is the same "certifies the wrong thing" defect that made the previous
-// version accept `name: "123"`.
+// Two earlier versions were wrong in opposite directions, which is worth recording because the
+// pull is real. `/^[a-z][a-z0-9-]*$/` enforced only the first character and accepted `a`,
+// `agent-` and a 51-character name. Tightening it to require a LETTER first then over-corrected
+// and rejected `4-eng`, which Claude Code's loader accepts — a false rejection entrenched by a
+// test asserting it.
+//
+// The rule is alphanumeric-first, not letter-first. That means a name like `123` satisfies the
+// identifier form; it is still rejected when written unquoted, because YAML resolves it to a
+// Number and `isNamed` requires a string. The value must be a string AND match this form.
 //
 // The value is tested UNTRIMMED on purpose. The earlier version trimmed first, so
 // `name: "  ccw-builder  "` passed while the identifier the consumer actually receives has
 // spaces in it. Trimming here would hide a real difference between what is written and what is
 // used; the author should fix the file instead.
-const AGENT_NAME = /^[a-z][a-z0-9-]{1,48}[a-z0-9]$/;
+const AGENT_NAME = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 const isValidName = (v) => typeof v === 'string' && AGENT_NAME.test(v);
 
 // Returns { fields } on a clean parse, { error } otherwise. Anything unreadable is an error, never
@@ -118,11 +125,22 @@ walk(AGENTS_DIR)
     if (!isValidName(fm.name)) {
       console.error(
         `  ❌ ${rel}: name "${fm.name}" is not a valid agent identifier ` +
-          '(lowercase letters, digits and hyphens, starting with a letter)'
+          '(3-50 chars of lowercase letters, digits and hyphens; first and last must be alphanumeric)'
       );
       errors++;
       return;
     }
+    // `name` is a UNIQUE identifier within the project. Claude Code detects duplicates and loads
+    // exactly one definition, so validating each file in isolation certified a second agent that
+    // is silently shadowed and never runs — the validator saying "valid" about something the
+    // runtime discards. The walk is recursive, so the duplicate need not be a sibling.
+    const first = seenNames.get(fm.name);
+    if (first) {
+      console.error(`  ❌ ${rel}: duplicate agent name "${fm.name}" — already defined in ${first}`);
+      errors++;
+      return;
+    }
+    seenNames.set(fm.name, rel);
     console.log(`  ✅ ${rel}`);
   });
 // An EMPTY directory is the same fail-open by another route: `checked` stays 0, `errors` stays 0,
