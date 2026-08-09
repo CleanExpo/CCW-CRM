@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { resolveAdaptivePageGapMs } from '@/lib/integrations/cin7-sync-adaptive';
 import { getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
 
 export type Cin7SyncRunStatus = 'idle' | 'running' | 'complete' | 'incomplete' | 'failed';
@@ -65,6 +66,10 @@ export type RunPagedSyncEngineResult = {
   syncErrors: string[];
   complete: boolean;
   durationMs: number;
+  /** Live Cin7 Total from envelope responses (null for bare arrays). */
+  reportedTotal: number | null;
+  /** Raw source rows fetched this run (sum of page sourceRowCount). */
+  sourceRowsFetched: number;
 };
 
 function sleep(ms: number): Promise<void> {
@@ -386,6 +391,14 @@ export async function runPagedSyncEngine(
 
   const budgetExceeded = () => Date.now() - startedAt >= input.timeBudgetMs;
 
+  const finish = (
+    partial: Omit<RunPagedSyncEngineResult, 'reportedTotal' | 'sourceRowsFetched'>
+  ): RunPagedSyncEngineResult => ({
+    ...partial,
+    reportedTotal,
+    sourceRowsFetched,
+  });
+
   while (page <= maxPages) {
     if (budgetExceeded() && pagesFetched > 0) {
       await appendCin7SyncJobLog({
@@ -408,7 +421,7 @@ export async function runPagedSyncEngine(
         failureReason: 'Time budget exceeded; resume from next_page.',
         durationMs,
       });
-      return {
+      return finish({
         status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
@@ -419,11 +432,18 @@ export async function runPagedSyncEngine(
         syncErrors,
         complete: false,
         durationMs,
-      };
+      });
     }
 
-    if (page > 1 && pageGapMs > 0) {
-      await sleep(pageGapMs);
+    const adaptiveGap = resolveAdaptivePageGapMs({
+      configuredGapMs: pageGapMs,
+      nextPage: page,
+      pageSize: input.pageSize,
+      reportedTotal,
+      sourceRowsFetchedSoFar: sourceRowsFetched,
+    });
+    if (adaptiveGap > 0) {
+      await sleep(adaptiveGap);
     }
 
     let fetched: PagedSyncPageResult;
@@ -452,7 +472,7 @@ export async function runPagedSyncEngine(
         message,
         page,
       });
-      return {
+      return finish({
         status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
@@ -463,7 +483,7 @@ export async function runPagedSyncEngine(
         syncErrors,
         complete: false,
         durationMs,
-      };
+      });
     }
 
     pagesFetched = page;
@@ -504,7 +524,7 @@ export async function runPagedSyncEngine(
           failureReason,
           durationMs,
         });
-        return {
+        return finish({
           status: 'incomplete',
           recordsProcessed,
           pagesFetched: lastCommittedPage,
@@ -515,7 +535,7 @@ export async function runPagedSyncEngine(
           syncErrors,
           complete: false,
           durationMs,
-        };
+        });
       }
 
       emptyEofHits += 1;
@@ -547,7 +567,7 @@ export async function runPagedSyncEngine(
           message: failureReason,
           page,
         });
-        return {
+        return finish({
           status: 'incomplete',
           recordsProcessed,
           pagesFetched: lastCommittedPage,
@@ -558,7 +578,7 @@ export async function runPagedSyncEngine(
           syncErrors,
           complete: false,
           durationMs,
-        };
+        });
       }
 
       // Clean EOF
@@ -582,7 +602,7 @@ export async function runPagedSyncEngine(
         message: `Sync complete at EOF page ${page} (${recordsProcessed} records).`,
         page,
       });
-      return {
+      return finish({
         status: 'complete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
@@ -593,7 +613,7 @@ export async function runPagedSyncEngine(
         syncErrors,
         complete: true,
         durationMs,
-      };
+      });
     }
 
     emptyRetries = 0;
@@ -652,7 +672,7 @@ export async function runPagedSyncEngine(
         failureReason: message,
         durationMs,
       });
-      return {
+      return finish({
         status: 'incomplete',
         recordsProcessed,
         pagesFetched: lastCommittedPage,
@@ -663,13 +683,49 @@ export async function runPagedSyncEngine(
         syncErrors,
         complete: false,
         durationMs,
-      };
+      });
+    }
+
+    // Envelope Total reached — finish without waiting for a trailing empty page.
+    if (reportedTotal != null && reportedTotal > 0 && sourceRowsFetched >= reportedTotal) {
+      const durationMs = Date.now() - startedAt;
+      await persistCin7SyncRunCheckpoint({
+        runId: input.runId,
+        status: 'complete',
+        recordsProcessed,
+        pagesFetched: lastCommittedPage,
+        lastCommittedPage,
+        nextPage: null,
+        failedPage: null,
+        failureReason: null,
+        durationMs,
+      });
+      await appendCin7SyncJobLog({
+        ownerUserId: input.ownerUserId,
+        entityType: input.entityType,
+        runId: input.runId,
+        level: 'info',
+        message: `Sync complete via Cin7 Total (${sourceRowsFetched}/${reportedTotal}; ${recordsProcessed} Optix records).`,
+        page,
+      });
+      return finish({
+        status: 'complete',
+        recordsProcessed,
+        pagesFetched: lastCommittedPage,
+        lastCommittedPage,
+        nextPage: null,
+        failedPage: null,
+        failureReason: null,
+        syncErrors,
+        complete: true,
+        durationMs,
+      });
     }
 
     // Do NOT treat sourceRowCount < requested pageSize as EOF.
     // Cin7 Omni often returns fewer rows than requested (e.g. ask 250, get 100)
     // while more pages remain — that caused false "complete" at round page boundaries.
-    // Clean EOF is only an empty page with no HTTP error (handled above).
+    // Clean EOF is only an empty page with no HTTP error (handled above), or Total reached.
     page += 1;
   }
 
@@ -688,7 +744,7 @@ export async function runPagedSyncEngine(
     failureReason,
     durationMs,
   });
-  return {
+  return finish({
     status: 'incomplete',
     recordsProcessed,
     pagesFetched: lastCommittedPage,
@@ -699,5 +755,5 @@ export async function runPagedSyncEngine(
     syncErrors,
     complete: false,
     durationMs,
-  };
+  });
 }
