@@ -32,9 +32,9 @@ console.log('\n🔍 Validating agent frontmatter...\n');
 // A missing directory is a FAILURE, not a skip. This used to `process.exit(0)` with a warning,
 // which made the whole gate fail-open. `AGENTS_DIR` is repository-local, and at `b059c8f7` —
 // where the agents were not tracked — `git ls-files .claude` returned 0, so a checkout of that
-// commit had nothing here and this validator exited 0 having read nothing. Tracking the agents
-// fixes that checkout; exiting non-zero here is what stops the vacuum returning the moment
-// someone removes or re-ignores them.
+// commit had nothing here and this validator exited 0 having read nothing. That commit's tree is
+// immutable and still behaves that way; tracking the agents fixes LATER checkouts, and exiting
+// non-zero here is what stops the vacuum returning the moment someone removes or re-ignores them.
 if (!fs.existsSync(AGENTS_DIR)) {
   console.error('  ❌ .claude/agents/ not found. It is tracked — a missing directory means it was');
   console.error('     deleted or re-ignored, which silently disables this check.');
