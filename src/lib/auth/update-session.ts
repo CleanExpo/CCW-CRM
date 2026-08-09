@@ -2,9 +2,9 @@
  * Next.js middleware session gate: verify access JWT from cookie (Edge).
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
-import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from '@/lib/auth/session-cookies';
 import { verifyAuthAccessJwt } from '@/lib/auth/jwt-tokens';
+import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from '@/lib/auth/session-cookies';
+import { NextResponse, type NextRequest } from 'next/server';
 
 interface SessionUser {
   id: string;
@@ -80,6 +80,7 @@ export async function updateSession(request: NextRequest) {
     '/terms',
     '/api/cron',
     '/api/auth',
+    '/api/webhooks',
     '/api/public',
     // OAuth redirects must load without a prior session (provider sends user back to callback).
     '/api/integrations/xero/callback',
@@ -93,9 +94,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicPath =
     publicExactPaths.has(request.nextUrl.pathname) ||
     publicPaths.some(
-      (path) =>
-        request.nextUrl.pathname === path ||
-        request.nextUrl.pathname.startsWith(path + '/')
+      (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
     );
 
   if (!isPublicPath && !user) {
@@ -119,7 +118,8 @@ export async function updateSession(request: NextRequest) {
   if (user && !request.nextUrl.pathname.startsWith('/api/')) {
     if (user.role === 'billing') {
       const canAccess = billingAllowedPrefixes.some(
-        (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) =>
+          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
       );
       if (!canAccess) {
         const url = request.nextUrl.clone();
@@ -129,7 +129,8 @@ export async function updateSession(request: NextRequest) {
     }
     if (user.role === 'member') {
       const blocked = memberBlockedPrefixes.some(
-        (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) =>
+          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
       );
       if (blocked) {
         const url = request.nextUrl.clone();
