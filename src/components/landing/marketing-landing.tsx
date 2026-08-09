@@ -354,21 +354,24 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                 />
                 <ol className="space-y-10 md:space-y-12">
                   {STEPS.map((step, i) => (
-                    <MarketingReveal key={step.n} delayMs={i * 50}>
-                      <li className="relative grid gap-4 pl-12 md:grid-cols-[8rem_1fr] md:gap-10 md:pl-16">
-                        <span
-                          className="absolute top-1 left-0 flex h-9 w-9 items-center justify-center border border-sky-500/40 bg-[#08080c] text-[12px] font-semibold text-sky-300 tabular-nums"
-                          style={display}
-                        >
-                          {step.n}
-                        </span>
-                        <h3 className="text-lg font-semibold text-white md:text-xl" style={display}>
-                          {step.title}
-                        </h3>
-                        <p className="max-w-lg text-[15px] leading-relaxed text-zinc-400">
-                          {step.body}
-                        </p>
-                      </li>
+                    <MarketingReveal
+                      key={step.n}
+                      as="li"
+                      delayMs={i * 50}
+                      className="relative grid gap-4 pl-12 md:grid-cols-[8rem_1fr] md:gap-10 md:pl-16"
+                    >
+                      <span
+                        className="absolute top-1 left-0 flex h-9 w-9 items-center justify-center border border-sky-500/40 bg-[#08080c] text-[12px] font-semibold text-sky-300 tabular-nums"
+                        style={display}
+                      >
+                        {step.n}
+                      </span>
+                      <h3 className="text-lg font-semibold text-white md:text-xl" style={display}>
+                        {step.title}
+                      </h3>
+                      <p className="max-w-lg text-[15px] leading-relaxed text-zinc-400">
+                        {step.body}
+                      </p>
                     </MarketingReveal>
                   ))}
                 </ol>

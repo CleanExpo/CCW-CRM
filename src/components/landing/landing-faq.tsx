@@ -51,7 +51,10 @@ export function LandingFaq() {
             >
               <span
                 className={cn(
-                  'mt-0.5 shrink-0 text-[12px] font-semibold tracking-widest text-zinc-600 tabular-nums',
+                  // zinc-400, not zinc-600: closed rows sit at 2.58:1 on this #08080c panel,
+                  // well under the 4.5:1 AA minimum. The open row recolours to sky and passes,
+                  // which is why only the closed indices failed the axe gate.
+                  'mt-0.5 shrink-0 text-[12px] font-semibold tracking-widest text-zinc-400 tabular-nums',
                   isOpen && 'text-sky-400/90'
                 )}
                 aria-hidden
