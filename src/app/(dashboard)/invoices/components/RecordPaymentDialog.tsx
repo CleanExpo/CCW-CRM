@@ -1,9 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,27 +17,33 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { invoicesApi } from "@/lib/api/invoices";
-import { useToast } from "@/hooks/use-toast";
-import type { Invoice, InvoiceSummary, PaymentMethod } from "@/types/invoices";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { invoicesApi } from '@/lib/api/invoices';
+import type { Invoice, InvoiceSummary, PaymentMethod } from '@/types/invoices';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const paymentSchema = z.object({
-  amount: z.string().refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    "Amount must be greater than 0"
-  ),
-  payment_method: z.enum(["cash", "check", "bank_transfer", "credit_card", "other"] as const),
+  amount: z
+    .string()
+    .refine(
+      (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+      'Amount must be greater than 0'
+    ),
+  // Card/Stripe payments are applied only via signed Stripe webhooks.
+  payment_method: z.enum(['cash', 'check', 'bank_transfer', 'other'] as const),
   payment_date: z.string().optional(),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
@@ -64,18 +67,17 @@ export function RecordPaymentDialog({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const maxAmount = typeof invoice.amount_due === "string"
-    ? parseFloat(invoice.amount_due)
-    : invoice.amount_due;
+  const maxAmount =
+    typeof invoice.amount_due === 'string' ? parseFloat(invoice.amount_due) : invoice.amount_due;
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       amount: maxAmount.toString(),
-      payment_method: "credit_card",
-      payment_date: new Date().toISOString().split("T")[0],
-      reference_number: "",
-      notes: "",
+      payment_method: 'bank_transfer',
+      payment_date: new Date().toISOString().split('T')[0],
+      reference_number: '',
+      notes: '',
     },
   });
 
@@ -85,23 +87,23 @@ export function RecordPaymentDialog({
       await invoicesApi.recordPayment(invoice.id, {
         amount: parseFloat(data.amount),
         payment_method: data.payment_method as PaymentMethod,
-        payment_date: data.payment_date || new Date().toISOString().split("T")[0],
+        payment_date: data.payment_date || new Date().toISOString().split('T')[0],
         reference_number: data.reference_number || undefined,
         notes: data.notes || undefined,
       });
 
       toast({
-        title: "Payment recorded",
+        title: 'Payment recorded',
         description: `Payment of $${data.amount} has been recorded successfully`,
       });
 
       form.reset();
       onPaymentRecorded();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to record payment";
+      const message = error instanceof Error ? error.message : 'Failed to record payment';
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: message,
       });
     } finally {
@@ -115,7 +117,8 @@ export function RecordPaymentDialog({
         <DialogHeader>
           <DialogTitle>Record Payment</DialogTitle>
           <DialogDescription>
-            Invoice {invoice.invoice_number} • Amount Due: ${maxAmount.toFixed(2)}
+            Invoice {invoice.invoice_number} • Amount Due: ${maxAmount.toFixed(2)}. Card payments
+            are recorded automatically by Stripe — use this form for cash, EFT, or cheque only.
           </DialogDescription>
         </DialogHeader>
 
@@ -136,9 +139,7 @@ export function RecordPaymentDialog({
                       disabled={isLoading}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Maximum: ${maxAmount.toFixed(2)}
-                  </FormDescription>
+                  <FormDescription>Maximum: ${maxAmount.toFixed(2)}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -162,10 +163,9 @@ export function RecordPaymentDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="credit_card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="check">Check</SelectItem>
-                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="check">Cheque</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer / EFT</SelectItem>
+                      <SelectItem value="other">Other (offline)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -180,11 +180,7 @@ export function RecordPaymentDialog({
                 <FormItem>
                   <FormLabel>Payment Date</FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      disabled={isLoading}
-                    />
+                    <Input type="date" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -196,14 +192,17 @@ export function RecordPaymentDialog({
               name="reference_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reference Number (Optional)</FormLabel>
+                  <FormLabel>Reference Number</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Transaction ID, Check #, etc."
+                      placeholder="EFT receipt, cheque #, bank reference"
                       {...field}
                       disabled={isLoading}
                     />
                   </FormControl>
+                  <FormDescription>
+                    Required for EFT / cheque — kept for the payment audit trail.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -238,7 +237,7 @@ export function RecordPaymentDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Recording..." : "Record Payment"}
+                {isLoading ? 'Recording...' : 'Record Payment'}
               </Button>
             </DialogFooter>
           </form>
