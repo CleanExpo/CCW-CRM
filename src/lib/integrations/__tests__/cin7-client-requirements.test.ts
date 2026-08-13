@@ -105,12 +105,9 @@ describe('client requirement checklist (static)', () => {
     );
     expect(src).not.toContain('cleanupCin7DuplicateCustomers');
     expect(src).not.toContain('Remove duplicate customers');
-    // The card used to say "No data is deleted". That is no longer TRUE of the card as a whole —
-    // it now offers an audited, reversible surplus-stock prune that does delete rows — so the
-    // assertion tracks the narrower claim the card actually makes: the REPORT is read-only, and
-    // repair is a separate explicit action. Asserting the old sentence would force the UI back to
-    // a statement contradicted by its own buttons.
+    expect(src).not.toContain('pruneSurplusStock');
     expect(src).toContain('This report does not heal, align, or delete Optix');
+    expect(src).toContain('locked until Cin7 count is stable');
   });
 
   it('sync route imports full-catalog source resolver', async () => {
@@ -165,6 +162,18 @@ describe('client requirement checklist (static)', () => {
       'utf8'
     );
     expect(src).toContain('fetchAllOmniMasterCatalogsSequential');
+  });
+
+  it('master catalog recon walk is sequential and fail-closes short of Cin7 Total', async () => {
+    const fs = await import('node:fs/promises');
+    const src = await fs.readFile(
+      `${REPO_ROOT}/src/lib/integrations/cin7-catalog-fetch.ts`,
+      'utf8'
+    );
+    expect(src).toContain('sequential fetch');
+    expect(src).not.toMatch(/await Promise\.all\(\[\s*fetchFullOmniProductsRawCatalog/);
+    expect(src).toContain('finalizeCatalogWalk');
+    expect(src).toContain('Catalog truncated');
   });
 
   it('reconciliation includes internal-customer exception summary', async () => {
