@@ -24,6 +24,9 @@ import { CIN7_SYNC_SAFETY_MAX_PAGES, getCin7PageSize } from '@/lib/integrations/
 export type Cin7CatalogFetchMeta = {
   pages_fetched: number;
   errors: string[];
+  reported_total?: number | null;
+  source_rows_fetched?: number;
+  truncated?: boolean;
 };
 
 export type Cin7CatalogProductSku = {
@@ -68,26 +71,61 @@ export function getCatalogEntityGapMs(): number {
 }
 
 /**
- * Gaps for live reconciliation. Default 0 — wall-clock is dominated by Cin7 latency,
- * and independent catalogs run in parallel (Retry-After still handles 429s).
+ * Gaps for live/acceptance reconciliation. Defaults used to be 0 with parallel catalog
+ * walks, which 429'd around page 12. Catalogs now run one-at-a-time; keep a page gap
+ * so Retry-After is not the only back-pressure. Nightly sync uses its own engine.
  */
 export function getReconCatalogFetchOptions(): Cin7CatalogFetchOptions {
-  const pageRaw = Number(process.env.CIN7_RECON_PAGE_GAP_MS ?? 0);
-  const entityRaw = Number(process.env.CIN7_RECON_ENTITY_GAP_MS ?? 0);
+  const pageRaw = Number(process.env.CIN7_RECON_PAGE_GAP_MS ?? 400);
+  const entityRaw = Number(process.env.CIN7_RECON_ENTITY_GAP_MS ?? 1_500);
   return {
-    pageGapMs: Number.isFinite(pageRaw) && pageRaw >= 0 ? Math.min(5_000, Math.floor(pageRaw)) : 0,
+    pageGapMs:
+      Number.isFinite(pageRaw) && pageRaw >= 0 ? Math.min(5_000, Math.floor(pageRaw)) : 400,
     entityGapMs:
-      Number.isFinite(entityRaw) && entityRaw >= 0 ? Math.min(10_000, Math.floor(entityRaw)) : 0,
+      Number.isFinite(entityRaw) && entityRaw >= 0
+        ? Math.min(10_000, Math.floor(entityRaw))
+        : 1_500,
   };
 }
 
-async function paginateUntilDone<T>(input: {
+export function finalizeCatalogWalk(input: {
+  errors: string[];
+  sourceRowsFetched: number;
+  reportedTotal: number | null;
+}): { errors: string[]; truncated: boolean } {
+  const truncated =
+    input.reportedTotal != null &&
+    input.reportedTotal > 0 &&
+    input.sourceRowsFetched < input.reportedTotal;
+  if (!truncated) {
+    return { errors: input.errors, truncated: false };
+  }
+  const already = input.errors.some((e) => e.includes('Cin7 Total'));
+  return {
+    truncated: true,
+    errors: already
+      ? input.errors
+      : [
+          ...input.errors,
+          `Catalog truncated: fetched ${input.sourceRowsFetched} of Cin7 Total ${input.reportedTotal}`,
+        ],
+  };
+}
+
+export async function paginateUntilDone<T>(input: {
   maxPages?: number;
   pageGapMs?: number;
   fetchPage: (
     page: number
   ) => Promise<{ items: T[]; sourceRowCount: number; total: number | null; error?: string }>;
-}): Promise<{ items: T[]; pages_fetched: number; errors: string[] }> {
+}): Promise<{
+  items: T[];
+  pages_fetched: number;
+  errors: string[];
+  reported_total: number | null;
+  source_rows_fetched: number;
+  truncated: boolean;
+}> {
   const pageSize = getCin7PageSize();
   const maxPages = input.maxPages ?? CIN7_SYNC_SAFETY_MAX_PAGES;
   const pageGapMs = input.pageGapMs ?? getCatalogPageGapMs();
@@ -130,7 +168,9 @@ async function paginateUntilDone<T>(input: {
         errors.push(`Page ${page}: giving up after empty/error — catalog incomplete`);
         break;
       }
-      // Clean empty with no prior error → EOF
+      // Clean empty is EOF only when Cin7 Total is unknown or already met.
+      // An empty page while Total still exceeds rows fetched is a truncated catalog
+      // (the 9,805 vs ~10,500 class of bug), not a complete snapshot.
       break;
     }
     emptyRetries = 0;
@@ -149,7 +189,35 @@ async function paginateUntilDone<T>(input: {
     // Clean empty page (handled above) is the only Total-less EOF signal.
   }
 
-  return { items, pages_fetched: pagesFetched, errors };
+  const finalized = finalizeCatalogWalk({
+    errors,
+    sourceRowsFetched,
+    reportedTotal,
+  });
+  return {
+    items,
+    pages_fetched: pagesFetched,
+    errors: finalized.errors,
+    reported_total: reportedTotal,
+    source_rows_fetched: sourceRowsFetched,
+    truncated: finalized.truncated,
+  };
+}
+
+function walkMeta(walk: {
+  pages_fetched: number;
+  errors: string[];
+  reported_total: number | null;
+  source_rows_fetched: number;
+  truncated: boolean;
+}): Cin7CatalogFetchMeta {
+  return {
+    pages_fetched: walk.pages_fetched,
+    errors: walk.errors,
+    reported_total: walk.reported_total,
+    source_rows_fetched: walk.source_rows_fetched,
+    truncated: walk.truncated,
+  };
 }
 
 function resolvePageGap(options?: Cin7CatalogFetchOptions): number {
@@ -195,6 +263,9 @@ export function buildProductCatalogFromRawStyles(
     style_codes: styleCodes,
     pages_fetched: meta.pages_fetched,
     errors: meta.errors,
+    reported_total: meta.reported_total,
+    source_rows_fetched: meta.source_rows_fetched,
+    truncated: meta.truncated,
   };
 }
 
@@ -233,7 +304,7 @@ export async function fetchFullOmniProductCatalog(
   const byVisibility: Record<string, number> = {};
   const skus: Cin7CatalogProductSku[] = [];
 
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -258,7 +329,7 @@ export async function fetchFullOmniProductCatalog(
     },
   });
 
-  for (const row of items) {
+  for (const row of walk.items) {
     skus.push(row);
     if (row.styleCode) styleCodes.add(row.styleCode);
     byVisibility[row.visibility] = (byVisibility[row.visibility] ?? 0) + 1;
@@ -269,8 +340,7 @@ export async function fetchFullOmniProductCatalog(
     skus,
     by_visibility: byVisibility,
     style_codes: styleCodes,
-    pages_fetched,
-    errors,
+    ...walkMeta(walk),
   };
 }
 
@@ -382,7 +452,7 @@ export async function fetchFullOmniContactsByType(
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { contacts: Cin7OmniContactRow[] }> {
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -398,7 +468,7 @@ export async function fetchFullOmniContactsByType(
     },
   });
 
-  return { contacts: items, pages_fetched, errors };
+  return { contacts: walk.items, ...walkMeta(walk) };
 }
 
 /** All Omni contacts (no type filter) — one walk for recon partitioning. */
@@ -407,7 +477,7 @@ export async function fetchFullOmniAllContacts(
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { contacts: Cin7OmniContactRow[] }> {
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -420,7 +490,7 @@ export async function fetchFullOmniAllContacts(
       };
     },
   });
-  return { contacts: items, pages_fetched, errors };
+  return { contacts: walk.items, ...walkMeta(walk) };
 }
 
 export function partitionOmniContactsByType(contacts: Cin7OmniContactRow[]): {
@@ -446,7 +516,7 @@ export async function fetchFullOmniBranchCatalog(
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { branches: Cin7OmniBranchRow[] }> {
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -460,7 +530,7 @@ export async function fetchFullOmniBranchCatalog(
     },
   });
 
-  return { branches: items, pages_fetched, errors };
+  return { branches: walk.items, ...walkMeta(walk) };
 }
 
 export async function fetchFullOmniProductCategoryCatalog(
@@ -468,7 +538,7 @@ export async function fetchFullOmniProductCategoryCatalog(
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { categories: Cin7OmniProductCategoryRow[] }> {
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -481,7 +551,7 @@ export async function fetchFullOmniProductCategoryCatalog(
       };
     },
   });
-  return { categories: items, pages_fetched, errors };
+  return { categories: walk.items, ...walkMeta(walk) };
 }
 
 export async function fetchFullOmniStockCatalog(
@@ -489,7 +559,7 @@ export async function fetchFullOmniStockCatalog(
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { stockLevels: Cin7OmniStockLevelRow[] }> {
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -502,7 +572,7 @@ export async function fetchFullOmniStockCatalog(
       };
     },
   });
-  return { stockLevels: items, pages_fetched, errors };
+  return { stockLevels: walk.items, ...walkMeta(walk) };
 }
 
 export async function fetchFullOmniProductsRawCatalog(
@@ -510,7 +580,7 @@ export async function fetchFullOmniProductsRawCatalog(
   maxPages?: number,
   options?: Cin7CatalogFetchOptions
 ): Promise<Cin7CatalogFetchMeta & { styles: unknown[] }> {
-  const { items, pages_fetched, errors } = await paginateUntilDone({
+  const walk = await paginateUntilDone({
     maxPages: maxPages ?? options?.maxPages,
     pageGapMs: resolvePageGap(options),
     fetchPage: async (page) => {
@@ -523,7 +593,7 @@ export async function fetchFullOmniProductsRawCatalog(
       };
     },
   });
-  return { styles: items, pages_fetched, errors };
+  return { styles: walk.items, ...walkMeta(walk) };
 }
 
 export type Cin7DerivedReferenceCatalog = {
@@ -581,10 +651,9 @@ export type Cin7OmniMasterCatalogs = {
 /**
  * Fetch all master catalogs for reconciliation/sync proof.
  *
- * Performance (same accuracy as sequential typed walks):
- * - Products raw pulled once → SKU flatten + derived brands/UOM/price columns
- * - Contacts pulled once (no type filter) → partitioned in-memory
- * - Products / Contacts / Stock / Branches / Categories run in parallel
+ * One walk at a time (products → contacts → branches → categories → stock last)
+ * so parallel page-12 429s cannot starve the stock catalog. Same accuracy as
+ * the old parallel typed walks; wall-clock is slower on purpose.
  */
 export async function fetchAllOmniMasterCatalogsSequential(
   creds: Cin7OmniCredentials,
@@ -592,17 +661,22 @@ export async function fetchAllOmniMasterCatalogsSequential(
 ): Promise<Cin7OmniMasterCatalogs> {
   const started = Date.now();
 
-  const [rawProducts, allContacts, stockLevels, branches, productCategories] = await Promise.all([
-    fetchFullOmniProductsRawCatalog(creds, undefined, options),
-    fetchFullOmniAllContacts(creds, undefined, options),
-    fetchFullOmniStockCatalog(creds, undefined, options),
-    fetchFullOmniBranchCatalog(creds, undefined, options),
-    fetchFullOmniProductCategoryCatalog(creds, undefined, options),
-  ]);
+  const rawProducts = await fetchFullOmniProductsRawCatalog(creds, undefined, options);
+  await entityGap(options, rawProducts.styles.length);
+  const allContacts = await fetchFullOmniAllContacts(creds, undefined, options);
+  await entityGap(options, allContacts.contacts.length);
+  const branches = await fetchFullOmniBranchCatalog(creds, undefined, options);
+  await entityGap(options, branches.branches.length);
+  const productCategories = await fetchFullOmniProductCategoryCatalog(creds, undefined, options);
+  await entityGap(options, productCategories.categories.length);
+  const stockLevels = await fetchFullOmniStockCatalog(creds, undefined, options);
 
   const products = buildProductCatalogFromRawStyles(rawProducts.styles, {
     pages_fetched: rawProducts.pages_fetched,
     errors: rawProducts.errors,
+    reported_total: rawProducts.reported_total,
+    source_rows_fetched: rawProducts.source_rows_fetched,
+    truncated: rawProducts.truncated,
   });
 
   const partitioned = partitionOmniContactsByType(allContacts.contacts);
@@ -610,17 +684,26 @@ export async function fetchAllOmniMasterCatalogsSequential(
     contacts: partitioned.customers,
     pages_fetched: allContacts.pages_fetched,
     errors: allContacts.errors,
+    reported_total: allContacts.reported_total,
+    source_rows_fetched: allContacts.source_rows_fetched,
+    truncated: allContacts.truncated,
   };
   const internalCustomers = {
     contacts: partitioned.internalCustomers,
     pages_fetched: 0,
     // Same walk as customers — propagate contact-catalog errors (fail-closed).
     errors: allContacts.errors,
+    reported_total: allContacts.reported_total,
+    source_rows_fetched: allContacts.source_rows_fetched,
+    truncated: allContacts.truncated,
   };
   const suppliers = {
     contacts: partitioned.suppliers,
     pages_fetched: 0,
     errors: allContacts.errors,
+    reported_total: allContacts.reported_total,
+    source_rows_fetched: allContacts.source_rows_fetched,
+    truncated: allContacts.truncated,
   };
 
   const derived = buildDerivedReferenceFromParts({
@@ -634,11 +717,12 @@ export async function fetchAllOmniMasterCatalogsSequential(
   rawProducts.styles.length = 0;
 
   console.log(
-    `[Cin7 recon catalog] parallel fetch in ${Date.now() - started}ms ` +
+    `[Cin7 recon catalog] sequential fetch in ${Date.now() - started}ms ` +
       `(products_pages=${products.pages_fetched} contacts_pages=${allContacts.pages_fetched} ` +
       `stock_pages=${stockLevels.pages_fetched} skus=${products.skus.length} ` +
       `customers=${customers.contacts.length} suppliers=${suppliers.contacts.length} ` +
-      `stock=${stockLevels.stockLevels.length})`
+      `stock=${stockLevels.stockLevels.length} stock_total=${stockLevels.reported_total ?? 'n/a'} ` +
+      `stock_truncated=${Boolean(stockLevels.truncated)})`
   );
 
   return {
