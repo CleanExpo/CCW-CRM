@@ -3,6 +3,10 @@ import { prisma } from '@/lib/db/prisma';
 import { runAuditedStockPrune } from '@/lib/integrations/cin7-heal-audit';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
 import { clearCachedReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
+import {
+  CIN7_STOCK_PRUNE_LOCKED_DETAIL,
+  getCin7StockStability,
+} from '@/lib/integrations/cin7-stock-stability';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
@@ -35,6 +39,19 @@ export async function POST(request: NextRequest) {
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
+
+  const stability = await getCin7StockStability(scope.userId);
+  if (!stability.prune_enabled) {
+    return NextResponse.json(
+      {
+        detail: CIN7_STOCK_PRUNE_LOCKED_DETAIL,
+        prune_enabled: false,
+        stability,
+      },
+      { status: 409 }
+    );
+  }
+
   const omniCreds = getCin7OmniCredentials(request);
   if (!omniCreds || !(await pingCin7Omni(omniCreds))) {
     return NextResponse.json({ detail: 'Cin7 Omni is not reachable.' }, { status: 401 });
