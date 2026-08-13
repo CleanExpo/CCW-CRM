@@ -93,6 +93,8 @@ export type Cin7ReconHistoryItem = {
   products_optix: number | null;
   stock_cin7: number | null;
   stock_optix: number | null;
+  stock_reported_total: number | null;
+  stock_truncated: boolean;
 };
 
 export async function listImmutableReconSnapshots(
@@ -118,6 +120,7 @@ export async function listImmutableReconSnapshots(
 
   return rows.map((row) => {
     const summary = (row.summary ?? {}) as Partial<Cin7ReconciliationSnapshot>;
+    const evidence = summary.stock_evidence;
     return {
       id: row.id,
       mode: row.mode,
@@ -129,8 +132,10 @@ export async function listImmutableReconSnapshots(
       field_mismatch_count: row.fieldMismatchCount,
       products_cin7: summary.cin7?.products?.skus ?? null,
       products_optix: summary.optix?.products?.skus ?? null,
-      stock_cin7: summary.cin7?.reference?.stock_levels ?? null,
+      stock_cin7: evidence?.cin7_rows ?? summary.cin7?.reference?.stock_levels ?? null,
       stock_optix: summary.optix?.reference?.stock_levels ?? null,
+      stock_reported_total: evidence?.cin7_reported_total ?? null,
+      stock_truncated: Boolean(evidence?.truncated),
     };
   });
 }
