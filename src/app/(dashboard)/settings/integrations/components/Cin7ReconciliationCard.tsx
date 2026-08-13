@@ -6,12 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
+  getCin7B1Residuals,
+  getCin7B1ResidualsExportUrl,
   getCin7ExceptionReport,
   getCin7ExceptionReportExportUrl,
+  getCin7ReconSnapshot,
   getCin7Reconciliation,
+  getCin7StockStability,
   healCin7FieldMismatches,
   listCin7ReconHistory,
-  pruneCin7StockSurplus,
+  revertCin7HealAudit,
   type Cin7ExceptionEntity,
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
@@ -24,7 +28,7 @@ import {
   History,
   Loader2,
   RefreshCw,
-  Scissors,
+  RotateCcw,
   Wrench,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -32,6 +36,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 type Cin7ReconciliationCardProps = {
   isConnected: boolean;
 };
+
+const SNAPSHOT_SESSION_KEY = 'optix.cin7.recon.selectedSnapshotId';
 
 const EXCEPTION_ENTITIES: { key: Cin7ExceptionEntity; label: string }[] = [
   { key: 'products', label: 'Products' },
@@ -108,13 +114,77 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   const [exceptionTotal, setExceptionTotal] = useState(0);
   const [exceptionOffset, setExceptionOffset] = useState(0);
   const [healingFields, setHealingFields] = useState(false);
-  const [pruningStock, setPruningStock] = useState(false);
+  const [revertingPrune, setRevertingPrune] = useState(false);
   const [history, setHistory] = useState<Awaited<ReturnType<typeof listCin7ReconHistory>>['items']>(
     []
   );
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
+  const [residuals, setResiduals] = useState<Awaited<ReturnType<typeof getCin7B1Residuals>> | null>(
+    null
+  );
+  const [stability, setStability] = useState<Awaited<
+    ReturnType<typeof getCin7StockStability>
+  > | null>(null);
   const [lastHealAuditId, setLastHealAuditId] = useState<string | null>(null);
   const loadRequestId = useRef(0);
   const EXCEPTION_PAGE = 100;
+
+  const rememberSnapshotId = (id: string | null) => {
+    setSelectedSnapshotId(id);
+    try {
+      if (id) sessionStorage.setItem(SNAPSHOT_SESSION_KEY, id);
+      else sessionStorage.removeItem(SNAPSHOT_SESSION_KEY);
+    } catch {
+      /* private mode */
+    }
+  };
+
+  const refreshEvidencePanels = useCallback(async () => {
+    const [historyResult, residualResult, stabilityResult] = await Promise.allSettled([
+      listCin7ReconHistory(20),
+      getCin7B1Residuals(),
+      getCin7StockStability(),
+    ]);
+    if (historyResult.status === 'fulfilled') setHistory(historyResult.value.items);
+    if (residualResult.status === 'fulfilled') setResiduals(residualResult.value);
+    if (stabilityResult.status === 'fulfilled') setStability(stabilityResult.value);
+    return historyResult.status === 'fulfilled' ? historyResult.value.items : [];
+  }, []);
+
+  const openStoredSnapshot = useCallback(
+    async (id: string, options?: { silent?: boolean }) => {
+      try {
+        const stored = await getCin7ReconSnapshot(id);
+        setSnapshot({
+          ...stored,
+          recon_run_id: stored.recon_run_id ?? id,
+          read_only: true,
+          cache_meta: {
+            from_cache: false,
+            cached_at: stored.checked_at,
+            ttl_ms: 0,
+            mode: stored.cache_meta?.mode ?? (stored.mode as 'live' | 'acceptance' | undefined),
+          },
+        });
+        rememberSnapshotId(id);
+        setLoadError(null);
+        if (!options?.silent) {
+          toast({
+            title: 'Stored snapshot opened',
+            description: 'Loaded from the audit trail — Cin7 was not re-walked.',
+          });
+        }
+      } catch (error: unknown) {
+        toast({
+          variant: 'destructive',
+          title: 'Could not open snapshot',
+          description:
+            error instanceof Error ? error.message : 'Snapshot not found for this account',
+        });
+      }
+    },
+    [toast]
+  );
 
   const load = useCallback(
     async (options?: { force?: boolean; silent?: boolean; mode?: 'live' | 'acceptance' }) => {
@@ -129,10 +199,9 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         const data = await getCin7Reconciliation({ force, mode });
         if (requestId !== loadRequestId.current) return;
         setSnapshot(data);
+        if (data.recon_run_id) rememberSnapshotId(data.recon_run_id);
         if (force || mode === 'acceptance') {
-          void listCin7ReconHistory(8)
-            .then((h) => setHistory(h.items))
-            .catch(() => undefined);
+          void refreshEvidencePanels();
         }
         if (!options?.silent) {
           const acceptanceBlocked =
@@ -174,8 +243,32 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         }
       }
     },
-    [snapshot, toast]
+    [refreshEvidencePanels, snapshot, toast]
   );
+
+  useEffect(() => {
+    if (!isConnected) return;
+    let cancelled = false;
+    void (async () => {
+      const items = await refreshEvidencePanels();
+      if (cancelled) return;
+      let storedId: string | null = null;
+      try {
+        storedId = sessionStorage.getItem(SNAPSHOT_SESSION_KEY);
+      } catch {
+        storedId = null;
+      }
+      const fromSession = storedId && items.some((item) => item.id === storedId) ? storedId : null;
+      const latestAcceptance = items.find(
+        (item) => item.mode === 'acceptance' && item.status === 'complete'
+      );
+      const fallback = fromSession ?? latestAcceptance?.id ?? items[0]?.id ?? null;
+      if (fallback) await openStoredSnapshot(fallback, { silent: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isConnected, openStoredSnapshot, refreshEvidencePanels]);
 
   // After scheduled sync finishes, apply the live recon it just pulled.
   useEffect(() => {
@@ -225,8 +318,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     (ex?.branches_field_mismatches ?? 0) +
     (ex?.internal_customers_field_mismatches ?? 0) +
     (ex?.stock_levels_field_mismatches ?? 0);
-  const stockExtra = ex?.stock_levels_extra_in_optix ?? 0;
-  const isRefreshing = loading || liveLoading || healingFields || pruningStock;
+  const isRefreshing = loading || liveLoading || healingFields || revertingPrune;
   const fromCache = snapshot?.cache_meta?.from_cache;
 
   const healFieldDiffs = async () => {
@@ -258,32 +350,29 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     }
   };
 
-  const pruneSurplusStock = async () => {
-    setPruningStock(true);
+  const revertLastPrune = async () => {
+    const auditId = stability?.last_prune_audit?.id;
+    if (!auditId) return;
+    const ok = window.confirm(
+      `Revert stock prune ${auditId}?\n\nThis restores every Optix stock row stored on that audit's before-image. It does not re-run Cin7.`
+    );
+    if (!ok) return;
+    setRevertingPrune(true);
     try {
-      const preview = await pruneCin7StockSurplus({ dryRun: true });
-      const ok = window.confirm(
-        `Prune surplus stock?\n\nDry-run: ${preview.deleted} Optix rows are absent from Cin7 (Optix ${preview.optix_before} · Cin7 ${preview.cin7_keys}).\n\nThis is a separate logged action — not reconciliation. Deleted rows are stored in the audit log for revert.`
-      );
-      if (!ok) return;
-      const result = await pruneCin7StockSurplus({ dryRun: false });
-      if (result.audit_run_id) setLastHealAuditId(result.audit_run_id);
+      const result = await revertCin7HealAudit(auditId);
       toast({
-        title: `Pruned ${result.deleted} surplus stock row${result.deleted === 1 ? '' : 's'}`,
-        description: result.audit_run_id
-          ? `Audit: ${result.audit_run_id}. Re-run live recon to measure.`
-          : 'Re-run live recon to measure.',
-        variant: result.errors.length > 0 ? 'destructive' : undefined,
+        title: `Reverted ${result.reverted} pruned stock row${result.reverted === 1 ? '' : 's'}`,
+        description: `Audit ${auditId} is now reverted.`,
       });
-      await load({ force: true, silent: true });
+      await refreshEvidencePanels();
     } catch (error: unknown) {
       toast({
         variant: 'destructive',
-        title: 'Stock prune failed',
-        description: error instanceof Error ? error.message : 'Could not prune surplus stock',
+        title: 'Prune revert failed',
+        description: error instanceof Error ? error.message : 'Could not revert prune',
       });
     } finally {
-      setPruningStock(false);
+      setRevertingPrune(false);
     }
   };
 
@@ -296,7 +385,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         </CardTitle>
         <CardDescription>
           Read-only measurement against Cin7. This report does not heal, align, or delete Optix
-          data. Sign-off uses stored immutable snapshots for this account only.
+          data. The acceptance gate is the only sign-off number. Live refresh is measurement only
+          and is not used for close-out.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -305,6 +395,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           <p className="text-muted-foreground mt-0.5">
             Sync runs and reconciliation are stored per Optix account. Two users on the same URL can
             see different last-sync times and counts — that is expected, not a shared global ledger.
+            Stored snapshots stay listed after reload; click a row to open it without re-running
+            Cin7.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -326,13 +418,14 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
             variant="outline"
             disabled={!isConnected || isRefreshing}
             onClick={() => void load({ force: true })}
+            title="Measurement only — 429s are fail-closed and masked. Not used for sign-off."
           >
             {liveLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <RefreshCw className="mr-2 h-4 w-4" />
             )}
-            Refresh from live Cin7
+            Live measurement (not sign-off)
           </Button>
           <Button
             size="sm"
@@ -376,22 +469,6 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               Apply field heal ({fieldDiffTotal})
             </Button>
           ) : null}
-          {stockExtra > 0 && !snapshot?.acceptance_blocked ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={!isConnected || isRefreshing}
-              onClick={() => void pruneSurplusStock()}
-              title="Separate audited prune of Optix stock rows absent from Cin7"
-            >
-              {pruningStock ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Scissors className="mr-2 h-4 w-4" />
-              )}
-              Prune surplus stock ({stockExtra})
-            </Button>
-          ) : null}
         </div>
 
         {snapshot?.read_only ? (
@@ -402,31 +479,181 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           </p>
         ) : null}
 
-        {history.length > 0 ? (
-          <div className="rounded-lg border p-3">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium">
-              <History className="h-3.5 w-3.5" />
-              Stored snapshots (this account)
+        <div className="rounded-lg border p-3">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium">
+            <History className="h-3.5 w-3.5" />
+            Stored snapshots (this account)
+          </p>
+          {history.length === 0 ? (
+            <p className="text-muted-foreground text-xs">
+              No stored snapshots yet. Run the acceptance gate to create a sign-off snapshot. Reload
+              does not clear this list once snapshots exist.
             </p>
+          ) : (
             <ul className="space-y-1 text-xs">
-              {history.map((item) => (
+              {history.map((item) => {
+                const selected = item.id === selectedSnapshotId;
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className={`border-border/40 flex w-full flex-wrap justify-between gap-2 border-b py-1.5 text-left last:border-0 ${
+                        selected ? 'text-foreground font-medium' : 'text-muted-foreground'
+                      }`}
+                      onClick={() => void openStoredSnapshot(item.id)}
+                    >
+                      <span>
+                        {new Date(item.checked_at).toLocaleString()} · {item.mode} · {item.status}
+                        {item.stock_truncated ? ' · truncated' : ''}
+                        {selected ? ' · open' : ''}
+                      </span>
+                      <span className="tabular-nums">
+                        SKU {item.products_cin7 ?? '—'}/{item.products_optix ?? '—'} · stock{' '}
+                        {item.stock_cin7 ?? '—'}
+                        {item.stock_reported_total != null
+                          ? ` of Total ${item.stock_reported_total}`
+                          : ''}
+                        /{item.stock_optix ?? '—'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-lg border p-3">
+          <p className="mb-1 text-xs font-medium">Closed residual (B1)</p>
+          <p className="text-muted-foreground mb-2 text-xs">
+            {residuals?.note ??
+              'Record-by-record list from the last complete acceptance run. Stock is not part of this residual.'}
+          </p>
+          {residuals ? (
+            <div className="text-muted-foreground mb-2 space-y-0.5 text-xs tabular-nums">
+              <p>
+                Products {residuals.counts.products?.missing ?? 0} missing ·{' '}
+                {residuals.counts.products?.extra ?? 0} extra
+              </p>
+              <p>
+                Customers {residuals.counts.customers?.missing ?? 0} missing ·{' '}
+                {residuals.counts.customers?.extra ?? 0} extra
+              </p>
+              <p>
+                Suppliers {residuals.counts.suppliers?.missing ?? 0} missing ·{' '}
+                {residuals.counts.suppliers?.extra ?? 0} extra
+              </p>
+              <p>
+                Tax codes {residuals.counts['tax-codes']?.missing ?? 0} missing ·{' '}
+                {residuals.counts['tax-codes']?.extra ?? 0} extra
+              </p>
+            </div>
+          ) : null}
+          {residuals && residuals.items.length > 0 ? (
+            <div className="max-h-64 space-y-2 overflow-y-auto">
+              {residuals.items.map((row, idx) => (
+                <div
+                  key={`${row.entity_type}-${row.cin7_id}-${row.reason}-${idx}`}
+                  className="border-border/60 rounded-md border px-3 py-2 text-xs"
+                >
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <span className="font-medium">
+                      {row.entity_type}: {row.label}
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {row.reason === 'missing_in_optix'
+                        ? 'In Cin7, not in Optix'
+                        : 'In Optix, not in Cin7'}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground mt-0.5 font-mono">{row.cin7_id}</p>
+                  <p className="mt-1">{row.explanation}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-xs">
+              No B1 residual rows on the last complete acceptance run.
+            </p>
+          )}
+          <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" asChild>
+            <a href={getCin7B1ResidualsExportUrl()} download>
+              Export B1 CSV
+            </a>
+          </Button>
+        </div>
+
+        <div className="rounded-lg border p-3">
+          <p className="mb-1 text-xs font-medium">
+            Cin7 stock count — three consecutive acceptance runs
+          </p>
+          <p className="text-muted-foreground mb-2 text-xs">
+            {stability?.reason ??
+              'Run the acceptance gate three times so the Cin7 stock row count can be compared for stability.'}
+          </p>
+          {stability?.runs.length ? (
+            <ul className="space-y-1 text-xs">
+              {stability.runs.map((run) => (
                 <li
-                  key={item.id}
-                  className="text-muted-foreground border-border/40 flex flex-wrap justify-between gap-2 border-b py-1 last:border-0"
+                  key={run.id}
+                  className="text-muted-foreground flex flex-wrap justify-between gap-2 tabular-nums"
                 >
                   <span>
-                    {new Date(item.checked_at).toLocaleString()} · {item.mode} · {item.status}
+                    {new Date(run.checked_at).toLocaleString()}
+                    {run.truncated ? ' · truncated' : ''}
                   </span>
-                  <span className="tabular-nums">
-                    SKU {item.products_cin7 ?? '—'}/{item.products_optix ?? '—'} · stock{' '}
-                    {item.stock_cin7 ?? '—'}/{item.stock_optix ?? '—'} · field{' '}
-                    {item.field_mismatch_count} · extra {item.extra_count}
+                  <span>
+                    Cin7 {run.stock_cin7 ?? '—'}
+                    {run.cin7_reported_total != null ? ` · Total ${run.cin7_reported_total}` : ''} ·
+                    Optix {run.stock_optix ?? '—'}
                   </span>
                 </li>
               ))}
             </ul>
-          </div>
-        ) : null}
+          ) : (
+            <p className="text-muted-foreground text-xs">No complete acceptance runs yet.</p>
+          )}
+          <p className="mt-2 text-xs font-medium">
+            {stability?.stable ? 'Cin7 stock count is stable.' : 'Cin7 stock count is not stable.'}
+          </p>
+        </div>
+
+        <div className="rounded-lg border p-3">
+          <p className="mb-1 text-xs font-medium">
+            Stock prune — locked until Cin7 count is stable
+          </p>
+          <p className="text-muted-foreground text-xs">
+            Prune is a separate audited action and is not enabled. The client asked not to prune
+            against a moving or truncated Cin7 catalog. When a prune does run, each deleted Optix
+            stock row is stored on the heal audit <span className="font-mono">before_json</span>.
+            Revert restores those rows via the audit id — it does not re-walk Cin7.
+          </p>
+          {stability?.last_prune_audit ? (
+            <p className="text-muted-foreground mt-2 text-xs">
+              Last prune audit {stability.last_prune_audit.id} · {stability.last_prune_audit.status}{' '}
+              · {stability.last_prune_audit.deleted_total} rows ·{' '}
+              {stability.last_prune_audit.reversible ? 'reversible' : 'already reverted'}
+            </p>
+          ) : (
+            <p className="text-muted-foreground mt-2 text-xs">No prune audit exists yet.</p>
+          )}
+          {stability?.last_prune_audit?.reversible ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2"
+              disabled={revertingPrune}
+              onClick={() => void revertLastPrune()}
+            >
+              {revertingPrune ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="mr-2 h-4 w-4" />
+              )}
+              Revert last prune from audit
+            </Button>
+          ) : null}
+        </div>
 
         {loadError ? (
           <p className="flex items-start gap-1.5 text-sm text-amber-600 dark:text-amber-400">
@@ -453,8 +680,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
           <div className="border-destructive/40 bg-destructive/5 rounded-lg border p-3">
             <p className="text-destructive flex items-start gap-1.5 text-sm font-medium">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              Cin7 fetch was incomplete — do not use this snapshot for sign-off until a clean live
-              refresh succeeds. Exception zeros are blocked while the pull is dirty.
+              Cin7 fetch was incomplete — do not use this snapshot for sign-off until a clean
+              acceptance gate succeeds. Live measurement 429s are fail-closed and masked.
             </p>
             {snapshot.fetch_meta.errors.length > 0 ? (
               <p className="text-muted-foreground mt-1 text-xs">
@@ -574,6 +801,27 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                       snapshot.cin7.reference.stock_levels !== snapshot.optix.reference.stock_levels
                     }
                   />
+                  {snapshot.stock_evidence ? (
+                    <p
+                      className={`text-xs ${
+                        snapshot.stock_evidence.truncated || !snapshot.stock_evidence.complete
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      Durable snapshot stock {snapshot.stock_evidence.cin7_rows}
+                      {snapshot.stock_evidence.cin7_reported_total != null
+                        ? ` · Cin7 Total ${snapshot.stock_evidence.cin7_reported_total}`
+                        : ' · Cin7 Total not reported'}
+                      {' · truncated: '}
+                      {snapshot.stock_evidence.truncated ? 'yes' : 'no'}
+                      {snapshot.stock_evidence.truncated
+                        ? ' — not a sign-off stock number (prior complete readings were ~10,500).'
+                        : snapshot.stock_evidence.cin7_reported_total == null
+                          ? ' — completeness vs the ~10,500 prior readings cannot be proven from this snapshot.'
+                          : ' — this walk matched Cin7 Total.'}
+                    </p>
+                  ) : null}
                   <CountRow
                     label="Warehouses (Cin7 branches)"
                     cin7={snapshot.cin7.reference.warehouses}
@@ -590,7 +838,8 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                   <p className="text-destructive font-medium">Exception summary unavailable</p>
                   <p className="text-muted-foreground">
                     Fail-closed: Cin7 pull was incomplete, so missing/extra/field diffs are not
-                    shown as clean zeros. Re-run Refresh from live Cin7.
+                    shown as clean zeros. Re-run the acceptance gate — live measurement is not
+                    sign-off.
                   </p>
                 </div>
               ) : ex ? (
@@ -785,7 +1034,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
         ) : (
           <p className="text-muted-foreground text-sm">
             {isConnected
-              ? 'Click refresh to compare full Cin7 catalog counts with Optix.'
+              ? 'Open a stored snapshot above, or run the acceptance gate for a sign-off number. Live measurement is optional and not used for close-out.'
               : 'Connect Cin7 to run reconciliation.'}
           </p>
         )}
