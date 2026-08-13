@@ -488,7 +488,7 @@ export async function buildCin7Reconciliation(
   // READ-ONLY measurement path (Toby precondition): never write Optix from recon.
   // Field heal / stock prune are separate explicit actions with their own audit logs.
   notes.push(
-    'This reconciliation is read-only. It does not align, heal, or delete Optix data. Use “Apply field heal” or “Prune surplus stock” for repairs — those are separate, logged actions.'
+    'This reconciliation is read-only. It does not align, heal, or delete Optix data. Field heal is a separate logged action. Stock prune is not part of this report.'
   );
 
   const optixCustomerById = new Map(
