@@ -508,12 +508,12 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                         {selected ? ' · open' : ''}
                       </span>
                       <span className="tabular-nums">
-                        SKU {item.products_cin7 ?? '—'}/{item.products_optix ?? '—'} · stock{' '}
+                        SKU {item.products_cin7 ?? '—'}/{item.products_optix ?? '—'} · stock fetched{' '}
                         {item.stock_cin7 ?? '—'}
                         {item.stock_reported_total != null
                           ? ` of Total ${item.stock_reported_total}`
-                          : ''}
-                        /{item.stock_optix ?? '—'}
+                          : ''}{' '}
+                        / Optix {item.stock_optix ?? '—'}
                       </span>
                     </button>
                   </li>
@@ -603,7 +603,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                     {run.truncated ? ' · truncated' : ''}
                   </span>
                   <span>
-                    Cin7 {run.stock_cin7 ?? '—'}
+                    Cin7 fetched {run.stock_cin7 ?? '—'}
                     {run.cin7_reported_total != null ? ` · Total ${run.cin7_reported_total}` : ''} ·
                     Optix {run.stock_optix ?? '—'}
                   </span>
@@ -620,13 +620,17 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
 
         <div className="rounded-lg border p-3">
           <p className="mb-1 text-xs font-medium">
-            Stock prune — locked until Cin7 count is stable
+            {stability?.stable
+              ? 'Stock prune — Cin7 count is stable; prune is still a separate action'
+              : 'Stock prune — locked until Cin7 count is stable'}
           </p>
           <p className="text-muted-foreground text-xs">
-            Prune is a separate audited action and is not enabled. The client asked not to prune
-            against a moving or truncated Cin7 catalog. When a prune does run, each deleted Optix
-            stock row is stored on the heal audit <span className="font-mono">before_json</span>.
-            Revert restores those rows via the audit id — it does not re-walk Cin7.
+            {stability?.stable
+              ? 'The three-run Cin7 stock count is stable. Prune is still a separate audited action and is not run from this report.'
+              : 'Prune is a separate audited action and is not enabled. The client asked not to prune against a moving or truncated Cin7 catalog.'}{' '}
+            When a prune does run, each deleted Optix stock row is stored on the heal audit{' '}
+            <span className="font-mono">before_json</span>. Revert restores those rows via the audit
+            id — it does not re-walk Cin7.
           </p>
           {stability?.last_prune_audit ? (
             <p className="text-muted-foreground mt-2 text-xs">
@@ -809,17 +813,24 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                           : 'text-muted-foreground'
                       }`}
                     >
-                      Durable snapshot stock {snapshot.stock_evidence.cin7_rows}
+                      Fetched {snapshot.stock_evidence.cin7_rows}
+                      {' · distinct branch×SKU '}
+                      {snapshot.cin7.reference.stock_levels}
+                      {' · Optix '}
+                      {snapshot.optix.reference.stock_levels}
                       {snapshot.stock_evidence.cin7_reported_total != null
                         ? ` · Cin7 Total ${snapshot.stock_evidence.cin7_reported_total}`
                         : ' · Cin7 Total not reported'}
                       {' · truncated: '}
                       {snapshot.stock_evidence.truncated ? 'yes' : 'no'}
+                      {snapshot.stock_evidence.cin7_rows !== snapshot.cin7.reference.stock_levels
+                        ? ' — fetched is raw walk rows; distinct is unique branch×SKU (duplicates in the walk are not extras).'
+                        : ''}
                       {snapshot.stock_evidence.truncated
-                        ? ' — not a sign-off stock number (prior complete readings were ~10,500).'
+                        ? ' Not a sign-off stock number (prior complete readings were ~10,500).'
                         : snapshot.stock_evidence.cin7_reported_total == null
-                          ? ' — completeness vs the ~10,500 prior readings cannot be proven from this snapshot.'
-                          : ' — this walk matched Cin7 Total.'}
+                          ? ' Completeness vs the ~10,500 prior readings cannot be proven from this snapshot.'
+                          : ' This walk matched Cin7 Total.'}
                     </p>
                   ) : null}
                   <CountRow
