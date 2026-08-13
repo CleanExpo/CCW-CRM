@@ -15,10 +15,11 @@ import {
   resolveCin7SyncEntityAlias,
 } from '@/lib/integrations/cin7-master-entities';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
-import type {
-  Cin7ExceptionEntity,
-  Cin7ExceptionRecord,
-  Cin7ReconciliationSnapshot,
+import {
+  buildStockCatalogEvidence,
+  type Cin7ExceptionEntity,
+  type Cin7ExceptionRecord,
+  type Cin7ReconciliationSnapshot,
 } from '@/lib/integrations/cin7-reconciliation';
 import {
   getCin7ReferenceCounts,
@@ -329,7 +330,12 @@ function snapshotPayloadFromCatalog(
         id: `${s.cin7BranchId}:${s.sku}`,
         label: s.sku,
       }));
-      return { count: payload.length, payload, complete: errors.length === 0, errors };
+      return {
+        count: payload.length,
+        payload,
+        complete: errors.length === 0 && !Boolean(catalogs.stockLevels.truncated),
+        errors,
+      };
     }
     default:
       return { count: 0, payload: [], complete: false, errors: [`Unknown entity ${entityType}`] };
@@ -913,6 +919,7 @@ export async function runFailClosedReconciliation(ownerUserId: string): Promise<
 
   if (!allSnapshotsComplete) {
     const reason = `Incomplete Cin7 catalog snapshot: ${snapshotErrors.slice(0, 5).join('; ')}`;
+    const stockEvidence = buildStockCatalogEvidence(catalogs.stockLevels);
     await prisma.cin7ReconRun.update({
       where: { id: run.id },
       data: {
@@ -924,6 +931,7 @@ export async function runFailClosedReconciliation(ownerUserId: string): Promise<
           ...emptyExceptionsSummary(),
           products_missing_in_optix: 1,
           cin7_snapshot_incomplete: true,
+          stock_evidence: stockEvidence,
         },
       },
     });
@@ -937,10 +945,18 @@ export async function runFailClosedReconciliation(ownerUserId: string): Promise<
         label: reason,
       },
     });
+    const blocked = viewFromBlocked({ runId: run.id, reason, optix, notes: [reason] });
     return {
-      ...viewFromBlocked({ runId: run.id, reason, optix, notes: [reason] }),
+      ...blocked,
       recon_status: 'failed',
       cin7_snapshot_complete: false,
+      stock_evidence: stockEvidence,
+      fetch_meta: {
+        ...blocked.fetch_meta,
+        stock_pages: catalogs.stockLevels.pages_fetched,
+        incomplete: true,
+        errors: [...blocked.fetch_meta.errors, ...snapshotErrors.slice(0, 8)],
+      },
     };
   }
 
@@ -991,6 +1007,18 @@ export async function runFailClosedReconciliation(ownerUserId: string): Promise<
 
   const productsSnap = snaps.find((s) => s.entityType === 'products');
   const cin7Ref = getCin7ReferenceCounts(catalogs);
+  const stockEvidence = buildStockCatalogEvidence(catalogs.stockLevels);
+  const stockNotes = stockEvidence.truncated
+    ? [
+        `Durable Cin7 stock snapshot is truncated: fetched ${stockEvidence.cin7_rows} of Cin7 Total ${stockEvidence.cin7_reported_total}. This is not a sign-off stock number (prior complete readings were ~10,500).`,
+      ]
+    : stockEvidence.cin7_reported_total == null
+      ? [
+          `Durable Cin7 stock snapshot fetched ${stockEvidence.cin7_rows} rows; Cin7 did not report Total, so completeness cannot be proven against the ~10,500 prior readings.`,
+        ]
+      : [
+          `Durable Cin7 stock snapshot is complete: ${stockEvidence.cin7_rows} rows matching Cin7 Total ${stockEvidence.cin7_reported_total}.`,
+        ];
 
   await prisma.cin7ReconRun.update({
     where: { id: run.id },
@@ -1036,11 +1064,14 @@ export async function runFailClosedReconciliation(ownerUserId: string): Promise<
       customers_pages: catalogs.customers.pages_fetched,
       suppliers_pages: catalogs.suppliers.pages_fetched,
       branches_pages: catalogs.branches.pages_fetched,
+      stock_pages: catalogs.stockLevels.pages_fetched,
       errors: [],
     },
+    stock_evidence: stockEvidence,
     notes: [
       'Fail-closed reconciliation complete: Cin7 durable snapshot vs Optix SQL.',
       'Inactive products and all visibility types are included.',
+      ...stockNotes,
     ],
   };
 }
