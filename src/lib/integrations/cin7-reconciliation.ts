@@ -43,6 +43,31 @@ import {
 
 const CIN7_PRODUCT_CATEGORY_PREFIX = 'Cin7';
 
+export type Cin7StockCatalogEvidence = {
+  cin7_rows: number;
+  cin7_reported_total: number | null;
+  pages_fetched: number;
+  truncated: boolean;
+  complete: boolean;
+};
+
+export function buildStockCatalogEvidence(stock: {
+  stockLevels: { length: number };
+  pages_fetched: number;
+  errors: string[];
+  reported_total?: number | null;
+  truncated?: boolean;
+}): Cin7StockCatalogEvidence {
+  const truncated = Boolean(stock.truncated);
+  return {
+    cin7_rows: stock.stockLevels.length,
+    cin7_reported_total: stock.reported_total ?? null,
+    pages_fetched: stock.pages_fetched,
+    truncated,
+    complete: stock.errors.length === 0 && !truncated,
+  };
+}
+
 export type Cin7ReconciliationSnapshot = {
   source: 'core' | 'omni' | 'none';
   checked_at: string;
@@ -97,10 +122,16 @@ export type Cin7ReconciliationSnapshot = {
     customers_pages?: number;
     suppliers_pages?: number;
     branches_pages?: number;
+    stock_pages?: number;
     errors: string[];
     /** True when Cin7 pull was truncated/errored — exception zeros are not trustworthy. */
     incomplete?: boolean;
   };
+  /**
+   * Durable Cin7 stock walk vs Omni Total. Truncated snapshots are not sign-off numbers
+   * (e.g. 9,805 fetched while Cin7 Total still reads ~10,500).
+   */
+  stock_evidence?: Cin7StockCatalogEvidence;
   notes: string[];
   sync_completeness?: Cin7SyncCompletenessRow[];
   /** When true, UI must not treat exception summary as sign-off clean. */
@@ -301,6 +332,7 @@ export async function buildCin7Reconciliation(
     fetchMeta.customers_pages = customers.pages_fetched;
     fetchMeta.suppliers_pages = suppliers.pages_fetched;
     fetchMeta.branches_pages = branches.pages_fetched;
+    fetchMeta.stock_pages = catalogs.stockLevels.pages_fetched;
     fetchErrors.push(
       ...productCatalog.errors,
       ...customers.errors,
@@ -605,8 +637,13 @@ export async function buildCin7Reconciliation(
         omniCatalogs.suppliers.errors.length > 0 ||
         omniCatalogs.branches.errors.length > 0 ||
         omniCatalogs.stockLevels.errors.length > 0 ||
+        omniCatalogs.stockLevels.truncated ||
         omniCatalogs.productCategories.errors.length > 0)
     );
+
+  const stockEvidence = omniCatalogs
+    ? buildStockCatalogEvidence(omniCatalogs.stockLevels)
+    : undefined;
 
   if (fetchErrors.length > 0) {
     notes.push(`Cin7 fetch warnings: ${fetchErrors.slice(0, 3).join('; ')}`);
@@ -658,6 +695,21 @@ export async function buildCin7Reconciliation(
     notes.push(
       'Cin7 is unreachable — counts below are not valid for acceptance. Reconnect and refresh from live Cin7.'
     );
+  }
+  if (stockEvidence) {
+    if (stockEvidence.truncated) {
+      notes.push(
+        `Durable Cin7 stock snapshot is truncated: fetched ${stockEvidence.cin7_rows} of Cin7 Total ${stockEvidence.cin7_reported_total}. This is not a sign-off stock number (prior complete readings were ~10,500).`
+      );
+    } else if (stockEvidence.cin7_reported_total == null) {
+      notes.push(
+        `Durable Cin7 stock snapshot fetched ${stockEvidence.cin7_rows} rows; Cin7 did not report Total, so completeness cannot be proven against the ~10,500 prior readings.`
+      );
+    } else {
+      notes.push(
+        `Durable Cin7 stock snapshot is complete: ${stockEvidence.cin7_rows} rows matching Cin7 Total ${stockEvidence.cin7_reported_total}.`
+      );
+    }
   }
   if (catalogFetchIncomplete) {
     notes.push(
@@ -745,6 +797,7 @@ export async function buildCin7Reconciliation(
           ...referenceExceptions,
         },
     fetch_meta: fetchMeta,
+    stock_evidence: stockEvidence,
     notes: uniqueNotes(notes),
     acceptance_blocked: maskExceptions,
     products_field_mismatch_breakdown: maskExceptions
