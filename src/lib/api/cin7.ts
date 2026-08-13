@@ -363,6 +363,7 @@ export type Cin7ReconciliationResponse =
     recon_run_id?: string | null;
     read_only?: boolean;
     owner_scope_note?: string;
+    mode?: string;
   };
 
 /**
@@ -463,9 +464,68 @@ export async function listCin7ReconHistory(limit = 20): Promise<{
     products_optix: number | null;
     stock_cin7: number | null;
     stock_optix: number | null;
+    stock_reported_total: number | null;
+    stock_truncated: boolean;
   }>;
 }> {
   return apiClient.get(`/api/integrations/cin7/reconciliation/history?limit=${limit}`);
+}
+
+export async function getCin7ReconSnapshot(
+  reconRunId: string
+): Promise<Cin7ReconciliationResponse> {
+  return apiClient.get(
+    `/api/integrations/cin7/reconciliation/history?id=${encodeURIComponent(reconRunId)}`
+  );
+}
+
+export async function getCin7B1Residuals(): Promise<{
+  recon_run_id: string | null;
+  checked_at: string | null;
+  note: string;
+  counts: Record<string, { missing: number; extra: number }>;
+  items: Array<{
+    entity_type: string;
+    cin7_id: string;
+    label: string;
+    reason: string;
+    explanation: string;
+  }>;
+}> {
+  return apiClient.get('/api/integrations/cin7/reconciliation/residuals');
+}
+
+export function getCin7B1ResidualsExportUrl(): string {
+  return '/api/integrations/cin7/reconciliation/residuals?format=csv';
+}
+
+export async function getCin7StockStability(): Promise<{
+  stable: boolean;
+  prune_enabled: boolean;
+  required: number;
+  observed: number;
+  cin7_counts: Array<number | null>;
+  reason: string;
+  runs: Array<{
+    id: string;
+    checked_at: string;
+    status: string;
+    stock_cin7: number | null;
+    stock_optix: number | null;
+    cin7_reported_total: number | null;
+    truncated: boolean;
+    complete: boolean;
+  }>;
+  last_prune_audit: {
+    id: string;
+    created_at: string;
+    deleted_total: number;
+    status: string;
+    reversible: boolean;
+  } | null;
+  revert_how: string;
+}> {
+  return apiClient.get('/api/integrations/cin7/reconciliation/stock-stability');
 }
 
 /** @deprecated Prefer healCin7FieldMismatches — products-only wrapper. */
