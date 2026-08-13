@@ -37,7 +37,12 @@ vi.mock('@/lib/api/cin7', () => ({
 }));
 
 import type { Cin7ReconciliationResponse } from '@/lib/api/cin7';
-import { getCin7ReconSnapshot, getCin7Reconciliation, listCin7ReconHistory } from '@/lib/api/cin7';
+import {
+  getCin7ReconSnapshot,
+  getCin7Reconciliation,
+  getCin7StockStability,
+  listCin7ReconHistory,
+} from '@/lib/api/cin7';
 import { Cin7ReconciliationCard } from '../Cin7ReconciliationCard';
 
 function buildSnapshot(extraWithoutId: number): Cin7ReconciliationResponse {
@@ -67,6 +72,17 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
   beforeEach(() => {
     vi.mocked(getCin7Reconciliation).mockReset();
     vi.mocked(getCin7ReconSnapshot).mockReset();
+    vi.mocked(getCin7StockStability).mockResolvedValue({
+      stable: false,
+      prune_enabled: false,
+      required: 3,
+      observed: 0,
+      cin7_counts: [],
+      reason: 'Need 3 consecutive complete acceptance runs',
+      runs: [],
+      last_prune_audit: null,
+      revert_how: '',
+    });
     vi.mocked(listCin7ReconHistory).mockResolvedValue({
       owner_user_id: 'owner-1',
       note: '',
@@ -142,6 +158,32 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
         screen.getByText(/Stock prune — locked until Cin7 count is stable/i)
       ).toBeInTheDocument();
     });
+    expect(screen.queryByRole('button', { name: /prune surplus stock/i })).not.toBeInTheDocument();
+  });
+
+  it('does not offer a prune button after the Cin7 stock count is stable', async () => {
+    vi.mocked(getCin7StockStability).mockResolvedValue({
+      stable: true,
+      prune_enabled: true,
+      required: 3,
+      observed: 3,
+      cin7_counts: [10283, 10283, 10283],
+      reason: 'Cin7 stock row count held at 10283 across 3 consecutive complete acceptance runs.',
+      runs: [],
+      last_prune_audit: null,
+      revert_how: '',
+    });
+
+    render(<Cin7ReconciliationCard isConnected={true} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Stock prune — Cin7 count is stable; prune is still a separate action/i)
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByText(/Stock prune — locked until Cin7 count is stable/i)
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /prune surplus stock/i })).not.toBeInTheDocument();
   });
 });
