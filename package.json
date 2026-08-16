@@ -16,7 +16,13 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:lighthouse": "lhci autorun",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "removetemp-accounts": "node scripts/remove-temp-accounts.mjs",
+    "list-accounts": "node scripts/list-accounts.mjs"
+  },
+  "bin": {
+    "removetemp-accounts": "./scripts/remove-temp-accounts.mjs",
+    "list-accounts": "./scripts/list-accounts.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
