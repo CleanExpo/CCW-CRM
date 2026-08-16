@@ -1,8 +1,8 @@
 /**
  * Toby onboarding: register and forgot-password routes.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth/app-user-repo', () => ({
   findAppUserByEmail: vi.fn(),
@@ -30,18 +30,23 @@ vi.mock('@/lib/auth/session-cookies', () => ({
   setAuthSessionCookies: vi.fn(),
 }));
 
+import { POST as forgotPasswordPost } from '@/app/api/auth/forgot-password/route';
+import { POST as registerPost } from '@/app/api/auth/register/route';
 import {
   countAppUsers,
   findAppUserByEmail,
   insertAppUser,
   setPasswordResetFields,
 } from '@/lib/auth/app-user-repo';
-import { POST as registerPost } from '@/app/api/auth/register/route';
-import { POST as forgotPasswordPost } from '@/app/api/auth/forgot-password/route';
 
 describe('auth onboarding routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('ALLOW_PUBLIC_REGISTRATION', 'true');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('register rejects duplicate email with 409', async () => {
