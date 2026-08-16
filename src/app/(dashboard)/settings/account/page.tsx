@@ -1,5 +1,6 @@
 'use client';
 
+import { MfaEnrollPanel } from '@/components/auth/mfa-enroll-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ function MfaSettingsRow() {
   const [busy, setBusy] = useState(false);
   const [setup, setSetup] = useState<{
     secret: string;
+    otpauth_uri: string;
     recovery_codes: string[];
   } | null>(null);
   const [code, setCode] = useState('');
@@ -35,7 +37,11 @@ function MfaSettingsRow() {
     setBusy(true);
     try {
       const result = await authApi.setupMfa();
-      setSetup({ secret: result.secret, recovery_codes: result.recovery_codes });
+      setSetup({
+        secret: result.secret,
+        otpauth_uri: result.otpauth_uri,
+        recovery_codes: result.recovery_codes,
+      });
       toast({
         title: 'Authenticator setup started',
         description: 'Save recovery codes, then confirm.',
@@ -107,25 +113,16 @@ function MfaSettingsRow() {
         ) : null}
       </div>
       {setup ? (
-        <div className="space-y-2 rounded-md border p-3">
-          <p className="font-mono text-xs break-all">Secret: {setup.secret}</p>
-          <ul className="grid grid-cols-2 gap-1 font-mono text-xs">
-            {setup.recovery_codes.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
-          <div className="flex gap-2">
-            <Input
-              placeholder="6-digit code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="max-w-[160px]"
-            />
-            <Button disabled={busy || code.trim().length < 6} onClick={() => void confirmSetup()}>
-              Confirm
-            </Button>
-          </div>
-        </div>
+        <MfaEnrollPanel
+          secret={setup.secret}
+          otpauthUri={setup.otpauth_uri}
+          recoveryCodes={setup.recovery_codes}
+          code={code}
+          onCodeChange={setCode}
+          onConfirm={() => void confirmSetup()}
+          busy={busy}
+          confirmLabel="Confirm"
+        />
       ) : null}
     </div>
   );
