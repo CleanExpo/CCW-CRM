@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth/app-user-repo', () => ({
   findAppUserByEmail: vi.fn(),
@@ -57,10 +57,28 @@ function memberRow(email: string, id = 'u-member') {
 describe('public registration privilege boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('ALLOW_PUBLIC_REGISTRATION', 'true');
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it('rejects registration when public self-reg is closed', async () => {
+    vi.stubEnv('ALLOW_PUBLIC_REGISTRATION', 'false');
+
+    const res = await registerPost(
+      registerRequest({
+        email: 'closed@example.com',
+        password: 'Password123!',
+        full_name: 'Closed',
+      })
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.detail).toMatch(/registration is closed/i);
+    expect(insertAppUser).not.toHaveBeenCalled();
   });
 
   it('creates an ordinary public user with least privilege', async () => {
@@ -114,11 +132,7 @@ describe('public registration privilege boundary', () => {
     });
     // The challenge is signed for the persisted row, so forged `role`/`is_admin` in the request
     // body cannot reach the token even indirectly.
-    expect(signMfaChallengeToken).toHaveBeenCalledWith(
-      'u-forged',
-      'forged@example.com',
-      'enroll'
-    );
+    expect(signMfaChallengeToken).toHaveBeenCalledWith('u-forged', 'forged@example.com', 'enroll');
     expect(body.user).toMatchObject({ role: 'member', is_admin: false });
     // No session exists until MFA completes: no access token in the body, and no cookies set.
     expect(body.access_token).toBeUndefined();
@@ -160,12 +174,15 @@ describe('public registration privilege boundary', () => {
 
   it('parallel public registrations cannot race into privileged claims', async () => {
     vi.mocked(findAppUserByEmail).mockResolvedValue(null);
-    vi.mocked(insertAppUser).mockImplementation(async (input) => ({
-      ...memberRow(input.email.toLowerCase(), `u-${input.email}`),
-      fullName: input.full_name,
-      isAdmin: input.is_admin,
-      role: input.role ?? 'member',
-    }) as never);
+    vi.mocked(insertAppUser).mockImplementation(
+      async (input) =>
+        ({
+          ...memberRow(input.email.toLowerCase(), `u-${input.email}`),
+          fullName: input.full_name,
+          isAdmin: input.is_admin,
+          role: input.role ?? 'member',
+        }) as never
+    );
 
     const responses = await Promise.all(
       Array.from({ length: 8 }, (_, index) =>
