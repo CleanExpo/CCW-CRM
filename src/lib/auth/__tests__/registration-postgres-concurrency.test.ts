@@ -1,15 +1,16 @@
 // @vitest-environment node
 
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { NextRequest } from 'next/server';
 import { POST as registerPost } from '@/app/api/auth/register/route';
 import { verifyAccessJwt } from '@/lib/auth/jwt-tokens';
 import { prisma } from '@/lib/db/prisma';
+import { NextRequest } from 'next/server';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const testDatabaseHost = testDatabaseUrl ? new URL(testDatabaseUrl).hostname : null;
 const isLocalTestDatabase = testDatabaseHost === '127.0.0.1' || testDatabaseHost === 'localhost';
 if (isLocalTestDatabase && testDatabaseUrl) process.env.DATABASE_URL = testDatabaseUrl;
+process.env.ALLOW_PUBLIC_REGISTRATION = 'true';
 const describeWithPostgres = isLocalTestDatabase ? describe : describe.skip;
 const emailSuffix = '@registration-concurrency.invalid';
 
@@ -50,9 +51,9 @@ describeWithPostgres('public registration with disposable PostgreSQL', () => {
     const bodies = await Promise.all(responses.map((response) => response.json()));
 
     expect(responses.every((response) => response.status === 200)).toBe(true);
-    expect(bodies.every((body) => body.user.role === 'member' && body.user.is_admin === false)).toBe(
-      true
-    );
+    expect(
+      bodies.every((body) => body.user.role === 'member' && body.user.is_admin === false)
+    ).toBe(true);
 
     const persisted = await prisma.appUser.findMany({
       where: { email: { endsWith: emailSuffix } },
@@ -64,7 +65,9 @@ describeWithPostgres('public registration with disposable PostgreSQL', () => {
     const claims = await Promise.all(
       bodies.map((body) => verifyAccessJwt(body.access_token as string))
     );
-    expect(claims.every((claim) => claim?.role === 'member' && claim.is_admin === false)).toBe(true);
+    expect(claims.every((claim) => claim?.role === 'member' && claim.is_admin === false)).toBe(
+      true
+    );
   });
 
   it('normalises mixed-case email races to one member and one conflict', async () => {
