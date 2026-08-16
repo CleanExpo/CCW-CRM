@@ -65,12 +65,6 @@ export function MarketingHeader() {
 
           <div className="relative z-10 flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
-              href="/register"
-              className="hidden min-h-10 items-center justify-center px-3 text-[13px] font-medium text-zinc-400 transition hover:text-white md:inline-flex"
-            >
-              Sign up
-            </Link>
-            <Link
               href="/login"
               className="group inline-flex min-h-10 items-center justify-center gap-2 bg-sky-500 px-4 text-[13px] font-semibold text-zinc-950 transition hover:bg-sky-400 sm:px-5"
             >
@@ -107,12 +101,6 @@ export function MarketingHeader() {
                     </Link>
                   ))}
                   <div className="my-1 h-px bg-white/[0.06]" />
-                  <Link
-                    href="/register"
-                    className="px-3 py-2.5 text-[14px] font-medium text-zinc-300 transition hover:bg-white/[0.04] hover:text-white"
-                  >
-                    Sign up
-                  </Link>
                   <Link
                     href="/login"
                     className="mt-1 bg-sky-500 px-3 py-2.5 text-center text-[14px] font-semibold text-zinc-950 transition hover:bg-sky-400"
