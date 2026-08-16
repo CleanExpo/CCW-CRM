@@ -4,6 +4,10 @@ import { signMfaChallengeToken, signTokenPair } from '@/lib/auth/jwt-tokens';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
 import { roleRequiresMfa } from '@/lib/auth/mfa-totp';
 import { hashPassword } from '@/lib/auth/password';
+import {
+  isPublicRegistrationEnabled,
+  PUBLIC_REGISTRATION_CLOSED_DETAIL,
+} from '@/lib/auth/public-registration';
 import { registerBodySchema } from '@/lib/auth/schemas';
 import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
 import { NextRequest } from 'next/server';
@@ -15,6 +19,10 @@ function isPrismaUniqueViolation(e: unknown): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isPublicRegistrationEnabled()) {
+    return jsonDetail(PUBLIC_REGISTRATION_CLOSED_DETAIL, 403);
+  }
+
   const parsedBody = await readJsonBody(request);
   if (!parsedBody.ok) return parsedBody.response;
 
