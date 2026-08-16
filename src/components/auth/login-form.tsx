@@ -1,6 +1,7 @@
 'use client';
 
 import { AuthHotToaster } from '@/components/auth/auth-hot-toaster';
+import { MfaEnrollPanel } from '@/components/auth/mfa-enroll-panel';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -209,40 +210,17 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
     return (
       <>
         <AuthHotToaster />
-        <div className={isMarketing ? 'space-y-4' : 'space-y-3'}>
-          <p className={isMarketing ? 'text-sm text-zinc-300' : 'text-muted-foreground text-sm'}>
-            MFA is required for Optix accounts. Add this secret in Google Authenticator / 1Password
-            / Authy, save your recovery codes, then enter a 6-digit code.
-          </p>
-          <div className="rounded-md border p-3 font-mono text-xs break-all">
-            <p className="text-muted-foreground mb-1">Secret</p>
-            <p>{mfaStep.secret}</p>
-          </div>
-          {mfaStep.recovery_codes?.length ? (
-            <div className="rounded-md border p-3 font-mono text-xs">
-              <p className="text-muted-foreground mb-1">Recovery codes (save now)</p>
-              <ul className="grid grid-cols-2 gap-1">
-                {mfaStep.recovery_codes.map((code) => (
-                  <li key={code}>{code}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          <Input
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="123456"
-            value={mfaCode}
-            onChange={(e) => setMfaCode(e.target.value)}
-          />
-          <Button
-            className="w-full"
-            disabled={isLoading || mfaCode.trim().length < 6}
-            onClick={() => void onConfirmEnroll()}
-          >
-            {isLoading ? 'Enabling…' : 'Enable MFA and sign in'}
-          </Button>
-        </div>
+        <MfaEnrollPanel
+          variant={isMarketing ? 'marketing' : 'default'}
+          secret={mfaStep.secret}
+          otpauthUri={mfaStep.otpauth_uri}
+          recoveryCodes={mfaStep.recovery_codes}
+          code={mfaCode}
+          onCodeChange={setMfaCode}
+          onConfirm={() => void onConfirmEnroll()}
+          busy={isLoading}
+          confirmLabel="Enable MFA and sign in"
+        />
       </>
     );
   }
@@ -376,17 +354,6 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
             }
           >
             <p className={isMarketing ? 'text-zinc-400' : undefined}>
-              <Link
-                href="/register"
-                className={
-                  isMarketing
-                    ? 'font-medium text-sky-300 underline-offset-4 transition-colors hover:text-sky-200 hover:underline'
-                    : 'text-primary font-medium hover:underline'
-                }
-              >
-                Create an account
-              </Link>
-              <span className={isMarketing ? 'text-zinc-600' : 'text-muted-foreground'}> · </span>
               <Link
                 href="/forgot-password"
                 className={
