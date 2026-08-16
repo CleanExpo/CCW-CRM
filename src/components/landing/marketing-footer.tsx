@@ -15,7 +15,6 @@ const PRODUCT = [
 const COMPANY = [
   { href: '/contact', label: 'Contact' },
   { href: '/login', label: 'Sign in' },
-  { href: '/register', label: 'Sign up' },
 ] as const;
 
 const LEGAL = [
