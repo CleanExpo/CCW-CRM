@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import path from 'node:path';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -7,6 +8,35 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   serverExternalPackages: ['pg', '@prisma/client', '@prisma/adapter-pg'],
+  webpack: (config, { dir, isServer, nextRuntime, webpack }) => {
+    // instrumentation.ts is compiled for the browser as well as Node. The Node
+    // boot file pulls Prisma/`pg`; stub it (and pg) so the client compile does
+    // not try to resolve `tls` / `net` / `crypto`.
+    if (!isServer || nextRuntime === 'edge') {
+      config.plugins = config.plugins ?? [];
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /instrumentation\.node/,
+        })
+      );
+      const stubs: Record<string, false> = {
+        [path.join(dir, 'src/instrumentation.node.ts')]: false,
+        [path.join(dir, 'src/instrumentation.node')]: false,
+        pg: false,
+      };
+      config.resolve = config.resolve ?? {};
+      const alias = config.resolve.alias;
+      if (Array.isArray(alias)) {
+        config.resolve.alias = [
+          ...alias,
+          ...Object.entries(stubs).map(([name, target]) => ({ name, alias: target })),
+        ];
+      } else {
+        config.resolve.alias = { ...alias, ...stubs };
+      }
+    }
+    return config;
+  },
   typedRoutes: false,
   productionBrowserSourceMaps: false,
   // Prevents Webpack from mis-resolving CJS/ESM interop for these packages
