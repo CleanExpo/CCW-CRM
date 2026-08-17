@@ -1,9 +1,9 @@
+import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
+import LandingOperationsPulsePlaceholder from '@/components/landing/landing-operations-pulse';
+import MarketingLanding from '@/components/landing/marketing-landing';
+import { getAppOrigin } from '@/lib/api/backend-url';
 import type { Metadata } from 'next';
 import { Suspense, type ReactNode } from 'react';
-import MarketingLanding from '@/components/landing/marketing-landing';
-import { LiveStatsBar, type PublicStats } from '@/components/landing/LiveStatsBar';
-import { LandingOperationsPulsePlaceholder } from '@/components/landing/landing-operations-pulse';
-import { getAppOrigin } from '@/lib/api/backend-url';
 
 export const metadata: Metadata = {
   title: 'CCW Online ERP — Operations platform for equipment suppliers',
