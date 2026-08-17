@@ -26,6 +26,7 @@ import {
   getCin7SyncLogs,
   syncCin7EntityUntilComplete,
   triggerCin7Poll,
+  type Cin7ScheduledSyncStatus,
   type Cin7SyncLog,
 } from '@/lib/api/cin7';
 import { toCin7SyncDisplayStatus } from '@/lib/integrations/cin7-sync-display';
@@ -114,8 +115,8 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
   const anySyncing = Object.values(syncing).some(Boolean);
   const syncActionsLocked = anySyncing || polling || scheduledBusy;
 
-  const loadLogs = useCallback(async () => {
-    setLogsLoading(true);
+  const loadLogs = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLogsLoading(true);
     try {
       const { logs: recent } = await getCin7SyncLogs();
       const next: Record<string, Cin7SyncLog> = {};
@@ -126,8 +127,34 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
     } catch {
       // Non-blocking — sync controls still work without history
     } finally {
-      setLogsLoading(false);
+      if (!opts?.silent) setLogsLoading(false);
     }
+  }, []);
+
+  const applyLiveScheduledStatus = useCallback((status: Cin7ScheduledSyncStatus) => {
+    const live = status.live_entities ?? [];
+    if (live.length === 0) return;
+    setLogsByEntity((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const row of live) {
+        const existing = next[row.entity];
+        if (existing?.status === row.status && existing?.records_processed === row.records) {
+          continue;
+        }
+        changed = true;
+        next[row.entity] = {
+          id: existing?.id ?? `live-${row.entity}`,
+          entity_type: row.entity,
+          direction: existing?.direction ?? 'pull',
+          status: row.status,
+          records_processed: row.records,
+          synced_at: row.updated_at || existing?.synced_at || null,
+          error_message: existing?.error_message,
+        };
+      }
+      return changed ? next : prev;
+    });
   }, []);
 
   useEffect(() => {
@@ -282,8 +309,9 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
           isConnected={isConnected}
           manualBusy={anySyncing || polling}
           onScheduledBusyChange={setScheduledBusy}
+          onLiveEntities={applyLiveScheduledStatus}
           onLogsMayHaveChanged={() => {
-            void loadLogs();
+            void loadLogs({ silent: true });
           }}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
