@@ -16,21 +16,9 @@ export const CIN7_SCHEDULED_SYNC_ENV = 'CIN7_SCHEDULED_SYNC_AT';
 export const CIN7_SCHEDULED_SYNC_TZ = 'Australia/Sydney';
 export const CIN7_SCHEDULED_SYNC_DEFAULT = '21:00';
 
-/** Production slots: 5:00 AM and 9:00 PM Australia/Sydney. */
-export const CIN7_SYNC_PRODUCTION_HOURS = [5, 21] as const;
-export const CIN7_SYNC_TEST_DELAY_MS = 5 * 60 * 1000;
-
-/**
- * `npm run dev` always fires once 5 minutes after boot so the schedule can be
- * verified. Production uses 5:00 AM / 9:00 PM Australia/Sydney only, unless
- * CIN7_SYNC_TEST_DELAY=true.
- */
-export function isCin7SyncTestDelayEnabled(): boolean {
-  const raw = (process.env.CIN7_SYNC_TEST_DELAY ?? '').trim().toLowerCase();
-  if (raw === 'true' || raw === '1' || raw === '5m' || raw === 'on') return true;
-  if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') return false;
-  return true;
-}
+/** Daily production slot: 9:00 PM Australia/Sydney. */
+export const CIN7_SYNC_PRODUCTION_HOUR = 21;
+export const CIN7_SYNC_SCHEDULE_LABEL = '9:00 PM Australia/Sydney';
 
 /** Browser event after scheduled sync runs a live Cin7 reconciliation pull. */
 export const CIN7_LIVE_RECON_REFRESHED_EVENT = 'cin7:live-recon-refreshed';
@@ -202,22 +190,30 @@ export function getNextCin7ScheduledFireAt(
   return candidate;
 }
 
-/** Next 5:00 AM or 9:00 PM Australia/Sydney strictly after `from`. */
+function sydneyNinePmOn(parts: {
+  year: number;
+  month: number;
+  day: number;
+}): Date {
+  return sydneyWallTimeToUtc(parts.year, parts.month, parts.day, CIN7_SYNC_PRODUCTION_HOUR, 0, 0);
+}
+
+/** Next 9:00 PM Australia/Sydney strictly after `from`. */
 export function getNextCin7ProductionFireAt(from: Date = new Date()): Date {
   const nowParts = zonedParts(from, CIN7_SCHEDULED_SYNC_TZ);
-  const candidates: Date[] = [];
-  for (const hour of CIN7_SYNC_PRODUCTION_HOURS) {
-    candidates.push(sydneyWallTimeToUtc(nowParts.year, nowParts.month, nowParts.day, hour, 0, 0));
-  }
+  const today = sydneyNinePmOn(nowParts);
+  if (today.getTime() > from.getTime()) return today;
   const tomorrow = new Date(from.getTime() + 24 * 60 * 60 * 1000);
-  const t = zonedParts(tomorrow, CIN7_SCHEDULED_SYNC_TZ);
-  for (const hour of CIN7_SYNC_PRODUCTION_HOURS) {
-    candidates.push(sydneyWallTimeToUtc(t.year, t.month, t.day, hour, 0, 0));
-  }
-  const upcoming = candidates
-    .filter((at) => at.getTime() > from.getTime())
-    .sort((a, b) => a.getTime() - b.getTime());
-  return upcoming[0] ?? new Date(from.getTime() + 12 * 60 * 60 * 1000);
+  return sydneyNinePmOn(zonedParts(tomorrow, CIN7_SCHEDULED_SYNC_TZ));
+}
+
+/** Most recent 9:00 PM Australia/Sydney at or before `from` (today’s slot after it fires). */
+export function getCin7ProductionSlotAtOrBefore(from: Date = new Date()): Date {
+  const nowParts = zonedParts(from, CIN7_SCHEDULED_SYNC_TZ);
+  const today = sydneyNinePmOn(nowParts);
+  if (today.getTime() <= from.getTime()) return today;
+  const yesterday = new Date(from.getTime() - 24 * 60 * 60 * 1000);
+  return sydneyNinePmOn(zonedParts(yesterday, CIN7_SCHEDULED_SYNC_TZ));
 }
 
 export function formatCin7SyncWhen(date: Date): string {
@@ -284,7 +280,10 @@ export function cin7ScheduleStatusPollDelayMs(input: {
   if (!input.nextFireAt) return CIN7_SCHEDULE_IDLE_POLL_MAX_MS;
   const ms = input.nextFireAt.getTime() - (input.now ?? new Date()).getTime();
   if (ms <= 8_000) return CIN7_SCHEDULE_ACTIVE_POLL_MS;
-  return Math.min(Math.max(ms - 5_000, CIN7_SCHEDULE_ACTIVE_POLL_MS), CIN7_SCHEDULE_IDLE_POLL_MAX_MS);
+  return Math.min(
+    Math.max(ms - 5_000, CIN7_SCHEDULE_ACTIVE_POLL_MS),
+    CIN7_SCHEDULE_IDLE_POLL_MAX_MS
+  );
 }
 
 /** Changes when an entity finishes or the walk starts/stops — not on every record tick. */
