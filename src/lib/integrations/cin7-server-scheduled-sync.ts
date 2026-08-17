@@ -6,10 +6,12 @@
 import { POST as postCin7SyncEntity } from '@/app/api/integrations/cin7/sync/[entityType]/route';
 import { findAppUserById } from '@/lib/auth/app-user-repo';
 import { signAccessToken } from '@/lib/auth/jwt-tokens';
+import { CIN7_SCHEDULED_SYNC_LOCK, withPgAdvisoryLock } from '@/lib/db/advisory-lock';
 import { prisma } from '@/lib/db/prisma';
 import { persistImmutableReconSnapshot } from '@/lib/integrations/cin7-recon-snapshot-store';
 import { buildCin7Reconciliation } from '@/lib/integrations/cin7-reconciliation';
 import { getOrBuildReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
+import { getCin7ProductionSlotAtOrBefore } from '@/lib/integrations/cin7-scheduled-sync';
 import {
   defaultScheduledSyncSleep,
   runCin7SequentialEntityWalk,
@@ -25,7 +27,7 @@ import { NextRequest } from 'next/server';
 
 export type Cin7ScheduledSyncJobResult = {
   skipped: boolean;
-  skip_reason?: 'lock_held' | 'missing_owner';
+  skip_reason?: 'lock_held' | 'missing_owner' | 'already_ran';
   cin7_complete?: boolean;
   consecutive_complete_count?: number;
   ledger_id?: string;
@@ -206,16 +208,36 @@ export async function runCin7ScheduledSyncJob(options?: {
     return { skipped: true, skip_reason: 'missing_owner' };
   }
 
-  console.log(`[cin7-scheduled-sync] started owner=${ownerUserId}`);
-  setCin7ScheduledSyncRunning(true);
-  try {
-    const result = await runWalk(ownerUserId);
-    console.log('[cin7-scheduled-sync] completed', JSON.stringify(result));
-    return result;
-  } catch (error) {
-    console.error('[cin7-scheduled-sync] failed', describeError(error));
-    throw error;
-  } finally {
-    setCin7ScheduledSyncRunning(false);
+  const locked = await withPgAdvisoryLock(CIN7_SCHEDULED_SYNC_LOCK, async () => {
+    const slot = getCin7ProductionSlotAtOrBefore(new Date());
+    const existing = await prisma.cin7NightlySyncLedger.findFirst({
+      where: { ownerUserId, startedAt: { gte: slot } },
+      orderBy: { startedAt: 'desc' },
+    });
+    if (existing?.overallStatus === 'complete' && existing.finishedAt) {
+      console.log(
+        `[cin7-scheduled-sync] skipped: tonight's 9:00 PM slot already completed ledger=${existing.id}`
+      );
+      return { skipped: true, skip_reason: 'already_ran' } satisfies Cin7ScheduledSyncJobResult;
+    }
+
+    console.log(`[cin7-scheduled-sync] started owner=${ownerUserId}`);
+    setCin7ScheduledSyncRunning(true);
+    try {
+      const result = await runWalk(ownerUserId);
+      console.log('[cin7-scheduled-sync] completed', JSON.stringify(result));
+      return result;
+    } catch (error) {
+      console.error('[cin7-scheduled-sync] failed', describeError(error));
+      throw error;
+    } finally {
+      setCin7ScheduledSyncRunning(false);
+    }
+  });
+
+  if (!locked.acquired) {
+    console.log('[cin7-scheduled-sync] skipped: another replica already holds the sync lock');
+    return { skipped: true, skip_reason: 'lock_held' };
   }
+  return locked.result;
 }
