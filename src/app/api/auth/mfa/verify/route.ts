@@ -4,6 +4,7 @@ import { signTokenPair, verifyMfaChallengeToken } from '@/lib/auth/jwt-tokens';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
 import { verifyUserMfa } from '@/lib/auth/mfa-totp';
 import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
+import { rememberCin7SyncActor } from '@/lib/integrations/cin7-server-scheduler';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -45,5 +46,6 @@ export async function POST(request: NextRequest) {
     mfa_method: method,
   });
   setAuthSessionCookies(response, tokens);
+  rememberCin7SyncActor(row.id);
   return response;
 }
