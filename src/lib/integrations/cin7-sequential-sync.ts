@@ -1,6 +1,7 @@
 /**
  * Sequential Cin7 walk used by the unattended scheduler.
  * Same entity order, restart/resume, and contact `full=` as the old browser runner.
+ * Each entity is posted until complete — time-budget pauses do not stop the walk.
  */
 
 import {
@@ -40,11 +41,14 @@ export type Cin7SequentialSyncDeps = {
     entity: Cin7ScheduledSyncEntity,
     outcome: Cin7ScheduledEntityOutcome
   ) => Promise<void> | void;
-  maxRoundsFor?: (entity: Cin7ScheduledSyncEntity) => number;
-  maxChunksPerRound?: number;
+  /** Safety cap against a stuck loop. Not a time budget. */
+  maxChunksPerEntity?: number;
 };
 
-const DEFAULT_CHUNKS_PER_ROUND = 8;
+/** Guardrail only — a healthy catalog finishes well below this. */
+export const CIN7_SCHEDULED_SYNC_MAX_CHUNKS_PER_ENTITY = 50_000;
+const MAX_CONSECUTIVE_PAGE_RETRIES = 3;
+const MAX_CONSECUTIVE_POST_ERRORS = 5;
 
 function sleepMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,8 +58,20 @@ function isComplete(data: Cin7ScheduledChunkResult): boolean {
   return data.complete === true || data.status === 'complete';
 }
 
+function failedOutcome(resumed: boolean, last?: Cin7ScheduledChunkResult): Cin7ScheduledEntityOutcome {
+  return {
+    status: last?.status ?? 'failed',
+    records: last?.records_processed ?? 0,
+    pages: last?.last_committed_page ?? 0,
+    failed_page: last?.failed_page ?? null,
+    complete: false,
+    resumed,
+  };
+}
+
 /**
- * Keep posting one entity until complete — same loop as the Sync buttons / old tab runner.
+ * Keep posting one entity until complete. Per-request time budgets only pause
+ * a chunk; this loop continues until Cin7 reports the entity finished.
  */
 export async function syncCin7ScheduledEntityUntilComplete(
   entity: Cin7ScheduledSyncEntity,
@@ -63,46 +79,59 @@ export async function syncCin7ScheduledEntityUntilComplete(
   priorStatus: string | null
 ): Promise<Cin7ScheduledEntityOutcome> {
   const contactFull = isCin7ScheduledContactEntity(entity);
-  const maxRounds = deps.maxRoundsFor?.(entity) ?? (contactFull ? 60 : 40);
-  const maxChunksPerRound = deps.maxChunksPerRound ?? DEFAULT_CHUNKS_PER_ROUND;
+  const maxChunks = deps.maxChunksPerEntity ?? CIN7_SCHEDULED_SYNC_MAX_CHUNKS_PER_ENTITY;
   let restart = shouldRestartCin7ScheduledEntity(priorStatus);
   const resumed = !restart;
   let last: Cin7ScheduledChunkResult = {};
+  let pageErrorRetries = 0;
+  let postErrorRetries = 0;
 
-  for (let round = 0; round < maxRounds; round += 1) {
-    let pageErrorRetries = 0;
-    for (let chunk = 0; chunk < maxChunksPerRound; chunk += 1) {
+  for (let chunk = 0; chunk < maxChunks; chunk += 1) {
+    try {
       last = await deps.postChunk(entity, {
-        restart: restart && chunk === 0,
+        restart,
         full: contactFull,
       });
       restart = false;
+      postErrorRetries = 0;
+    } catch (error) {
+      postErrorRetries += 1;
+      if (postErrorRetries >= MAX_CONSECUTIVE_POST_ERRORS) {
+        throw error;
+      }
+      await deps.sleep(5_000 * postErrorRetries);
+      continue;
+    }
 
-      if (isComplete(last)) {
-        return toOutcome(last, true, resumed);
-      }
-      if (last.status === 'running') {
-        await deps.sleep(20_000);
-        break;
-      }
-      if (last.status === 'failed') {
-        return toOutcome(last, false, resumed);
-      }
-      if (last.failed_page != null && last.complete === false && last.next_page != null) {
-        if (pageErrorRetries < 3) {
-          pageErrorRetries += 1;
-          const rateLimited = (last.sync_errors ?? []).some((e) => /429|rate-?limit/i.test(e));
-          await deps.sleep(rateLimited ? 15_000 : 5_000 * pageErrorRetries);
-          continue;
-        }
-        return toOutcome(last, false, resumed);
-      }
-      if (last.complete === false && last.next_page != null) {
-        pageErrorRetries = 0;
+    if (isComplete(last)) {
+      return toOutcome(last, true, resumed);
+    }
+
+    if (last.status === 'running') {
+      await deps.sleep(20_000);
+      continue;
+    }
+
+    if (last.status === 'failed' && last.next_page == null && last.failed_page == null) {
+      return toOutcome(last, false, resumed);
+    }
+
+    if (last.failed_page != null && last.complete === false && last.next_page != null) {
+      if (pageErrorRetries < MAX_CONSECUTIVE_PAGE_RETRIES) {
+        pageErrorRetries += 1;
+        const rateLimited = (last.sync_errors ?? []).some((e) => /429|rate-?limit/i.test(e));
+        await deps.sleep(rateLimited ? 15_000 : 5_000 * pageErrorRetries);
         continue;
       }
       return toOutcome(last, false, resumed);
     }
+
+    if (last.complete === false && last.next_page != null) {
+      pageErrorRetries = 0;
+      continue;
+    }
+
+    return toOutcome(last, false, resumed);
   }
 
   return toOutcome(last, isComplete(last), resumed);
@@ -123,9 +152,7 @@ function toOutcome(
   };
 }
 
-export async function runCin7SequentialEntityWalk(
-  deps: Cin7SequentialSyncDeps
-): Promise<{
+export async function runCin7SequentialEntityWalk(deps: Cin7SequentialSyncDeps): Promise<{
   entityResults: Record<string, Cin7ScheduledEntityOutcome>;
   cin7AllComplete: boolean;
   order: readonly Cin7ScheduledSyncEntity[];
@@ -134,7 +161,16 @@ export async function runCin7SequentialEntityWalk(
 
   for (const entity of CIN7_SCHEDULED_SYNC_ENTITY_ORDER) {
     const prior = await deps.loadPriorStatus(entity);
-    const outcome = await syncCin7ScheduledEntityUntilComplete(entity, deps, prior);
+    let outcome: Cin7ScheduledEntityOutcome;
+    try {
+      outcome = await syncCin7ScheduledEntityUntilComplete(entity, deps, prior);
+    } catch (error) {
+      console.error(
+        `[cin7-sequential-sync] ${entity} failed`,
+        error instanceof Error ? error.message : error
+      );
+      outcome = failedOutcome(!shouldRestartCin7ScheduledEntity(prior));
+    }
     entityResults[entity] = outcome;
     await deps.onEntityProgress?.(entity, outcome);
   }
