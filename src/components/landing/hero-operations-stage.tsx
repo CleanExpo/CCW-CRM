@@ -188,3 +188,5 @@ export function HeroOperationsStage() {
     </div>
   );
 }
+
+export default HeroOperationsStage;
