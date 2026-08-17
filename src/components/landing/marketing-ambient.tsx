@@ -74,3 +74,5 @@ export function MarketingAmbientCanvas({
     </div>
   );
 }
+
+export default MarketingAmbientCanvas;
