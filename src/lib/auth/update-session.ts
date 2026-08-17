@@ -49,15 +49,29 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  const token = request.cookies.get(AUTH_ACCESS_COOKIE)?.value;
+  const cookieToken = request.cookies.get(AUTH_ACCESS_COOKIE)?.value;
 
   let user: SessionUser | null = null;
-  if (token) {
-    user = await userFromAccessToken(token);
+  if (cookieToken) {
+    user = await userFromAccessToken(cookieToken);
 
     if (!user) {
       response.cookies.delete(AUTH_ACCESS_COOKIE);
       response.cookies.delete(AUTH_REFRESH_COOKIE);
+    }
+  }
+
+  // API clients (browser fetch + in-process Cin7 walk) send Authorization: Bearer.
+  // Cookie-only gating turns those into /login HTML 200s. JWTs contain `.`; cron
+  // secrets typically do not, so Bearer CRON_SECRET still falls through to the
+  // public `/api/cron` prefix or the route's own cron check.
+  if (!user && request.nextUrl.pathname.startsWith('/api/')) {
+    const auth = request.headers.get('authorization');
+    if (auth?.startsWith('Bearer ')) {
+      const candidate = auth.slice(7).trim();
+      if (candidate.includes('.')) {
+        user = await userFromAccessToken(candidate);
+      }
     }
   }
 
