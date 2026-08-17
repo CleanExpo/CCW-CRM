@@ -8,8 +8,9 @@ export const maxDuration = 300;
 /**
  * Nightly Full Sync Cron Job
  *
- * Cin7 sequential walks normally start once per account after login.
- * This route can run the same walk when an owner is already reserved.
+ * Backup trigger for the in-process 9:00 PM Australia/Sydney Cin7 walk,
+ * then Xero/Shopify follow-on. Duplicate Cin7 starts are skipped by the
+ * advisory lock and tonight's completed ledger.
  */
 export async function GET(request: Request) {
   try {
@@ -82,9 +83,13 @@ export async function GET(request: Request) {
 
     const failedCount = Object.values(results).filter((r) => !r.success).length;
     const cin7AllComplete = cin7.cin7_complete === true;
+    const cin7Accepted =
+      cin7.skip_reason === 'already_ran' ||
+      cin7.skip_reason === 'lock_held' ||
+      (!cin7.skipped && cin7AllComplete);
 
     return NextResponse.json({
-      success: !cin7.skipped && cin7AllComplete && failedCount === 0,
+      success: cin7Accepted && failedCount === 0,
       skipped: cin7.skipped,
       skip_reason: cin7.skip_reason,
       cin7_complete: cin7AllComplete,
