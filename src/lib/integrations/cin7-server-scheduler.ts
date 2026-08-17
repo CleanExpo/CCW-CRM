@@ -1,15 +1,13 @@
 /**
  * In-process Cin7 scheduler.
- * Production: 5:00 AM and 9:00 PM Australia/Sydney.
- * Testing: first run 5 minutes after the server starts (NODE_ENV=development
- * or CIN7_SYNC_TEST_DELAY=true). No cron user, no schedule table.
+ * Fires once per day at 9:00 PM Australia/Sydney and walks every entity
+ * until complete. No test delay. No cron user. No schedule table.
  */
 
 import {
-  CIN7_SYNC_TEST_DELAY_MS,
+  CIN7_SYNC_SCHEDULE_LABEL,
   formatCin7SyncWhen,
   getNextCin7ProductionFireAt,
-  isCin7SyncTestDelayEnabled,
 } from '@/lib/integrations/cin7-scheduled-sync';
 
 export type Cin7SchedulerSnapshot = {
@@ -24,7 +22,6 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let nextFireAt: Date | null = null;
 let running = false;
 let actorUserId: string | null = null;
-let usedTestDelay = false;
 let started = false;
 let runJob: Cin7ScheduledSyncRunner | null = null;
 
@@ -55,26 +52,12 @@ export function setCin7ScheduledSyncRunning(value: boolean): void {
   running = value;
 }
 
-function pickNextFireAt(now: Date): { at: Date; label: string } {
-  if (isCin7SyncTestDelayEnabled() && !usedTestDelay) {
-    usedTestDelay = true;
-    return {
-      at: new Date(now.getTime() + CIN7_SYNC_TEST_DELAY_MS),
-      label: 'test delay (5 minutes)',
-    };
-  }
-  return {
-    at: getNextCin7ProductionFireAt(now),
-    label: '5:00 AM / 9:00 PM Australia/Sydney',
-  };
-}
-
-function arm(at: Date, label: string): void {
+function arm(at: Date): void {
   clearTimer();
   nextFireAt = at;
   const delay = Math.max(0, at.getTime() - Date.now());
   console.log(
-    `[cin7-scheduler] next run ${at.toISOString()} (${formatCin7SyncWhen(at)}) in ${Math.round(delay / 1000)}s [${label}]`
+    `[cin7-scheduler] next run ${at.toISOString()} (${formatCin7SyncWhen(at)}) in ${Math.round(delay / 1000)}s [${CIN7_SYNC_SCHEDULE_LABEL}]`
   );
   timer = setTimeout(() => {
     timer = null;
@@ -83,21 +66,23 @@ function arm(at: Date, label: string): void {
   timer.unref?.();
 }
 
+function armNextSlot(): void {
+  arm(getNextCin7ProductionFireAt(new Date()));
+}
+
 async function triggerScheduledSync(): Promise<void> {
   console.log('[cin7-scheduler] triggered');
   if (running) {
     console.log('[cin7-scheduler] skipped: a sync is already running');
-    arm(getNextCin7ProductionFireAt(new Date()), '5:00 AM / 9:00 PM Australia/Sydney');
+    armNextSlot();
     return;
   }
 
-  // Arm the next 5:00 AM / 9:00 PM slot before the walk so a long sync cannot skip it.
-  arm(getNextCin7ProductionFireAt(new Date()), '5:00 AM / 9:00 PM Australia/Sydney');
+  // Arm tomorrow's 9:00 PM before the walk so a long sync cannot skip it.
+  armNextSlot();
 
   if (!runJob) {
-    console.error(
-      '[cin7-scheduler] skipped: sync job is not registered (Node boot did not load)'
-    );
+    console.error('[cin7-scheduler] skipped: sync job is not registered (Node boot did not load)');
     return;
   }
 
@@ -112,14 +97,8 @@ async function triggerScheduledSync(): Promise<void> {
 export function startCin7ServerScheduler(): void {
   if (started) return;
   started = true;
-  const test = isCin7SyncTestDelayEnabled();
-  console.log(
-    test
-      ? '[cin7-scheduler] starting — first run in 5 minutes (testing), then 5:00 AM and 9:00 PM Australia/Sydney'
-      : '[cin7-scheduler] starting — 5:00 AM and 9:00 PM Australia/Sydney'
-  );
-  const next = pickNextFireAt(new Date());
-  arm(next.at, next.label);
+  console.log(`[cin7-scheduler] starting — daily ${CIN7_SYNC_SCHEDULE_LABEL}`);
+  armNextSlot();
 }
 
 export function resetCin7ScheduleForTests(): void {
@@ -127,7 +106,6 @@ export function resetCin7ScheduleForTests(): void {
   nextFireAt = null;
   running = false;
   actorUserId = null;
-  usedTestDelay = false;
   started = false;
   runJob = null;
 }
