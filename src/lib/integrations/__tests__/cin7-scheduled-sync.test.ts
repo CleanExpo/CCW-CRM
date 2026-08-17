@@ -9,15 +9,16 @@ import {
   CIN7_SCHEDULED_SYNC_ENTITY_ORDER,
   CIN7_SCHEDULE_ACTIVE_POLL_MS,
   CIN7_SCHEDULE_IDLE_POLL_MAX_MS,
-  CIN7_SYNC_TEST_DELAY_MS,
+  CIN7_SYNC_PRODUCTION_HOUR,
+  CIN7_SYNC_SCHEDULE_LABEL,
   cin7EntityCompletionFingerprint,
   cin7ScheduleStatusPollDelayMs,
+  getCin7ProductionSlotAtOrBefore,
   getCin7ScheduledSyncRaw,
   getNextCin7ProductionFireAt,
   getNextCin7ScheduledFireAt,
   isCin7ScheduledContactEntity,
   isCin7ServerSchedulerArmed,
-  isCin7SyncTestDelayEnabled,
   ledgerCoversFireSlot,
   parseCin7ScheduledSyncAt,
   shouldRestartCin7ScheduledEntity,
@@ -225,25 +226,79 @@ describe('runCin7SequentialEntityWalk', () => {
     expect(walk.cin7AllComplete).toBe(false);
     expect(walk.entityResults.customers?.complete).toBe(true);
   });
-});
 
-describe('Cin7 test-delay switch', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
+  it('keeps posting an entity through hundreds of time-budget pauses until it completes', async () => {
+    const incompleteChunks = 400;
+    let productsPosts = 0;
+
+    const walk = await runCin7SequentialEntityWalk({
+      loadPriorStatus: async () => 'complete',
+      postChunk: async (entity) => {
+        if (entity !== 'products') {
+          return { status: 'complete', complete: true, records_processed: 1 };
+        }
+        productsPosts += 1;
+        if (productsPosts <= incompleteChunks) {
+          return {
+            status: 'incomplete',
+            complete: false,
+            next_page: productsPosts + 1,
+            records_processed: productsPosts,
+            last_committed_page: productsPosts,
+          };
+        }
+        return {
+          status: 'complete',
+          complete: true,
+          records_processed: productsPosts,
+          last_committed_page: productsPosts,
+        };
+      },
+      sleep: async () => undefined,
+    });
+
+    expect(productsPosts).toBe(incompleteChunks + 1);
+    expect(walk.entityResults.products?.complete).toBe(true);
+    expect(walk.cin7AllComplete).toBe(true);
   });
 
-  it('uses a 5-minute first run on next dev even when CIN7_SYNC_TEST_DELAY=false', () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('CIN7_SYNC_TEST_DELAY', 'false');
-    expect(isCin7SyncTestDelayEnabled()).toBe(true);
+  it('resumes after a time-budget running pause instead of giving up the entity', async () => {
+    let productsPosts = 0;
+    const walk = await runCin7SequentialEntityWalk({
+      loadPriorStatus: async () => 'incomplete',
+      postChunk: async (entity) => {
+        if (entity !== 'products') {
+          return { status: 'complete', complete: true, records_processed: 1 };
+        }
+        productsPosts += 1;
+        if (productsPosts === 1) {
+          return { status: 'running', complete: false, next_page: 2 };
+        }
+        return { status: 'complete', complete: true, records_processed: 2, last_committed_page: 2 };
+      },
+      sleep: async () => undefined,
+    });
+
+    expect(productsPosts).toBe(2);
+    expect(walk.entityResults.products?.complete).toBe(true);
   });
 
-  it('keeps production on 5:00 AM / 9:00 PM unless the test delay is forced on', () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    vi.stubEnv('CIN7_SYNC_TEST_DELAY', 'false');
-    expect(isCin7SyncTestDelayEnabled()).toBe(false);
-    vi.stubEnv('CIN7_SYNC_TEST_DELAY', 'true');
-    expect(isCin7SyncTestDelayEnabled()).toBe(true);
+  it('continues the remaining entities when one entity throws', async () => {
+    const walk = await runCin7SequentialEntityWalk({
+      loadPriorStatus: async () => 'complete',
+      postChunk: async (entity) => {
+        if (entity === 'products') {
+          throw new Error('Cin7 products blew up');
+        }
+        return { status: 'complete', complete: true, records_processed: 1 };
+      },
+      sleep: async () => undefined,
+    });
+
+    expect(walk.entityResults.products?.complete).toBe(false);
+    expect(walk.entityResults.products?.status).toBe('failed');
+    expect(walk.entityResults.customers?.complete).toBe(true);
+    expect(walk.cin7AllComplete).toBe(false);
   });
 });
 
@@ -258,25 +313,51 @@ describe('Cin7 production clock (Australia/Sydney)', () => {
     );
   }
 
-  it('chooses 5:00 AM Sydney when the morning slot is still ahead', () => {
+  it('is a single 9:00 PM Australia/Sydney slot', () => {
+    expect(CIN7_SYNC_PRODUCTION_HOUR).toBe(21);
+    expect(CIN7_SYNC_SCHEDULE_LABEL).toBe('9:00 PM Australia/Sydney');
+  });
+
+  it('chooses 9:00 PM Sydney even when 5:00 AM is still ahead', () => {
     const from = new Date('2026-08-16T18:00:00.000Z');
     const next = getNextCin7ProductionFireAt(from);
-    expect(sydneyHour(next)).toBe(5);
+    expect(sydneyHour(next)).toBe(21);
     expect(next.getTime()).toBeGreaterThan(from.getTime());
   });
 
-  it('chooses 9:00 PM Sydney after the morning slot has passed', () => {
+  it('chooses 9:00 PM Sydney later the same day', () => {
     const from = new Date('2026-08-16T20:00:00.000Z');
     const next = getNextCin7ProductionFireAt(from);
     expect(sydneyHour(next)).toBe(21);
     expect(next.getTime()).toBeGreaterThan(from.getTime());
   });
 
-  it('rolls to 5:00 AM the next Sydney morning after 9:00 PM', () => {
+  it('rolls to 9:00 PM the next Sydney evening after tonight’s slot', () => {
     const from = new Date('2026-08-17T12:00:00.000Z');
     const next = getNextCin7ProductionFireAt(from);
-    expect(sydneyHour(next)).toBe(5);
+    expect(sydneyHour(next)).toBe(21);
     expect(next.getTime()).toBeGreaterThan(from.getTime());
+  });
+
+  it('never selects a 5:00 AM Sydney fire', () => {
+    const samples = [
+      new Date('2026-08-16T17:00:00.000Z'),
+      new Date('2026-08-16T18:30:00.000Z'),
+      new Date('2026-08-16T19:00:00.000Z'),
+      new Date('2026-08-17T11:00:00.000Z'),
+      new Date('2026-08-17T12:00:00.000Z'),
+    ];
+    for (const from of samples) {
+      expect(sydneyHour(getNextCin7ProductionFireAt(from))).toBe(21);
+    }
+  });
+
+  it('treats tonight’s 9:00 PM as the active slot after that wall time', () => {
+    const afterNine = new Date('2026-08-17T12:00:00.000Z');
+    const slot = getCin7ProductionSlotAtOrBefore(afterNine);
+    expect(sydneyHour(slot)).toBe(21);
+    expect(slot.getTime()).toBeLessThanOrEqual(afterNine.getTime());
+    expect(ledgerCoversFireSlot(afterNine, slot)).toBe(true);
   });
 });
 
@@ -288,10 +369,12 @@ describe('in-process Cin7 scheduler', () => {
     vi.useRealTimers();
   });
 
-  it('arms a 5-minute test run then walks entities in-process when it fires', async () => {
+  it('arms the next 9:00 PM Sydney slot with no 5-minute test delay', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('CIN7_SYNC_TEST_DELAY', 'true');
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-17T00:00:00.000Z'));
+    const now = new Date('2026-08-16T20:00:00.000Z');
+    vi.setSystemTime(now);
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     vi.mocked(runCin7ScheduledSyncJob).mockClear();
@@ -299,15 +382,20 @@ describe('in-process Cin7 scheduler', () => {
 
     startCin7ServerScheduler();
     const first = getCin7SchedulerSnapshot();
-    expect(first.nextFireAt?.getTime()).toBe(Date.now() + CIN7_SYNC_TEST_DELAY_MS);
+    const expected = getNextCin7ProductionFireAt(now);
+    expect(first.nextFireAt?.getTime()).toBe(expected.getTime());
+    expect(expected.getTime() - now.getTime()).toBeGreaterThan(5 * 60 * 1000);
 
-    await vi.advanceTimersByTimeAsync(CIN7_SYNC_TEST_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+    expect(runCin7ScheduledSyncJob).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(expected.getTime() - Date.now());
     expect(runCin7ScheduledSyncJob).toHaveBeenCalledTimes(1);
     expect(fetchMock).not.toHaveBeenCalled();
 
     const after = getCin7SchedulerSnapshot();
     expect(after.nextFireAt).toBeTruthy();
-    expect(after.nextFireAt!.getTime()).toBeGreaterThan(Date.now() + CIN7_SYNC_TEST_DELAY_MS);
+    expect(after.nextFireAt!.getTime()).toBe(getNextCin7ProductionFireAt(new Date()).getTime());
   });
 
   it('remembers the signed-in actor without starting a walk', () => {
