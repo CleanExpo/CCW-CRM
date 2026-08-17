@@ -93,3 +93,5 @@ export function LandingFaq() {
     </div>
   );
 }
+
+export default LandingFaq;
