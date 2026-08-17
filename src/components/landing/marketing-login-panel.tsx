@@ -11,10 +11,13 @@ function LoginFormFallback() {
   );
 }
 
-const LoginForm = dynamic(() => import('@/components/auth/login-form').then((m) => m.LoginForm), {
-  ssr: false,
-  loading: () => <LoginFormFallback />,
-});
+const LoginForm = dynamic(
+  () => import('@/components/auth/login-form').then((m) => ({ default: m.LoginForm })),
+  {
+    ssr: false,
+    loading: () => <LoginFormFallback />,
+  }
+);
 
 /** Client boundary so `ssr: false` is valid for the marketing sign-in embed. */
 export function MarketingLoginPanel() {
@@ -24,3 +27,5 @@ export function MarketingLoginPanel() {
     </Suspense>
   );
 }
+
+export default MarketingLoginPanel;
