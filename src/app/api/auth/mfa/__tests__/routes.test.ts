@@ -28,6 +28,11 @@ vi.mock('@/lib/auth/session-cookies', () => ({
   setAuthSessionCookies: vi.fn(),
 }));
 
+const rememberCin7SyncActor = vi.fn();
+vi.mock('@/lib/integrations/cin7-server-scheduler', () => ({
+  rememberCin7SyncActor: (...args: unknown[]) => rememberCin7SyncActor(...args),
+}));
+
 import { POST as confirmMfa } from '@/app/api/auth/mfa/confirm/route';
 import { POST as setupMfa } from '@/app/api/auth/mfa/setup/route';
 import { POST as verifyMfa } from '@/app/api/auth/mfa/verify/route';
@@ -112,6 +117,7 @@ describe('MFA routes', () => {
     expect(updateLastLogin).toHaveBeenCalledWith('user-1');
     expect(signTokenPair).toHaveBeenCalled();
     expect(setAuthSessionCookies).toHaveBeenCalled();
+    expect(rememberCin7SyncActor).toHaveBeenCalledWith('user-1');
     expect(body.access_token).toBe('access');
     expect(body.enabled).toBe(true);
   });
@@ -129,6 +135,7 @@ describe('MFA routes', () => {
     );
     expect(res.status).toBe(400);
     expect(setAuthSessionCookies).not.toHaveBeenCalled();
+    expect(rememberCin7SyncActor).not.toHaveBeenCalled();
   });
 
   it('verifies TOTP after password and issues a session', async () => {
@@ -159,6 +166,7 @@ describe('MFA routes', () => {
     expect(body.mfa_method).toBe('totp');
     expect(body.access_token).toBe('access');
     expect(setAuthSessionCookies).toHaveBeenCalled();
+    expect(rememberCin7SyncActor).toHaveBeenCalledWith('user-1');
   });
 
   it('rejects an invalid authenticator code on verify', async () => {
@@ -174,5 +182,6 @@ describe('MFA routes', () => {
     );
     expect(res.status).toBe(401);
     expect(setAuthSessionCookies).not.toHaveBeenCalled();
+    expect(rememberCin7SyncActor).not.toHaveBeenCalled();
   });
 });
