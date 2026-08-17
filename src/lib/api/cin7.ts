@@ -614,6 +614,37 @@ export async function getCin7SyncProof(limit = 10): Promise<{
   return apiClient.get(`/api/integrations/cin7/sync-proof?limit=${limit}`);
 }
 
+export type Cin7ScheduledSyncStatus = {
+  source: 'server';
+  schedule: { raw: string; kind: 'once' | 'daily' | 'twice-daily'; time_zone: string | null };
+  next_fire_at: string | null;
+  countdown: string | null;
+  running: boolean;
+  current_entity: string | null;
+  unattended_owner_is_this_account: boolean;
+  armed: boolean;
+  live_entities: Array<{
+    entity: string;
+    status: string;
+    records: number;
+    updated_at: string;
+  }>;
+  last_run: {
+    id: string;
+    started_at: string;
+    finished_at: string | null;
+    overall_status: string;
+    consecutive_complete_count: number;
+    entity_results: Record<string, { status?: string; complete?: boolean; records?: number }>;
+  } | null;
+  note: string;
+};
+
+/** Server scheduler status — read-only; does not start a sync. */
+export async function getCin7ScheduledSyncStatus(): Promise<Cin7ScheduledSyncStatus> {
+  return apiClient.get(`/api/integrations/cin7/scheduled-sync`);
+}
+
 /**
  * Get SSE stream stats
  */
