@@ -1,45 +1,31 @@
+'use client';
+
 /**
- * Premium marketing home — server component.
+ * Premium marketing home.
  * Hero LCP text stays outside client reveal wrappers.
+ *
+ * This file is a client module so webpack Flight never lazy-loads named
+ * exports from child `'use client'` files (that path resolves to undefined).
  */
+import HeroOperationsStage from '@/components/landing/hero-operations-stage';
+import LandingFaq from '@/components/landing/landing-faq';
+import MarketingAmbientCanvas from '@/components/landing/marketing-ambient';
 import { marketingFont } from '@/components/landing/marketing-font';
 import { MarketingFooter } from '@/components/landing/marketing-footer';
 import { MarketingHeader } from '@/components/landing/marketing-header';
-import { MarketingLoginPanel } from '@/components/landing/marketing-login-panel';
-import { MarketingReveal } from '@/components/landing/marketing-reveal';
+import MarketingLoginPanel from '@/components/landing/marketing-login-panel';
+import MarketingReveal from '@/components/landing/marketing-reveal';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
 import {
-  marketingSectionRule as sectionRule,
-  marketingSectionY as sectionY,
-  marketingShell as shell,
-  marketingShellWide as shellWide,
+    marketingSectionRule as sectionRule,
+    marketingSectionY as sectionY,
+    marketingShell as shell,
+    marketingShellWide as shellWide,
 } from '@/components/landing/marketing-shell';
 import { cn } from '@/lib/utils';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-
-const MarketingAmbientCanvas = dynamic(
-  () => import('@/components/landing/marketing-ambient').then((m) => m.MarketingAmbientCanvas),
-  { loading: () => null }
-);
-
-const HeroOperationsStage = dynamic(
-  () => import('@/components/landing/hero-operations-stage').then((m) => m.HeroOperationsStage),
-  {
-    loading: () => (
-      <div className="min-h-[320px] w-full border border-white/[0.06] bg-[#0a0a0e]" aria-hidden />
-    ),
-  }
-);
-
-const LandingFaq = dynamic(
-  () => import('@/components/landing/landing-faq').then((m) => m.LandingFaq),
-  {
-    loading: () => <div className="min-h-[200px] w-full" aria-hidden />,
-  }
-);
 
 const display: React.CSSProperties = {
   fontFamily: 'var(--font-marketing-display), var(--font-marketing-body), sans-serif',
