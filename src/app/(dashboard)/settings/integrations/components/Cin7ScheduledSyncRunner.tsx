@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { getCin7ScheduledSyncStatus, type Cin7ScheduledSyncStatus } from '@/lib/api/cin7';
 import {
   CIN7_LIVE_RECON_REFRESHED_EVENT,
+  CIN7_SYNC_SCHEDULE_LABEL,
   cin7EntityCompletionFingerprint,
   cin7ScheduleStatusPollDelayMs,
 } from '@/lib/integrations/cin7-scheduled-sync';
@@ -112,7 +113,7 @@ export function Cin7ScheduledSyncRunner({
 
   return (
     <p className="text-muted-foreground text-xs">
-      Scheduled sync: 5:00 AM and 9:00 PM Australia/Sydney.
+      Scheduled sync: {CIN7_SYNC_SCHEDULE_LABEL}.
     </p>
   );
 }
