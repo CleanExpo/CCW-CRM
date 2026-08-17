@@ -2,6 +2,7 @@ import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 import {
   CIN7_SCHEDULED_SYNC_ENTITY_ORDER,
+  CIN7_SYNC_SCHEDULE_LABEL,
   formatCountdownUntil,
 } from '@/lib/integrations/cin7-scheduled-sync';
 import { getCin7SchedulerSnapshot } from '@/lib/integrations/cin7-server-scheduler';
@@ -65,8 +66,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     source: 'server',
     schedule: {
-      raw: '05:00,21:00',
-      kind: 'twice-daily',
+      raw: '21:00',
+      kind: 'daily',
       time_zone: 'Australia/Sydney',
     },
     next_fire_at: fireAt ? fireAt.toISOString() : null,
@@ -88,6 +89,6 @@ export async function GET(request: NextRequest) {
       : null,
     note: running
       ? 'Server sync is running entity-by-entity. This page updates as each entity finishes.'
-      : 'Scheduled sync: 5:00 AM and 9:00 PM Australia/Sydney. A test run fires 5 minutes after the server starts in development.',
+      : `Scheduled sync: ${CIN7_SYNC_SCHEDULE_LABEL}.`,
   });
 }
