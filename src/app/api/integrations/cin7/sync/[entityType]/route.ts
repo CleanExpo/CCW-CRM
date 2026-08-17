@@ -297,7 +297,7 @@ export async function POST(
   // Tax codes: one-shot from contacts + branches (not paged). The old BRANCH_BASE
   // page bridge jumped early on short Cin7 pages and left status stuck incomplete.
   if (entityType === 'tax-codes') {
-    const startedAt = Date.now();
+  const startedAt = Date.now();
     if (!useOmni || !omniCreds) {
       await persistCin7SyncRunCheckpoint({
         runId: run.id,
@@ -538,7 +538,7 @@ export async function POST(
           total,
           error: undefined,
           persist: async () => {
-            cin7SourceStyles += rows.length;
+        cin7SourceStyles += rows.length;
             const n = await batchUpsertProducts(scope.userId, mapCoreProductRows(rows));
             return { recordsProcessed: n };
           },
@@ -573,8 +573,8 @@ export async function POST(
         return {
           sourceRowCount: rows.length,
           persist: async () => {
-            const mapped = mapCoreCustomerRows(rows);
-            skipped.missing_core_id += rows.length - mapped.length;
+        const mapped = mapCoreCustomerRows(rows);
+        skipped.missing_core_id += rows.length - mapped.length;
             const n = await batchUpsertCustomers(scope.userId, mapped);
             return { recordsProcessed: n };
           },
@@ -731,7 +731,7 @@ export async function POST(
             }
             if (entityType === 'price-lists') {
               await batchUpsertPriceLists(
-                scope.userId,
+      scope.userId,
                 mapPriceColumnLabels([...derivedAccum.priceColumns].sort())
               );
               return { recordsProcessed: derivedAccum.priceColumns.size - priceBefore };
@@ -795,11 +795,11 @@ export async function POST(
       durationMs: 0,
       source: sourceKind,
     });
-    return NextResponse.json(
+      return NextResponse.json(
       { detail: 'No fetch strategy for entity/source combination.' },
-      { status: 400 }
-    );
-  }
+        { status: 400 }
+      );
+    }
 
   // For derived entities on resume, reload prior Optix sets so accum isn't empty.
   if (
