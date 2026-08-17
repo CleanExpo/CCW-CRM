@@ -20,7 +20,7 @@ describe('Cin7ScheduledSyncRunner', () => {
   it('shows the next server run and never posts a Cin7 sync from the browser', async () => {
     vi.mocked(getCin7ScheduledSyncStatus).mockResolvedValue({
       source: 'server',
-      schedule: { raw: '05:00,21:00', kind: 'twice-daily', time_zone: 'Australia/Sydney' },
+      schedule: { raw: '21:00', kind: 'daily', time_zone: 'Australia/Sydney' },
       next_fire_at: '2026-08-17T11:00:00.000Z',
       countdown: '2h',
       running: false,
@@ -29,7 +29,7 @@ describe('Cin7ScheduledSyncRunner', () => {
       armed: true,
       live_entities: [],
       last_run: null,
-      note: 'Scheduled sync: 5:00 AM and 9:00 PM Australia/Sydney.',
+      note: 'Scheduled sync: 9:00 PM Australia/Sydney.',
     });
 
     render(
@@ -42,7 +42,7 @@ describe('Cin7ScheduledSyncRunner', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Scheduled sync: 5:00 AM and 9:00 PM Australia\/Sydney/i)
+        screen.getByText(/Scheduled sync: 9:00 PM Australia\/Sydney/i)
       ).toBeInTheDocument();
     });
     expect(syncCin7EntityUntilComplete).not.toHaveBeenCalled();
