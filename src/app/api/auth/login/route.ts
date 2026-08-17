@@ -6,6 +6,7 @@ import { roleRequiresMfa } from '@/lib/auth/mfa-totp';
 import { verifyPassword } from '@/lib/auth/password';
 import { loginBodySchema } from '@/lib/auth/schemas';
 import { setAuthSessionCookies } from '@/lib/auth/session-cookies';
+import { rememberCin7SyncActor } from '@/lib/integrations/cin7-server-scheduler';
 import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       user: mapAppUserRowToPublic(row),
     });
     setAuthSessionCookies(response, tokens);
+    rememberCin7SyncActor(row.id);
     return response;
   } catch (e) {
     console.error('[auth/login]', e);
