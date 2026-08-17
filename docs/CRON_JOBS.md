@@ -35,14 +35,14 @@ Enforced against `vercel.json` by `node scripts/ci/validate-vercel-crons.js`. AE
 
 ### Daily
 
-| Schedule (UTC) | AEST     | Endpoint                                   | Description                                             |
-| -------------- | -------- | ------------------------------------------ | ------------------------------------------------------- |
-| `0 2 * * *`    | 12:00 PM | `/api/cron/cleanup-old-runs`               | Delete completed/failed agent runs older than 30 days   |
-| `0 6 * * *`    | 4:00 PM  | `/api/cron/sync-bank-feeds`                | Pull bank feed transactions                             |
-| `0 9 * * *`    | 7:00 PM  | `/api/cron/daily-report`                   | Daily summary of agent activity and success rates       |
-| `0 10 * * *`   | 8:00 PM  | `/api/cron/check-invoice-overdue`          | Overdue invoice notifications                           |
-| `0 11 * * *`   | 9:00 PM  | `/api/cron/check-trade-finance-maturities` | Trade finance maturity alerts                           |
-| `0 11 * * *`   | 9:00 PM  | `/api/cron/nightly-full-sync`              | Cin7 full sync, resumable across nights per entity      |
+| Schedule (UTC) | AEST     | Endpoint                                   | Description                                           |
+| -------------- | -------- | ------------------------------------------ | ----------------------------------------------------- |
+| `0 2 * * *`    | 12:00 PM | `/api/cron/cleanup-old-runs`               | Delete completed/failed agent runs older than 30 days |
+| `0 6 * * *`    | 4:00 PM  | `/api/cron/sync-bank-feeds`                | Pull bank feed transactions                           |
+| `0 9 * * *`    | 7:00 PM  | `/api/cron/daily-report`                   | Daily summary of agent activity and success rates     |
+| `0 10 * * *`   | 8:00 PM  | `/api/cron/check-invoice-overdue`          | Overdue invoice notifications                         |
+| `0 11 * * *`   | 9:00 PM  | `/api/cron/check-trade-finance-maturities` | Trade finance maturity alerts                         |
+| `0 11 * * *`   | 9:00 PM  | `/api/cron/nightly-full-sync`              | Cin7 full sync, resumable across nights per entity    |
 
 **Total: 9 scheduled cron jobs**
 
@@ -116,7 +116,9 @@ and every such request returns 401.
 Until 2026-08-07 each handler inlined the comparison:
 
 ```typescript
-if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) { /* 401 */ }
+if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  /* 401 */
+}
 ```
 
 That is **fail-open**. When `CRON_SECRET` is unset the template evaluates to the literal string
@@ -193,13 +195,13 @@ export async function GET(request: Request) {
 
 ## File reference
 
-| File | Purpose |
-| --- | --- |
-| `vercel.json` | Vercel cron schedule configuration |
-| `src/app/api/cron/*/route.ts` | Cron Route Handlers (9 scheduled) |
+| File                                  | Purpose                                   |
+| ------------------------------------- | ----------------------------------------- |
+| `vercel.json`                         | Vercel cron schedule configuration        |
+| `src/app/api/cron/*/route.ts`         | Cron Route Handlers (9 scheduled)         |
 | `scripts/ci/validate-vercel-crons.js` | Fails CI when a scheduled cron cannot run |
-| `src/lib/db/database-env.ts` | Database connection resolution |
-| `docs/CRON_JOBS.md` | This documentation |
+| `src/lib/db/database-env.ts`          | Database connection resolution            |
+| `docs/CRON_JOBS.md`                   | This documentation                        |
 
 Paths under `apps/web/` and `apps/backend/` appeared in earlier revisions of this table. They do
 not exist in this repository — the FastAPI tier they referred to is the one whose absence made
