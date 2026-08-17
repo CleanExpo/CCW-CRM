@@ -45,12 +45,18 @@ describe('GET /api/integrations/cin7/scheduled-sync', () => {
   it('returns the next server fire time without starting a walk', async () => {
     findFirst.mockResolvedValue(null);
 
-    const response = await GET(new NextRequest('http://localhost/api/integrations/cin7/scheduled-sync'));
+    const response = await GET(
+      new NextRequest('http://localhost/api/integrations/cin7/scheduled-sync')
+    );
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.source).toBe('server');
-    expect(body.schedule.kind).toBe('twice-daily');
+    expect(body.schedule.kind).toBe('daily');
+    expect(body.schedule.raw).toBe('21:00');
+    expect(body.note).toContain('9:00 PM Australia/Sydney');
+    expect(body.note).not.toContain('5:00 AM');
+    expect(body.note).not.toContain('5 minutes');
     expect(body.running).toBe(false);
     expect(body.next_fire_at).toBe('2026-08-17T11:00:00.000Z');
   });
@@ -70,7 +76,9 @@ describe('GET /api/integrations/cin7/scheduled-sync', () => {
       entityResults: { products: { complete: true, status: 'complete', records: 10 } },
     });
 
-    const response = await GET(new NextRequest('http://localhost/api/integrations/cin7/scheduled-sync'));
+    const response = await GET(
+      new NextRequest('http://localhost/api/integrations/cin7/scheduled-sync')
+    );
     const body = await response.json();
 
     expect(body.running).toBe(true);
