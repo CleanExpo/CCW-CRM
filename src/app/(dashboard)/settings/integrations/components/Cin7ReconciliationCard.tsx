@@ -20,7 +20,7 @@ import {
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
 } from '@/lib/api/cin7';
-import { CIN7_LIVE_RECON_REFRESHED_EVENT } from '@/lib/integrations/cin7-client-sync-scheduler';
+import { CIN7_LIVE_RECON_REFRESHED_EVENT } from '@/lib/integrations/cin7-scheduled-sync';
 import {
   AlertTriangle,
   BarChart3,
