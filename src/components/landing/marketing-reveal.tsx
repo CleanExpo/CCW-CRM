@@ -70,3 +70,5 @@ export function MarketingReveal({
     </Tag>
   );
 }
+
+export default MarketingReveal;
