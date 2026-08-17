@@ -13,7 +13,9 @@ describe('Cin7 scheduler wiring (static)', () => {
     expect(src).not.toContain('Keep this page open');
     expect(src).not.toContain('2_000');
     expect(src).not.toContain('border-amber-500');
-    expect(src).toContain('5:00 AM and 9:00 PM');
+    expect(src).toContain('CIN7_SYNC_SCHEDULE_LABEL');
+    expect(src).not.toContain('5:00 AM');
+    expect(src).not.toContain('5 minutes');
     expect(src).toContain('cin7ScheduleStatusPollDelayMs');
     expect(src).toContain('getCin7ScheduledSyncStatus');
   });
@@ -45,7 +47,10 @@ describe('Cin7 scheduler wiring (static)', () => {
     expect(instrumentation).not.toContain('cin7-server-scheduled-sync');
     expect(nodeBoot).toContain('startCin7ServerScheduler');
     expect(nodeBoot).toContain('runCin7ScheduledSyncJob');
-    expect(scheduler).toContain('CIN7_SYNC_TEST_DELAY_MS');
+    expect(scheduler).not.toContain('CIN7_SYNC_TEST_DELAY');
+    expect(scheduler).not.toContain('5 minutes');
+    expect(scheduler).not.toContain('5:00 AM');
+    expect(scheduler).toContain('getNextCin7ProductionFireAt');
     expect(scheduler).toContain('[cin7-scheduler] triggered');
     expect(scheduler).toContain('registerCin7ScheduledSyncRunner');
     expect(scheduler).not.toContain('cin7-server-scheduled-sync');
@@ -53,6 +58,8 @@ describe('Cin7 scheduler wiring (static)', () => {
     expect(job).toContain('[cin7-scheduled-sync] started');
     expect(job).toContain('[cin7-scheduled-sync] completed');
     expect(job).toContain('postCin7SyncEntity');
+    expect(job).toContain('withPgAdvisoryLock');
+    expect(job).toContain('CIN7_SCHEDULED_SYNC_LOCK');
     expect(job).not.toContain("redirect: 'manual'");
   });
 });
