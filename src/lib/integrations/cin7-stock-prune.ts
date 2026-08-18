@@ -22,12 +22,45 @@ export type Cin7StockPruneResult = {
   optix_before: number;
   deleted: number;
   missing_in_optix: number;
+  missing_keys: string[];
   errors: string[];
   dry_run: boolean;
+  freeze_id?: string;
 };
 
-function stockKey(branchId: string, sku: string): string {
+export function stockKey(branchId: string, sku: string): string {
   return `${branchId}:${sku}`;
+}
+
+export function diffStockKeysForPrune(
+  cin7Keys: Set<string>,
+  optix: Array<{ id: string; cin7BranchId: string; sku: string }>
+): {
+  toDeleteIds: string[];
+  missing_in_optix: number;
+  missing_keys: string[];
+  optix_before: number;
+  cin7_keys: number;
+} {
+  const toDeleteIds: string[] = [];
+  const optixKeys = new Set<string>();
+  for (const row of optix) {
+    const key = stockKey(row.cin7BranchId, row.sku);
+    optixKeys.add(key);
+    if (!cin7Keys.has(key)) toDeleteIds.push(row.id);
+  }
+  const missing_keys: string[] = [];
+  for (const key of cin7Keys) {
+    if (!optixKeys.has(key)) missing_keys.push(key);
+  }
+  missing_keys.sort();
+  return {
+    toDeleteIds,
+    missing_in_optix: missing_keys.length,
+    missing_keys,
+    optix_before: optix.length,
+    cin7_keys: cin7Keys.size,
+  };
 }
 
 /**
@@ -77,15 +110,62 @@ export async function healOptixStockFieldMismatches(
 }
 
 /**
+ * Delete Optix stock rows whose (branch, sku) is absent from a frozen Cin7 keyset.
+ * Does not re-walk live Cin7. Qty heal is a separate field-heal action.
+ */
+export async function pruneOptixStockLevelsToKeyset(
+  ownerUserId: string,
+  cin7Keys: Set<string>,
+  options?: { dryRun?: boolean; freezeId?: string }
+): Promise<Cin7StockPruneResult> {
+  const dryRun = options?.dryRun === true;
+  const optixRows = await prisma.cin7StockLevel.findMany({
+    where: { ownerUserId },
+    select: { id: true, cin7BranchId: true, sku: true },
+  });
+  const diff = diffStockKeysForPrune(cin7Keys, optixRows);
+
+  let deleted = 0;
+  if (!dryRun && diff.toDeleteIds.length > 0) {
+    const batchSize = 500;
+    for (let i = 0; i < diff.toDeleteIds.length; i += batchSize) {
+      const chunk = diff.toDeleteIds.slice(i, i + batchSize);
+      const result = await prisma.cin7StockLevel.deleteMany({
+        where: { ownerUserId, id: { in: chunk } },
+      });
+      deleted += result.count;
+    }
+  } else if (dryRun) {
+    deleted = diff.toDeleteIds.length;
+  }
+
+  console.log(
+    `[Cin7 stock prune] owner=${ownerUserId} freeze=${options?.freezeId ?? 'none'} ` +
+      `cin7=${diff.cin7_keys} optix=${diff.optix_before} delete=${deleted} ` +
+      `missing=${diff.missing_in_optix} dryRun=${dryRun}`
+  );
+
+  return {
+    cin7_keys: diff.cin7_keys,
+    optix_before: diff.optix_before,
+    deleted,
+    missing_in_optix: diff.missing_in_optix,
+    missing_keys: diff.missing_keys,
+    errors: [],
+    dry_run: dryRun,
+    freeze_id: options?.freezeId,
+  };
+}
+
+/**
  * Full Omni /v1/Stock walk → delete Optix cin7_stock_levels whose (branch, sku) is absent.
- * Also heals qty field mismatches so prune leaves a clean exception summary.
+ * Prefer pruneOptixStockLevelsToKeyset against a D10 freeze for sign-off.
  */
 export async function pruneOptixStockLevelsToCin7(
   ownerUserId: string,
   omniCreds: Cin7OmniCredentials,
   options?: { dryRun?: boolean }
 ): Promise<Cin7StockPruneResult> {
-  const dryRun = options?.dryRun === true;
   const catalog = await fetchFullOmniStockCatalog(omniCreds);
   if (catalog.errors.length > 0 && catalog.stockLevels.length === 0) {
     return {
@@ -93,61 +173,18 @@ export async function pruneOptixStockLevelsToCin7(
       optix_before: 0,
       deleted: 0,
       missing_in_optix: 0,
+      missing_keys: [],
       errors: catalog.errors,
-      dry_run: dryRun,
+      dry_run: options?.dryRun === true,
     };
   }
 
   const cin7ByKey = dedupeOmniStockLevels(catalog.stockLevels);
-  const cin7Keys = new Set(cin7ByKey.keys());
-
-  const optixRows = await prisma.cin7StockLevel.findMany({
-    where: { ownerUserId },
-    select: { id: true, cin7BranchId: true, sku: true },
+  const result = await pruneOptixStockLevelsToKeyset(ownerUserId, new Set(cin7ByKey.keys()), {
+    dryRun: options?.dryRun,
   });
-
-  const toDeleteIds: string[] = [];
-  const optixKeys = new Set<string>();
-  for (const row of optixRows) {
-    const key = stockKey(row.cin7BranchId, row.sku);
-    optixKeys.add(key);
-    if (!cin7Keys.has(key)) toDeleteIds.push(row.id);
-  }
-
-  let missingInOptix = 0;
-  for (const key of cin7Keys) {
-    if (!optixKeys.has(key)) missingInOptix += 1;
-  }
-
-  let deleted = 0;
-  if (!dryRun && toDeleteIds.length > 0) {
-    const batchSize = 500;
-    for (let i = 0; i < toDeleteIds.length; i += batchSize) {
-      const chunk = toDeleteIds.slice(i, i + batchSize);
-      const result = await prisma.cin7StockLevel.deleteMany({
-        where: { ownerUserId, id: { in: chunk } },
-      });
-      deleted += result.count;
-    }
-  } else if (dryRun) {
-    deleted = toDeleteIds.length;
-  }
-
-  if (!dryRun) {
+  if (!options?.dryRun && catalog.errors.length === 0) {
     await healOptixStockFieldMismatches(ownerUserId, catalog.stockLevels);
   }
-
-  console.log(
-    `[Cin7 stock prune] owner=${ownerUserId} cin7=${cin7Keys.size} optix=${optixRows.length} ` +
-      `delete=${deleted} missing=${missingInOptix} dryRun=${dryRun} errors=${catalog.errors.length}`
-  );
-
-  return {
-    cin7_keys: cin7Keys.size,
-    optix_before: optixRows.length,
-    deleted,
-    missing_in_optix: missingInOptix,
-    errors: catalog.errors.slice(0, 20),
-    dry_run: dryRun,
-  };
+  return { ...result, errors: catalog.errors.slice(0, 20) };
 }
