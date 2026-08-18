@@ -11,7 +11,10 @@ import { prisma } from '@/lib/db/prisma';
 import { persistImmutableReconSnapshot } from '@/lib/integrations/cin7-recon-snapshot-store';
 import { buildCin7Reconciliation } from '@/lib/integrations/cin7-reconciliation';
 import { getOrBuildReconciliation } from '@/lib/integrations/cin7-reconciliation-cache';
-import { getCin7ProductionSlotAtOrBefore } from '@/lib/integrations/cin7-scheduled-sync';
+import {
+  getCin7ProductionSlotAtOrBefore,
+  isCin7NightlyLedgerLive,
+} from '@/lib/integrations/cin7-scheduled-sync';
 import {
   defaultScheduledSyncSleep,
   runCin7SequentialEntityWalk,
@@ -27,7 +30,7 @@ import { NextRequest } from 'next/server';
 
 export type Cin7ScheduledSyncJobResult = {
   skipped: boolean;
-  skip_reason?: 'lock_held' | 'missing_owner' | 'already_ran';
+  skip_reason?: 'lock_held' | 'missing_owner' | 'already_ran' | 'already_running';
   cin7_complete?: boolean;
   consecutive_complete_count?: number;
   ledger_id?: string;
@@ -198,6 +201,47 @@ async function resolveOwnerUserId(explicit?: string): Promise<string | null> {
   return row?.id ?? null;
 }
 
+export async function recoverStaleCin7NightlyLedgers(input?: {
+  inProcessRunning?: boolean;
+  now?: Date;
+}): Promise<number> {
+  if (input?.inProcessRunning) return 0;
+  const now = input?.now ?? new Date();
+  const open = await prisma.cin7NightlySyncLedger.findMany({
+    where: { overallStatus: 'running', finishedAt: null },
+    select: { id: true, ownerUserId: true, startedAt: true, overallStatus: true, finishedAt: true },
+  });
+  let closed = 0;
+  for (const row of open) {
+    const heartbeat = await prisma.cin7SyncRun.findFirst({
+      where: { ownerUserId: row.ownerUserId },
+      orderBy: { updatedAt: 'desc' },
+      select: { updatedAt: true },
+    });
+    if (
+      isCin7NightlyLedgerLive({
+        overallStatus: row.overallStatus,
+        finishedAt: row.finishedAt,
+        startedAt: row.startedAt,
+        inProcessRunning: false,
+        lastSyncRunUpdatedAt: heartbeat?.updatedAt ?? null,
+        now,
+      })
+    ) {
+      continue;
+    }
+    await prisma.cin7NightlySyncLedger.update({
+      where: { id: row.id },
+      data: {
+        finishedAt: now,
+        overallStatus: 'failed',
+      },
+    });
+    closed += 1;
+  }
+  return closed;
+}
+
 export async function runCin7ScheduledSyncJob(options?: {
   ownerUserId?: string;
 }): Promise<Cin7ScheduledSyncJobResult> {
@@ -207,6 +251,10 @@ export async function runCin7ScheduledSyncJob(options?: {
     setCin7ScheduledSyncRunning(false);
     return { skipped: true, skip_reason: 'missing_owner' };
   }
+
+  await recoverStaleCin7NightlyLedgers({
+    inProcessRunning: getCin7SchedulerSnapshot().running,
+  });
 
   const locked = await withPgAdvisoryLock(CIN7_SCHEDULED_SYNC_LOCK, async () => {
     const slot = getCin7ProductionSlotAtOrBefore(new Date());
