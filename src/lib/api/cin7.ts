@@ -422,8 +422,10 @@ export async function pruneCin7StockSurplus(options?: { dryRun?: boolean }): Pro
   optix_before: number;
   deleted: number;
   missing_in_optix: number;
+  missing_keys?: string[];
   errors: string[];
   dry_run: boolean;
+  freeze_id?: string;
   optix_after?: number;
   accepted?: boolean;
   reversible?: boolean;
@@ -433,6 +435,24 @@ export async function pruneCin7StockSurplus(options?: { dryRun?: boolean }): Pro
     return apiClient.get('/api/integrations/cin7/stock-prune?dry_run=true', undefined, 300_000);
   }
   return apiClient.post('/api/integrations/cin7/stock-prune', {}, undefined, 300_000);
+}
+
+/** Stock-only Cin7 walk that stores a named D10 as-of keyset. Not a full recon. */
+export async function captureCin7StockFreeze(): Promise<{
+  freeze: {
+    procedure: 'D10';
+    freeze_id: string;
+    as_of: string;
+    time_zone: string;
+    cin7_keys: number;
+    keyset_sha256: string;
+    truncated: boolean;
+    complete: boolean;
+    cin7_reported_total: number | null;
+  } | null;
+  errors: string[];
+}> {
+  return apiClient.post('/api/integrations/cin7/stock-freeze', {}, undefined, 300_000);
 }
 
 export async function revertCin7HealAudit(auditRunId: string): Promise<{
@@ -505,7 +525,20 @@ export async function getCin7StockStability(): Promise<{
   required: number;
   observed: number;
   cin7_counts: Array<number | null>;
+  counts_identical: boolean;
   reason: string;
+  live_reason: string;
+  freeze: {
+    procedure: 'D10';
+    freeze_id: string;
+    as_of: string;
+    time_zone: string;
+    cin7_keys: number;
+    keyset_sha256: string;
+    truncated: boolean;
+    complete: boolean;
+    cin7_reported_total: number | null;
+  } | null;
   runs: Array<{
     id: string;
     checked_at: string;
