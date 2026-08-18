@@ -20,43 +20,35 @@ function run(
   };
 }
 
-describe('assessCin7StockStability', () => {
-  it('requires three consecutive complete acceptance runs', () => {
+describe('assessCin7StockStability (live drift, not a prune lock)', () => {
+  it('notes when fewer than three complete acceptance runs exist', () => {
     const result = assessCin7StockStability([run({ id: 'a', stock_cin7: 9805 })]);
-    expect(result.stable).toBe(false);
+    expect(result.counts_identical).toBe(false);
     expect(result.required).toBe(CIN7_STOCK_STABILITY_RUNS_REQUIRED);
     expect(result.observed).toBe(1);
-    expect(result.reason).toMatch(/Need 3 consecutive/);
+    expect(result.reason).toMatch(/live Cin7 catalog/i);
   });
 
-  it('is stable when the last three Cin7 counts match and are complete', () => {
+  it('does not treat identical live counts as a prune unlock', () => {
     const result = assessCin7StockStability([
       run({ id: 'c', stock_cin7: 9805 }),
       run({ id: 'b', stock_cin7: 9805 }),
       run({ id: 'a', stock_cin7: 9805 }),
     ]);
-    expect(result.stable).toBe(true);
+    expect(result.counts_identical).toBe(true);
     expect(result.cin7_counts).toEqual([9805, 9805, 9805]);
+    expect(result.reason).toMatch(/live Cin7 catalog still moves/i);
   });
 
-  it('is not stable when Cin7 counts move between runs', () => {
+  it('records live drift without calling it a sign-off failure', () => {
     const result = assessCin7StockStability([
-      run({ id: 'c', stock_cin7: 9805 }),
-      run({ id: 'b', stock_cin7: 10542 }),
-      run({ id: 'a', stock_cin7: 10534 }),
-    ]);
-    expect(result.stable).toBe(false);
-    expect(result.reason).toMatch(/not identical/);
-  });
-
-  it('rejects a truncated run even if the count matches', () => {
-    const result = assessCin7StockStability([
-      run({ id: 'c', stock_cin7: 9805, truncated: true, complete: false }),
-      run({ id: 'b', stock_cin7: 9805 }),
+      run({ id: 'c', stock_cin7: 10007 }),
+      run({ id: 'b', stock_cin7: 9996 }),
       run({ id: 'a', stock_cin7: 9805 }),
     ]);
-    expect(result.stable).toBe(false);
-    expect(result.reason).toMatch(/truncated or incomplete/);
+    expect(result.counts_identical).toBe(false);
+    expect(result.cin7_counts).toEqual([10007, 9996, 9805]);
+    expect(result.reason).toMatch(/live Cin7 catalog still moves/i);
   });
 });
 
