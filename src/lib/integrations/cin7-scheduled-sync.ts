@@ -270,6 +270,26 @@ export function formatCountdownUntil(fireAt: Date, now: Date = new Date()): stri
 export const CIN7_SCHEDULE_ACTIVE_POLL_MS = 4_000;
 export const CIN7_SCHEDULE_IDLE_POLL_MAX_MS = 60_000;
 
+/** A leftover `running` ledger with no heartbeat is not tonight's 9:00 PM walk. */
+export const CIN7_NIGHTLY_LEDGER_STALE_MS = 6 * 60 * 1000;
+
+export function isCin7NightlyLedgerLive(input: {
+  overallStatus: string;
+  finishedAt: Date | null;
+  startedAt: Date;
+  inProcessRunning: boolean;
+  lastSyncRunUpdatedAt: Date | null;
+  now?: Date;
+  staleMs?: number;
+}): boolean {
+  if (input.inProcessRunning) return true;
+  if (input.overallStatus !== 'running' || input.finishedAt != null) return false;
+  const now = input.now ?? new Date();
+  const staleMs = input.staleMs ?? CIN7_NIGHTLY_LEDGER_STALE_MS;
+  const heartbeat = input.lastSyncRunUpdatedAt ?? input.startedAt;
+  return now.getTime() - heartbeat.getTime() <= staleMs;
+}
+
 /** How long the integrations page should wait before asking the status API again. */
 export function cin7ScheduleStatusPollDelayMs(input: {
   running: boolean;
