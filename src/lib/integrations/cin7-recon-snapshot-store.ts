@@ -102,7 +102,7 @@ export async function listImmutableReconSnapshots(
   limit = 20
 ): Promise<Cin7ReconHistoryItem[]> {
   const rows = await prisma.cin7ReconRun.findMany({
-    where: { ownerUserId, immutable: true },
+    where: { ownerUserId, immutable: true, mode: { in: ['live', 'acceptance'] } },
     orderBy: { checkedAt: 'desc' },
     take: Math.min(50, Math.max(1, limit)),
     select: {
@@ -148,6 +148,7 @@ export async function getImmutableReconSnapshot(
     where: { id: reconRunId, ownerUserId, immutable: true },
   });
   if (!row?.summary || typeof row.summary !== 'object') return null;
+  if (row.mode === 'freeze') return null;
   const snapshot = row.summary as Cin7ReconciliationSnapshot;
   return {
     ...snapshot,
