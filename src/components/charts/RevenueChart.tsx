@@ -1,17 +1,5 @@
 'use client';
 
-import { memo } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
-import { BarChart3 } from 'lucide-react';
 import {
   chartAxisLine,
   chartGridStroke,
@@ -20,6 +8,18 @@ import {
   DashboardWidgetEmpty,
   DashboardWidgetHeader,
 } from '@/components/dashboard/dashboard-widget-primitives';
+import { BarChart3 } from 'lucide-react';
+import { memo } from 'react';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 interface RevenueDataPoint {
   month: string;
@@ -70,7 +70,7 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
           <DashboardWidgetEmpty
             icon={BarChart3}
             title="No revenue series yet"
-            description="Once orders are marked delivered this month, a trend line will appear here. Use Presentation mode on the dashboard for a sample chart."
+            description="Once orders are marked delivered this month, a trend line will appear here."
           />
         ) : (
           <ResponsiveContainer width="100%" height={300}>
