@@ -17,6 +17,7 @@ import {
   getCin7ScheduledSyncRaw,
   getNextCin7ProductionFireAt,
   getNextCin7ScheduledFireAt,
+  isCin7NightlyLedgerLive,
   isCin7ScheduledContactEntity,
   isCin7ServerSchedulerArmed,
   ledgerCoversFireSlot,
@@ -111,6 +112,33 @@ describe('Cin7 schedule parsing', () => {
     const spec = parseCin7ScheduledSyncAt('2026-08-17T11:00:00.000Z');
     expect(spec?.kind).toBe('once');
     expect(getNextCin7ScheduledFireAt(spec!, new Date('2026-08-17T11:05:00.000Z'))).toBeNull();
+  });
+
+  it('treats a leftover running ledger with no heartbeat as stale', () => {
+    const now = new Date('2026-08-18T03:35:00.000Z');
+    expect(
+      isCin7NightlyLedgerLive({
+        overallStatus: 'running',
+        finishedAt: null,
+        startedAt: new Date('2026-08-17T12:49:01.326Z'),
+        inProcessRunning: false,
+        lastSyncRunUpdatedAt: new Date('2026-08-17T22:12:49.516Z'),
+        now,
+      })
+    ).toBe(false);
+  });
+
+  it('keeps a ledger live while the in-process walk is running', () => {
+    expect(
+      isCin7NightlyLedgerLive({
+        overallStatus: 'running',
+        finishedAt: null,
+        startedAt: new Date('2026-08-17T12:49:01.326Z'),
+        inProcessRunning: true,
+        lastSyncRunUpdatedAt: null,
+        now: new Date('2026-08-18T03:35:00.000Z'),
+      })
+    ).toBe(true);
   });
 
   it('treats a ledger started at the slot as already covering that fire', () => {
