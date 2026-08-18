@@ -27,21 +27,29 @@ vi.mock('@/lib/api/cin7', () => ({
     required: 3,
     observed: 0,
     cin7_counts: [],
-    reason: 'Need 3 consecutive complete acceptance runs',
+    counts_identical: false,
+    reason: 'D10 freeze has not been captured',
+    live_reason: 'Need 3 consecutive complete acceptance runs to observe the live Cin7 catalog',
+    freeze: null,
     runs: [],
     last_prune_audit: null,
     revert_how: '',
   }),
+  captureCin7StockFreeze: vi.fn(),
+  pruneCin7StockSurplus: vi.fn(),
+  syncCin7EntityUntilComplete: vi.fn(),
   healCin7FieldMismatches: vi.fn(),
   revertCin7HealAudit: vi.fn(),
 }));
 
 import type { Cin7ReconciliationResponse } from '@/lib/api/cin7';
 import {
+  captureCin7StockFreeze,
   getCin7ReconSnapshot,
   getCin7Reconciliation,
   getCin7StockStability,
   listCin7ReconHistory,
+  pruneCin7StockSurplus,
 } from '@/lib/api/cin7';
 import { Cin7ReconciliationCard } from '../Cin7ReconciliationCard';
 
@@ -78,7 +86,10 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
       required: 3,
       observed: 0,
       cin7_counts: [],
-      reason: 'Need 3 consecutive complete acceptance runs',
+      counts_identical: false,
+      reason: 'D10 freeze has not been captured',
+      live_reason: 'Need 3 consecutive complete acceptance runs to observe the live Cin7 catalog',
+      freeze: null,
       runs: [],
       last_prune_audit: null,
       revert_how: '',
@@ -151,39 +162,127 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
     expect(getCin7Reconciliation).not.toHaveBeenCalled();
   });
 
-  it('does not offer a prune button while stock is unstable', async () => {
+  it('does not offer a prune button until a D10 freeze exists', async () => {
     render(<Cin7ReconciliationCard isConnected={true} />);
     await waitFor(() => {
-      expect(
-        screen.getByText(/Stock prune — locked until Cin7 count is stable/i)
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /capture freeze/i })).toBeInTheDocument();
     });
-    expect(screen.queryByRole('button', { name: /prune surplus stock/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /prune extras/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sync stock/i })).not.toBeInTheDocument();
   });
 
-  it('does not offer a prune button after the Cin7 stock count is stable', async () => {
+  it('offers prune extras when Optix has surplus against the freeze', async () => {
     vi.mocked(getCin7StockStability).mockResolvedValue({
       stable: true,
       prune_enabled: true,
       required: 3,
       observed: 3,
-      cin7_counts: [10283, 10283, 10283],
-      reason: 'Cin7 stock row count held at 10283 across 3 consecutive complete acceptance runs.',
+      cin7_counts: [10007, 9996, 9805],
+      counts_identical: false,
+      reason: '',
+      live_reason: '',
+      freeze: {
+        procedure: 'D10',
+        freeze_id: 'freeze-1',
+        as_of: '2026-08-17T11:00:00.000Z',
+        time_zone: 'Australia/Sydney',
+        cin7_keys: 10007,
+        keyset_sha256: 'abc123def4567890',
+        truncated: false,
+        complete: true,
+        cin7_reported_total: 10007,
+      },
       runs: [],
       last_prune_audit: null,
       revert_how: '',
+    });
+    vi.mocked(pruneCin7StockSurplus).mockResolvedValue({
+      audit_run_id: null,
+      cin7_keys: 10007,
+      optix_before: 13749,
+      deleted: 3742,
+      missing_in_optix: 0,
+      missing_keys: [],
+      errors: [],
+      dry_run: true,
+      freeze_id: 'freeze-1',
     });
 
     render(<Cin7ReconciliationCard isConnected={true} />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Stock prune — Cin7 count is stable; prune is still a separate action/i)
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /prune extras/i })).toBeEnabled();
     });
-    expect(
-      screen.queryByText(/Stock prune — locked until Cin7 count is stable/i)
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /prune surplus stock/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /recapture freeze/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sync stock/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /undo prune/i })).not.toBeInTheDocument();
+  });
+
+  it('lists freeze keys missing in Optix without offering a live stock sync', async () => {
+    vi.mocked(getCin7StockStability).mockResolvedValue({
+      stable: true,
+      prune_enabled: true,
+      required: 3,
+      observed: 0,
+      cin7_counts: [],
+      counts_identical: false,
+      reason: '',
+      live_reason: '',
+      freeze: {
+        procedure: 'D10',
+        freeze_id: 'freeze-1',
+        as_of: '2026-08-18T03:47:48.671Z',
+        time_zone: 'Australia/Sydney',
+        cin7_keys: 10403,
+        keyset_sha256: '15ea42db5e7cabcd',
+        truncated: false,
+        complete: true,
+        cin7_reported_total: 10403,
+      },
+      runs: [],
+      last_prune_audit: {
+        id: 'audit-1',
+        status: 'applied',
+        deleted_total: 12,
+        reversible: true,
+        created_at: '2026-08-18T03:00:00.000Z',
+      },
+      revert_how: '',
+    });
+    vi.mocked(pruneCin7StockSurplus).mockResolvedValue({
+      audit_run_id: null,
+      cin7_keys: 10403,
+      optix_before: 10399,
+      deleted: 0,
+      missing_in_optix: 4,
+      missing_keys: ['b1:SKU-A', 'b1:SKU-B', 'b2:SKU-C', 'b2:SKU-D'],
+      errors: [],
+      dry_run: true,
+      freeze_id: 'freeze-1',
+    });
+
+    render(<Cin7ReconciliationCard isConnected={true} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('b1:SKU-A')).toBeInTheDocument();
+    });
+    expect(screen.getByText('b2:SKU-D')).toBeInTheDocument();
+    expect(screen.getByText(/missing in Optix/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sync stock/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /prune extras/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /recapture freeze/i })).not.toBeInTheDocument();
+  });
+
+  it('opens an in-app confirm for D10 freeze instead of a browser dialog', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    render(<Cin7ReconciliationCard isConnected={true} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /capture freeze/i }));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /capture freeze\?/i })).toBeInTheDocument();
+    expect(captureCin7StockFreeze).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
   });
 });
