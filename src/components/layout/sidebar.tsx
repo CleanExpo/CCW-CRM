@@ -1,7 +1,8 @@
 'use client';
 
-import { NotificationBell } from '@/components/layout/NotificationBell';
 import { CcwLogo } from '@/components/brand/ccw-logo';
+import { NotificationBell } from '@/components/layout/NotificationBell';
+import { shouldShowSidebarGroup } from '@/components/layout/sidebar-visibility';
 import { authApi, logoutAndRedirectToLogin } from '@/lib/api/auth';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -10,9 +11,9 @@ import {
   BarChart3,
   Bell,
   Bot,
+  Building2,
   Calendar,
   CalendarDays,
-  Building2,
   CheckCircle,
   ChevronDown,
   ChevronRight,
@@ -36,8 +37,8 @@ import {
   PackageCheck,
   PackagePlus,
   PackageSearch,
-  RefreshCw,
   Receipt,
+  RefreshCw,
   Scale,
   Settings,
   Ship,
@@ -199,7 +200,8 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-const DEFAULT_OPEN = ['operations', 'crm', 'workshop', 'inventory', 'finance'];
+const DEFAULT_OPEN = ['operations', 'crm', 'workshop', 'inventory', 'finance', 'admin'];
+const SIDEBAR_GROUPS_KEY = 'sidebar-groups-v2';
 
 /** Highlight the nav item whose href is the longest prefix of pathname (avoids parent+child both active). */
 function getActiveNavHref(pathname: string, items: NavItem[]): string | null {
@@ -276,7 +278,7 @@ export function Sidebar() {
   // Persist collapsed state in localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('sidebar-groups');
+      const saved = localStorage.getItem(SIDEBAR_GROUPS_KEY);
       if (saved) {
         setOpenGroups(new Set(JSON.parse(saved) as string[]));
       }
@@ -305,21 +307,7 @@ export function Sidebar() {
   }, []);
 
   const filteredNavGroups = useMemo(
-    () =>
-      navGroups.filter((group) => {
-        // Prevent a privileged-link flash before role is loaded.
-        if (!roleResolved) {
-          return group.id !== 'admin' && group.id !== 'finance';
-        }
-        if (!userRole || userRole === 'owner' || userRole === 'admin') return true;
-        if (userRole === 'billing') {
-          return group.id === 'finance' || group.id === 'admin';
-        }
-        if (userRole === 'member') {
-          return group.id !== 'admin' && group.id !== 'finance';
-        }
-        return true;
-      }),
+    () => navGroups.filter((group) => shouldShowSidebarGroup(group.id, userRole, roleResolved)),
     [userRole, roleResolved]
   );
 
@@ -356,7 +344,7 @@ export function Sidebar() {
         next.add(id);
       }
       try {
-        localStorage.setItem('sidebar-groups', JSON.stringify([...next]));
+        localStorage.setItem(SIDEBAR_GROUPS_KEY, JSON.stringify([...next]));
       } catch {
         // ignore
       }
