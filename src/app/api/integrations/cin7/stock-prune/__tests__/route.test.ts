@@ -7,7 +7,7 @@ vi.mock('@/lib/auth/data-scope', () => ({
 
 vi.mock('@/lib/integrations/cin7-stock-stability', () => ({
   CIN7_STOCK_PRUNE_LOCKED_DETAIL:
-    'Stock prune is locked until three consecutive complete acceptance runs show a stable Cin7 stock row count.',
+    'Stock prune is locked until a complete D10 freeze (as-of Cin7 stock keyset) is captured. Do not prune against a live catalog.',
   getCin7StockStability: vi.fn(),
 }));
 
@@ -47,14 +47,17 @@ describe('POST /api/integrations/cin7/stock-prune', () => {
     vi.mocked(runAuditedStockPrune).mockReset();
   });
 
-  it('refuses prune with 409 until Cin7 stock counts are stable', async () => {
+  it('refuses prune with 409 until a D10 freeze exists', async () => {
     vi.mocked(getCin7StockStability).mockResolvedValue({
       stable: false,
       prune_enabled: false,
       required: 3,
+      freeze: null,
       observed: 1,
       cin7_counts: [9805],
-      reason: 'Need 3 consecutive complete acceptance runs',
+      counts_identical: false,
+      live_reason: 'Live Cin7 catalog still moves',
+      reason: 'D10 freeze has not been captured',
       runs: [],
       last_prune_audit: null,
       revert_how: 'revert from audit',
