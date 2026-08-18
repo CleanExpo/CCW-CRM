@@ -1,9 +1,8 @@
 /**
- * Cin7 stock-count stability for the prune lock.
+ * Live Cin7 stock-count observation (drift), plus the D10 freeze prune lock.
  *
- * The client asked not to prune until the Cin7 stock row count from three
- * consecutive complete acceptance runs is stable. A truncated snapshot is not
- * a sign-off number and cannot unlock prune.
+ * Identical live counts do not unlock prune. Cin7 Omni has no historical as-of;
+ * prune uses a named freeze keyset. Acceptance-run counts are trading evidence.
  */
 
 import { prisma } from '@/lib/db/prisma';
@@ -11,11 +10,16 @@ import type {
   Cin7ReconciliationSnapshot,
   Cin7StockCatalogEvidence,
 } from '@/lib/integrations/cin7-reconciliation';
+import {
+  assessCin7StockFreeze,
+  loadLatestStockFreeze,
+  type Cin7StockFreezeRecord,
+} from '@/lib/integrations/cin7-stock-freeze';
 
 export const CIN7_STOCK_STABILITY_RUNS_REQUIRED = 3;
 
 export const CIN7_STOCK_PRUNE_LOCKED_DETAIL =
-  'Stock prune is locked until three consecutive complete acceptance runs show a stable Cin7 stock row count. The client asked not to prune against a moving or truncated Cin7 catalog.';
+  'Stock prune is locked until a complete D10 freeze (as-of Cin7 stock keyset) is captured. Do not prune against a live catalog.';
 
 export type { Cin7StockCatalogEvidence };
 
@@ -39,12 +43,18 @@ export type Cin7StockPruneAuditSummary = {
 };
 
 export type Cin7StockStabilityReport = {
+  /** True when a complete D10 freeze exists (same as prune_enabled). */
   stable: boolean;
   prune_enabled: boolean;
   required: number;
   observed: number;
   cin7_counts: Array<number | null>;
+  counts_identical: boolean;
+  /** Freeze gate — why prune is locked or unlocked. */
   reason: string;
+  /** Observational live-count copy; never a prune unlock. */
+  live_reason: string;
+  freeze: Cin7StockFreezeRecord | null;
   runs: Cin7StockStabilityRun[];
   last_prune_audit: Cin7StockPruneAuditSummary | null;
   revert_how: string;
@@ -66,7 +76,7 @@ export function extractStockEvidence(
 }
 
 export function assessCin7StockStability(runs: Cin7StockStabilityRun[]): {
-  stable: boolean;
+  counts_identical: boolean;
   required: number;
   observed: number;
   cin7_counts: Array<number | null>;
@@ -79,28 +89,28 @@ export function assessCin7StockStability(runs: Cin7StockStabilityRun[]): {
 
   if (observed < required) {
     return {
-      stable: false,
+      counts_identical: false,
       required,
       observed,
       cin7_counts,
-      reason: `Need ${required} consecutive complete acceptance runs with Cin7 stock counts; ${observed} available.`,
+      reason: `Need ${required} consecutive complete acceptance runs to observe the live Cin7 catalog; ${observed} available.`,
     };
   }
 
   if (consecutive.some((run) => run.truncated || !run.complete)) {
     return {
-      stable: false,
+      counts_identical: false,
       required,
       observed,
       cin7_counts,
       reason:
-        'One or more of the last three acceptance runs is truncated or incomplete, so the Cin7 stock count is not a sign-off number.',
+        'One or more of the last three acceptance runs is truncated or incomplete, so those live Cin7 counts are not comparable.',
     };
   }
 
   if (consecutive.some((run) => run.stock_cin7 == null)) {
     return {
-      stable: false,
+      counts_identical: false,
       required,
       observed,
       cin7_counts,
@@ -112,20 +122,20 @@ export function assessCin7StockStability(runs: Cin7StockStabilityRun[]): {
   const allSame = consecutive.every((run) => run.stock_cin7 === first);
   if (!allSame) {
     return {
-      stable: false,
+      counts_identical: false,
       required,
       observed,
       cin7_counts,
-      reason: `Cin7 stock counts from the last ${required} complete acceptance runs are not identical (${cin7_counts.join(', ')}). Prune stays locked.`,
+      reason: `Live Cin7 catalog still moves (${cin7_counts.join(', ')}). This is trading evidence, not a prune lock — prune uses a D10 freeze.`,
     };
   }
 
   return {
-    stable: true,
+    counts_identical: true,
     required,
     observed,
     cin7_counts,
-    reason: `Cin7 stock row count held at ${first} across ${required} consecutive complete acceptance runs.`,
+    reason: `Live Cin7 counts matched at ${first} across ${required} runs. The live Cin7 catalog still moves; prune unlocks from a D10 freeze, not identical counts.`,
   };
 }
 
@@ -192,14 +202,23 @@ export async function getLastStockPruneAudit(
 export async function getCin7StockStability(
   ownerUserId: string
 ): Promise<Cin7StockStabilityReport> {
-  const [runs, lastPrune] = await Promise.all([
+  const [runs, lastPrune, freeze] = await Promise.all([
     listRecentCompleteAcceptanceStockRuns(ownerUserId, CIN7_STOCK_STABILITY_RUNS_REQUIRED),
     getLastStockPruneAudit(ownerUserId),
+    loadLatestStockFreeze(ownerUserId),
   ]);
-  const assessed = assessCin7StockStability(runs);
+  const live = assessCin7StockStability(runs);
+  const freezeGate = assessCin7StockFreeze(freeze);
   return {
-    ...assessed,
-    prune_enabled: assessed.stable,
+    counts_identical: live.counts_identical,
+    required: live.required,
+    observed: live.observed,
+    cin7_counts: live.cin7_counts,
+    live_reason: live.reason,
+    reason: freezeGate.reason,
+    stable: freezeGate.prune_enabled,
+    prune_enabled: freezeGate.prune_enabled,
+    freeze,
     runs,
     last_prune_audit: lastPrune,
     revert_how: CIN7_STOCK_PRUNE_REVERT_HOW,
