@@ -4,7 +4,9 @@ import {
   CIN7_SCHEDULED_SYNC_ENTITY_ORDER,
   CIN7_SYNC_SCHEDULE_LABEL,
   formatCountdownUntil,
+  isCin7NightlyLedgerLive,
 } from '@/lib/integrations/cin7-scheduled-sync';
+import { recoverStaleCin7NightlyLedgers } from '@/lib/integrations/cin7-server-scheduled-sync';
 import { getCin7SchedulerSnapshot } from '@/lib/integrations/cin7-server-scheduler';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -21,15 +23,31 @@ export async function GET(request: NextRequest) {
   }
 
   const snapshot = getCin7SchedulerSnapshot();
+  await recoverStaleCin7NightlyLedgers({ inProcessRunning: snapshot.running });
   const ownerIds = [...new Set([scope.userId, snapshot.actorUserId].filter(Boolean))] as string[];
   const latest = await prisma.cin7NightlySyncLedger.findFirst({
     where: { ownerUserId: { in: ownerIds } },
     orderBy: { startedAt: 'desc' },
   });
 
+  const heartbeat = await prisma.cin7SyncRun.findFirst({
+    where: { ownerUserId: { in: ownerIds } },
+    orderBy: { updatedAt: 'desc' },
+    select: { updatedAt: true },
+  });
+
   const entityResults = (latest?.entityResults ?? {}) as EntityResults;
+  const running = latest
+    ? isCin7NightlyLedgerLive({
+        overallStatus: latest.overallStatus,
+        finishedAt: latest.finishedAt,
+        startedAt: latest.startedAt,
+        inProcessRunning: snapshot.running,
+        lastSyncRunUpdatedAt: heartbeat?.updatedAt ?? null,
+      })
+    : snapshot.running;
   const currentEntity =
-    (latest && !latest.finishedAt) || snapshot.running
+    running
       ? (CIN7_SCHEDULED_SYNC_ENTITY_ORDER.find((entity) => !(entity in entityResults)) ?? null)
       : null;
 
@@ -56,10 +74,6 @@ export async function GET(request: NextRequest) {
       records: run.recordsProcessed,
       updated_at: run.updatedAt.toISOString(),
     }));
-
-  const running =
-    snapshot.running ||
-    (latest != null && latest.finishedAt == null && latest.overallStatus === 'running');
 
   const fireAt = snapshot.nextFireAt;
 
