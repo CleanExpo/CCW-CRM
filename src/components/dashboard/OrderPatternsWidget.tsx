@@ -1,29 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { DashboardWidgetEmpty } from '@/components/dashboard/dashboard-widget-primitives';
 import { Badge } from '@/components/ui/badge';
 import {
+  BentoCardContent,
+  BentoCardDescription,
   BentoCardHeader,
   BentoCardTitle,
-  BentoCardDescription,
-  BentoCardContent,
 } from '@/components/ui/bento-grid';
-import {
-  RefreshCw,
-  TrendingUp,
-  Calendar,
-  Package,
-  Users,
-  ShoppingCart,
-  AlertCircle,
-  Clock,
-} from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { apiClient } from '@/lib/api/client';
 import { formatDistanceToNow } from 'date-fns';
-import { DashboardWidgetEmpty } from '@/components/dashboard/dashboard-widget-primitives';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertCircle,
+  Calendar,
+  Clock,
+  Package,
+  RefreshCw,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type PatternType =
   | 'repeat_customer'
@@ -250,7 +250,7 @@ export function OrderPatternsWidget() {
           <DashboardWidgetEmpty
             icon={TrendingUp}
             title="No order patterns detected"
-            description="Patterns appear when there is enough order history and repeat behaviour. Build volume over time, or use Presentation mode to explore sample dashboard data."
+            description="Patterns appear when there is enough order history and repeat behaviour. Build volume over time."
           />
         ) : (
           <AnimatePresence mode="popLayout">
@@ -273,8 +273,13 @@ export function OrderPatternsWidget() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="mb-1 flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-zinc-100">{pattern.customer_name}</h4>
-                            <Badge variant="outline" className="border-white/15 text-xs text-zinc-200">
+                            <h4 className="text-sm font-semibold text-zinc-100">
+                              {pattern.customer_name}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className="border-white/15 text-xs text-zinc-200"
+                            >
                               {getPatternLabel(pattern.type)}
                             </Badge>
                           </div>
@@ -288,7 +293,9 @@ export function OrderPatternsWidget() {
                       </div>
 
                       {/* Pattern Description */}
-                      <p className="text-sm leading-relaxed text-zinc-400">{pattern.pattern_description}</p>
+                      <p className="text-sm leading-relaxed text-zinc-400">
+                        {pattern.pattern_description}
+                      </p>
 
                       {/* Additional Details */}
                       <div className="flex flex-wrap gap-2 text-xs">
@@ -319,7 +326,7 @@ export function OrderPatternsWidget() {
                       {pattern.suggested_action && (
                         <div className="flex items-start gap-2 rounded-lg border border-sky-500/25 bg-sky-950/25 p-2 ring-1 ring-sky-500/10">
                           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
-                          <p className="text-xs font-medium leading-relaxed text-sky-100/90">
+                          <p className="text-xs leading-relaxed font-medium text-sky-100/90">
                             {pattern.suggested_action}
                           </p>
                         </div>
