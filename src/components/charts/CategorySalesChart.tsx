@@ -1,18 +1,5 @@
 'use client';
 
-import { memo } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  Cell,
-} from 'recharts';
-import { LayoutGrid } from 'lucide-react';
 import {
   chartAxisLine,
   chartGridStroke,
@@ -21,6 +8,19 @@ import {
   DashboardWidgetEmpty,
   DashboardWidgetHeader,
 } from '@/components/dashboard/dashboard-widget-primitives';
+import { LayoutGrid } from 'lucide-react';
+import { memo } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 interface CategorySales {
   category: string;
@@ -34,7 +34,9 @@ interface CategorySalesChartProps {
 
 const BAR_COLORS = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#a78bfa'];
 
-export const CategorySalesChart = memo(function CategorySalesChart({ data }: CategorySalesChartProps) {
+export const CategorySalesChart = memo(function CategorySalesChart({
+  data,
+}: CategorySalesChartProps) {
   const chartData = (data || []).map((item, index) => ({
     category: item.category.replace(/_/g, ' '),
     value: parseFloat(item.value),
@@ -52,14 +54,18 @@ export const CategorySalesChart = memo(function CategorySalesChart({ data }: Cat
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border border-white/15 bg-zinc-950/98 p-3 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
-          <p className="text-sm font-medium capitalize text-zinc-100">{payload[0].payload.category}</p>
+          <p className="text-sm font-medium text-zinc-100 capitalize">
+            {payload[0].payload.category}
+          </p>
           <p className="mt-1 text-sm font-bold text-sky-300">
             {new Intl.NumberFormat('en-AU', {
               style: 'currency',
               currency: 'AUD',
             }).format(payload[0].value)}
           </p>
-          <p className="mt-1 text-xs text-zinc-400">{payload[0].payload.percentage.toFixed(1)}% of total</p>
+          <p className="mt-1 text-xs text-zinc-400">
+            {payload[0].payload.percentage.toFixed(1)}% of total
+          </p>
         </div>
       );
     }
@@ -77,7 +83,7 @@ export const CategorySalesChart = memo(function CategorySalesChart({ data }: Cat
           <DashboardWidgetEmpty
             icon={LayoutGrid}
             title="No category breakdown yet"
-            description="Needs active products and delivered orders (or use Presentation mode for sample bars)."
+            description="Needs active products and delivered orders."
           />
         ) : (
           <ResponsiveContainer width="100%" height={300}>
