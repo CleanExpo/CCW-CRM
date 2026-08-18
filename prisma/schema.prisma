@@ -773,7 +773,7 @@ model Cin7ReconRun {
   ownerUserId          String    @map("owner_user_id") @db.Uuid
   /// blocked | running | complete | failed
   status               String
-  /// live (read-only measurement) | acceptance (fail-closed gate)
+  /// live (read-only measurement) | acceptance (fail-closed gate) | freeze (D10 stock keyset)
   mode                 String    @default("acceptance")
   /// When true, this row is an immutable sign-off artifact (never overwrite).
   immutable            Boolean   @default(true)
