@@ -1,11 +1,11 @@
-'use client';
-
 /**
- * Premium marketing home.
+ * Premium marketing home (Server Component).
  * Hero LCP text stays outside client reveal wrappers.
  *
- * This file is a client module so webpack Flight never lazy-loads named
- * exports from child `'use client'` files (that path resolves to undefined).
+ * Must not be `'use client'`: webpack Flight then lazy-loads this default
+ * export as undefined (`Element type is invalid. Received a promise that
+ * resolves to: undefined`). Interactive pieces stay in child client islands
+ * imported as default exports.
  */
 import HeroOperationsStage from '@/components/landing/hero-operations-stage';
 import LandingFaq from '@/components/landing/landing-faq';
@@ -17,10 +17,10 @@ import MarketingLoginPanel from '@/components/landing/marketing-login-panel';
 import MarketingReveal from '@/components/landing/marketing-reveal';
 import { MarketingSectionHeading } from '@/components/landing/marketing-section-heading';
 import {
-    marketingSectionRule as sectionRule,
-    marketingSectionY as sectionY,
-    marketingShell as shell,
-    marketingShellWide as shellWide,
+  marketingSectionRule as sectionRule,
+  marketingSectionY as sectionY,
+  marketingShell as shell,
+  marketingShellWide as shellWide,
 } from '@/components/landing/marketing-shell';
 import { cn } from '@/lib/utils';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
