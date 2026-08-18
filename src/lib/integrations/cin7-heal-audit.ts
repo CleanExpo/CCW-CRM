@@ -15,7 +15,9 @@ import {
 } from '@/lib/integrations/cin7-field-heal';
 import type { Cin7OmniCredentials } from '@/lib/integrations/cin7-omni';
 import { productFieldsMatch } from '@/lib/integrations/cin7-product-heal';
-import { pruneOptixStockLevelsToCin7 } from '@/lib/integrations/cin7-stock-prune';
+import { hashStockKeyset, loadStockFreezeKeyset } from '@/lib/integrations/cin7-stock-freeze';
+import { pruneOptixStockLevelsToKeyset } from '@/lib/integrations/cin7-stock-prune';
+import { CIN7_STOCK_PRUNE_LOCKED_DETAIL } from '@/lib/integrations/cin7-stock-stability';
 import {
   batchUpsertCustomers,
   batchUpsertProducts,
@@ -257,7 +259,6 @@ export async function runAuditedFieldHeal(input: {
 export async function runAuditedStockPrune(input: {
   ownerUserId: string;
   actorUserId: string;
-  omniCreds: Cin7OmniCredentials;
   dryRun?: boolean;
 }): Promise<{
   audit_run_id: string | null;
@@ -265,24 +266,35 @@ export async function runAuditedStockPrune(input: {
   optix_before: number;
   deleted: number;
   missing_in_optix: number;
+  missing_keys?: string[];
   errors: string[];
   dry_run: boolean;
+  freeze_id?: string;
 }> {
+  const loaded = await loadStockFreezeKeyset(input.ownerUserId);
+  if (!loaded) {
+    return {
+      audit_run_id: null,
+      cin7_keys: 0,
+      optix_before: 0,
+      deleted: 0,
+      missing_in_optix: 0,
+      missing_keys: [],
+      errors: [CIN7_STOCK_PRUNE_LOCKED_DETAIL],
+      dry_run: Boolean(input.dryRun),
+    };
+  }
+
+  const { freeze, keys: cin7Keys } = loaded;
+
   if (input.dryRun) {
-    const preview = await pruneOptixStockLevelsToCin7(input.ownerUserId, input.omniCreds, {
+    const preview = await pruneOptixStockLevelsToKeyset(input.ownerUserId, cin7Keys, {
       dryRun: true,
+      freezeId: freeze.freeze_id,
     });
     return { audit_run_id: null, ...preview };
   }
 
-  // Capture surplus rows before delete for reversibility.
-  const catalog = await fetchAllOmniMasterCatalogsSequential(
-    input.omniCreds,
-    getReconCatalogFetchOptions()
-  );
-  const cin7Keys = new Set(
-    catalog.stockLevels.stockLevels.map((s) => `${s.cin7BranchId}:${s.sku}`)
-  );
   const optixRows = await prisma.cin7StockLevel.findMany({
     where: { ownerUserId: input.ownerUserId },
   });
@@ -295,7 +307,11 @@ export async function runAuditedStockPrune(input: {
       status: 'applied',
       createdByUserId: input.actorUserId,
       deletedTotal: 0,
-      summary: { phase: 'started' } as Prisma.InputJsonValue,
+      summary: {
+        phase: 'started',
+        freeze_id: freeze.freeze_id,
+        keyset_sha256: freeze.keyset_sha256,
+      } as Prisma.InputJsonValue,
       rows: {
         create: surplus.map((r) => ({
           ownerUserId: input.ownerUserId,
@@ -316,9 +332,23 @@ export async function runAuditedStockPrune(input: {
     select: { id: true },
   });
 
-  const result = await pruneOptixStockLevelsToCin7(input.ownerUserId, input.omniCreds, {
+  const result = await pruneOptixStockLevelsToKeyset(input.ownerUserId, cin7Keys, {
     dryRun: false,
+    freezeId: freeze.freeze_id,
   });
+
+  const remaining = await prisma.cin7StockLevel.findMany({
+    where: { ownerUserId: input.ownerUserId },
+    select: { cin7BranchId: true, sku: true },
+  });
+  const remainingSha = hashStockKeyset(
+    remaining.map((row) => `${row.cin7BranchId}:${row.sku}`)
+  );
+  if (remainingSha !== freeze.keyset_sha256) {
+    result.errors.push(
+      `Optix stock keyset hash does not match D10 freeze ${freeze.freeze_id}.`
+    );
+  }
 
   await prisma.cin7HealAuditRun.update({
     where: { id: audit.id },
@@ -327,7 +357,9 @@ export async function runAuditedStockPrune(input: {
       status: result.errors.length > 0 && result.deleted === 0 ? 'failed' : 'applied',
       summary: {
         ...result,
-        note: 'Explicit stock prune — deletes Optix rows absent from Cin7. Reversible from audit.',
+        freeze_id: freeze.freeze_id,
+        keyset_sha256: freeze.keyset_sha256,
+        note: 'Explicit stock prune against the D10 freeze keyset. Does not re-walk live Cin7. Reversible from audit.',
       } as unknown as Prisma.InputJsonValue,
     },
   });
