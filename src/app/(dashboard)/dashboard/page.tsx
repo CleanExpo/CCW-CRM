@@ -27,7 +27,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 // PHASE 4: Real-time POS failure alerts + Dashboard metrics
 import { CategorySalesChart } from '@/components/charts/CategorySalesChart';
 import { RevenueChart } from '@/components/charts/RevenueChart';
@@ -52,10 +52,6 @@ import { DashboardAmbient } from '@/components/dashboard/dashboard-ambient';
 import { DashboardHero } from '@/components/dashboard/dashboard-hero';
 import { DashboardQuickActions } from '@/components/dashboard/dashboard-quick-actions';
 import {
-  DashboardPresentationToggle,
-  DASHBOARD_PRESENTATION_LS_KEY,
-} from '@/components/dashboard/dashboard-presentation-toggle';
-import {
   DashboardOperationalMix,
   DashboardStatTiles,
   type DashboardStatMetrics,
@@ -65,11 +61,6 @@ import { MiniRevenueSparkline } from '@/components/dashboard/MiniRevenueSparklin
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import {
-  DASHBOARD_DEMO_AGGREGATED,
-  DASHBOARD_DEMO_INSIGHTS,
-  DASHBOARD_DEMO_URGENT,
-} from '@/lib/dashboard/dashboard-demo-data';
 
 type DashboardMetrics = DashboardStatMetrics;
 
@@ -105,7 +96,7 @@ interface InventoryDataPoint {
   out_of_stock: number;
 }
 
-type DashboardRollup = 'order_lines' | 'allocated' | 'inventory' | 'demo';
+type DashboardRollup = 'order_lines' | 'allocated' | 'inventory';
 
 interface AggregatedDashboardData {
   metrics: DashboardMetrics;
@@ -168,62 +159,17 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [urgentItems, setUrgentItems] = useState<UrgentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [presentationMode, setPresentationMode] = useState(false);
   const [rollup, setRollup] = useState<DashboardRollup | null>(null);
-  const [bootstrapped, setBootstrapped] = useState(false);
 
-  useEffect(() => {
-    try {
-      setPresentationMode(window.localStorage.getItem(DASHBOARD_PRESENTATION_LS_KEY) === '1');
-    } catch {
-      /* ignore */
-    }
-    setBootstrapped(true);
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(DASHBOARD_PRESENTATION_LS_KEY, presentationMode ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  }, [presentationMode]);
-
-  // PHASE 4: Real-time POS failure monitoring (disabled in presentation mode)
   const [posFailureCount, setPosFailureCount] = useState(0);
-  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts(!presentationMode);
-
-  // PHASE 4: Real-time dashboard metrics
-  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream(
-    !presentationMode
-  );
-
-  const applyPresentationDemo = useCallback(() => {
-    const d = DASHBOARD_DEMO_AGGREGATED;
-    setRollup(d.rollup);
-    setMetrics(d.metrics);
-    setRevenueData(d.revenue_chart);
-    setCategorySales(d.category_sales);
-    setTopProducts(d.top_products);
-    setActivity(d.recent_activity);
-    setInsights(DASHBOARD_DEMO_INSIGHTS);
-    setPosFailureCount(0);
-    setUrgentItems(DASHBOARD_DEMO_URGENT as UrgentItem[]);
-  }, []);
+  const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts();
+  const { data: metricsUpdate, status: metricsStreamStatus } = useDashboardMetricsStream();
 
   useEffect(() => {
-    if (!bootstrapped) return;
-
     let cancelled = false;
     setLoading(true);
 
     async function loadDashboardData() {
-      if (presentationMode) {
-        applyPresentationDemo();
-        if (!cancelled) setLoading(false);
-        return;
-      }
-
       try {
         const [dashboardData, insightsData, posFailures, warrantyStats, certStats] =
           await Promise.all([
@@ -298,11 +244,9 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapped, presentationMode, applyPresentationDemo]);
+  }, []);
 
-  // PHASE 4: Handle real-time POS failure alerts
   useEffect(() => {
-    if (presentationMode) return;
     if (posFailure) {
       setPosFailureCount((prev) => prev + 1);
       toast({
@@ -311,11 +255,9 @@ export default function DashboardPage() {
         variant: 'destructive',
       });
     }
-  }, [posFailure, presentationMode, toast]);
+  }, [posFailure, toast]);
 
-  // PHASE 4: Handle real-time dashboard metrics updates
   useEffect(() => {
-    if (presentationMode) return;
     if (metricsUpdate) {
       // Refresh specific metrics based on the update
       async function refreshMetrics() {
@@ -335,7 +277,7 @@ export default function DashboardPage() {
       const timeout = setTimeout(refreshMetrics, 500);
       return () => clearTimeout(timeout);
     }
-  }, [metricsUpdate, presentationMode]);
+  }, [metricsUpdate]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-AU', {
@@ -344,7 +286,7 @@ export default function DashboardPage() {
     }).format(value);
   };
 
-  if (!bootstrapped || loading) {
+  if (loading) {
     return (
       <div className="relative space-y-10 pb-12">
         <DashboardAmbient />
@@ -390,7 +332,7 @@ export default function DashboardPage() {
           title={
             <>
               Operations hub for{' '}
-              <span className="text-transparent bg-gradient-to-r from-sky-200 via-white to-indigo-200 bg-clip-text">
+              <span className="bg-gradient-to-r from-sky-200 via-white to-indigo-200 bg-clip-text text-transparent">
                 equipment suppliers
               </span>
             </>
@@ -398,13 +340,9 @@ export default function DashboardPage() {
           description="Real-time trading, inventory signals, and pipeline health — aligned with your CCW Online brand experience."
           aside={
             <div className="flex flex-col gap-4">
-              <DashboardPresentationToggle
-                checked={presentationMode}
-                onCheckedChange={setPresentationMode}
-              />
-              {!presentationMode && posFailureCount > 0 ? (
+              {posFailureCount > 0 ? (
                 <Link href="/dashboard/operations/pos/reconciliation" className="block shrink-0">
-                  <Card className="overflow-hidden rounded-2xl border border-red-500/35 bg-gradient-to-br from-red-950/40 via-zinc-950/80 to-black shadow-lg shadow-red-900/20 ring-1 ring-red-500/15 transition-colors hover:border-red-400/40">
+                  <Card className="overflow-hidden rounded-2xl border border-red-500/35 bg-gradient-to-br from-red-950/40 via-zinc-950/80 to-black shadow-lg ring-1 shadow-red-900/20 ring-red-500/15 transition-colors hover:border-red-400/40">
                     <CardContent className="px-4 py-4 sm:px-5">
                       <div className="flex items-center gap-3">
                         <AlertTriangle className="text-destructive h-5 w-5 shrink-0" aria-hidden />
@@ -412,7 +350,9 @@ export default function DashboardPage() {
                           <p className="text-destructive text-sm font-medium">
                             {posFailureCount} POS {posFailureCount === 1 ? 'failure' : 'failures'}
                           </p>
-                          <p className="text-xs text-zinc-400">Last 24 hours · Review reconciliation</p>
+                          <p className="text-xs text-zinc-400">
+                            Last 24 hours · Review reconciliation
+                          </p>
                         </div>
                         {posAlertStatus === 'connected' ? (
                           <Badge variant="outline" className="ml-auto shrink-0 text-xs">
@@ -431,16 +371,11 @@ export default function DashboardPage() {
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <DashboardQuickActions />
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            {presentationMode ? (
+            {metricsStreamStatus === 'connected' ? (
               <Badge
                 variant="outline"
-                className="border-amber-400/35 bg-amber-500/10 text-xs font-medium text-amber-100"
+                className="border-white/15 text-xs font-normal text-zinc-200"
               >
-                Sample data
-              </Badge>
-            ) : null}
-            {!presentationMode && metricsStreamStatus === 'connected' ? (
-              <Badge variant="outline" className="border-white/15 text-xs font-normal text-zinc-200">
                 <span
                   className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500"
                   aria-hidden
@@ -459,7 +394,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <Card className="overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-zinc-950/90 to-black shadow-xl shadow-amber-900/10 ring-1 ring-amber-500/15">
+          <Card className="overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-zinc-950/90 to-black shadow-xl ring-1 shadow-amber-900/10 ring-amber-500/15">
             <CardHeader className="space-y-1 pb-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
@@ -550,7 +485,11 @@ export default function DashboardPage() {
             <RevenueChart data={revenueData} />
           </BentoCard>
 
-          <BentoCard variant="gradient" span={1} className="min-h-[400px] overflow-hidden rounded-2xl shadow-lg">
+          <BentoCard
+            variant="gradient"
+            span={1}
+            className="min-h-[400px] overflow-hidden rounded-2xl shadow-lg"
+          >
             <StockHealthWidget />
           </BentoCard>
 
@@ -675,11 +614,9 @@ export default function DashboardPage() {
             <BentoCardHeader>
               <BentoCardTitle className="text-zinc-50">Top 5 products</BentoCardTitle>
               <BentoCardDescription className="text-zinc-400">
-                {presentationMode || rollup === 'demo'
-                  ? 'Demo best-sellers by revenue'
-                  : rollup === 'order_lines'
-                    ? 'From line items on delivered orders'
-                    : 'Estimated from delivered revenue × catalogue mix'}
+                {rollup === 'order_lines'
+                  ? 'From line items on delivered orders'
+                  : 'Estimated from delivered revenue × catalogue mix'}
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
@@ -699,11 +636,9 @@ export default function DashboardPage() {
                             {product.name}
                           </p>
                           <p className="text-xs text-zinc-400">
-                            {presentationMode || rollup === 'demo'
-                              ? `${product.quantity_sold} units sold`
-                              : rollup === 'order_lines'
-                                ? `${product.quantity_sold} units (delivered)`
-                                : `${product.quantity_sold} mix index (est.)`}
+                            {rollup === 'order_lines'
+                              ? `${product.quantity_sold} units (delivered)`
+                              : `${product.quantity_sold} mix index (est.)`}
                           </p>
                         </div>
                       </div>
