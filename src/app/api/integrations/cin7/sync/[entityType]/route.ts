@@ -31,7 +31,6 @@ import {
   clearCachedReconciliation,
   getCachedReconciliation,
 } from '@/lib/integrations/cin7-reconciliation-cache';
-import { pruneOptixStockLevelsToCin7 } from '@/lib/integrations/cin7-stock-prune';
 import {
   buildShortSyncIncompleteMessage,
   resolveCin7ExpectedCount,
@@ -896,56 +895,8 @@ export async function POST(
     }
   }
 
-  // Full stock sync → prune phantoms + heal qty drift before acceptance.
-  if (
-    entityType === 'stock-levels' &&
-    syncMode === 'full' &&
-    result.status === 'complete' &&
-    useOmni &&
-    omniCreds
-  ) {
-    try {
-      const prune = await pruneOptixStockLevelsToCin7(scope.userId, omniCreds, { dryRun: false });
-      if (prune.errors.length > 0 || prune.missing_in_optix > 0) {
-        const reason =
-          prune.errors.length > 0
-            ? `Stock prune incomplete: ${prune.errors.slice(0, 2).join('; ')}`
-            : `Stock prune left ${prune.missing_in_optix} Cin7 keys missing in Optix.`;
-        result = {
-          ...result,
-          status: 'incomplete',
-          complete: false,
-          nextPage: 1,
-          failedPage: 1,
-          failureReason: reason,
-          syncErrors: [...result.syncErrors, reason, ...prune.errors].slice(0, 20),
-        };
-      } else {
-        // Prune may delete surplus rows — Recent sync must show Optix after prune, not pre-prune.
-        const liveAfterPrune = await getOptixEntityRecordCount(scope.userId, rawEntityType);
-        result = {
-          ...result,
-          recordsProcessed: liveAfterPrune,
-        };
-        console.log(
-          `[Cin7 sync] stock-levels: pruned ${prune.deleted} phantoms; cin7_keys=${prune.cin7_keys}; optix=${liveAfterPrune}`
-        );
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      result = {
-        ...result,
-        status: 'incomplete',
-        complete: false,
-        nextPage: 1,
-        failedPage: 1,
-        failureReason: `Stock prune failed: ${message}`,
-        syncErrors: [...result.syncErrors, message].slice(0, 20),
-      };
-    }
-  }
-
-  // Authoritative Optix count for the final ledger (may drop after stock prune).
+  // Authoritative Optix count for the final ledger. Surplus stock is removed only
+  // by the explicit D10 freeze prune — never as a side-effect of a live stock sync.
   let optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
   const skipCountCheck = entityType === 'orders';
   {
