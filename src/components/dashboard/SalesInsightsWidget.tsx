@@ -1,25 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { DashboardWidgetEmpty } from '@/components/dashboard/dashboard-widget-primitives';
 import {
+  BentoCardContent,
+  BentoCardDescription,
   BentoCardHeader,
   BentoCardTitle,
-  BentoCardDescription,
-  BentoCardContent,
 } from '@/components/ui/bento-grid';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api/client';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Sparkles,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
   AlertCircle,
   CheckCircle2,
+  RefreshCw,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
-import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
-import { DashboardWidgetEmpty } from '@/components/dashboard/dashboard-widget-primitives';
+import { useEffect, useState } from 'react';
 
 interface SalesInsight {
   type: 'trend' | 'opportunity' | 'warning' | 'recommendation';
@@ -196,7 +196,7 @@ export function SalesInsightsWidget() {
           <DashboardWidgetEmpty
             icon={Sparkles}
             title="No AI sales insights yet"
-            description="The sales insights service needs enough recent orders and revenue signal. Try again after more trading activity, or use dashboard Presentation mode to preview sample KPIs elsewhere."
+            description="The sales insights service needs enough recent orders and revenue signal. Try again after more trading activity."
           />
         ) : (
           <AnimatePresence mode="popLayout">
@@ -221,7 +221,7 @@ export function SalesInsightsWidget() {
                       </div>
                       <p className="text-sm leading-relaxed text-zinc-400">{insight.description}</p>
                       {insight.metric && (
-                        <p className="text-sky-300 mt-2 text-xs font-medium">{insight.metric}</p>
+                        <p className="mt-2 text-xs font-medium text-sky-300">{insight.metric}</p>
                       )}
                     </div>
                   </div>
