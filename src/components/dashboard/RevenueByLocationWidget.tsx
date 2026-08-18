@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, memo } from 'react';
-import { MapPin, TrendingUp, DollarSign } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { apiClient } from '@/lib/api/client';
 import {
   DashboardWidgetEmpty,
   DashboardWidgetHeader,
   DashboardWidgetLoading,
 } from '@/components/dashboard/dashboard-widget-primitives';
+import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/lib/api/client';
+import { DollarSign, MapPin, TrendingUp } from 'lucide-react';
+import { memo, useEffect, useState } from 'react';
 
 interface LocationRevenue {
   location: string;
@@ -68,8 +68,7 @@ export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
       maximumFractionDigits: 0,
     }).format(value);
 
-  const formatLocation = (location: string) =>
-    location.charAt(0).toUpperCase() + location.slice(1);
+  const formatLocation = (location: string) => location.charAt(0).toUpperCase() + location.slice(1);
 
   if (loading) {
     return <DashboardWidgetLoading title="Revenue by location" subtitle="Aggregating branches…" />;
@@ -103,14 +102,16 @@ export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
         <DashboardWidgetEmpty
           icon={DollarSign}
           title="No location revenue yet"
-          description="Delivered orders with location attribution will populate this view. Until then, use Presentation mode on the dashboard to preview sample regional splits."
+          description="Delivered orders with location attribution will populate this view."
         />
       ) : (
         <div className="space-y-5">
           <div className="rounded-xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-zinc-900/40 to-indigo-500/10 p-4 ring-1 ring-sky-500/15">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold tracking-wide text-sky-200/90 uppercase">Total revenue</p>
+                <p className="text-xs font-semibold tracking-wide text-sky-200/90 uppercase">
+                  Total revenue
+                </p>
                 <p className="mt-1 text-2xl font-bold tracking-tight text-white tabular-nums">
                   {formatCurrency(data!.total_revenue)}
                 </p>
@@ -125,7 +126,9 @@ export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <MapPin className="h-4 w-4 shrink-0 text-zinc-500" />
-                    <span className="font-semibold text-zinc-100">{formatLocation(location.location)}</span>
+                    <span className="font-semibold text-zinc-100">
+                      {formatLocation(location.location)}
+                    </span>
                     {location.growth_percentage !== null && (
                       <Badge
                         variant="outline"
@@ -142,7 +145,9 @@ export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold tabular-nums text-white">{formatCurrency(location.revenue)}</p>
+                    <p className="text-sm font-bold text-white tabular-nums">
+                      {formatCurrency(location.revenue)}
+                    </p>
                     <p className="text-xs text-zinc-500">{location.percentage.toFixed(1)}% share</p>
                   </div>
                 </div>
@@ -157,11 +162,13 @@ export const RevenueByLocationWidget = memo(function RevenueByLocationWidget() {
                 <div className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-zinc-900/40 px-3 py-2 text-sm">
                   <div>
                     <p className="text-xs text-zinc-500">Orders</p>
-                    <p className="font-semibold tabular-nums text-zinc-100">{location.order_count}</p>
+                    <p className="font-semibold text-zinc-100 tabular-nums">
+                      {location.order_count}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-zinc-500">Avg order</p>
-                    <p className="font-semibold tabular-nums text-zinc-100">
+                    <p className="font-semibold text-zinc-100 tabular-nums">
                       {formatCurrency(location.average_order_value)}
                     </p>
                   </div>
