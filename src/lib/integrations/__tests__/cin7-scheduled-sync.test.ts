@@ -231,7 +231,7 @@ describe('runCin7SequentialEntityWalk', () => {
     expect(calls.find((c) => c.entity === 'internal-customers')).toMatchObject({ full: true });
     expect(calls.find((c) => c.entity === 'suppliers')).toMatchObject({ full: true });
     expect(calls.find((c) => c.entity === 'stock-levels')).toMatchObject({
-      full: false,
+      full: true,
       restart: true,
     });
     expect(walk.cin7AllComplete).toBe(true);
