@@ -15,6 +15,14 @@ import {
   pingCin7Core,
 } from '@/lib/integrations/cin7-core';
 import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
+import { runAuditedStockWalkDeletes } from '@/lib/integrations/cin7-heal-audit';
+import {
+  isCin7StockSyncEntity,
+  mergeStockWalkKeys,
+  readStockWalkCheckpoint,
+  writeStockWalkCheckpoint,
+  type StockWalkCheckpoint,
+} from '@/lib/integrations/cin7-stock-walk-deletes';
 import {
   extractReferenceDataFromProducts,
   fetchOmniBranchesPage,
@@ -78,6 +86,7 @@ import {
   mapOmniSupplierRows,
   type Cin7SyncSkipInput,
 } from '@/lib/integrations/cin7-sync-persist';
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
@@ -87,6 +96,7 @@ type SyncSkipped = {
   missing_cin7_id: number;
   inactive_products: number;
   missing_core_id: number;
+  stock_deletes?: unknown;
 };
 
 function jsonSyncResult(input: {
@@ -98,7 +108,7 @@ function jsonSyncResult(input: {
   nextPage: number | null;
   failedPage: number | null;
   syncErrors: string[];
-  skipped: SyncSkipped;
+  skipped: Record<string, unknown>;
   cin7SourceStyles?: number;
   lastCommittedPage?: number;
   cin7Count?: number | null;
@@ -229,6 +239,7 @@ export async function POST(
     completedAt: run.completedAt,
     optixCount: optixFloor,
     expectedSourceCount,
+    entityType,
   });
   const incrementalWhere =
     syncMode === 'incremental' &&
@@ -258,6 +269,34 @@ export async function POST(
   // Additive: never start the counter below Optix; resume keeps the higher of Optix/run.
   const priorRecords =
     syncMode === 'resume' ? Math.max(optixFloor, run.recordsProcessed) : optixFloor;
+
+  const isStockEntity = isCin7StockSyncEntity(entityType);
+  const stockWalkKind = incrementalWhere ? 'incremental' : 'full';
+  let stockWalk: StockWalkCheckpoint | null = null;
+  if (isStockEntity) {
+    const stored = await prisma.cin7SyncRun.findFirst({
+      where: { id: run.id },
+      select: { skipped: true },
+    });
+    const prior = readStockWalkCheckpoint(stored?.skipped);
+    const priorCount =
+      prior?.kind === 'full' && prior.keys.length > 0
+        ? prior.keys.length
+        : (prior?.priorCompleteFullKeys ?? null);
+    if (syncMode === 'resume' && !resetCheckpoint && prior) {
+      stockWalk = {
+        kind: prior.kind,
+        keys: prior.keys,
+        priorCompleteFullKeys: prior.priorCompleteFullKeys ?? priorCount,
+      };
+    } else {
+      stockWalk = {
+        kind: stockWalkKind,
+        keys: [],
+        priorCompleteFullKeys: priorCount,
+      };
+    }
+  }
 
   // Atomic lock — avoids two tax-codes requests both passing a status check then racing.
   if (!forceRestart) {
@@ -757,7 +796,26 @@ export async function POST(
           total,
           error,
           persist: async () => {
-            const n = await batchUpsertStockLevels(scope.userId, mapOmniStockLevelRows(rows));
+            const mapped = mapOmniStockLevelRows(rows);
+            const n = await batchUpsertStockLevels(scope.userId, mapped);
+            if (stockWalk) {
+              stockWalk = {
+                ...stockWalk,
+                keys: mergeStockWalkKeys(
+                  stockWalk.keys,
+                  mapped.map((row) => `${row.cin7BranchId}:${row.sku}`)
+                ),
+              };
+              await prisma.cin7SyncRun.update({
+                where: { id: run.id },
+                data: {
+                  skipped: writeStockWalkCheckpoint(
+                    skipped,
+                    stockWalk
+                  ) as Prisma.InputJsonValue,
+                },
+              });
+            }
             return { recordsProcessed: n };
           },
         };
@@ -895,8 +953,8 @@ export async function POST(
     }
   }
 
-  // Authoritative Optix count for the final ledger. Surplus stock is removed only
-  // by the explicit D10 freeze prune — never as a side-effect of a live stock sync.
+  // Authoritative Optix count for the final ledger. Stock extras are removed
+  // inside a complete full walk (below), not left for a later freeze prune.
   let optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
   const skipCountCheck = entityType === 'orders';
   {
@@ -955,6 +1013,37 @@ export async function POST(
     };
   }
 
+  if (isStockEntity && stockWalk && result.status === 'complete' && result.complete) {
+    const truncated =
+      typeof result.reportedTotal === 'number' &&
+      result.reportedTotal > 0 &&
+      result.sourceRowsFetched < result.reportedTotal;
+    const walkDeletes = await runAuditedStockWalkDeletes({
+      ownerUserId: scope.userId,
+      actorUserId: scope.userId,
+      keys: stockWalk.keys,
+      walkKind: stockWalk.kind,
+      complete: true,
+      truncated,
+      syncErrors: result.syncErrors,
+      reportedTotal: result.reportedTotal,
+      priorCompleteFullKeys: stockWalk.priorCompleteFullKeys,
+    });
+    skipped.stock_deletes = {
+      allowed: walkDeletes.allowed,
+      reason: walkDeletes.reason,
+      deleted: walkDeletes.deleted,
+      audit_run_id: walkDeletes.audit_run_id,
+    };
+    if (walkDeletes.allowed) {
+      console.log(
+        `[Cin7 sync] stock-levels: walk deletes allowed deleted=${walkDeletes.deleted} keys=${walkDeletes.cin7_keys}`
+      );
+    } else {
+      console.log(`[Cin7 sync] stock-levels: walk deletes skipped — ${walkDeletes.reason}`);
+    }
+  }
+
   optixAfter = await getOptixEntityRecordCount(scope.userId, rawEntityType);
   result = {
     ...result,
@@ -978,6 +1067,11 @@ export async function POST(
   }
 
   // Attach skipped + source on final checkpoint write.
+  const skippedForPersist = (
+    stockWalk
+      ? writeStockWalkCheckpoint(skipped as unknown as Record<string, unknown>, stockWalk)
+      : skipped
+  ) as Prisma.InputJsonValue;
   await persistCin7SyncRunCheckpoint({
     runId: run.id,
     status: result.status,
@@ -988,7 +1082,7 @@ export async function POST(
     failedPage: result.failedPage,
     failureReason: result.failureReason,
     durationMs: result.durationMs,
-    skipped,
+    skipped: skippedForPersist,
     source: sourceKind,
   });
 
@@ -1018,7 +1112,7 @@ export async function POST(
       failedPage: result.failedPage,
       failureReason: result.failureReason,
       durationMs: result.durationMs,
-      skipped,
+      skipped: skippedForPersist,
       source: sourceKind,
     });
   }
