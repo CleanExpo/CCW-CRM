@@ -10,6 +10,7 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { resolveCin7SyncEntityAlias } from '@/lib/integrations/cin7-master-entities';
+import { isCin7StockSyncEntity } from '@/lib/integrations/cin7-stock-walk-deletes';
 
 const CIN7_PRODUCT_CATEGORY_PREFIX = 'Cin7';
 
@@ -47,11 +48,13 @@ export function decideCin7SyncMode(input: {
   expectedSourceCount?: number | null;
   /** Tolerate small timing drift between recon and sync. */
   shortfallTolerance?: number;
+  /** When stock-levels, never choose incremental (disappearances must be visible). */
+  entityType?: string;
 }): { mode: Cin7SyncMode; modifiedSince: Date | null } {
   if (input.status === 'incomplete' || input.status === 'running') {
     return { mode: 'resume', modifiedSince: null };
   }
-  if (input.forceFull) {
+  if (input.forceFull || (input.entityType && isCin7StockSyncEntity(input.entityType))) {
     return { mode: 'full', modifiedSince: null };
   }
   // Fail-closed: any Optix shortfall vs a known Cin7 total forces a full backfill.
@@ -283,7 +286,6 @@ export function entitySupportsModifiedSince(entityType: string): boolean {
     resolved === 'products' ||
     resolved === 'brands' ||
     resolved === 'price-lists' ||
-    resolved === 'units-of-measure' ||
-    resolved === 'stock-levels'
+    resolved === 'units-of-measure'
   );
 }
