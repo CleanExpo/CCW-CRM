@@ -289,8 +289,9 @@ export function Cin7SyncControls({ isConnected }: Cin7SyncControlsProps) {
               Cin7 Sync Controls
             </CardTitle>
             <CardDescription>
-              Sync each master-data entity from Cin7. Incomplete runs resume from a checkpoint —
-              nothing already imported is removed.
+              Sync each master-data entity from Cin7. Incomplete runs resume from a checkpoint.
+              Stock is different: a complete full walk removes Optix branch × SKU rows Cin7
+              stopped returning. Products and customers still only add.
             </CardDescription>
           </div>
           <Button
