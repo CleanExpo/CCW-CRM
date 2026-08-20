@@ -107,7 +107,8 @@ describe('client requirement checklist (static)', () => {
     expect(src).not.toContain('Remove duplicate customers');
     expect(src).not.toContain('pruneSurplusStock');
     expect(src).toContain('This report does not heal, align, or delete Optix');
-    expect(src).toContain('locked until Cin7 count is stable');
+    expect(src).toContain('Freeze is the measurement point');
+    expect(src).toContain('complete nightly stock walk now deletes');
   });
 
   it('sync route imports full-catalog source resolver', async () => {
