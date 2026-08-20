@@ -11,11 +11,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
+  attachAnneCin7Export,
   captureCin7StockFreeze,
   getCin7B1Residuals,
   getCin7B1ResidualsExportUrl,
@@ -27,6 +29,7 @@ import {
   healCin7FieldMismatches,
   listCin7ReconHistory,
   pruneCin7StockSurplus,
+  revertCin7HealAudit,
   type Cin7ExceptionEntity,
   type Cin7ExceptionRecord,
   type Cin7ReconciliationResponse,
@@ -44,7 +47,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type ConfirmKind = 'heal' | 'freeze' | 'prune';
+type ConfirmKind = 'heal' | 'freeze' | 'prune' | 'revert';
 
 type Cin7ReconciliationCardProps = {
   isConnected: boolean;
@@ -153,6 +156,10 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   const [healingFields, setHealingFields] = useState(false);
   const [capturingFreeze, setCapturingFreeze] = useState(false);
   const [pruningStock, setPruningStock] = useState(false);
+  const [revertingPrune, setRevertingPrune] = useState(false);
+  const [savingAnne, setSavingAnne] = useState(false);
+  const [anneRowCount, setAnneRowCount] = useState('');
+  const [anneQty, setAnneQty] = useState('');
   const [history, setHistory] = useState<Awaited<ReturnType<typeof listCin7ReconHistory>>['items']>(
     []
   );
@@ -457,6 +464,53 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     }
   };
 
+  const applyRevert = async () => {
+    const auditId = stability?.last_prune_audit?.id;
+    if (!auditId) return;
+    setConfirmKind(null);
+    setRevertingPrune(true);
+    try {
+      const result = await revertCin7HealAudit(auditId);
+      toast({
+        title: `Restored ${result.reverted.toLocaleString()} stock rows`,
+        description: 'The prune audit was reverted. Nightly sync may delete them again.',
+      });
+      await refreshEvidencePanels();
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Revert failed',
+        description: error instanceof Error ? error.message : 'Could not restore pruned rows',
+      });
+    } finally {
+      setRevertingPrune(false);
+    }
+  };
+
+  const saveAnneExport = async () => {
+    setSavingAnne(true);
+    try {
+      await attachAnneCin7Export({
+        row_count: Number(anneRowCount),
+        total_quantity: Number(anneQty),
+        as_of: new Date().toISOString(),
+        captured_by: 'Anne',
+      });
+      toast({ title: 'Anne’s export stored on the freeze' });
+      setAnneRowCount('');
+      setAnneQty('');
+      await refreshEvidencePanels();
+    } catch (error: unknown) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not store Anne’s export',
+        description: error instanceof Error ? error.message : 'Check the row count and quantity.',
+      });
+    } finally {
+      setSavingAnne(false);
+    }
+  };
+
   const confirmCopy: Record<ConfirmKind, { title: string; description: string; action: string }> = {
     heal: {
       title: 'Apply field heal?',
@@ -467,13 +521,19 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     freeze: {
       title: 'Capture freeze?',
       description:
-        'Walks Cin7 stock once and stores the keyset. Prune uses this snapshot, not live Cin7.',
+        'Walks Cin7 stock once and stores the keyset. This freeze is the measurement point. Nightly stock sync deletes extras against each complete walk — do not prune just to make this number match.',
       action: 'Capture freeze',
     },
     prune: {
       title: 'Prune extras?',
-      description: `Deletes ${extraCount.toLocaleString()} Optix rows that are not in the freeze.`,
+      description: `Emergency delete of ${extraCount.toLocaleString()} Optix rows that are not in the freeze. Prefer waiting for tonight’s complete stock sync, which now deletes as part of the walk.`,
       action: 'Prune extras',
+    },
+    revert: {
+      title: 'Undo prune?',
+      description:
+        'Restores the deleted Optix stock rows from the heal audit. Tonight’s stock sync may remove them again if Cin7 no longer returns them.',
+      action: 'Undo prune',
     },
   };
 
@@ -481,6 +541,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
     if (confirmKind === 'heal') void healFieldDiffs();
     else if (confirmKind === 'freeze') void captureFreeze();
     else if (confirmKind === 'prune') void applyPrune();
+    else if (confirmKind === 'revert') void applyRevert();
   };
 
   return (
@@ -589,6 +650,10 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
 
           <div className="rounded-lg border p-3">
             <p className="mb-1 text-xs font-medium">Stock</p>
+            <p className="text-muted-foreground mb-2 text-xs">
+              Freeze is the measurement point. A complete nightly stock walk now deletes Optix rows
+              Cin7 stopped returning. Do not prune extras just to force Matched.
+            </p>
             {freezeReady ? (
               <p className="text-xs tabular-nums">
                 Freeze {stability?.freeze?.cin7_keys.toLocaleString()} · Optix{' '}
@@ -641,7 +706,66 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                   Prune extras
                 </Button>
               ) : null}
+              {stability?.last_prune_audit?.reversible ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isRefreshing || revertingPrune}
+                  onClick={() => setConfirmKind('revert')}
+                >
+                  {revertingPrune ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Undo prune
+                </Button>
+              ) : null}
             </div>
+            {freezeReady ? (
+              <div className="mt-3 space-y-2 border-t pt-2">
+                <p className="text-xs font-medium">Anne’s Cin7 stock-on-hand export</p>
+                {stability?.freeze?.anne_export_row_count != null ? (
+                  <p className="text-muted-foreground text-xs tabular-nums">
+                    Stored {stability.freeze.anne_export_row_count.toLocaleString()} rows · qty{' '}
+                    {stability.freeze.anne_export_total_quantity?.toLocaleString() ?? '—'}
+                    {stability.freeze.anne_export_captured_by
+                      ? ` · ${stability.freeze.anne_export_captured_by}`
+                      : ''}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    The freeze key count is precision. Anne’s export row count and total quantity
+                    are the accuracy check. Store them together at the next as-of moment.
+                  </p>
+                )}
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className="text-muted-foreground text-[11px]">
+                    Row count
+                    <Input
+                      className="mt-0.5 h-8 w-28"
+                      inputMode="numeric"
+                      value={anneRowCount}
+                      onChange={(e) => setAnneRowCount(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-muted-foreground text-[11px]">
+                    Total quantity
+                    <Input
+                      className="mt-0.5 h-8 w-28"
+                      inputMode="numeric"
+                      value={anneQty}
+                      onChange={(e) => setAnneQty(e.target.value)}
+                    />
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={savingAnne || !anneRowCount || !anneQty}
+                    onClick={() => void saveAnneExport()}
+                  >
+                    {savingAnne ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Store export
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-lg border p-3">
