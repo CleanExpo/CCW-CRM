@@ -29,6 +29,10 @@ export type Cin7StockFreezeRecord = {
   truncated: boolean;
   complete: boolean;
   cin7_reported_total: number | null;
+  anne_export_row_count: number | null;
+  anne_export_total_quantity: number | null;
+  anne_export_as_of: string | null;
+  anne_export_captured_by: string | null;
 };
 
 export type Cin7StockFreezePayload = {
@@ -64,7 +68,37 @@ export function assessCin7StockFreeze(freeze: Cin7StockFreezeRecord | null): {
   }
   return {
     prune_enabled: true,
-    reason: `D10 freeze ${freeze.freeze_id} at ${freeze.as_of} (${freeze.cin7_keys} Cin7 keys, sha256 ${freeze.keyset_sha256.slice(0, 12)}…). Prune uses this keyset, not a live Cin7 pull.`,
+    reason: `D10 freeze ${freeze.freeze_id} at ${freeze.as_of} (${freeze.cin7_keys} Cin7 keys, sha256 ${freeze.keyset_sha256.slice(0, 12)}…). Measure Optix against this keyset; nightly stock sync is what deletes extras.`,
+  };
+}
+
+export type Cin7AnneExportInput = {
+  row_count: number;
+  total_quantity: number;
+  as_of: string;
+  captured_by: string;
+};
+
+export function attachAnneExportToFreeze(
+  freeze: Cin7StockFreezeRecord,
+  input: Cin7AnneExportInput
+): Cin7StockFreezeRecord {
+  if (!Number.isFinite(input.row_count) || input.row_count <= 0) {
+    throw new Error('Anne export row count must be a positive number.');
+  }
+  if (!Number.isFinite(input.total_quantity)) {
+    throw new Error('Anne export total quantity must be a number.');
+  }
+  const capturedBy = input.captured_by.trim();
+  if (!capturedBy) throw new Error('Anne export captured_by is required.');
+  const asOf = new Date(input.as_of);
+  if (Number.isNaN(asOf.getTime())) throw new Error('Anne export as-of must be a valid timestamp.');
+  return {
+    ...freeze,
+    anne_export_row_count: Math.floor(input.row_count),
+    anne_export_total_quantity: input.total_quantity,
+    anne_export_as_of: asOf.toISOString(),
+    anne_export_captured_by: capturedBy,
   };
 }
 
@@ -94,6 +128,10 @@ function recordFromRun(input: {
       !Boolean(freeze.truncated),
     cin7_reported_total:
       freeze.cin7_reported_total ?? summary.stock_evidence?.cin7_reported_total ?? null,
+    anne_export_row_count: freeze.anne_export_row_count ?? null,
+    anne_export_total_quantity: freeze.anne_export_total_quantity ?? null,
+    anne_export_as_of: freeze.anne_export_as_of ?? null,
+    anne_export_captured_by: freeze.anne_export_captured_by ?? null,
   };
 }
 
@@ -171,6 +209,10 @@ export async function captureCin7StockFreeze(input: {
     truncated,
     complete,
     cin7_reported_total: catalog.reported_total ?? null,
+    anne_export_row_count: null,
+    anne_export_total_quantity: null,
+    anne_export_as_of: null,
+    anne_export_captured_by: null,
   };
 
   const run = await prisma.cin7ReconRun.create({
@@ -246,4 +288,31 @@ export async function captureCin7StockFreeze(input: {
     }),
     errors: catalog.errors.slice(0, 20),
   };
+}
+
+export async function persistAnneExportOnLatestFreeze(
+  ownerUserId: string,
+  input: Cin7AnneExportInput
+): Promise<Cin7StockFreezeRecord> {
+  const freeze = await loadLatestStockFreeze(ownerUserId);
+  if (!freeze || !freeze.complete) {
+    throw new Error('Capture a complete D10 freeze before storing Anne’s export.');
+  }
+  const next = attachAnneExportToFreeze(freeze, input);
+  const run = await prisma.cin7ReconRun.findFirst({
+    where: { id: freeze.freeze_id, ownerUserId },
+    select: { id: true, summary: true },
+  });
+  if (!run) throw new Error('D10 freeze row was not found.');
+  const summary = (run.summary ?? {}) as Record<string, unknown>;
+  await prisma.cin7ReconRun.update({
+    where: { id: run.id },
+    data: {
+      summary: {
+        ...summary,
+        freeze: next,
+      } as unknown as Prisma.InputJsonValue,
+    },
+  });
+  return next;
 }
