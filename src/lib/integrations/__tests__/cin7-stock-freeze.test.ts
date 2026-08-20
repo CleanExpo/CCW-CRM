@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assessCin7StockFreeze,
+  attachAnneExportToFreeze,
   hashStockKeyset,
   normalizeStockKeyset,
   type Cin7StockFreezeRecord,
@@ -19,6 +20,10 @@ function freeze(partial: Partial<Cin7StockFreezeRecord> = {}): Cin7StockFreezeRe
     truncated: false,
     complete: true,
     cin7_reported_total: 10007,
+    anne_export_row_count: null,
+    anne_export_total_quantity: null,
+    anne_export_as_of: null,
+    anne_export_captured_by: null,
     ...partial,
   };
 }
@@ -51,7 +56,7 @@ describe('assessCin7StockFreeze', () => {
     const result = assessCin7StockFreeze(freeze());
     expect(result.prune_enabled).toBe(true);
     expect(result.reason).toMatch(/D10 freeze freeze-1/);
-    expect(result.reason).toMatch(/not a live Cin7 pull/i);
+    expect(result.reason).toMatch(/Measure Optix against this keyset/i);
   });
 });
 
@@ -69,5 +74,34 @@ describe('diffStockKeysForPrune', () => {
     expect(diff.missing_keys).toEqual(['br-1:sku-b']);
     expect(diff.optix_before).toBe(3);
     expect(diff.cin7_keys).toBe(2);
+  });
+});
+
+describe('Anne export corroboration', () => {
+  it('stores Anne row count and total quantity on the freeze without changing the keyset', () => {
+    const base = freeze();
+    const result = attachAnneExportToFreeze(base, {
+      row_count: 10362,
+      total_quantity: 184_221,
+      as_of: '2026-08-19T21:00:00.000Z',
+      captured_by: 'Anne',
+    });
+    expect(result.keyset_sha256).toBe(base.keyset_sha256);
+    expect(result.cin7_keys).toBe(base.cin7_keys);
+    expect(result.anne_export_row_count).toBe(10362);
+    expect(result.anne_export_total_quantity).toBe(184221);
+    expect(result.anne_export_captured_by).toBe('Anne');
+    expect(result.anne_export_as_of).toBe('2026-08-19T21:00:00.000Z');
+  });
+
+  it('rejects a non-positive row count', () => {
+    expect(() =>
+      attachAnneExportToFreeze(freeze(), {
+        row_count: 0,
+        total_quantity: 1,
+        as_of: '2026-08-19T21:00:00.000Z',
+        captured_by: 'Anne',
+      })
+    ).toThrow(/row count/i);
   });
 });
