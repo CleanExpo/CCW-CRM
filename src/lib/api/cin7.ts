@@ -455,6 +455,31 @@ export async function captureCin7StockFreeze(): Promise<{
   return apiClient.post('/api/integrations/cin7/stock-freeze', {}, undefined, 300_000);
 }
 
+export async function attachAnneCin7Export(input: {
+  row_count: number;
+  total_quantity: number;
+  as_of: string;
+  captured_by: string;
+}): Promise<{
+  freeze: {
+    procedure: 'D10';
+    freeze_id: string;
+    as_of: string;
+    time_zone: string;
+    cin7_keys: number;
+    keyset_sha256: string;
+    truncated: boolean;
+    complete: boolean;
+    cin7_reported_total: number | null;
+    anne_export_row_count: number | null;
+    anne_export_total_quantity: number | null;
+    anne_export_as_of: string | null;
+    anne_export_captured_by: string | null;
+  };
+}> {
+  return apiClient.patch('/api/integrations/cin7/stock-freeze', input);
+}
+
 export async function revertCin7HealAudit(auditRunId: string): Promise<{
   reverted: number;
   action_type: string;
@@ -538,6 +563,10 @@ export async function getCin7StockStability(): Promise<{
     truncated: boolean;
     complete: boolean;
     cin7_reported_total: number | null;
+    anne_export_row_count?: number | null;
+    anne_export_total_quantity?: number | null;
+    anne_export_as_of?: string | null;
+    anne_export_captured_by?: string | null;
   } | null;
   runs: Array<{
     id: string;
