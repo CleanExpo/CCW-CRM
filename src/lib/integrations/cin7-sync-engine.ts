@@ -6,6 +6,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { resolveAdaptivePageGapMs } from '@/lib/integrations/cin7-sync-adaptive';
 import { getCin7SyncMaxPages } from '@/lib/integrations/cin7-sync-config';
+import { Prisma } from '@prisma/client';
 
 export type Cin7SyncRunStatus = 'idle' | 'running' | 'complete' | 'incomplete' | 'failed';
 
@@ -342,7 +343,7 @@ export async function persistCin7SyncRunCheckpoint(input: {
   failedPage: number | null;
   failureReason: string | null;
   durationMs: number;
-  skipped?: Record<string, number>;
+  skipped?: Prisma.InputJsonValue;
   source?: string;
 }): Promise<void> {
   const completedAt = input.status === 'complete' ? new Date() : null;
