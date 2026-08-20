@@ -1,6 +1,10 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-omni';
-import { captureCin7StockFreeze, loadLatestStockFreeze } from '@/lib/integrations/cin7-stock-freeze';
+import {
+  captureCin7StockFreeze,
+  loadLatestStockFreeze,
+  persistAnneExportOnLatestFreeze,
+} from '@/lib/integrations/cin7-stock-freeze';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 300;
@@ -48,4 +52,30 @@ export async function POST(request: NextRequest) {
     ...result,
     explicit_action: true,
   });
+}
+
+/** Store Anne’s Cin7 stock-on-hand export on the latest complete freeze. */
+export async function PATCH(request: NextRequest) {
+  const scope = await requireAuthScope(request);
+  if (!scope) {
+    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+  }
+  const body = (await request.json().catch(() => ({}))) as {
+    row_count?: unknown;
+    total_quantity?: unknown;
+    as_of?: unknown;
+    captured_by?: unknown;
+  };
+  try {
+    const freeze = await persistAnneExportOnLatestFreeze(scope.userId, {
+      row_count: Number(body.row_count),
+      total_quantity: Number(body.total_quantity),
+      as_of: String(body.as_of ?? ''),
+      captured_by: String(body.captured_by ?? ''),
+    });
+    return NextResponse.json({ freeze });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not store Anne export.';
+    return NextResponse.json({ detail: message }, { status: 400 });
+  }
 }
