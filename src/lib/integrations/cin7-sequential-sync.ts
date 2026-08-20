@@ -10,6 +10,7 @@ import {
   shouldRestartCin7ScheduledEntity,
   type Cin7ScheduledSyncEntity,
 } from '@/lib/integrations/cin7-scheduled-sync';
+import { isCin7StockSyncEntity } from '@/lib/integrations/cin7-stock-walk-deletes';
 
 export type Cin7ScheduledChunkResult = {
   status?: string;
@@ -78,7 +79,7 @@ export async function syncCin7ScheduledEntityUntilComplete(
   deps: Cin7SequentialSyncDeps,
   priorStatus: string | null
 ): Promise<Cin7ScheduledEntityOutcome> {
-  const contactFull = isCin7ScheduledContactEntity(entity);
+  const forceFullCatalog = isCin7ScheduledContactEntity(entity) || isCin7StockSyncEntity(entity);
   const maxChunks = deps.maxChunksPerEntity ?? CIN7_SCHEDULED_SYNC_MAX_CHUNKS_PER_ENTITY;
   let restart = shouldRestartCin7ScheduledEntity(priorStatus);
   const resumed = !restart;
@@ -90,7 +91,7 @@ export async function syncCin7ScheduledEntityUntilComplete(
     try {
       last = await deps.postChunk(entity, {
         restart,
-        full: contactFull,
+        full: forceFullCatalog,
       });
       restart = false;
       postErrorRetries = 0;
