@@ -19,6 +19,10 @@ import { hashStockKeyset, loadStockFreezeKeyset } from '@/lib/integrations/cin7-
 import { pruneOptixStockLevelsToKeyset } from '@/lib/integrations/cin7-stock-prune';
 import { CIN7_STOCK_PRUNE_LOCKED_DETAIL } from '@/lib/integrations/cin7-stock-stability';
 import {
+  assessStockWalkDeletes,
+  type StockWalkKind,
+} from '@/lib/integrations/cin7-stock-walk-deletes';
+import {
   batchUpsertCustomers,
   batchUpsertProducts,
   batchUpsertStockLevels,
@@ -256,6 +260,99 @@ export async function runAuditedFieldHeal(input: {
   }
 }
 
+async function applyAuditedStockKeysetDelete(input: {
+  ownerUserId: string;
+  actorUserId: string;
+  cin7Keys: Set<string>;
+  freezeId?: string;
+  requireRemainingSha?: string;
+  summaryNote: string;
+  extraSummary?: Record<string, unknown>;
+}): Promise<{
+  audit_run_id: string;
+  cin7_keys: number;
+  optix_before: number;
+  deleted: number;
+  missing_in_optix: number;
+  missing_keys?: string[];
+  errors: string[];
+  dry_run: boolean;
+  freeze_id?: string;
+}> {
+  const optixRows = await prisma.cin7StockLevel.findMany({
+    where: { ownerUserId: input.ownerUserId },
+  });
+  const surplus = optixRows.filter((r) => !input.cin7Keys.has(`${r.cin7BranchId}:${r.sku}`));
+
+  const audit = await prisma.cin7HealAuditRun.create({
+    data: {
+      ownerUserId: input.ownerUserId,
+      actionType: 'stock_prune',
+      status: 'applied',
+      createdByUserId: input.actorUserId,
+      deletedTotal: 0,
+      summary: {
+        phase: 'started',
+        freeze_id: input.freezeId ?? null,
+        ...(input.extraSummary ?? {}),
+      } as Prisma.InputJsonValue,
+      rows: {
+        create: surplus.map((r) => ({
+          ownerUserId: input.ownerUserId,
+          entityType: 'stock',
+          recordKey: `${r.cin7BranchId}:${r.sku}`,
+          beforeJson: {
+            cin7BranchId: r.cin7BranchId,
+            sku: r.sku,
+            branchName: r.branchName,
+            available: r.available,
+            stockOnHand: r.stockOnHand,
+            incoming: r.incoming,
+            openSales: r.openSales,
+          } as Prisma.InputJsonValue,
+        })),
+      },
+    },
+    select: { id: true },
+  });
+
+  const result = await pruneOptixStockLevelsToKeyset(input.ownerUserId, input.cin7Keys, {
+    dryRun: false,
+    freezeId: input.freezeId,
+  });
+
+  if (input.requireRemainingSha) {
+    const remaining = await prisma.cin7StockLevel.findMany({
+      where: { ownerUserId: input.ownerUserId },
+      select: { cin7BranchId: true, sku: true },
+    });
+    const remainingSha = hashStockKeyset(
+      remaining.map((row) => `${row.cin7BranchId}:${row.sku}`)
+    );
+    if (remainingSha !== input.requireRemainingSha) {
+      result.errors.push(
+        `Optix stock keyset hash does not match D10 freeze ${input.freezeId ?? ''}.`
+      );
+    }
+  }
+
+  await prisma.cin7HealAuditRun.update({
+    where: { id: audit.id },
+    data: {
+      deletedTotal: result.deleted,
+      status: result.errors.length > 0 && result.deleted === 0 ? 'failed' : 'applied',
+      summary: {
+        ...result,
+        freeze_id: input.freezeId ?? null,
+        note: input.summaryNote,
+        ...(input.extraSummary ?? {}),
+      } as unknown as Prisma.InputJsonValue,
+    },
+  });
+
+  return { audit_run_id: audit.id, ...result };
+}
+
 export async function runAuditedStockPrune(input: {
   ownerUserId: string;
   actorUserId: string;
@@ -295,76 +392,74 @@ export async function runAuditedStockPrune(input: {
     return { audit_run_id: null, ...preview };
   }
 
-  const optixRows = await prisma.cin7StockLevel.findMany({
-    where: { ownerUserId: input.ownerUserId },
-  });
-  const surplus = optixRows.filter((r) => !cin7Keys.has(`${r.cin7BranchId}:${r.sku}`));
-
-  const audit = await prisma.cin7HealAuditRun.create({
-    data: {
-      ownerUserId: input.ownerUserId,
-      actionType: 'stock_prune',
-      status: 'applied',
-      createdByUserId: input.actorUserId,
-      deletedTotal: 0,
-      summary: {
-        phase: 'started',
-        freeze_id: freeze.freeze_id,
-        keyset_sha256: freeze.keyset_sha256,
-      } as Prisma.InputJsonValue,
-      rows: {
-        create: surplus.map((r) => ({
-          ownerUserId: input.ownerUserId,
-          entityType: 'stock',
-          recordKey: `${r.cin7BranchId}:${r.sku}`,
-          beforeJson: {
-            cin7BranchId: r.cin7BranchId,
-            sku: r.sku,
-            branchName: r.branchName,
-            available: r.available,
-            stockOnHand: r.stockOnHand,
-            incoming: r.incoming,
-            openSales: r.openSales,
-          } as Prisma.InputJsonValue,
-        })),
-      },
-    },
-    select: { id: true },
-  });
-
-  const result = await pruneOptixStockLevelsToKeyset(input.ownerUserId, cin7Keys, {
-    dryRun: false,
+  return applyAuditedStockKeysetDelete({
+    ownerUserId: input.ownerUserId,
+    actorUserId: input.actorUserId,
+    cin7Keys,
     freezeId: freeze.freeze_id,
+    requireRemainingSha: freeze.keyset_sha256,
+    extraSummary: { keyset_sha256: freeze.keyset_sha256 },
+    summaryNote:
+      'Explicit stock prune against the D10 freeze keyset. Does not re-walk live Cin7. Reversible from audit.',
   });
+}
 
-  const remaining = await prisma.cin7StockLevel.findMany({
-    where: { ownerUserId: input.ownerUserId },
-    select: { cin7BranchId: true, sku: true },
+export async function runAuditedStockWalkDeletes(input: {
+  ownerUserId: string;
+  actorUserId: string;
+  keys: Iterable<string>;
+  walkKind: StockWalkKind;
+  complete: boolean;
+  truncated: boolean;
+  syncErrors: string[];
+  reportedTotal: number | null;
+  priorCompleteFullKeys: number | null;
+}): Promise<{
+  allowed: boolean;
+  reason: string;
+  audit_run_id: string | null;
+  deleted: number;
+  cin7_keys: number;
+  optix_before: number;
+}> {
+  const keys = [...new Set([...input.keys].map((k) => k.trim()).filter(Boolean))];
+  const gate = assessStockWalkDeletes({
+    walkKind: input.walkKind,
+    complete: input.complete,
+    truncated: input.truncated,
+    syncErrors: input.syncErrors,
+    reportedTotal: input.reportedTotal,
+    keysFetched: keys.length,
+    priorCompleteFullKeys: input.priorCompleteFullKeys,
   });
-  const remainingSha = hashStockKeyset(
-    remaining.map((row) => `${row.cin7BranchId}:${row.sku}`)
-  );
-  if (remainingSha !== freeze.keyset_sha256) {
-    result.errors.push(
-      `Optix stock keyset hash does not match D10 freeze ${freeze.freeze_id}.`
-    );
+  if (!gate.allowed) {
+    return {
+      allowed: false,
+      reason: gate.reason,
+      audit_run_id: null,
+      deleted: 0,
+      cin7_keys: keys.length,
+      optix_before: 0,
+    };
   }
 
-  await prisma.cin7HealAuditRun.update({
-    where: { id: audit.id },
-    data: {
-      deletedTotal: result.deleted,
-      status: result.errors.length > 0 && result.deleted === 0 ? 'failed' : 'applied',
-      summary: {
-        ...result,
-        freeze_id: freeze.freeze_id,
-        keyset_sha256: freeze.keyset_sha256,
-        note: 'Explicit stock prune against the D10 freeze keyset. Does not re-walk live Cin7. Reversible from audit.',
-      } as unknown as Prisma.InputJsonValue,
-    },
+  const applied = await applyAuditedStockKeysetDelete({
+    ownerUserId: input.ownerUserId,
+    actorUserId: input.actorUserId,
+    cin7Keys: new Set(keys),
+    extraSummary: { source: 'stock_sync_walk', keyset_sha256: hashStockKeyset(keys) },
+    summaryNote:
+      'Stock sync deleted Optix branch×SKU rows absent from this complete full Cin7 walk. Reversible from audit.',
   });
 
-  return { audit_run_id: audit.id, ...result };
+  return {
+    allowed: true,
+    reason: gate.reason,
+    audit_run_id: applied.audit_run_id,
+    deleted: applied.deleted,
+    cin7_keys: applied.cin7_keys,
+    optix_before: applied.optix_before,
+  };
 }
 
 /** Restore Optix rows from a prior heal/prune audit (best-effort reverse). */
