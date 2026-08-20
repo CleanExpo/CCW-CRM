@@ -36,6 +36,7 @@ vi.mock('@/lib/api/cin7', () => ({
     revert_how: '',
   }),
   captureCin7StockFreeze: vi.fn(),
+  attachAnneCin7Export: vi.fn(),
   pruneCin7StockSurplus: vi.fn(),
   syncCin7EntityUntilComplete: vi.fn(),
   healCin7FieldMismatches: vi.fn(),
@@ -271,6 +272,7 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
     expect(screen.queryByRole('button', { name: /sync stock/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /prune extras/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /recapture freeze/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /undo prune/i })).toBeEnabled();
   });
 
   it('opens an in-app confirm for D10 freeze instead of a browser dialog', async () => {
