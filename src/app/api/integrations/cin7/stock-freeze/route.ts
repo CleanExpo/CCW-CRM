@@ -3,7 +3,9 @@ import { getCin7OmniCredentials, pingCin7Omni } from '@/lib/integrations/cin7-om
 import {
   captureCin7StockFreeze,
   loadLatestStockFreeze,
+  parseAnnePerBranch,
   persistAnneExportOnLatestFreeze,
+  type Cin7AnneBranchQty,
 } from '@/lib/integrations/cin7-stock-freeze';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -63,6 +65,9 @@ export async function PATCH(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
     row_count?: unknown;
     total_quantity?: unknown;
+    value?: unknown;
+    nonzero_positions?: unknown;
+    per_branch?: unknown;
     as_of?: unknown;
     captured_by?: unknown;
   };
@@ -70,6 +75,9 @@ export async function PATCH(request: NextRequest) {
     const freeze = await persistAnneExportOnLatestFreeze(scope.userId, {
       row_count: Number(body.row_count),
       total_quantity: Number(body.total_quantity),
+      value: Number(body.value),
+      nonzero_positions: Number(body.nonzero_positions),
+      per_branch: parseAnnePerBranchInput(body.per_branch),
       as_of: String(body.as_of ?? ''),
       captured_by: String(body.captured_by ?? ''),
     });
@@ -78,4 +86,17 @@ export async function PATCH(request: NextRequest) {
     const message = error instanceof Error ? error.message : 'Could not store Anne export.';
     return NextResponse.json({ detail: message }, { status: 400 });
   }
+}
+
+function parseAnnePerBranchInput(value: unknown): Cin7AnneBranchQty[] {
+  if (typeof value === 'string') return parseAnnePerBranch(value);
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const rec = row as { branch?: unknown; quantity?: unknown };
+    const branch = String(rec.branch ?? '').trim();
+    const quantity = Number(rec.quantity);
+    if (!branch || !Number.isFinite(quantity)) return [];
+    return [{ branch, quantity }];
+  });
 }
