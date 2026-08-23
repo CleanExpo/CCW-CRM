@@ -5,6 +5,7 @@ import {
   attachAnneExportToFreeze,
   hashStockKeyset,
   normalizeStockKeyset,
+  parseAnnePerBranch,
   type Cin7StockFreezeRecord,
 } from '../cin7-stock-freeze';
 import { diffStockKeysForPrune } from '../cin7-stock-prune';
@@ -22,6 +23,9 @@ function freeze(partial: Partial<Cin7StockFreezeRecord> = {}): Cin7StockFreezeRe
     cin7_reported_total: 10007,
     anne_export_row_count: null,
     anne_export_total_quantity: null,
+    anne_export_value: null,
+    anne_export_nonzero_positions: null,
+    anne_export_per_branch: null,
     anne_export_as_of: null,
     anne_export_captured_by: null,
     ...partial,
@@ -78,18 +82,29 @@ describe('diffStockKeysForPrune', () => {
 });
 
 describe('Anne export corroboration', () => {
-  it('stores Anne row count and total quantity on the freeze without changing the keyset', () => {
+  const anneInput = {
+    row_count: 10362,
+    total_quantity: 97_307.06,
+    value: 1_487_977.13,
+    nonzero_positions: 4846,
+    per_branch: [
+      { branch: 'Brisbane', quantity: 40_000 },
+      { branch: 'Sydney', quantity: 57_307.06 },
+    ],
+    as_of: '2026-08-19T21:00:00.000Z',
+    captured_by: 'Anne',
+  };
+
+  it('stores value, non-zero positions and per-branch qty with the row count', () => {
     const base = freeze();
-    const result = attachAnneExportToFreeze(base, {
-      row_count: 10362,
-      total_quantity: 184_221,
-      as_of: '2026-08-19T21:00:00.000Z',
-      captured_by: 'Anne',
-    });
+    const result = attachAnneExportToFreeze(base, anneInput);
     expect(result.keyset_sha256).toBe(base.keyset_sha256);
     expect(result.cin7_keys).toBe(base.cin7_keys);
     expect(result.anne_export_row_count).toBe(10362);
-    expect(result.anne_export_total_quantity).toBe(184221);
+    expect(result.anne_export_total_quantity).toBe(97307.06);
+    expect(result.anne_export_value).toBe(1487977.13);
+    expect(result.anne_export_nonzero_positions).toBe(4846);
+    expect(result.anne_export_per_branch).toEqual(anneInput.per_branch);
     expect(result.anne_export_captured_by).toBe('Anne');
     expect(result.anne_export_as_of).toBe('2026-08-19T21:00:00.000Z');
   });
@@ -97,11 +112,35 @@ describe('Anne export corroboration', () => {
   it('rejects a non-positive row count', () => {
     expect(() =>
       attachAnneExportToFreeze(freeze(), {
+        ...anneInput,
         row_count: 0,
-        total_quantity: 1,
-        as_of: '2026-08-19T21:00:00.000Z',
-        captured_by: 'Anne',
       })
     ).toThrow(/row count/i);
+  });
+
+  it('rejects a missing value, non-zero count or per-branch breakdown', () => {
+    expect(() =>
+      attachAnneExportToFreeze(freeze(), { ...anneInput, value: Number.NaN })
+    ).toThrow(/value/i);
+    expect(() =>
+      attachAnneExportToFreeze(freeze(), { ...anneInput, nonzero_positions: 0 })
+    ).toThrow(/non-zero/i);
+    expect(() =>
+      attachAnneExportToFreeze(freeze(), { ...anneInput, per_branch: [] })
+    ).toThrow(/per-branch/i);
+  });
+});
+
+describe('parseAnnePerBranch', () => {
+  it('reads one Branch: quantity line per warehouse', () => {
+    expect(parseAnnePerBranch('Brisbane: 40000\nSydney = 57307.06')).toEqual([
+      { branch: 'Brisbane', quantity: 40000 },
+      { branch: 'Sydney', quantity: 57307.06 },
+    ]);
+  });
+
+  it('rejects an empty or malformed breakdown', () => {
+    expect(() => parseAnnePerBranch('')).toThrow(/per-branch/i);
+    expect(() => parseAnnePerBranch('Brisbane only')).toThrow(/Branch: quantity/i);
   });
 });
