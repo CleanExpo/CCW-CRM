@@ -18,7 +18,10 @@ export async function GET(request: NextRequest) {
   const format = request.nextUrl.searchParams.get('format')?.toLowerCase();
 
   if (format === 'csv') {
-    const csv = b1ResidualsToCsv(report.items);
+    const csv = b1ResidualsToCsv(report.items, {
+      freeze_as_of: report.freeze_as_of,
+      as_of_checked_at: report.as_of_checked_at,
+    });
     return new NextResponse(csv, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
