@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -160,6 +161,9 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
   const [savingAnne, setSavingAnne] = useState(false);
   const [anneRowCount, setAnneRowCount] = useState('');
   const [anneQty, setAnneQty] = useState('');
+  const [anneValue, setAnneValue] = useState('');
+  const [anneNonzero, setAnneNonzero] = useState('');
+  const [annePerBranch, setAnnePerBranch] = useState('');
   const [history, setHistory] = useState<Awaited<ReturnType<typeof listCin7ReconHistory>>['items']>(
     []
   );
@@ -493,18 +497,37 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
       await attachAnneCin7Export({
         row_count: Number(anneRowCount),
         total_quantity: Number(anneQty),
+        value: Number(anneValue),
+        nonzero_positions: Number(anneNonzero),
+        per_branch: annePerBranch
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const match = line.match(/^(.+?)\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*$/);
+            if (!match) {
+              throw new Error(`Per-branch line must be "Branch: quantity" (got ${line}).`);
+            }
+            return { branch: match[1].trim(), quantity: Number(match[2]) };
+          }),
         as_of: new Date().toISOString(),
         captured_by: 'Anne',
       });
       toast({ title: 'Anne’s export stored on the freeze' });
       setAnneRowCount('');
       setAnneQty('');
+      setAnneValue('');
+      setAnneNonzero('');
+      setAnnePerBranch('');
       await refreshEvidencePanels();
     } catch (error: unknown) {
       toast({
         variant: 'destructive',
         title: 'Could not store Anne’s export',
-        description: error instanceof Error ? error.message : 'Check the row count and quantity.',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Check value, non-zero positions, and per-branch lines.',
       });
     } finally {
       setSavingAnne(false);
@@ -622,6 +645,15 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               )}
               Load exception report
             </Button>
+            <Button size="sm" variant="outline" asChild>
+              <a
+                id="export-b1-csv"
+                href={getCin7B1ResidualsExportUrl()}
+                download="cin7-b1-closed-residuals.csv"
+              >
+                Export B1 CSV
+              </a>
+            </Button>
             {fieldDiffTotal > 0 && !snapshot?.acceptance_blocked ? (
               <Button
                 size="sm"
@@ -722,42 +754,103 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               <div className="mt-3 space-y-2 border-t pt-2">
                 <p className="text-xs font-medium">Anne’s Cin7 stock-on-hand export</p>
                 {stability?.freeze?.anne_export_row_count != null ? (
-                  <p className="text-muted-foreground text-xs tabular-nums">
-                    Stored {stability.freeze.anne_export_row_count.toLocaleString()} rows · qty{' '}
-                    {stability.freeze.anne_export_total_quantity?.toLocaleString() ?? '—'}
-                    {stability.freeze.anne_export_captured_by
-                      ? ` · ${stability.freeze.anne_export_captured_by}`
-                      : ''}
-                  </p>
+                  <div className="text-muted-foreground space-y-1 text-xs tabular-nums">
+                    <p>
+                      Stored {stability.freeze.anne_export_row_count.toLocaleString()} rows · qty{' '}
+                      {stability.freeze.anne_export_total_quantity?.toLocaleString() ?? '—'}
+                      {stability.freeze.anne_export_value != null
+                        ? ` · value ${stability.freeze.anne_export_value.toLocaleString()}`
+                        : ''}
+                      {stability.freeze.anne_export_nonzero_positions != null
+                        ? ` · ${stability.freeze.anne_export_nonzero_positions.toLocaleString()} non-zero`
+                        : ''}
+                      {stability.freeze.anne_export_captured_by
+                        ? ` · ${stability.freeze.anne_export_captured_by}`
+                        : ''}
+                    </p>
+                    {stability.freeze.anne_export_per_branch &&
+                    stability.freeze.anne_export_per_branch.length > 0 ? (
+                      <ul className="space-y-0.5">
+                        {stability.freeze.anne_export_per_branch.map((row) => (
+                          <li key={row.branch}>
+                            {row.branch}: {row.quantity.toLocaleString()}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="text-muted-foreground text-xs">
-                    The freeze key count is precision. Anne’s export row count and total quantity
-                    are the accuracy check. Store them together at the next as-of moment.
+                    The freeze key count is precision. Store row count, total quantity, value,
+                    non-zero positions and the per-branch breakdown together at the next as-of
+                    moment. Per-branch qty is the Area 1 check.
                   </p>
                 )}
                 <div className="flex flex-wrap items-end gap-2">
-                  <label className="text-muted-foreground text-[11px]">
+                  <label className="text-muted-foreground text-[11px]" htmlFor="anne-row-count">
                     Row count
                     <Input
+                      id="anne-row-count"
                       className="mt-0.5 h-8 w-28"
                       inputMode="numeric"
                       value={anneRowCount}
                       onChange={(e) => setAnneRowCount(e.target.value)}
                     />
                   </label>
-                  <label className="text-muted-foreground text-[11px]">
+                  <label className="text-muted-foreground text-[11px]" htmlFor="anne-qty">
                     Total quantity
                     <Input
+                      id="anne-qty"
                       className="mt-0.5 h-8 w-28"
                       inputMode="numeric"
                       value={anneQty}
                       onChange={(e) => setAnneQty(e.target.value)}
                     />
                   </label>
+                  <label className="text-muted-foreground text-[11px]" htmlFor="anne-value">
+                    Value
+                    <Input
+                      id="anne-value"
+                      className="mt-0.5 h-8 w-28"
+                      inputMode="decimal"
+                      value={anneValue}
+                      onChange={(e) => setAnneValue(e.target.value)}
+                    />
+                  </label>
+                  <label
+                    className="text-muted-foreground text-[11px]"
+                    htmlFor="anne-nonzero-positions"
+                  >
+                    Non-zero positions
+                    <Input
+                      id="anne-nonzero-positions"
+                      className="mt-0.5 h-8 w-36"
+                      inputMode="numeric"
+                      value={anneNonzero}
+                      onChange={(e) => setAnneNonzero(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-muted-foreground w-full text-[11px]" htmlFor="anne-per-branch">
+                    Per-branch
+                    <Textarea
+                      id="anne-per-branch"
+                      className="mt-0.5 min-h-[72px] text-xs"
+                      placeholder={'Brisbane: 40000\nSydney: 57307.06'}
+                      value={annePerBranch}
+                      onChange={(e) => setAnnePerBranch(e.target.value)}
+                    />
+                  </label>
                   <Button
                     size="sm"
                     variant="secondary"
-                    disabled={savingAnne || !anneRowCount || !anneQty}
+                    disabled={
+                      savingAnne ||
+                      !anneRowCount ||
+                      !anneQty ||
+                      !anneValue ||
+                      !anneNonzero ||
+                      !annePerBranch
+                    }
                     onClick={() => void saveAnneExport()}
                   >
                     {savingAnne ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -812,11 +905,11 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
             )}
           </div>
 
-          <div className="rounded-lg border p-3">
+          <div id="closed-residual-b1" className="rounded-lg border p-3">
             <p className="mb-1 text-xs font-medium">Closed residual (B1)</p>
             <p className="text-muted-foreground mb-2 text-xs">
               {residuals?.note ??
-                'Record-by-record list from the last complete acceptance run. Stock is not part of this residual.'}
+                'Standing extras and missings at the freeze as-of. Cin7 records created after that as-of are sync lag and are excluded from sign-off. Stock is not part of this residual.'}
             </p>
             {residuals ? (
               <div className="text-muted-foreground mb-2 space-y-0.5 text-xs tabular-nums">
@@ -862,11 +955,38 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               </div>
             ) : (
               <p className="text-muted-foreground text-xs">
-                No B1 residual rows on the last complete acceptance run.
+                No closed B1 residual rows at the freeze as-of.
               </p>
             )}
+            {residuals && (residuals.sync_lag_items?.length ?? 0) > 0 ? (
+              <div className="mt-3 border-t pt-2">
+                <p className="mb-1 text-xs font-medium">Sync lag (excluded from sign-off)</p>
+                <p className="text-muted-foreground mb-2 text-xs">
+                  Created in Cin7 after the freeze as-of. These import on the next complete sync.
+                </p>
+                <div className="max-h-40 space-y-2 overflow-y-auto">
+                  {residuals.sync_lag_items!.map((row, idx) => (
+                    <div
+                      key={`lag-${row.entity_type}-${row.cin7_id}-${idx}`}
+                      className="border-border/60 rounded-md border px-3 py-2 text-xs"
+                    >
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <span className="font-medium">
+                          {row.entity_type}: {row.label}
+                        </span>
+                        <Badge variant="outline" className="text-[10px]">
+                          Sync lag
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground mt-0.5 font-mono">{row.cin7_id}</p>
+                      <p className="mt-1">{row.explanation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" asChild>
-              <a href={getCin7B1ResidualsExportUrl()} download>
+              <a href={getCin7B1ResidualsExportUrl()} download="cin7-b1-closed-residuals.csv">
                 Export B1 CSV
               </a>
             </Button>
