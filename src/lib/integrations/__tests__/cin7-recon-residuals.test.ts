@@ -5,6 +5,7 @@ import {
   classifyB1AgainstAsOf,
   emptyB1Tally,
   explainB1Residual,
+  resolveB1AsOfRun,
   tallyB1Residuals,
 } from '../cin7-recon-residuals';
 
@@ -141,11 +142,49 @@ describe('buildB1ResidualRecords', () => {
         explanation: 'In Cin7, not Optix',
         bucket: 'closed',
       },
-    ]);
-    expect(csv.startsWith('entity_type,cin7_id,label,reason,bucket,explanation')).toBe(true);
+    ],
+    {
+      freeze_as_of: '2026-08-20T11:47:00.000Z',
+      as_of_checked_at: '2026-08-18T03:20:00.000Z',
+    }
+  );
+    expect(
+      csv.startsWith(
+        'entity_type,cin7_id,label,reason,bucket,freeze_as_of,as_of_checked_at,explanation'
+      )
+    ).toBe(true);
     expect(csv).toContain('""x""');
     expect(csv).toContain('SKU,1');
     expect(csv).toContain('closed');
+    expect(csv).toContain('2026-08-20T11:47:00.000Z');
+    expect(csv).toContain('2026-08-18T03:20:00.000Z');
+  });
+});
+
+describe('resolveB1AsOfRun', () => {
+  const latest = { id: 'late', checkedAt: new Date('2026-08-21T04:25:00.000Z') };
+  const atFreeze = { id: 'asof', checkedAt: new Date('2026-08-20T11:47:00.000Z') };
+  const afterFreeze = { id: 'mid', checkedAt: new Date('2026-08-21T00:00:00.000Z') };
+  const before = { id: 'early', checkedAt: new Date('2026-08-17T00:00:00.000Z') };
+
+  it('uses the last complete acceptance at or before freeze as-of, never a later walk', () => {
+    const result = resolveB1AsOfRun({
+      latestId: latest.id,
+      freezeAsOf: new Date('2026-08-20T11:47:00.000Z'),
+      acceptances: [latest, afterFreeze, atFreeze, before],
+    });
+    expect(result.asOf?.id).toBe('asof');
+    expect(result.latestIsAsOf).toBe(false);
+  });
+
+  it('does not invent an as-of from a previous walk when there is no freeze', () => {
+    const result = resolveB1AsOfRun({
+      latestId: latest.id,
+      freezeAsOf: null,
+      acceptances: [latest, before],
+    });
+    expect(result.asOf).toBeNull();
+    expect(result.latestIsAsOf).toBe(false);
   });
 });
 
