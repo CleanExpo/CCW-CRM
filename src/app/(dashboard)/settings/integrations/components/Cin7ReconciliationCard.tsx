@@ -11,11 +11,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
   attachAnneCin7Export,
@@ -715,7 +715,7 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
             ) : null}
             {prunePreview && extraCount === 0 && missingCount === 0 ? (
               <p className="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                Matched
+                Counts equal — not sign-off
               </p>
             ) : null}
             <div className="mt-2 flex flex-wrap gap-2">
@@ -739,15 +739,21 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 </Button>
               ) : null}
               {stability?.last_prune_audit?.reversible ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={isRefreshing || revertingPrune}
-                  onClick={() => setConfirmKind('revert')}
-                >
-                  {revertingPrune ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Undo prune
-                </Button>
+                <div className="space-y-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isRefreshing || revertingPrune}
+                    onClick={() => setConfirmKind('revert')}
+                  >
+                    {revertingPrune ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Undo prune
+                  </Button>
+                  <p className="text-muted-foreground text-[11px]">
+                    Leave this audit in place. Do not revert unless agreed — tonight’s walk would
+                    delete the restored rows again.
+                  </p>
+                </div>
               ) : null}
             </div>
             {freezeReady ? (
@@ -830,12 +836,15 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                       onChange={(e) => setAnneNonzero(e.target.value)}
                     />
                   </label>
-                  <label className="text-muted-foreground w-full text-[11px]" htmlFor="anne-per-branch">
+                  <label
+                    className="text-muted-foreground w-full text-[11px]"
+                    htmlFor="anne-per-branch"
+                  >
                     Per-branch
                     <Textarea
                       id="anne-per-branch"
                       className="mt-0.5 min-h-[72px] text-xs"
-                      placeholder={'Brisbane: 40000\nSydney: 57307.06'}
+                      placeholder="Branch name: quantity"
                       value={annePerBranch}
                       onChange={(e) => setAnnePerBranch(e.target.value)}
                     />
@@ -911,6 +920,18 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
               {residuals?.note ??
                 'Standing extras and missings at the freeze as-of. Cin7 records created after that as-of are sync lag and are excluded from sign-off. Stock is not part of this residual.'}
             </p>
+            {residuals?.freeze_as_of ? (
+              <p className="text-muted-foreground mb-2 text-xs tabular-nums">
+                Freeze as-of {new Date(residuals.freeze_as_of).toLocaleString()}
+                {residuals.as_of_checked_at
+                  ? ` · acceptance ${new Date(residuals.as_of_checked_at).toLocaleString()}`
+                  : ' · no acceptance at as-of'}
+              </p>
+            ) : residuals ? (
+              <p className="text-muted-foreground mb-2 text-xs">
+                No D10 freeze — missings are sync lag until a freeze exists.
+              </p>
+            ) : null}
             {residuals ? (
               <div className="text-muted-foreground mb-2 space-y-0.5 text-xs tabular-nums">
                 <p>
@@ -958,31 +979,38 @@ export function Cin7ReconciliationCard({ isConnected }: Cin7ReconciliationCardPr
                 No closed B1 residual rows at the freeze as-of.
               </p>
             )}
-            {residuals && (residuals.sync_lag_items?.length ?? 0) > 0 ? (
+            {residuals ? (
               <div className="mt-3 border-t pt-2">
                 <p className="mb-1 text-xs font-medium">Sync lag (excluded from sign-off)</p>
-                <p className="text-muted-foreground mb-2 text-xs">
-                  Created in Cin7 after the freeze as-of. These import on the next complete sync.
-                </p>
-                <div className="max-h-40 space-y-2 overflow-y-auto">
-                  {residuals.sync_lag_items!.map((row, idx) => (
-                    <div
-                      key={`lag-${row.entity_type}-${row.cin7_id}-${idx}`}
-                      className="border-border/60 rounded-md border px-3 py-2 text-xs"
-                    >
-                      <div className="flex flex-wrap justify-between gap-2">
-                        <span className="font-medium">
-                          {row.entity_type}: {row.label}
-                        </span>
-                        <Badge variant="outline" className="text-[10px]">
-                          Sync lag
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground mt-0.5 font-mono">{row.cin7_id}</p>
-                      <p className="mt-1">{row.explanation}</p>
+                {(residuals.sync_lag_items?.length ?? 0) > 0 ? (
+                  <>
+                    <p className="text-muted-foreground mb-2 text-xs">
+                      Created in Cin7 after the freeze as-of. These import on the next complete
+                      sync.
+                    </p>
+                    <div className="max-h-40 space-y-2 overflow-y-auto">
+                      {residuals.sync_lag_items!.map((row, idx) => (
+                        <div
+                          key={`lag-${row.entity_type}-${row.cin7_id}-${idx}`}
+                          className="border-border/60 rounded-md border px-3 py-2 text-xs"
+                        >
+                          <div className="flex flex-wrap justify-between gap-2">
+                            <span className="font-medium">
+                              {row.entity_type}: {row.label}
+                            </span>
+                            <Badge variant="outline" className="text-[10px]">
+                              Sync lag
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground mt-0.5 font-mono">{row.cin7_id}</p>
+                          <p className="mt-1">{row.explanation}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-xs">None since as-of.</p>
+                )}
               </div>
             ) : null}
             <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" asChild>
