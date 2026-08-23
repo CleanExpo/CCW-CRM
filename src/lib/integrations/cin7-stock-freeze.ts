@@ -19,6 +19,11 @@ export const CIN7_STOCK_FREEZE_PROCEDURE = 'D10';
 export const CIN7_STOCK_FREEZE_TZ = 'Australia/Sydney';
 export const CIN7_STOCK_FREEZE_SNAPSHOT_ENTITY = 'stock-levels-d10';
 
+export type Cin7AnneBranchQty = {
+  branch: string;
+  quantity: number;
+};
+
 export type Cin7StockFreezeRecord = {
   procedure: typeof CIN7_STOCK_FREEZE_PROCEDURE;
   freeze_id: string;
@@ -31,6 +36,9 @@ export type Cin7StockFreezeRecord = {
   cin7_reported_total: number | null;
   anne_export_row_count: number | null;
   anne_export_total_quantity: number | null;
+  anne_export_value: number | null;
+  anne_export_nonzero_positions: number | null;
+  anne_export_per_branch: Cin7AnneBranchQty[] | null;
   anne_export_as_of: string | null;
   anne_export_captured_by: string | null;
 };
@@ -75,9 +83,47 @@ export function assessCin7StockFreeze(freeze: Cin7StockFreezeRecord | null): {
 export type Cin7AnneExportInput = {
   row_count: number;
   total_quantity: number;
+  value: number;
+  nonzero_positions: number;
+  per_branch: Cin7AnneBranchQty[];
   as_of: string;
   captured_by: string;
 };
+
+export function parseAnnePerBranch(text: string): Cin7AnneBranchQty[] {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) {
+    throw new Error('Anne export per-branch breakdown is required.');
+  }
+  return lines.map((line) => {
+    const match = line.match(/^(.+?)\s*[:=]\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (!match) {
+      throw new Error(`Per-branch line must be "Branch: quantity" (got ${line}).`);
+    }
+    const branch = match[1].trim();
+    const quantity = Number(match[2]);
+    if (!branch || !Number.isFinite(quantity)) {
+      throw new Error(`Per-branch line must be "Branch: quantity" (got ${line}).`);
+    }
+    return { branch, quantity };
+  });
+}
+
+function normalizeAnnePerBranch(rows: Cin7AnneBranchQty[]): Cin7AnneBranchQty[] {
+  const cleaned = rows
+    .map((row) => ({
+      branch: row.branch.trim(),
+      quantity: Number(row.quantity),
+    }))
+    .filter((row) => row.branch && Number.isFinite(row.quantity));
+  if (cleaned.length === 0) {
+    throw new Error('Anne export per-branch breakdown is required.');
+  }
+  return cleaned;
+}
 
 export function attachAnneExportToFreeze(
   freeze: Cin7StockFreezeRecord,
@@ -89,6 +135,13 @@ export function attachAnneExportToFreeze(
   if (!Number.isFinite(input.total_quantity)) {
     throw new Error('Anne export total quantity must be a number.');
   }
+  if (!Number.isFinite(input.value)) {
+    throw new Error('Anne export value must be a number.');
+  }
+  if (!Number.isFinite(input.nonzero_positions) || input.nonzero_positions <= 0) {
+    throw new Error('Anne export non-zero positions must be a positive number.');
+  }
+  const perBranch = normalizeAnnePerBranch(input.per_branch ?? []);
   const capturedBy = input.captured_by.trim();
   if (!capturedBy) throw new Error('Anne export captured_by is required.');
   const asOf = new Date(input.as_of);
@@ -97,6 +150,9 @@ export function attachAnneExportToFreeze(
     ...freeze,
     anne_export_row_count: Math.floor(input.row_count),
     anne_export_total_quantity: input.total_quantity,
+    anne_export_value: input.value,
+    anne_export_nonzero_positions: Math.floor(input.nonzero_positions),
+    anne_export_per_branch: perBranch,
     anne_export_as_of: asOf.toISOString(),
     anne_export_captured_by: capturedBy,
   };
@@ -130,6 +186,11 @@ function recordFromRun(input: {
       freeze.cin7_reported_total ?? summary.stock_evidence?.cin7_reported_total ?? null,
     anne_export_row_count: freeze.anne_export_row_count ?? null,
     anne_export_total_quantity: freeze.anne_export_total_quantity ?? null,
+    anne_export_value: freeze.anne_export_value ?? null,
+    anne_export_nonzero_positions: freeze.anne_export_nonzero_positions ?? null,
+    anne_export_per_branch: Array.isArray(freeze.anne_export_per_branch)
+      ? freeze.anne_export_per_branch
+      : null,
     anne_export_as_of: freeze.anne_export_as_of ?? null,
     anne_export_captured_by: freeze.anne_export_captured_by ?? null,
   };
@@ -211,6 +272,9 @@ export async function captureCin7StockFreeze(input: {
     cin7_reported_total: catalog.reported_total ?? null,
     anne_export_row_count: null,
     anne_export_total_quantity: null,
+    anne_export_value: null,
+    anne_export_nonzero_positions: null,
+    anne_export_per_branch: null,
     anne_export_as_of: null,
     anne_export_captured_by: null,
   };
