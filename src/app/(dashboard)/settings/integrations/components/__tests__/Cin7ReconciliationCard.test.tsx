@@ -172,6 +172,13 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
     expect(screen.queryByRole('button', { name: /sync stock/i })).not.toBeInTheDocument();
   });
 
+  it('always shows Export B1 CSV on the recon card', async () => {
+    render(<Cin7ReconciliationCard isConnected={true} />);
+    const links = await screen.findAllByRole('link', { name: /^export b1 csv$/i });
+    expect(links.length).toBeGreaterThanOrEqual(1);
+    expect(links[0]).toHaveAttribute('href', '/api/cin7/residuals.csv');
+  });
+
   it('offers prune extras when Optix has surplus against the freeze', async () => {
     vi.mocked(getCin7StockStability).mockResolvedValue({
       stable: true,
@@ -217,6 +224,10 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
     expect(screen.queryByRole('button', { name: /recapture freeze/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /sync stock/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /undo prune/i })).not.toBeInTheDocument();
+
+    expect(screen.getByLabelText(/^value$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/non-zero positions/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/per-branch/i)).toBeInTheDocument();
   });
 
   it('lists freeze keys missing in Optix without offering a live stock sync', async () => {
