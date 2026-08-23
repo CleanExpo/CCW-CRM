@@ -458,6 +458,9 @@ export async function captureCin7StockFreeze(): Promise<{
 export async function attachAnneCin7Export(input: {
   row_count: number;
   total_quantity: number;
+  value: number;
+  nonzero_positions: number;
+  per_branch: Array<{ branch: string; quantity: number }>;
   as_of: string;
   captured_by: string;
 }): Promise<{
@@ -473,6 +476,9 @@ export async function attachAnneCin7Export(input: {
     cin7_reported_total: number | null;
     anne_export_row_count: number | null;
     anne_export_total_quantity: number | null;
+    anne_export_value: number | null;
+    anne_export_nonzero_positions: number | null;
+    anne_export_per_branch: Array<{ branch: string; quantity: number }> | null;
     anne_export_as_of: string | null;
     anne_export_captured_by: string | null;
   };
@@ -527,6 +533,9 @@ export async function getCin7ReconSnapshot(
 export async function getCin7B1Residuals(): Promise<{
   recon_run_id: string | null;
   checked_at: string | null;
+  as_of_run_id?: string | null;
+  as_of_checked_at?: string | null;
+  freeze_as_of?: string | null;
   note: string;
   counts: Record<string, { missing: number; extra: number }>;
   items: Array<{
@@ -534,6 +543,16 @@ export async function getCin7B1Residuals(): Promise<{
     cin7_id: string;
     label: string;
     reason: string;
+    bucket?: 'closed' | 'sync_lag';
+    explanation: string;
+  }>;
+  sync_lag_counts?: Record<string, { missing: number; extra: number }>;
+  sync_lag_items?: Array<{
+    entity_type: string;
+    cin7_id: string;
+    label: string;
+    reason: string;
+    bucket?: 'closed' | 'sync_lag';
     explanation: string;
   }>;
 }> {
@@ -565,6 +584,9 @@ export async function getCin7StockStability(): Promise<{
     cin7_reported_total: number | null;
     anne_export_row_count?: number | null;
     anne_export_total_quantity?: number | null;
+    anne_export_value?: number | null;
+    anne_export_nonzero_positions?: number | null;
+    anne_export_per_branch?: Array<{ branch: string; quantity: number }> | null;
     anne_export_as_of?: string | null;
     anne_export_captured_by?: string | null;
   } | null;
