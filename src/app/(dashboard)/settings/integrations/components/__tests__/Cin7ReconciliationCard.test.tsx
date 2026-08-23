@@ -46,6 +46,7 @@ vi.mock('@/lib/api/cin7', () => ({
 import type { Cin7ReconciliationResponse } from '@/lib/api/cin7';
 import {
   captureCin7StockFreeze,
+  getCin7B1Residuals,
   getCin7ReconSnapshot,
   getCin7Reconciliation,
   getCin7StockStability,
@@ -228,6 +229,8 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
     expect(screen.getByLabelText(/^value$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/non-zero positions/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/per-branch/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Branch name: quantity/i)).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/Brisbane: 40000/i)).not.toBeInTheDocument();
   });
 
   it('lists freeze keys missing in Optix without offering a live stock sync', async () => {
@@ -284,6 +287,91 @@ describe('Cin7ReconciliationCard extra_without_cin7_id remediation copy', () => 
     expect(screen.queryByRole('button', { name: /prune extras/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /recapture freeze/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /undo prune/i })).toBeEnabled();
+    expect(screen.getByText(/leave this audit/i)).toBeInTheDocument();
+  });
+
+  it('prints freeze as-of on B1 and keeps sync lag visible when empty', async () => {
+    vi.mocked(getCin7B1Residuals).mockResolvedValue({
+      recon_run_id: 'run-late',
+      checked_at: '2026-08-21T04:25:00.000Z',
+      as_of_run_id: 'run-asof',
+      as_of_checked_at: '2026-08-20T11:47:00.000Z',
+      freeze_as_of: '2026-08-20T11:47:00.000Z',
+      note: 'Closed residual (B1) is the standing extra/missing set at the freeze as-of.',
+      counts: {
+        products: { missing: 0, extra: 0 },
+        customers: { missing: 0, extra: 0 },
+        suppliers: { missing: 0, extra: 0 },
+        'tax-codes': { missing: 0, extra: 0 },
+      },
+      items: [],
+      sync_lag_counts: {
+        products: { missing: 0, extra: 0 },
+        customers: { missing: 0, extra: 0 },
+        suppliers: { missing: 0, extra: 0 },
+        'tax-codes': { missing: 0, extra: 0 },
+      },
+      sync_lag_items: [],
+    });
+
+    render(<Cin7ReconciliationCard isConnected={true} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/^Freeze as-of /i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/sync lag \(excluded from sign-off\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/none since as-of/i)).toBeInTheDocument();
+  });
+
+  it('does not present equal freeze and Optix counts as sign-off', async () => {
+    vi.mocked(getCin7StockStability).mockResolvedValue({
+      stable: true,
+      prune_enabled: true,
+      required: 3,
+      observed: 3,
+      cin7_counts: [10393, 10393, 10393],
+      counts_identical: true,
+      reason: '',
+      live_reason: '',
+      freeze: {
+        procedure: 'D10',
+        freeze_id: 'freeze-1',
+        as_of: '2026-08-17T11:00:00.000Z',
+        time_zone: 'Australia/Sydney',
+        cin7_keys: 10393,
+        keyset_sha256: 'abc123def4567890',
+        truncated: false,
+        complete: true,
+        cin7_reported_total: 10393,
+      },
+      runs: [],
+      last_prune_audit: {
+        id: 'audit-1',
+        status: 'applied',
+        deleted_total: 12,
+        reversible: true,
+        created_at: '2026-08-18T03:00:00.000Z',
+      },
+      revert_how: '',
+    });
+    vi.mocked(pruneCin7StockSurplus).mockResolvedValue({
+      audit_run_id: null,
+      cin7_keys: 10393,
+      optix_before: 10393,
+      deleted: 0,
+      missing_in_optix: 0,
+      missing_keys: [],
+      errors: [],
+      dry_run: true,
+      freeze_id: 'freeze-1',
+    });
+
+    render(<Cin7ReconciliationCard isConnected={true} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/counts equal — not sign-off/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/^Matched$/)).not.toBeInTheDocument();
   });
 
   it('opens an in-app confirm for D10 freeze instead of a browser dialog', async () => {
