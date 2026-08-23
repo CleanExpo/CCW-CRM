@@ -168,6 +168,22 @@ export function buildB1ResidualRecords(
   return items;
 }
 
+export function resolveB1AsOfRun(input: {
+  latestId: string;
+  freezeAsOf: Date | null;
+  acceptances: Array<{ id: string; checkedAt: Date }>;
+}): { asOf: { id: string; checkedAt: Date } | null; latestIsAsOf: boolean } {
+  if (!input.freezeAsOf || Number.isNaN(input.freezeAsOf.getTime())) {
+    return { asOf: null, latestIsAsOf: false };
+  }
+  const cutoff = input.freezeAsOf.getTime();
+  const eligible = input.acceptances
+    .filter((run) => run.checkedAt.getTime() <= cutoff)
+    .sort((a, b) => b.checkedAt.getTime() - a.checkedAt.getTime());
+  const asOf = eligible[0] ?? null;
+  return { asOf, latestIsAsOf: asOf?.id === input.latestId };
+}
+
 export function classifyB1AgainstAsOf(input: {
   latestRows: B1ExceptionRow[];
   asOfRows: B1ExceptionRow[] | null;
@@ -214,9 +230,14 @@ export function tallyB1Residuals(records: Cin7B1ResidualRecord[]): Cin7B1Residua
   return counts;
 }
 
-export function b1ResidualsToCsv(items: Cin7B1ResidualRecord[]): string {
+export function b1ResidualsToCsv(
+  items: Cin7B1ResidualRecord[],
+  meta?: { freeze_as_of?: string | null; as_of_checked_at?: string | null }
+): string {
   const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
-  const header = 'entity_type,cin7_id,label,reason,bucket,explanation';
+  const freezeAsOf = meta?.freeze_as_of ?? '';
+  const asOfCheckedAt = meta?.as_of_checked_at ?? '';
+  const header = 'entity_type,cin7_id,label,reason,bucket,freeze_as_of,as_of_checked_at,explanation';
   const rows = items.map((row) =>
     [
       escape(row.entity_type),
@@ -224,6 +245,8 @@ export function b1ResidualsToCsv(items: Cin7B1ResidualRecord[]): string {
       escape(row.label),
       escape(row.reason),
       escape(row.bucket),
+      escape(freezeAsOf),
+      escape(asOfCheckedAt),
       escape(row.explanation),
     ].join(',')
   );
@@ -265,9 +288,9 @@ async function loadB1ExceptionRows(reconRunId: string): Promise<B1ExceptionRow[]
   });
 }
 
-/** Latest complete acceptance, classified against the freeze as-of (or the previous complete run). */
+/** Latest complete acceptance, classified against the freeze as-of only. */
 export async function listClosedB1Residuals(ownerUserId: string): Promise<Cin7B1ResidualList> {
-  const latest = await prisma.cin7ReconRun.findFirst({
+  const acceptances = await prisma.cin7ReconRun.findMany({
     where: {
       ownerUserId,
       immutable: true,
@@ -275,8 +298,10 @@ export async function listClosedB1Residuals(ownerUserId: string): Promise<Cin7B1
       status: 'complete',
     },
     orderBy: { checkedAt: 'desc' },
+    take: 20,
     select: { id: true, checkedAt: true },
   });
+  const latest = acceptances[0];
 
   if (!latest) {
     return emptyB1List(
@@ -287,35 +312,12 @@ export async function listClosedB1Residuals(ownerUserId: string): Promise<Cin7B1
   const freeze = await loadLatestStockFreeze(ownerUserId);
   const freezeAsOf = freeze?.as_of ? new Date(freeze.as_of) : null;
   const freezeAsOfValid = freezeAsOf != null && !Number.isNaN(freezeAsOf.getTime());
+  const { asOf: asOfRun, latestIsAsOf } = resolveB1AsOfRun({
+    latestId: latest.id,
+    freezeAsOf: freezeAsOfValid ? freezeAsOf : null,
+    acceptances,
+  });
 
-  let asOfRun: { id: string; checkedAt: Date } | null = null;
-  if (freezeAsOfValid && freezeAsOf) {
-    asOfRun = await prisma.cin7ReconRun.findFirst({
-      where: {
-        ownerUserId,
-        immutable: true,
-        mode: 'acceptance',
-        status: 'complete',
-        checkedAt: { lte: freezeAsOf },
-      },
-      orderBy: { checkedAt: 'desc' },
-      select: { id: true, checkedAt: true },
-    });
-  } else {
-    asOfRun = await prisma.cin7ReconRun.findFirst({
-      where: {
-        ownerUserId,
-        immutable: true,
-        mode: 'acceptance',
-        status: 'complete',
-        id: { not: latest.id },
-      },
-      orderBy: { checkedAt: 'desc' },
-      select: { id: true, checkedAt: true },
-    });
-  }
-
-  const latestIsAsOf = asOfRun?.id === latest.id;
   const latestRows = await loadB1ExceptionRows(latest.id);
   const asOfRows =
     asOfRun && asOfRun.id !== latest.id ? await loadB1ExceptionRows(asOfRun.id) : null;
@@ -325,13 +327,20 @@ export async function listClosedB1Residuals(ownerUserId: string): Promise<Cin7B1
     latestIsAsOf,
   });
 
+  let note = CLOSED_RESIDUAL_NOTE;
+  if (!freezeAsOfValid) {
+    note = `${CLOSED_RESIDUAL_NOTE} No D10 freeze yet — missings on later walks are sync lag, not sign-off.`;
+  } else if (!asOfRun) {
+    note = `${CLOSED_RESIDUAL_NOTE} No complete acceptance at or before freeze as-of. Missings on later walks are sync lag.`;
+  }
+
   return {
     recon_run_id: latest.id,
     checked_at: latest.checkedAt.toISOString(),
-    as_of_run_id: asOfRun?.id ?? (latestIsAsOf ? latest.id : null),
-    as_of_checked_at: (asOfRun ?? (latestIsAsOf ? latest : null))?.checkedAt.toISOString() ?? null,
+    as_of_run_id: asOfRun?.id ?? null,
+    as_of_checked_at: asOfRun?.checkedAt.toISOString() ?? null,
     freeze_as_of: freezeAsOfValid && freezeAsOf ? freezeAsOf.toISOString() : null,
-    note: CLOSED_RESIDUAL_NOTE,
+    note,
     counts: tallyB1Residuals(classified.closed),
     items: classified.closed,
     sync_lag_counts: tallyB1Residuals(classified.sync_lag),
