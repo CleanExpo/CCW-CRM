@@ -18,7 +18,8 @@
     "test:lighthouse": "lhci autorun",
     "db:migrate": "prisma migrate dev",
     "removetemp-accounts": "node scripts/remove-temp-accounts.mjs",
-    "list-accounts": "node scripts/list-accounts.mjs"
+    "list-accounts": "node scripts/list-accounts.mjs",
+    "cin7:store-anne-export": "node scripts/store-anne-export.mjs"
   },
   "bin": {
     "removetemp-accounts": "./scripts/remove-temp-accounts.mjs",
