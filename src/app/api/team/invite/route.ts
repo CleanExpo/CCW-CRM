@@ -1,8 +1,11 @@
 import { NextRequest } from 'next/server';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { jsonDetail, jsonOk, jsonValidationError, readJsonBody } from '@/lib/auth/http';
 import { getAuthClaimsFromRequest } from '@/lib/auth/request-token';
 import { findAppUserByEmail, findAppUserById, insertAppUser } from '@/lib/auth/app-user-repo';
+import { createInviteToken, inviteAcceptUrl } from '@/lib/auth/invite-token';
+import { sendTeamInviteViaMailtrap } from '@/lib/auth/mailtrap-invite';
 import { hashPassword } from '@/lib/auth/password';
 import { mapAppUserRowToPublic } from '@/lib/auth/map-user';
 
@@ -11,17 +14,6 @@ const inviteSchema = z.object({
   full_name: z.string().max(200).optional(),
   role: z.enum(['owner', 'admin', 'member', 'billing']).default('member'),
 });
-
-function generateTempPassword(): string {
-  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  const nums = '23456789';
-  const symbols = '!@#$%^&*';
-  let out = 'Ccw#';
-  for (let i = 0; i < 4; i += 1) out += letters[Math.floor(Math.random() * letters.length)];
-  for (let i = 0; i < 3; i += 1) out += nums[Math.floor(Math.random() * nums.length)];
-  out += symbols[Math.floor(Math.random() * symbols.length)];
-  return out;
-}
 
 export async function POST(request: NextRequest) {
   const claims = await getAuthClaimsFromRequest(request);
@@ -43,23 +35,38 @@ export async function POST(request: NextRequest) {
   const existing = await findAppUserByEmail(email);
   if (existing) return jsonDetail('An account with this email already exists', 409);
 
-  const temporary_password = generateTempPassword();
+  const invite = createInviteToken();
+  const unusablePassword = randomBytes(32).toString('base64url');
   const row = await insertAppUser({
     email,
     full_name: parsed.data.full_name ?? null,
-    password_hash: await hashPassword(temporary_password),
+    password_hash: await hashPassword(unusablePassword),
     is_admin: parsed.data.role === 'owner' || parsed.data.role === 'admin',
     role: parsed.data.role,
     workspace_id: inviter.workspaceId,
+    must_change_password: true,
+    invite_token_hash: invite.hash,
+    invite_token_expires_at: invite.expiresAt,
   });
 
-  return jsonOk({
-    member: mapAppUserRowToPublic(row),
-    credentials: {
-      email: row.email,
-      temporary_password,
-      role: row.role,
-      must_change_password: true,
+  const mailed = await sendTeamInviteViaMailtrap({
+    toEmail: row.email,
+    acceptUrl: inviteAcceptUrl(invite.token),
+  });
+  if (!mailed.ok) {
+    return jsonDetail(mailed.detail, 503);
+  }
+
+  return jsonOk(
+    {
+      member: mapAppUserRowToPublic(row),
+      invite: {
+        email: row.email,
+        role: row.role,
+        delivery: 'mailtrap',
+        must_set_password: true,
+      },
     },
-  }, { status: 201 });
+    { status: 201 }
+  );
 }
