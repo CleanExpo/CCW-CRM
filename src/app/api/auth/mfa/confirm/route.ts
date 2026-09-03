@@ -54,7 +54,13 @@ export async function POST(request: NextRequest) {
   if (!row || !row.isActive) return jsonDetail('Account is disabled', 403);
 
   await updateLastLogin(row.id);
-  const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
+  const tokens = await signTokenPair(
+    row.id,
+    row.email,
+    row.isAdmin,
+    row.role,
+    row.sessionVersion ?? 0
+  );
   const response = jsonOk({
     enabled: true,
     access_token: tokens.access_token,
