@@ -70,15 +70,20 @@ as BLOCKED-ON-FOUNDER with what a GO unlocks. Nothing sits more than 7 days.
 9. **Independent review, pass two** (bound to `5e42b8f`, returned before the next fix commit)
    refuted: fetch still used the URL with userinfo (Node refuses it), `cause.code` not captured,
    key list still missing `key`/`pass`/`pwd`/`service_role` and inline `x=value` pairs; the dedupe
-   plan built before the lock without a recount; handoff figures for the wrong SHA. Fixed in the
-   commit after `5e42b8f` (see `git log`), with a lock-time recount that aborts on any change.
+   plan built before the lock without a recount; handoff figures for the wrong SHA. Fixed in
+   `6a2ea73`, with a lock-time recount that aborts on any change.
+10. **Independent review, passes three and four** (bound to `6a2ea73` and `9e1beb6`) passed both
+   code stories with data-level positive controls on a throwaway Postgres, and left only handoff
+   wording: an untraceable vitest figure for `f0a6514` and an "all exit 0" header contradicted by
+   the `6a2ea73` line. Both corrected in the commit carrying this revision.
 
-Gate evidence so far, each bound to its SHA (scratchpad logs, eleven commands each, all exit 0):
-`f0a6514`, log `dod-final.log` last written 03/09 13:30 AEST (vitest 80 files passed, 1 skipped;
-621 tests passed, 2 skipped); `5e42b8f`, log `dod-5e42b8f.log` last written 13:41 AEST (81 files
-passed, 1 skipped; 630 tests passed, 2 skipped); `6a2ea73`, log `dod-6a2ea73.log` last written
-13:49 AEST: ten commands exit 0 and `scan-secrets` exit 1 on an AWS-shaped test fixture, fixed in
-the next commit. The skipped file is the `TEST_DATABASE_URL`-gated one CLAUDE.md names. The final
+Gate evidence so far, each bound to its SHA (scratchpad logs, eleven commands each):
+`f0a6514`, log `dod-final.log` last written 03/09 13:30 AEST, all eleven exit 0 (that log captured
+no vitest totals, so none are quoted for it); `5e42b8f`, log `dod-5e42b8f.log` last written 13:41
+AEST, all eleven exit 0 (81 files passed, 1 skipped; 630 tests passed, 2 skipped); `6a2ea73`, log
+`dod-6a2ea73.log` last written 13:49 AEST: ten commands exit 0 and `scan-secrets` exit 1 on an
+AWS-shaped test fixture, fixed in `9e1beb6`; `9e1beb6`, log `dod-9e1beb6.log`, all eleven exit 0
+(81 files passed, 1 skipped; 631 tests passed, 2 skipped). The skipped file is the `TEST_DATABASE_URL`-gated one CLAUDE.md names. The final
 commit's own run is pasted into the pull request body; a figure here for a SHA that is not HEAD
 is history, not state.
 
