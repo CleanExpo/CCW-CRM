@@ -35,6 +35,9 @@ export async function insertAppUser(input: {
   role?: 'owner' | 'admin' | 'member' | 'billing';
   /** Existing workspace (inviter’s org). Omit to create a new solo workspace (id = new user id). */
   workspace_id?: string;
+  must_change_password?: boolean;
+  invite_token_hash?: string | null;
+  invite_token_expires_at?: Date | null;
 }): Promise<AppUserRow> {
   if (input.workspace_id) {
     return prisma.appUser.create({
@@ -45,6 +48,9 @@ export async function insertAppUser(input: {
         isAdmin: input.is_admin,
         role: input.role ?? 'member',
         workspaceId: input.workspace_id,
+        mustChangePassword: input.must_change_password ?? false,
+        inviteTokenHash: input.invite_token_hash ?? null,
+        inviteTokenExpiresAt: input.invite_token_expires_at ?? null,
       },
     });
   }
@@ -58,6 +64,31 @@ export async function insertAppUser(input: {
       isAdmin: input.is_admin,
       role: input.role ?? 'member',
       workspaceId: id,
+      mustChangePassword: input.must_change_password ?? false,
+      inviteTokenHash: input.invite_token_hash ?? null,
+      inviteTokenExpiresAt: input.invite_token_expires_at ?? null,
+    },
+  });
+}
+
+export async function findAppUserByInviteHash(tokenHash: string): Promise<AppUserRow | null> {
+  return prisma.appUser.findFirst({
+    where: {
+      inviteTokenHash: tokenHash,
+      inviteTokenExpiresAt: { gt: new Date() },
+      mustChangePassword: true,
+    },
+  });
+}
+
+export async function acceptInvitePassword(id: string, password_hash: string): Promise<void> {
+  await prisma.appUser.update({
+    where: { id },
+    data: {
+      passwordHash: password_hash,
+      mustChangePassword: false,
+      inviteTokenHash: null,
+      inviteTokenExpiresAt: null,
     },
   });
 }
