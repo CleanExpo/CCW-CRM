@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { hasDatabaseConfig } from "@/lib/db/database-env";
+import {
+  classifyDatabaseHost,
+  hasDatabaseConfig,
+  type DatabaseHostClass,
+} from "@/lib/db/database-env";
 import { prisma } from "@/lib/db/prisma";
 
 /**
@@ -25,6 +29,10 @@ interface HealthResponse {
     reachable: boolean;
     /** Error CLASS only — never the message, which can carry the DSN. */
     error?: string;
+    /** Shape of the configured host — never the host itself. */
+    host_class: DatabaseHostClass;
+    /** Operator guidance for a failure whose cause the host shape gives away. */
+    hint?: string;
   };
   verification_system: {
     enabled: boolean;
@@ -109,9 +117,20 @@ function describeFailure(error: unknown): string {
   return "UnknownError";
 }
 
+/**
+ * A Supabase direct host publishes no IPv4 address (unless the IPv4 add-on is
+ * bought) and Vercel has no IPv6 egress, so a probe against it times out. Say
+ * so, hedged, rather than leaving the operator to guess between "paused",
+ * "wrong project" and "unroutable".
+ */
+const SUPABASE_DIRECT_HOST_HINT =
+  "DATABASE_URL points at a Supabase direct host (db.<ref>.supabase.co). Direct hosts publish no IPv4 address unless the project has the IPv4 add-on, and Vercel functions have no IPv6 egress, so this shape usually times out from Vercel; the transaction pooler URI (aws-<n>-<region>.pooler.supabase.com:6543) is the supported form.";
+
 async function probeDatabase(): Promise<HealthResponse["database"]> {
+  const host_class = classifyDatabaseHost();
+
   if (!hasDatabaseConfig()) {
-    return { configured: false, reachable: false, error: "NotConfigured" };
+    return { configured: false, reachable: false, error: "NotConfigured", host_class };
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -121,11 +140,18 @@ async function probeDatabase(): Promise<HealthResponse["database"]> {
     });
     // Cheapest round trip that proves the connection is live, not merely configured.
     await Promise.race([prisma.$queryRaw`SELECT 1`, timeout]);
-    return { configured: true, reachable: true };
+    return { configured: true, reachable: true, host_class };
   } catch (error) {
     // Full detail stays server-side; only a recognised identifier goes public.
     console.error("[health] database probe failed", error);
-    return { configured: true, reachable: false, error: describeFailure(error) };
+    const failure: HealthResponse["database"] = {
+      configured: true,
+      reachable: false,
+      error: describeFailure(error),
+      host_class,
+    };
+    if (host_class === "supabase-direct") failure.hint = SUPABASE_DIRECT_HOST_HINT;
+    return failure;
   } finally {
     if (timer) clearTimeout(timer);
   }
