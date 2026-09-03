@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
       return jsonDetail('Invalid email or password', 401);
     }
 
+    if (row.mustChangePassword) {
+      return jsonDetail('Set a password from your invite link before signing in', 403);
+    }
+
     const mfaRequired = roleRequiresMfa(row.role, row.isAdmin);
 
     if (row.totpEnabled) {
@@ -52,7 +56,13 @@ export async function POST(request: NextRequest) {
     }
 
     await updateLastLogin(row.id);
-    const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
+    const tokens = await signTokenPair(
+      row.id,
+      row.email,
+      row.isAdmin,
+      row.role,
+      row.sessionVersion ?? 0
+    );
     const response = jsonOk({
       access_token: tokens.access_token,
       token_type: 'bearer',
