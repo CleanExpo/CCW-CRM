@@ -32,6 +32,12 @@ model AppUser {
   /// AES-256-GCM encrypted TOTP shared secret (never store plaintext).
   totpSecretEncrypted    String?   @map("totp_secret_encrypted")
   totpVerifiedAt         DateTime? @map("totp_verified_at")
+  /// Invitee cannot sign in until they set a password via the hashed invite token.
+  mustChangePassword     Boolean   @default(false) @map("must_change_password")
+  inviteTokenHash        String?   @map("invite_token_hash")
+  inviteTokenExpiresAt   DateTime? @map("invite_token_expires_at")
+  /// Bumped on role or status change so existing JWTs stop matching.
+  sessionVersion         Int       @default(0) @map("session_version")
 
   mfaRecoveryCodes AppUserMfaRecoveryCode[]
 
