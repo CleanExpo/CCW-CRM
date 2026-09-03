@@ -14,7 +14,8 @@ as BLOCKED-ON-FOUNDER with what a GO unlocks. Nothing sits more than 7 days.
 - Repo: CleanExpo/CCW-CRM, branch `claude/vibrant-lovelace-olw0dy`, merge-base with `origin/main`
   at `d0d72ec` (`git merge-base`, 03/09 12:55 AEST). Commits on the branch (`git log
   origin/main..HEAD`, times from `%ci` in AEST): `420b0ae` 13:02, `05daf3e` 13:13, `51e9744` 13:20,
-  `f0a6514` 13:24, `5e42b8f` 13:38, `6a2ea73` 13:46, plus the commit carrying this revision.
+  `f0a6514` 13:24, `5e42b8f` 13:38, `6a2ea73` 13:46, `9e1beb6` 13:56, `9da5e2f` 14:01, followed by
+  the one commit that carries this revision of the handoff (a commit cannot name its own SHA).
 - No `claude-hooks-mirror/` directory exists in the checkout (`find . -iname '*hooks-mirror*'`,
   03/09 12:55 AEST); `hooks/hooks.json` has empty PreToolUse/PostToolUse/Stop arrays;
   `.claude/settings.json` states hooks are deliberately absent and the gate is
@@ -72,10 +73,15 @@ as BLOCKED-ON-FOUNDER with what a GO unlocks. Nothing sits more than 7 days.
    key list still missing `key`/`pass`/`pwd`/`service_role` and inline `x=value` pairs; the dedupe
    plan built before the lock without a recount; handoff figures for the wrong SHA. Fixed in
    `6a2ea73`, with a lock-time recount that aborts on any change.
-10. **Independent review, passes three and four** (bound to `6a2ea73` and `9e1beb6`) passed both
-   code stories with data-level positive controls on a throwaway Postgres, and left only handoff
-   wording: an untraceable vitest figure for `f0a6514` and an "all exit 0" header contradicted by
-   the `6a2ea73` line. Both corrected in the commit carrying this revision.
+10. **Independent review, pass three** (bound to `6a2ea73`) passed the receipt tool and the dedupe
+   script with data-level positive controls on a throwaway Postgres, naming residuals (a doubled
+   doc comment in the receipt module, a stale header sentence in the dedupe CLI, a backup file left
+   behind by a rolled-back run), and failed on `scan-secrets` (the AWS-shaped fixture) and three
+   handoff figures. Fixed in `9e1beb6`. **Pass four** (bound to `9e1beb6`) passed all three code
+   closures and failed the handoff on an untraceable vitest figure for `f0a6514` and an "all exit
+   0" header contradicted by the `6a2ea73` line; fixed in `9da5e2f`. **Pass five** (bound to
+   `9da5e2f`) failed the handoff only on its commit list omitting `9e1beb6` and on the wording of
+   this item; both corrected here.
 
 Gate evidence so far, each bound to its SHA (scratchpad logs, eleven commands each):
 `f0a6514`, log `dod-final.log` last written 03/09 13:30 AEST, all eleven exit 0 (that log captured
