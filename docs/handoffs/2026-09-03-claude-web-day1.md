@@ -55,17 +55,27 @@ as BLOCKED-ON-FOUNDER with what a GO unlocks. Nothing sits more than 7 days.
    in because it cannot be rehearsed without a database.
 7. **UNI-2255**: commit `f0a6514` adds `npm run cin7:dedupe-customers` (dry-run default, plan +
    backup + one transaction + rollback). Linear comment 3594aa1e. Prior work found and kept:
-   `src/lib/integrations/cin7-duplicate-cleanup.ts` and its `CIN7_ALLOW_DUPLICATE_CLEANUP` gate.
+   `src/lib/integrations/cin7-duplicate-cleanup.ts` (delete-only) and the
+   `CIN7_ALLOW_DUPLICATE_CLEANUP` gate in `src/app/api/integrations/cin7/cleanup-duplicates/route.ts`.
    Survivor rule: Cin7-linked row, then most linked records, then oldest. **Not run.**
-8. **Independent review** (ccw-adversary agent, bound to `f0a6514`, 03/09 13:40 AEST) refuted the
-   receipt redaction, the dedupe 1:1 handling, the rollback table-name check, the backup timestamp
-   round-trip, the missing `ccw_ai_call_sessions.customer_id` pointer, and the stale handoff. All
-   fixed in the final commit on this branch (see `git log`), with tests for each finding.
+8. **Independent review, pass one** (ccw-adversary agent, bound to `f0a6514`, returned before the
+   fix commit `5e42b8f` at 13:38 AEST) refuted: receipt redaction (JWT, bearer, session and
+   credential keys, mysql and redis DSNs), `base_url` userinfo recorded verbatim, the unkeyed digest
+   presented as tamper detection, exit 1 on an unreachable target; dedupe 1:1 double-repoint,
+   rollback table-name interpolation, node-side timestamp serialisation, the unconstrained
+   `ccw_ai_call_sessions.customer_id` pointer, backup outside the lock; the unconditional health
+   hint and no real-URL route test; and a stale handoff. Fixed in `5e42b8f`.
+9. **Independent review, pass two** (bound to `5e42b8f`, returned before the next fix commit)
+   refuted: fetch still used the URL with userinfo (Node refuses it), `cause.code` not captured,
+   key list still missing `key`/`pass`/`pwd`/`service_role` and inline `x=value` pairs; the dedupe
+   plan built before the lock without a recount; handoff figures for the wrong SHA. Fixed in the
+   commit after `5e42b8f` (see `git log`), with a lock-time recount that aborts on any change.
 
-Gate evidence on `f0a6514` (scratchpad `dod-final.log`, 03/09 13:35 AEST): all eleven commands
-exit 0; vitest 80 files passed, 1 skipped, 621 tests passed, 2 skipped (the skipped file is the
-`TEST_DATABASE_URL`-gated one CLAUDE.md names). The final commit re-runs the same eleven; its
-result is pasted in the pull request.
+Gate evidence so far, each bound to its SHA (scratchpad logs, eleven commands each, all exit 0):
+`f0a6514` at 03/09 13:35 AEST (vitest 80 files passed, 1 skipped; 621 tests passed, 2 skipped);
+`5e42b8f` at 03/09 13:48 AEST (81 files passed, 1 skipped; 630 tests passed, 2 skipped). The
+skipped file is the `TEST_DATABASE_URL`-gated one CLAUDE.md names. The final commit's own run is
+pasted into the pull request body; a figure here for a SHA that is not HEAD is history, not state.
 
 ## Next
 
@@ -74,7 +84,8 @@ result is pasted in the pull request.
 - UNI-2342 on GO: read `/api/health` (expect `host_class=supabase-pooler`, `reachable=true`), post
   the timestamp on the issue and in Slack, run `npm run proof:runtime-receipt` for UNI-2483.
 - UNI-2255 on GO: dry run with `--out plan.json --expected-cin7-count 22640` (the 22,640 figure is
-  Toby's Cin7 count as quoted in UNI-2255), post the plan, then execute per the issue comment.
+  Toby's Cin7 count as quoted in the UNI-2255 description, read 03/09 12:56 AEST), post the plan,
+  then execute per the issue comment.
 - UNI-2108 by 10/09; then UNI-2257 (Branch model) and UNI-2258; Phase 2 and Margot wait on 1–5.
 
 ## Blockers

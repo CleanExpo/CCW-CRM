@@ -137,8 +137,7 @@ async function runStatements(client, statements) {
     for (const { sql, params } of statements) await client.query(sql, params);
     await client.query('COMMIT');
   } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
+    await rollbackQuietly(client, error);
   }
 }
 
@@ -157,6 +156,35 @@ async function verifyApplied(client, plan) {
     ).rows[0].n;
   }
   return { remaining_losers: remaining, dangling_references: dangling };
+}
+
+/**
+ * The plan was built before the lock. Anything linked to an involved
+ * customer since then would be missing from the backup and, for a Cascade
+ * table, destroyed by the loser delete. Recount under the lock and refuse
+ * to proceed on any difference; the caller re-runs and gets a fresh plan.
+ */
+function assertCountsUnchanged(before, after, ids) {
+  const diffs = [];
+  for (const id of ids) {
+    for (const { table } of CUSTOMER_FK_TABLES) {
+      const a = before[id]?.[table] ?? 0;
+      const b = after[id]?.[table] ?? 0;
+      if (a !== b) diffs.push(`${table}/${id}: ${a} -> ${b}`);
+    }
+  }
+  if (diffs.length) {
+    throw new Error(`Links changed since the plan was built; nothing applied. Re-run.\n${diffs.join('\n')}`);
+  }
+}
+
+async function rollbackQuietly(client, original) {
+  try {
+    await client.query('ROLLBACK');
+  } catch {
+    // The connection is gone; the server has already discarded the transaction.
+  }
+  throw original;
 }
 
 function printSummary(plan, expectedCin7Count) {
@@ -248,6 +276,7 @@ async function main() {
     await client.query('BEGIN');
     try {
       await client.query('SELECT id FROM customers WHERE id = ANY($1::uuid[]) FOR UPDATE', [involved]);
+      assertCountsUnchanged(linkCounts, await loadLinkCounts(client, involved), involved);
       const backup = await takeBackup(client, plan);
       backupPath = join(args.backupDir, `customer-dedupe-${backup.taken_at.replace(/[:.]/g, '-')}.json`);
       writeFileSync(backupPath, `${JSON.stringify(backup, null, 2)}\n`);
@@ -255,8 +284,7 @@ async function main() {
       for (const { sql, params } of planToSql(plan)) await client.query(sql, params);
       await client.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
+      await rollbackQuietly(client, error);
     }
     const check = await verifyApplied(client, plan);
     console.log(`applied: remaining losers ${check.remaining_losers}, dangling references ${check.dangling_references}`);

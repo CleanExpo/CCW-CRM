@@ -14,7 +14,12 @@ import { createHash, createHmac } from 'node:crypto';
 export const RECEIPT_MARKER = 'CCW-RUNTIME-RECEIPT-V1';
 
 const SECRET_KEY_PATTERN =
-  /token|secret|password|passwd|cookie|authorization|auth|api[-_]?key|jwt|bearer|session|credential|dsn|connection|private/i;
+  /token|secret|password|passwd|pwd|pass\b|cookie|authorization|auth|key|jwt|bearer|session|credential|dsn|connection|private|service_role/i;
+/** `PGPASSWORD=x`, `x-api-key: x`, `client_secret=x` and similar inline pairs. */
+const INLINE_PAIR_PATTERN =
+  /\b([A-Za-z0-9_-]*(?:key|password|passwd|pwd|secret|token|service_role)[A-Za-z0-9_-]*)\s*[:=]\s*(['"]?)[^\s'"]+\2/gi;
+/** Well-known credential prefixes. */
+const KNOWN_KEY_PATTERN = /\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]+\b|\bAKIA[0-9A-Z]{16}\b|\bxox[baprs]-[A-Za-z0-9-]+\b|\bghp_[A-Za-z0-9]{20,}\b/g;
 /** Any URL with userinfo: postgres://u:p@h, mysql://, redis://, https://u:p@h ... */
 const URL_WITH_CREDENTIALS_PATTERN = /\b[a-z][a-z0-9+.-]*:\/\/[^\s/@]+@[^\s]*/gi;
 /** Three base64url segments starting with the JWT header prefix. */
@@ -28,7 +33,9 @@ export function redactText(text) {
     .replace(URL_WITH_CREDENTIALS_PATTERN, '[redacted-url-with-credentials]')
     .replace(JWT_PATTERN, '[redacted-jwt]')
     .replace(BEARER_PATTERN, 'Bearer [redacted]')
-    .replace(BASIC_PATTERN, 'Basic [redacted]');
+    .replace(BASIC_PATTERN, 'Basic [redacted]')
+    .replace(KNOWN_KEY_PATTERN, '[redacted-key]')
+    .replace(INLINE_PAIR_PATTERN, '$1=[redacted]');
 }
 
 /** Strip anything that could carry a credential, recursively. */
@@ -187,9 +194,36 @@ async function attempt(fetchImpl, url, init) {
     return { response: await fetchImpl(url, init), error: null };
   } catch (error) {
     const name = error instanceof Error ? error.name : 'Error';
-    const cause = error instanceof Error && error.cause instanceof Error ? error.cause.name : null;
-    return { response: null, error: cause ? `${name}:${cause}` : name };
+    // Node puts the syscall in cause.code (ECONNREFUSED, ENOTFOUND); fall
+    // back to the cause's class name when there is no code.
+    const cause = error instanceof Error && error.cause instanceof Error ? error.cause : null;
+    // A dual-stack connect failure arrives as an AggregateError; use its first code.
+    const first = cause && Array.isArray(cause.errors) ? cause.errors[0] : null;
+    const code =
+      (cause && typeof cause.code === 'string' && cause.code) ||
+      (first && typeof first.code === 'string' && first.code) ||
+      cause?.name;
+    return { response: null, error: code ? `${name}:${code}` : name };
   }
+}
+
+/**
+ * fetch() refuses a URL that carries userinfo, so credentials in
+ * E2E_BASE_URL are moved into an Authorization header and the URL used for
+ * every request is the same stripped one the receipt records.
+ */
+function splitBaseUrl(baseUrl) {
+  const base = stripUrlCredentials(baseUrl);
+  try {
+    const url = new URL(baseUrl);
+    if (url.username || url.password) {
+      const pair = `${decodeURIComponent(url.username)}:${decodeURIComponent(url.password)}`;
+      return { base, headers: { authorization: `Basic ${Buffer.from(pair).toString('base64')}` } };
+    }
+  } catch {
+    // Not a parseable URL; the stripped string is all we can use.
+  }
+  return { base, headers: {} };
 }
 
 /**
@@ -212,11 +246,11 @@ export async function collectRuntimeReceipt({
   now = () => new Date(),
   signingKey = null,
 }) {
-  const base = baseUrl.replace(/\/+$/, '');
+  const { base, headers } = splitBaseUrl(baseUrl);
   /** @type {Probe[]} */
   const probes = [];
 
-  const landing = await attempt(fetchImpl, `${base}/`, { method: 'GET', redirect: 'manual' });
+  const landing = await attempt(fetchImpl, `${base}/`, { method: 'GET', redirect: 'manual', headers });
   probes.push({
     name: 'landing',
     method: 'GET',
@@ -225,7 +259,7 @@ export async function collectRuntimeReceipt({
     ...(landing.error ? { error: landing.error } : {}),
   });
 
-  const health = await attempt(fetchImpl, `${base}/api/health`, { method: 'GET' });
+  const health = await attempt(fetchImpl, `${base}/api/health`, { method: 'GET', headers });
   probes.push({
     name: 'health',
     method: 'GET',
@@ -237,7 +271,7 @@ export async function collectRuntimeReceipt({
   if (credentials?.email && credentials?.password) {
     const login = await attempt(fetchImpl, `${base}/api/auth/login`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { ...headers, 'content-type': 'application/json' },
       body: JSON.stringify({ email: credentials.email, password: credentials.password }),
       redirect: 'manual',
     });

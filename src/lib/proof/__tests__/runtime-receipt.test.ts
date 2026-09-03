@@ -36,9 +36,17 @@ describe('redact', () => {
       cache: 'redis://:REDISPW@host:6379',
       note: 'Authorization: Bearer eyJ-INLINE and eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abcdefghijklmnop',
       basic: 'Basic dXNlcjpwYXNz',
+      key: 'KEYVAL',
+      pass: 'PASSVAL',
+      pwd: 'PWDVAL',
+      supabase_service_role: 'ROLEVAL',
+      free: 'x-api-key: XAPIKEYVAL then PGPASSWORD=PGPWVAL and client_secret="CSVAL" plus sk_live_ABC123def and AKIAABCDEFGHIJKLMNOP',
     });
     const text = JSON.stringify(out);
-    for (const leak of ['MYSQLPW', 'REDISPW', 'SESSION-ID', 'CRED-VALUE', 'eyJ-BEARER', 'eyJ-INLINE', 'eyJhbGci', 'dXNlcjpwYXNz']) {
+    for (const leak of [
+      'MYSQLPW', 'REDISPW', 'SESSION-ID', 'CRED-VALUE', 'eyJ-BEARER', 'eyJ-INLINE', 'eyJhbGci', 'dXNlcjpwYXNz',
+      'KEYVAL', 'PASSVAL', 'PWDVAL', 'ROLEVAL', 'XAPIKEYVAL', 'PGPWVAL', 'CSVAL', 'sk_live_ABC123def', 'AKIAABCDEFGHIJKLMNOP',
+    ]) {
       expect(text).not.toContain(leak);
     }
   });
@@ -96,7 +104,7 @@ describe('buildReceipt', () => {
     expect(receipt.verdict).toBe('unhealthy');
   });
 
-  it('hashes the redacted record, so a tampered receipt fails verification', () => {
+  it('hashes the redacted record, so an edited receipt no longer matches its digest', () => {
     const receipt = buildReceipt({
       baseUrl,
       readAt,
@@ -167,8 +175,9 @@ describe('collectRuntimeReceipt', () => {
   });
 
   it('records a target that does not answer as status 0 with the error class, and stays unhealthy', async () => {
+    // The shape Node actually throws: TypeError('fetch failed') with cause.code.
     const fetchImpl = async () => {
-      throw Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('x'), { name: 'ECONNREFUSED' }) });
+      throw Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }) });
     };
     const receipt = await collectRuntimeReceipt({
       baseUrl: 'https://user:pw@127.0.0.1:9',
@@ -183,6 +192,22 @@ describe('collectRuntimeReceipt', () => {
       ['login', 0, 'TypeError:ECONNREFUSED'],
     ]);
     expect(JSON.stringify(receipt)).not.toContain('user:pw');
+  });
+
+  it('moves URL credentials into a Basic header and fetches the stripped URL', async () => {
+    const seen: { url: string; auth: string | undefined }[] = [];
+    const fetchImpl = async (url: string, init: { headers?: Record<string, string> }) => {
+      seen.push({ url, auth: init.headers?.authorization });
+      return fakeResponse(200, JSON.stringify({ database: { reachable: true } }));
+    };
+    const receipt = await collectRuntimeReceipt({
+      baseUrl: 'https://user:BASICPW@example.test',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(receipt.verdict).toBe('healthy');
+    expect(seen.map((s) => s.url)).toEqual(['https://example.test/', 'https://example.test/api/health']);
+    expect(seen[0].auth).toBe(`Basic ${Buffer.from('user:BASICPW').toString('base64')}`);
+    expect(JSON.stringify(receipt)).not.toContain('BASICPW');
   });
 
   it('skips the login probe without credentials', async () => {
