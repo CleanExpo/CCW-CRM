@@ -77,6 +77,37 @@ export function getDatabaseConnectionString(): string {
   return applyPostgresSslParams(`${base}?${MANAGED_POSTGRES_SSL_QUERY}`);
 }
 
+/**
+ * Coarse class of the configured database host. Safe to publish: it names a
+ * shape, never a hostname, user or password.
+ *
+ * Why it exists: on 2026-09-03 production had DATABASE_URL set but every probe
+ * timed out. A Supabase *direct* host (`db.<ref>.supabase.co`) publishes no
+ * IPv4 address, and Vercel functions have no IPv6 route, so a connection to it
+ * hangs until the timeout — indistinguishable from a paused or wrong database
+ * unless someone can see which kind of host was configured.
+ */
+export type DatabaseHostClass =
+  | 'none'
+  | 'local'
+  | 'supabase-direct'
+  | 'supabase-pooler'
+  | 'other';
+
+export function classifyDatabaseHost(): DatabaseHostClass {
+  const connectionString = getDatabaseConnectionString();
+  if (!connectionString) return 'none';
+
+  const url = parseConnectionUrl(connectionString);
+  if (!url) return 'other';
+
+  const host = url.hostname.toLowerCase();
+  if (isLocalHost(host)) return 'local';
+  if (/^db\.[a-z0-9]+\.supabase\.co$/.test(host)) return 'supabase-direct';
+  if (host.endsWith('.pooler.supabase.com')) return 'supabase-pooler';
+  return 'other';
+}
+
 export function hasDatabaseConfig(): boolean {
   return Boolean(
     process.env.DATABASE_URL?.trim() ||

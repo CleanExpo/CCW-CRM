@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hasDatabaseConfig = vi.fn();
+const classifyDatabaseHost = vi.fn();
 const queryRaw = vi.fn();
 
 vi.mock('@/lib/db/database-env', () => ({
   hasDatabaseConfig: () => hasDatabaseConfig(),
+  classifyDatabaseHost: () => classifyDatabaseHost(),
 }));
 
 vi.mock('@/lib/db/prisma', () => ({
@@ -17,6 +19,8 @@ import { GET } from '../route';
 
 beforeEach(() => {
   hasDatabaseConfig.mockReset();
+  classifyDatabaseHost.mockReset();
+  classifyDatabaseHost.mockReturnValue('other');
   queryRaw.mockReset();
 });
 
@@ -152,6 +156,44 @@ describe('GET /api/health', () => {
     const body = await response.json();
 
     expect(body.database.error).toBe('ECONNREFUSED');
+  });
+
+  // Production on 2026-09-03: DATABASE_URL set, every probe a ProbeTimeout.
+  // The host class is the one non-secret fact that explains it.
+  it('publishes the host class and a hint when a Supabase direct host times out', async () => {
+    hasDatabaseConfig.mockReturnValue(true);
+    classifyDatabaseHost.mockReturnValue('supabase-direct');
+    queryRaw.mockImplementation(() => new Promise(() => undefined));
+    vi.useFakeTimers();
+    try {
+      const pending = GET();
+      await vi.advanceTimersByTimeAsync(5_000);
+      const response = await pending;
+      const body = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(body.database).toMatchObject({
+        reachable: false,
+        error: 'ProbeTimeout',
+        host_class: 'supabase-direct',
+      });
+      expect(body.database.hint).toContain('pooler');
+      // The hint is a template, never the configured value.
+      expect(JSON.stringify(body)).not.toContain('postgresql://');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('publishes the host class without a hint when a pooler host is reachable', async () => {
+    hasDatabaseConfig.mockReturnValue(true);
+    classifyDatabaseHost.mockReturnValue('supabase-pooler');
+    queryRaw.mockResolvedValue([{ '?column?': 1 }]);
+
+    const body = await (await GET()).json();
+
+    expect(body.database).toMatchObject({ reachable: true, host_class: 'supabase-pooler' });
+    expect(body.database.hint).toBeUndefined();
   });
 
   it('reports the failure class when the error carries no code', async () => {
