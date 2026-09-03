@@ -47,6 +47,8 @@ const member = {
   isActive: true,
   isAdmin: false,
   totpEnabled: false,
+  mustChangePassword: false,
+  sessionVersion: 0,
   role: 'member',
   fullName: 'Ops',
   workspaceId: 'user-1',
@@ -96,6 +98,19 @@ describe('POST /api/auth/login Cin7 refresh', () => {
 
     expect(res.status).toBe(200);
     expect(body.mfa_required).toBe(true);
+    expect(setAuthSessionCookies).not.toHaveBeenCalled();
+    expect(rememberCin7SyncActor).not.toHaveBeenCalled();
+  });
+
+  it('refuses a session while the invitee still must set a password', async () => {
+    vi.mocked(findAppUserByEmail).mockResolvedValue({
+      ...member,
+      mustChangePassword: true,
+    } as never);
+
+    const res = await POST(loginPost({ email: 'ops@example.com', password: 'Password123!' }));
+
+    expect(res.status).toBe(403);
     expect(setAuthSessionCookies).not.toHaveBeenCalled();
     expect(rememberCin7SyncActor).not.toHaveBeenCalled();
   });
