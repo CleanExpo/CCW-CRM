@@ -44,13 +44,13 @@ export async function countOwnersInWorkspace(workspaceId: string): Promise<numbe
 export async function updateUserRole(userId: string, role: TeamRole, isAdmin: boolean) {
   return prisma.appUser.update({
     where: { id: userId },
-    data: { role, isAdmin },
+    data: { role, isAdmin, sessionVersion: { increment: 1 } },
   });
 }
 
 export async function deactivateUser(userId: string) {
   return prisma.appUser.update({
     where: { id: userId },
-    data: { isActive: false },
+    data: { isActive: false, sessionVersion: { increment: 1 } },
   });
 }
