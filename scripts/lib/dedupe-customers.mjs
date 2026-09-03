@@ -38,11 +38,17 @@ export const CUSTOMER_FK_TABLES = [
 /** The only table names any generated SQL may name. */
 const ALLOWED_TABLES = new Set(['customers', ...CUSTOMER_FK_TABLES.map((t) => t.table)]);
 
+/**
+ * Gate every table name that reaches generated SQL. Backup files are read
+ * from disk and could name anything, so a name that is not one of ours is
+ * refused rather than interpolated.
+ */
 function assertAllowedTable(table) {
   if (!ALLOWED_TABLES.has(table)) throw new Error(`Refusing unknown table in backup: ${String(table)}`);
   return table;
 }
 
+/** Trim, lowercase and collapse whitespace, so " Acme  Ltd " keys as "acme ltd". */
 export function normalisePart(value) {
   return (value ?? '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
 }
@@ -84,6 +90,7 @@ export function groupKeyFor(row) {
  * customer id -> table -> row count
  */
 
+/** How many linked rows a customer has in total, across every table. */
 function totalLinks(counts, id) {
   const byTable = counts[id] ?? {};
   return Object.values(byTable).reduce((sum, n) => sum + n, 0);

@@ -33,6 +33,10 @@ import {
 
 config({ path: join(dirname(fileURLToPath(import.meta.url)), '..', '.env') });
 
+/**
+ * Parse the CLI flags. Unknown arguments throw rather than being ignored:
+ * a misspelt --execute that silently did nothing would read as a dry run.
+ */
 function parseArgs(argv) {
   const out = {
     email: null,
@@ -58,10 +62,12 @@ function parseArgs(argv) {
   return out;
 }
 
+/** Local hosts skip the --confirm-remote requirement. */
 function isLocalHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1';
 }
 
+/** Resolve the owning account by email; returns null when there is no such user. */
 async function findOwner(client, email) {
   const { rows } = await client.query(
     'SELECT id, email, workspace_id FROM app_users WHERE lower(email) = lower($1) LIMIT 1',
@@ -70,6 +76,7 @@ async function findOwner(client, email) {
   return rows[0] ?? null;
 }
 
+/** Every customer for one owner, with the fields the natural key is built from. */
 async function loadCustomers(client, ownerUserId) {
   const { rows } = await client.query(
     `SELECT id, owner_user_id AS "ownerUserId", cin7_contact_id AS "cin7ContactId",
@@ -80,6 +87,10 @@ async function loadCustomers(client, ownerUserId) {
   return rows;
 }
 
+/**
+ * Count linked rows per customer per table.
+ * @returns {Promise<Record<string, Record<string, number>>>} customer id -> table -> rows
+ */
 async function loadLinkCounts(client, ids) {
   const counts = {};
   for (const { table } of CUSTOMER_FK_TABLES) {
@@ -134,6 +145,7 @@ async function takeBackup(client, plan) {
   };
 }
 
+/** Apply statements in one transaction; any failure rolls the whole set back. */
 async function runStatements(client, statements) {
   await client.query('BEGIN');
   try {
@@ -144,6 +156,10 @@ async function runStatements(client, statements) {
   }
 }
 
+/**
+ * Prove the merge landed: no loser customer still exists, and no table still
+ * points at one. Both must be zero, or the caller rolls back from the backup.
+ */
 async function verifyApplied(client, plan) {
   const losers = plan.merges.flatMap((m) => m.losers);
   const remaining = (
@@ -181,6 +197,11 @@ function assertCountsUnchanged(before, after, ids) {
   }
 }
 
+/**
+ * Roll back and rethrow the error that caused it. A ROLLBACK that itself
+ * fails (a dead connection) must not replace the real diagnosis; the server
+ * has already discarded the transaction in that case.
+ */
 async function rollbackQuietly(client, original) {
   try {
     await client.query('ROLLBACK');
@@ -190,6 +211,7 @@ async function rollbackQuietly(client, original) {
   throw original;
 }
 
+/** Print the dry-run report: what would change, and how it compares to Cin7. */
 function printSummary(plan, expectedCin7Count) {
   const t = plan.totals;
   console.log(`customers now:        ${t.customers}`);
@@ -209,6 +231,7 @@ function printSummary(plan, expectedCin7Count) {
   }
 }
 
+/** Resolve the target, then rollback, dry-run or execute per the flags. */
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const resolved = resolveDatabaseUrl();

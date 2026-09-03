@@ -68,6 +68,10 @@ export function canonicalJson(value) {
   return JSON.stringify(value);
 }
 
+/**
+ * @param {string} text
+ * @returns {string} lowercase hex SHA-256
+ */
 export function sha256Hex(text) {
   return createHash('sha256').update(text).digest('hex');
 }
@@ -171,6 +175,11 @@ export function verifyReceipt(receipt, signingKey = null) {
   return receiptDigest(canonicalJson(rest), signingKey) === sha256;
 }
 
+/**
+ * Parse a probe body as JSON. A non-JSON body is recorded as its length
+ * only: an HTML error page or a proxy notice is not evidence about the
+ * application, and echoing it could carry text we have not vetted.
+ */
 async function readJsonBody(response) {
   const text = await response.text();
   try {

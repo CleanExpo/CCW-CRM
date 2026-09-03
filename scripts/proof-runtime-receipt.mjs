@@ -16,6 +16,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { collectRuntimeReceipt } from './lib/runtime-receipt.mjs';
 
+/** Parse the CLI flags. Only --out is supported; everything else is env. */
 function parseArgs(argv) {
   const out = { outPath: null };
   for (let i = 0; i < argv.length; i += 1) {
