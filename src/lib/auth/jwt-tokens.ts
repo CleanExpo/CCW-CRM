@@ -10,12 +10,13 @@ export async function signAccessToken(
   userId: string,
   email: string,
   isAdmin: boolean,
-  role: 'owner' | 'admin' | 'member' | 'billing'
+  role: 'owner' | 'admin' | 'member' | 'billing',
+  sessionVersion = 0
 ): Promise<string> {
   const secret = getJwtSecret();
   if (!secret) throw new Error('JWT_SECRET is not configured');
   const exp = process.env.JWT_ACCESS_EXPIRES ?? '8h';
-  return new SignJWT({ email, is_admin: isAdmin, role, typ: 'access' })
+  return new SignJWT({ email, is_admin: isAdmin, role, typ: 'access', sv: sessionVersion })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setIssuedAt()
@@ -27,12 +28,13 @@ export async function signRefreshToken(
   userId: string,
   email: string,
   isAdmin: boolean,
-  role: 'owner' | 'admin' | 'member' | 'billing'
+  role: 'owner' | 'admin' | 'member' | 'billing',
+  sessionVersion = 0
 ): Promise<string> {
   const secret = getJwtSecret();
   if (!secret) throw new Error('JWT_SECRET is not configured');
   const exp = process.env.JWT_REFRESH_EXPIRES ?? '7d';
-  return new SignJWT({ email, is_admin: isAdmin, role, typ: 'refresh' })
+  return new SignJWT({ email, is_admin: isAdmin, role, typ: 'refresh', sv: sessionVersion })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setIssuedAt()
@@ -44,11 +46,12 @@ export async function signTokenPair(
   userId: string,
   email: string,
   isAdmin: boolean,
-  role: 'owner' | 'admin' | 'member' | 'billing'
+  role: 'owner' | 'admin' | 'member' | 'billing',
+  sessionVersion = 0
 ): Promise<{ access_token: string; refresh_token: string }> {
   const [access_token, refresh_token] = await Promise.all([
-    signAccessToken(userId, email, isAdmin, role),
-    signRefreshToken(userId, email, isAdmin, role),
+    signAccessToken(userId, email, isAdmin, role, sessionVersion),
+    signRefreshToken(userId, email, isAdmin, role, sessionVersion),
   ]);
   return { access_token, refresh_token };
 }
@@ -59,6 +62,7 @@ export async function verifyAuthAccessJwt(token: string): Promise<{
   email?: string;
   is_admin: boolean;
   role: 'owner' | 'admin' | 'member' | 'billing';
+  session_version: number;
 } | null> {
   const secret = getJwtSecret();
   if (!secret) return null;
@@ -73,10 +77,14 @@ export async function verifyAuthAccessJwt(token: string): Promise<{
     if (role !== 'owner' && role !== 'admin' && role !== 'member' && role !== 'billing') {
       return null;
     }
-    return { sub, email, is_admin, role };
+    return { sub, email, is_admin, role, session_version: sessionVersionFromPayload(payload) };
   } catch {
     return null;
   }
+}
+
+function sessionVersionFromPayload(payload: { sv?: unknown }): number {
+  return typeof payload.sv === 'number' && Number.isFinite(payload.sv) ? payload.sv : 0;
 }
 
 export async function verifyRefreshJwt(token: string): Promise<{
@@ -84,6 +92,7 @@ export async function verifyRefreshJwt(token: string): Promise<{
   email: string;
   is_admin: boolean;
   role: 'owner' | 'admin' | 'member' | 'billing';
+  session_version: number;
 } | null> {
   const secret = getJwtSecret();
   if (!secret) return null;
@@ -97,7 +106,13 @@ export async function verifyRefreshJwt(token: string): Promise<{
     if (role !== 'owner' && role !== 'admin' && role !== 'member' && role !== 'billing') {
       return null;
     }
-    return { sub, email, is_admin: payload.is_admin === true, role };
+    return {
+      sub,
+      email,
+      is_admin: payload.is_admin === true,
+      role,
+      session_version: sessionVersionFromPayload(payload),
+    };
   } catch {
     return null;
   }
@@ -109,6 +124,7 @@ export async function verifyAccessJwt(token: string): Promise<{
   email: string;
   is_admin: boolean;
   role: 'owner' | 'admin' | 'member' | 'billing';
+  session_version: number;
 } | null> {
   const secret = getJwtSecret();
   if (!secret) return null;
@@ -122,7 +138,13 @@ export async function verifyAccessJwt(token: string): Promise<{
     if (role !== 'owner' && role !== 'admin' && role !== 'member' && role !== 'billing') {
       return null;
     }
-    return { sub, email, is_admin: payload.is_admin === true, role };
+    return {
+      sub,
+      email,
+      is_admin: payload.is_admin === true,
+      role,
+      session_version: sessionVersionFromPayload(payload),
+    };
   } catch {
     return null;
   }
