@@ -36,11 +36,11 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface InviteTeamMemberFormProps {
-  onSuccess?: (credentials?: {
+  onSuccess?: (invite?: {
     email: string;
-    temporary_password: string;
     role: TeamMemberRole;
-    must_change_password: boolean;
+    delivery: 'mailtrap';
+    must_set_password: boolean;
   }) => void;
   onCancel?: () => void;
 }
@@ -76,11 +76,11 @@ export function InviteTeamMemberForm({ onSuccess, onCancel }: InviteTeamMemberFo
       });
 
       toast({
-        title: "Invitation Sent",
-        description: `Sent invitation to ${values.email}`,
+        title: "Invitation sent to Mailtrap",
+        description: `Invite for ${values.email} is in the shared Mailtrap inbox — not a live mailbox.`,
       });
 
-      onSuccess?.(result.credentials);
+      onSuccess?.(result.invite);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to send invitation";
       toast({
@@ -110,7 +110,9 @@ export function InviteTeamMemberForm({ onSuccess, onCancel }: InviteTeamMemberFo
                   disabled={isLoading}
                 />
               </FormControl>
-              <FormDescription>We'll send them an invitation email</FormDescription>
+              <FormDescription>
+                The accept link is delivered to Mailtrap (Toby and Phill share one inbox), not a live mailbox.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
