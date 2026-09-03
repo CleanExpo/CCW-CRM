@@ -29,7 +29,19 @@ export const CUSTOMER_FK_TABLES = [
   { table: 'operational_events', onDelete: 'SetNull', unique: false },
   { table: 'customer_personas', onDelete: 'Cascade', unique: true },
   { table: 'customer_price_tiers', onDelete: 'Cascade', unique: true },
+  // A uuid pointer with no database foreign key and no Prisma relation
+  // (CcwAiCallSession.customerId). Nothing stops a loser delete from leaving
+  // it dangling, so it is repointed like the rest.
+  { table: 'ccw_ai_call_sessions', onDelete: 'None', unique: false },
 ];
+
+/** The only table names any generated SQL may name. */
+const ALLOWED_TABLES = new Set(['customers', ...CUSTOMER_FK_TABLES.map((t) => t.table)]);
+
+function assertAllowedTable(table) {
+  if (!ALLOWED_TABLES.has(table)) throw new Error(`Refusing unknown table in backup: ${String(table)}`);
+  return table;
+}
 
 export function normalisePart(value) {
   return (value ?? '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
@@ -133,14 +145,20 @@ export function buildPlan({ customers, linkCounts }) {
     const survivor = chooseSurvivor(group, linkCounts);
     const losers = group.filter((r) => r.id !== survivor.id);
     const moves = [];
+    // A 1:1 slot on the survivor can be filled at most once: by its own row,
+    // or by the first loser repointed into it. Every later loser's row drops.
+    const filledOneToOne = new Set(
+      CUSTOMER_FK_TABLES.filter((t) => t.unique && (linkCounts[survivor.id]?.[t.table] ?? 0) > 0).map((t) => t.table)
+    );
     for (const loser of losers) {
       for (const { table, unique } of CUSTOMER_FK_TABLES) {
         const n = linkCounts[loser.id]?.[table] ?? 0;
         if (n === 0) continue;
-        if (unique && (linkCounts[survivor.id]?.[table] ?? 0) > 0) {
+        if (unique && filledOneToOne.has(table)) {
           moves.push({ table, from: loser.id, to: survivor.id, rows: n, action: 'drop' });
           oneToOneDrops[table] += n;
         } else {
+          if (unique) filledOneToOne.add(table);
           moves.push({ table, from: loser.id, to: survivor.id, rows: n, action: 'repoint' });
           repointsByTable[table] += n;
         }
@@ -212,14 +230,16 @@ export function rollbackSql(backup) {
     });
   }
   for (const { table, row } of backup.one_to_one_rows) {
+    const t = assertAllowedTable(table);
     statements.push({
-      sql: `INSERT INTO ${table} SELECT * FROM jsonb_populate_record(NULL::${table}, $1::jsonb)`,
+      sql: `INSERT INTO ${t} SELECT * FROM jsonb_populate_record(NULL::${t}, $1::jsonb)`,
       params: [JSON.stringify(row)],
     });
   }
   for (const { table, id, customer_id } of backup.fk_rows) {
+    const t = assertAllowedTable(table);
     statements.push({
-      sql: `UPDATE ${table} SET customer_id = $1 WHERE id = $2`,
+      sql: `UPDATE ${t} SET customer_id = $1 WHERE id = $2`,
       params: [customer_id, id],
     });
   }

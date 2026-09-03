@@ -6,8 +6,10 @@
  *   E2E_BASE_URL=https://ccw-crm-web.vercel.app npm run proof:runtime-receipt -- --out receipts/health.json
  *
  * With E2E_EMAIL and E2E_PASSWORD set it also records whether login yields a
- * session (status + cookie-set flag only). Exit code is 0 for a healthy
- * receipt and 2 for an unhealthy one, so a pipeline can gate on it.
+ * session (status + cookie-set flag only). With RECEIPT_SIGNING_KEY set the
+ * digest is an HMAC only the key holder can recompute. Exit code is 0 for a
+ * healthy receipt and 2 for an unhealthy one (including a target that does
+ * not answer at all), so a pipeline can gate on it.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -32,7 +34,8 @@ const credentials =
     ? { email: process.env.E2E_EMAIL, password: process.env.E2E_PASSWORD }
     : null;
 
-const receipt = await collectRuntimeReceipt({ baseUrl, credentials });
+const signingKey = process.env.RECEIPT_SIGNING_KEY || null;
+const receipt = await collectRuntimeReceipt({ baseUrl, credentials, signingKey });
 const text = `${JSON.stringify(receipt, null, 2)}\n`;
 
 if (outPath) {

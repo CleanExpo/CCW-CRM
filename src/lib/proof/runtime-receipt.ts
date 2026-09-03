@@ -9,7 +9,10 @@ export {
   buildReceipt,
   canonicalJson,
   collectRuntimeReceipt,
+  receiptDigest,
   redact,
+  redactText,
   sha256Hex,
+  stripUrlCredentials,
   verifyReceipt,
 } from '../../../scripts/lib/runtime-receipt.mjs';

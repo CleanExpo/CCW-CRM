@@ -5,6 +5,7 @@ import {
   canonicalJson,
   collectRuntimeReceipt,
   redact,
+  stripUrlCredentials,
   verifyReceipt,
 } from '../runtime-receipt';
 
@@ -23,6 +24,30 @@ describe('redact', () => {
     expect(text).not.toContain('hunter2');
     expect(text).not.toContain('postgresql://');
     expect(out.status).toBe('healthy');
+  });
+
+  it('catches secrets the key list does not name: JWTs, bearer tokens, any URL with userinfo', () => {
+    const out = redact({
+      jwt: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abcdefghijklmnop',
+      bearer: 'Bearer eyJ-BEARER',
+      session: 'SESSION-ID-VALUE',
+      credentials: 'CRED-VALUE',
+      dsn: 'mysql://root:MYSQLPW@h/db',
+      cache: 'redis://:REDISPW@host:6379',
+      note: 'Authorization: Bearer eyJ-INLINE and eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abcdefghijklmnop',
+      basic: 'Basic dXNlcjpwYXNz',
+    });
+    const text = JSON.stringify(out);
+    for (const leak of ['MYSQLPW', 'REDISPW', 'SESSION-ID', 'CRED-VALUE', 'eyJ-BEARER', 'eyJ-INLINE', 'eyJhbGci', 'dXNlcjpwYXNz']) {
+      expect(text).not.toContain(leak);
+    }
+  });
+});
+
+describe('stripUrlCredentials', () => {
+  it('drops userinfo from the base URL', () => {
+    expect(stripUrlCredentials('https://user:BASICPW@example.test/')).toBe('https://example.test');
+    expect(stripUrlCredentials('not a url http://u:p@x.y')).not.toContain('u:p@');
   });
 });
 
@@ -84,6 +109,18 @@ describe('buildReceipt', () => {
     expect(verifyReceipt({ ...receipt, verdict: 'healthy' })).toBe(false);
   });
 
+  it('keyed digests cannot be recomputed without the key', () => {
+    const probes = [{ name: 'health', method: 'GET', path: '/api/health', status: 200, body: {} }];
+    const signed = buildReceipt({ baseUrl, readAt, probes, signingKey: 'k1' });
+    expect(signed.hash_alg).toBe('hmac-sha256');
+    expect(verifyReceipt(signed, 'k1')).toBe(true);
+    expect(verifyReceipt(signed, 'k2')).toBe(false);
+    expect(verifyReceipt(signed)).toBe(false);
+    // Recomputing an unkeyed hash over an edited receipt is not a forgery of a keyed one.
+    const unsigned = buildReceipt({ baseUrl, readAt, probes });
+    expect(verifyReceipt({ ...unsigned, hash_alg: 'hmac-sha256' }, 'k1')).toBe(false);
+  });
+
   it('canonicalises key order so the hash is order-independent', () => {
     expect(canonicalJson({ b: 1, a: [{ d: 2, c: 3 }] })).toBe('{"a":[{"c":3,"d":2}],"b":1}');
   });
@@ -127,6 +164,25 @@ describe('collectRuntimeReceipt', () => {
     expect(receipt.probes[2]).toMatchObject({ status: 200, session_cookie_set: true });
     expect(receipt.verdict).toBe('healthy');
     expect(calls[0]).toBe('https://example.test/');
+  });
+
+  it('records a target that does not answer as status 0 with the error class, and stays unhealthy', async () => {
+    const fetchImpl = async () => {
+      throw Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('x'), { name: 'ECONNREFUSED' }) });
+    };
+    const receipt = await collectRuntimeReceipt({
+      baseUrl: 'https://user:pw@127.0.0.1:9',
+      credentials: { email: 'a@b.c', password: 'pw' },
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(receipt.verdict).toBe('unhealthy');
+    expect(receipt.base_url).toBe('https://127.0.0.1:9');
+    expect(receipt.probes.map((p) => [p.name, p.status, p.error])).toEqual([
+      ['landing', 0, 'TypeError:ECONNREFUSED'],
+      ['health', 0, 'TypeError:ECONNREFUSED'],
+      ['login', 0, 'TypeError:ECONNREFUSED'],
+    ]);
+    expect(JSON.stringify(receipt)).not.toContain('user:pw');
   });
 
   it('skips the login probe without credentials', async () => {

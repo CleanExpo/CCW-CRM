@@ -91,6 +91,21 @@ describe('buildPlan', () => {
     expect(plan.totals.one_to_one_drops.customer_personas).toBe(1);
   });
 
+  it('fills a survivor 1:1 slot once when several losers carry a row, dropping the rest', () => {
+    const plan = buildPlan({
+      customers: [row({ id: 'keep' }), row({ id: 'l1', createdAt: '2026-04-01T00:00:00Z' }), row({ id: 'l2', createdAt: '2026-05-01T00:00:00Z' })],
+      linkCounts: { keep: { orders: 9 }, l1: { customer_personas: 1 }, l2: { customer_personas: 1 } },
+    });
+    const [merge] = plan.merges;
+    const personaMoves = merge.moves.filter((m) => m.table === 'customer_personas');
+    expect(personaMoves.map((m) => m.action).sort()).toEqual(['drop', 'repoint']);
+    expect(plan.totals.repoints_by_table.customer_personas).toBe(1);
+    expect(plan.totals.one_to_one_drops.customer_personas).toBe(1);
+    // Exactly one UPDATE lands on the unique column.
+    const updates = planToSql(plan).filter((s) => s.sql.startsWith('UPDATE customer_personas'));
+    expect(updates).toHaveLength(1);
+  });
+
   it('is idempotent: applying the plan leaves nothing to plan', () => {
     const customers = [row({ id: 'a' }), row({ id: 'b' }), row({ id: 'c' }), row({ id: 'd', email: 'x@y.z' }), row({ id: 'e', email: 'X@Y.Z' })];
     const linkCounts = { a: { orders: 1 }, e: { quotes: 3 } };
@@ -128,8 +143,19 @@ describe('planToSql / rollbackSql', () => {
     ]);
   });
 
-  it('covers every relation Prisma declares on Customer', () => {
-    // Eleven relations on the model; if one is added there this list must grow.
-    expect(CUSTOMER_FK_TABLES).toHaveLength(11);
+  it('refuses a backup naming a table outside the constant list', () => {
+    expect(() =>
+      rollbackSql({ customers: [], one_to_one_rows: [], fk_rows: [{ table: 'orders; DROP TABLE customers; --', id: 'o', customer_id: 'c' }] })
+    ).toThrow(/unknown table/);
+    expect(() =>
+      rollbackSql({ customers: [], one_to_one_rows: [{ table: 'pg_shadow', row: {} }], fk_rows: [] })
+    ).toThrow(/unknown table/);
+  });
+
+  it('covers every Prisma relation on Customer plus the unconstrained call-session pointer', () => {
+    // Eleven relations on the model and one bare uuid column; if one is added
+    // to prisma/schema.prisma this list must grow.
+    expect(CUSTOMER_FK_TABLES).toHaveLength(12);
+    expect(CUSTOMER_FK_TABLES.map((t) => t.table)).toContain('ccw_ai_call_sessions');
   });
 });

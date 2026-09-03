@@ -92,24 +92,30 @@ async function loadLinkCounts(client, ids) {
   return counts;
 }
 
-/** Everything needed to put the losers back exactly as they were. */
+/**
+ * Everything needed to put the losers back exactly as they were. Rows are
+ * serialised by Postgres (`to_jsonb`) rather than by node-pg, so a
+ * `timestamp without time zone` column round-trips byte-for-byte instead of
+ * being parsed as local time and re-emitted as UTC. Called inside the
+ * transaction, after the customer rows are locked.
+ */
 async function takeBackup(client, plan) {
   const losers = plan.merges.flatMap((m) => m.losers);
   const customers = (
-    await client.query('SELECT * FROM customers WHERE id = ANY($1::uuid[])', [losers])
-  ).rows;
+    await client.query('SELECT to_jsonb(c) AS row FROM customers c WHERE id = ANY($1::uuid[])', [losers])
+  ).rows.map((r) => r.row);
   const fkRows = [];
   const oneToOneRows = [];
   for (const merge of plan.merges) {
     for (const move of merge.moves) {
       const { rows } = await client.query(
-        `SELECT * FROM ${move.table} WHERE customer_id = $1`,
+        `SELECT to_jsonb(t) AS row FROM ${move.table} t WHERE customer_id = $1`,
         [move.from]
       );
       if (move.action === 'drop') {
-        for (const row of rows) oneToOneRows.push({ table: move.table, row });
+        for (const { row } of rows) oneToOneRows.push({ table: move.table, row });
       } else {
-        for (const row of rows) {
+        for (const { row } of rows) {
           fkRows.push({ table: move.table, id: row.id, customer_id: row.customer_id });
         }
       }
@@ -233,13 +239,25 @@ async function main() {
       return;
     }
 
-    const backup = await takeBackup(client, plan);
+    // One transaction: lock every customer in the plan so nothing can be
+    // linked to a loser between the backup and the delete, take the backup,
+    // write it to disk, then apply. A failure anywhere rolls the lot back.
     mkdirSync(args.backupDir, { recursive: true });
-    const backupPath = join(args.backupDir, `customer-dedupe-${backup.taken_at.replace(/[:.]/g, '-')}.json`);
-    writeFileSync(backupPath, `${JSON.stringify(backup, null, 2)}\n`);
-    console.log(`backup written to ${backupPath} (${backup.customers.length} customers, ${backup.fk_rows.length} references)`);
-
-    await runStatements(client, planToSql(plan));
+    const involved = plan.merges.flatMap((m) => [m.survivor, ...m.losers]);
+    let backupPath = null;
+    await client.query('BEGIN');
+    try {
+      await client.query('SELECT id FROM customers WHERE id = ANY($1::uuid[]) FOR UPDATE', [involved]);
+      const backup = await takeBackup(client, plan);
+      backupPath = join(args.backupDir, `customer-dedupe-${backup.taken_at.replace(/[:.]/g, '-')}.json`);
+      writeFileSync(backupPath, `${JSON.stringify(backup, null, 2)}\n`);
+      console.log(`backup written to ${backupPath} (${backup.customers.length} customers, ${backup.fk_rows.length} references)`);
+      for (const { sql, params } of planToSql(plan)) await client.query(sql, params);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    }
     const check = await verifyApplied(client, plan);
     console.log(`applied: remaining losers ${check.remaining_losers}, dangling references ${check.dangling_references}`);
     if (check.remaining_losers !== 0 || check.dangling_references !== 0) {

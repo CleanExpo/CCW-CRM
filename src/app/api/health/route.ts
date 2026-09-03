@@ -118,12 +118,13 @@ function describeFailure(error: unknown): string {
 }
 
 /**
- * A Supabase direct host has no IPv4 address and Vercel has no IPv6 egress, so
- * a probe against it times out every time. Say so, rather than leaving the
- * operator to guess between "paused", "wrong project" and "unroutable".
+ * A Supabase direct host publishes no IPv4 address (unless the IPv4 add-on is
+ * bought) and Vercel has no IPv6 egress, so a probe against it times out. Say
+ * so, hedged, rather than leaving the operator to guess between "paused",
+ * "wrong project" and "unroutable".
  */
 const SUPABASE_DIRECT_HOST_HINT =
-  "DATABASE_URL points at a Supabase direct host (db.<ref>.supabase.co), which has no IPv4 route from Vercel; use the transaction pooler URI (aws-<n>-<region>.pooler.supabase.com:6543).";
+  "DATABASE_URL points at a Supabase direct host (db.<ref>.supabase.co). Direct hosts publish no IPv4 address unless the project has the IPv4 add-on, and Vercel functions have no IPv6 egress, so this shape usually times out from Vercel; the transaction pooler URI (aws-<n>-<region>.pooler.supabase.com:6543) is the supported form.";
 
 async function probeDatabase(): Promise<HealthResponse["database"]> {
   const host_class = classifyDatabaseHost();
