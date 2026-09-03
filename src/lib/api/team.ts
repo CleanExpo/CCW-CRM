@@ -26,16 +26,16 @@ export interface TeamMemberInvite {
   role?: TeamMemberRole;
 }
 
-export interface TeamInviteCredentials {
+export interface TeamInviteDelivery {
   email: string;
-  temporary_password: string;
   role: TeamMemberRole;
-  must_change_password: boolean;
+  delivery: 'mailtrap';
+  must_set_password: boolean;
 }
 
 export interface TeamInviteResponse {
   member: TeamMember;
-  credentials: TeamInviteCredentials;
+  invite: TeamInviteDelivery;
 }
 
 /**
