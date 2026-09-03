@@ -17,11 +17,23 @@ export async function POST(request: NextRequest) {
     }
 
     const row = await findAppUserById(claims.sub);
-    if (!row || !row.isActive || row.email.toLowerCase() !== claims.email.toLowerCase()) {
+    if (
+      !row ||
+      !row.isActive ||
+      row.mustChangePassword ||
+      row.email.toLowerCase() !== claims.email.toLowerCase() ||
+      (row.sessionVersion ?? 0) !== claims.session_version
+    ) {
       return jsonDetail('Invalid or expired refresh session', 401);
     }
 
-    const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
+    const tokens = await signTokenPair(
+      row.id,
+      row.email,
+      row.isAdmin,
+      row.role,
+      row.sessionVersion ?? 0
+    );
     const response = jsonOk({
       access_token: tokens.access_token,
       token_type: 'bearer',
