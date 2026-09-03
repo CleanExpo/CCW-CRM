@@ -19,7 +19,8 @@
     "db:migrate": "prisma migrate dev",
     "removetemp-accounts": "node scripts/remove-temp-accounts.mjs",
     "list-accounts": "node scripts/list-accounts.mjs",
-    "cin7:store-anne-export": "node scripts/store-anne-export.mjs"
+    "cin7:store-anne-export": "node scripts/store-anne-export.mjs",
+    "proof:runtime-receipt": "node scripts/proof-runtime-receipt.mjs"
   },
   "bin": {
     "removetemp-accounts": "./scripts/remove-temp-accounts.mjs",
