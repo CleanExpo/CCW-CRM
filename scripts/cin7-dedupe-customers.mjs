@@ -10,8 +10,11 @@
  *   node scripts/cin7-dedupe-customers.mjs --rollback ./backups/<file>.json --confirm-remote
  *
  * Execute requires CIN7_ALLOW_DUPLICATE_CLEANUP=true (the same gate as the
- * API route), --execute, and --confirm-remote for a non-local host. It writes
- * a backup file BEFORE the transaction opens; --rollback replays that file.
+ * API route), --execute, and --confirm-remote for a non-local host. Inside one
+ * transaction it locks the involved customers, recounts their links and
+ * aborts on any change, writes the backup file, then applies the plan;
+ * --rollback replays that file. A backup file whose transaction rolled back
+ * is harmless: replaying it fails on the customers primary key.
  */
 
 import { config } from 'dotenv';

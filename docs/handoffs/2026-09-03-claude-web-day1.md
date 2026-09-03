@@ -12,7 +12,9 @@ as BLOCKED-ON-FOUNDER with what a GO unlocks. Nothing sits more than 7 days.
 ## State
 
 - Repo: CleanExpo/CCW-CRM, branch `claude/vibrant-lovelace-olw0dy`, merge-base with `origin/main`
-  at `d0d72ec` (`git merge-base`, 03/09 12:55 AEST). Five commits on the branch, listed below.
+  at `d0d72ec` (`git merge-base`, 03/09 12:55 AEST). Commits on the branch (`git log
+  origin/main..HEAD`, times from `%ci` in AEST): `420b0ae` 13:02, `05daf3e` 13:13, `51e9744` 13:20,
+  `f0a6514` 13:24, `5e42b8f` 13:38, `6a2ea73` 13:46, plus the commit carrying this revision.
 - No `claude-hooks-mirror/` directory exists in the checkout (`find . -iname '*hooks-mirror*'`,
   03/09 12:55 AEST); `hooks/hooks.json` has empty PreToolUse/PostToolUse/Stop arrays;
   `.claude/settings.json` states hooks are deliberately absent and the gate is
@@ -72,10 +74,13 @@ as BLOCKED-ON-FOUNDER with what a GO unlocks. Nothing sits more than 7 days.
    commit after `5e42b8f` (see `git log`), with a lock-time recount that aborts on any change.
 
 Gate evidence so far, each bound to its SHA (scratchpad logs, eleven commands each, all exit 0):
-`f0a6514` at 03/09 13:35 AEST (vitest 80 files passed, 1 skipped; 621 tests passed, 2 skipped);
-`5e42b8f` at 03/09 13:48 AEST (81 files passed, 1 skipped; 630 tests passed, 2 skipped). The
-skipped file is the `TEST_DATABASE_URL`-gated one CLAUDE.md names. The final commit's own run is
-pasted into the pull request body; a figure here for a SHA that is not HEAD is history, not state.
+`f0a6514`, log `dod-final.log` last written 03/09 13:30 AEST (vitest 80 files passed, 1 skipped;
+621 tests passed, 2 skipped); `5e42b8f`, log `dod-5e42b8f.log` last written 13:41 AEST (81 files
+passed, 1 skipped; 630 tests passed, 2 skipped); `6a2ea73`, log `dod-6a2ea73.log` last written
+13:49 AEST: ten commands exit 0 and `scan-secrets` exit 1 on an AWS-shaped test fixture, fixed in
+the next commit. The skipped file is the `TEST_DATABASE_URL`-gated one CLAUDE.md names. The final
+commit's own run is pasted into the pull request body; a figure here for a SHA that is not HEAD
+is history, not state.
 
 ## Next
 

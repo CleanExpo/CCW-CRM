@@ -181,10 +181,6 @@ async function readJsonBody(response) {
 }
 
 /**
- * Run the probes against a deployment. `fetchImpl` is injectable for tests.
- * Login is attempted only when both credentials are present; the receipt
- * records the status and whether a session cookie was set, nothing else.
-/**
  * A probe that cannot even connect is still a probe result: status 0 and the
  * error's class name (never its message, which can carry a URL). The receipt
  * then reads unhealthy instead of the CLI dying with a stack trace.
