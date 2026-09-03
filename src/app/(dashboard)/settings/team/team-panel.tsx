@@ -69,11 +69,11 @@ export default function TeamManagementPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [createdCredentials, setCreatedCredentials] = useState<{
+  const [createdInvite, setCreatedInvite] = useState<{
     email: string;
-    temporary_password: string;
     role: TeamMemberRole;
-    must_change_password: boolean;
+    delivery: 'mailtrap';
+    must_set_password: boolean;
   } | null>(null);
   const { toast } = useToast();
 
@@ -121,14 +121,14 @@ export default function TeamManagementPage() {
     }
   }
 
-  function handleInviteSuccess(credentials?: {
+  function handleInviteSuccess(invite?: {
     email: string;
-    temporary_password: string;
     role: TeamMemberRole;
-    must_change_password: boolean;
+    delivery: 'mailtrap';
+    must_set_password: boolean;
   }) {
     setInviteDialogOpen(false);
-    setCreatedCredentials(credentials ?? null);
+    setCreatedInvite(invite ?? null);
     fetchTeamMembers();
   }
 
@@ -162,8 +162,7 @@ export default function TeamManagementPage() {
             <DialogHeader>
               <DialogTitle>Invite Team Member</DialogTitle>
               <DialogDescription>
-                Create a team user and assign access. You'll get one-time login credentials after
-                saving.
+                Invite them by email. The accept link is sent to Mailtrap, not a live inbox.
               </DialogDescription>
             </DialogHeader>
             <InviteTeamMemberForm
@@ -331,36 +330,32 @@ export default function TeamManagementPage() {
         </div>
       )}
 
-      <Dialog open={!!createdCredentials} onOpenChange={(open) => !open && setCreatedCredentials(null)}>
+      <Dialog open={!!createdInvite} onOpenChange={(open) => !open && setCreatedInvite(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Login Credentials Generated</DialogTitle>
+            <DialogTitle>Invite sent to Mailtrap</DialogTitle>
             <DialogDescription>
-              Share these one-time credentials securely with the new team member.
+              Open the shared Mailtrap inbox (Toby and Phill, one API token) and use the accept
+              link. No temporary password is issued.
             </DialogDescription>
           </DialogHeader>
-          {createdCredentials && (
+          {createdInvite && (
             <div className="space-y-3 rounded-md border p-3">
               <div>
                 <p className="text-xs text-muted-foreground">Email</p>
-                <p className="font-mono text-sm">{createdCredentials.email}</p>
-              </div>
-              <Separator />
-              <div>
-                <p className="text-xs text-muted-foreground">Temporary Password</p>
-                <p className="font-mono text-sm">{createdCredentials.temporary_password}</p>
+                <p className="font-mono text-sm">{createdInvite.email}</p>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">Granted Role</p>
-                <Badge className={ROLE_COLORS[createdCredentials.role]}>
-                  {createdCredentials.role.toUpperCase()}
+                <Badge className={ROLE_COLORS[createdInvite.role]}>
+                  {createdInvite.role.toUpperCase()}
                 </Badge>
               </div>
             </div>
           )}
           <div className="flex justify-end">
-            <Button onClick={() => setCreatedCredentials(null)}>Done</Button>
+            <Button onClick={() => setCreatedInvite(null)}>Done</Button>
           </div>
         </DialogContent>
       </Dialog>
