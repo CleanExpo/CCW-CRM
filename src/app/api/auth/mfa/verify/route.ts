@@ -38,7 +38,13 @@ export async function POST(request: NextRequest) {
   }
 
   await updateLastLogin(row.id);
-  const tokens = await signTokenPair(row.id, row.email, row.isAdmin, row.role);
+  const tokens = await signTokenPair(
+    row.id,
+    row.email,
+    row.isAdmin,
+    row.role,
+    row.sessionVersion ?? 0
+  );
   const response = jsonOk({
     access_token: tokens.access_token,
     token_type: 'bearer',
