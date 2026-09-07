@@ -3,7 +3,19 @@ import crypto from 'crypto';
 
 export type ShopifyMode = 'demo' | 'live';
 
-const API_VERSION_FALLBACK = '2025-01';
+/**
+ * The Admin API version this codebase's queries are written against (UNI-2672).
+ *
+ * This is a compatibility contract with the three REST endpoints and the one
+ * GraphQL operation Optix calls — not a deployment setting — so it lives in the
+ * code and the env var is an override, never the source of truth.
+ *
+ * Kept at 2025-01 deliberately: moving it changes live store behaviour and needs
+ * a run against a real store, which is founder-gated. The audit that decides the
+ * next value is `docs/integrations/shopify-readiness-2026-10.md`; none of the
+ * confirmed 2026-10 breaking changes touch anything Optix calls.
+ */
+const PINNED_API_VERSION = '2025-01';
 
 export function getShopifyMode(): ShopifyMode {
   return process.env.SHOPIFY_MODE === 'live' ? 'live' : 'demo';
@@ -41,11 +53,40 @@ export function getShopifyScopes(): string {
 }
 
 /**
- * Admin API version must be YYYY-MM. Invalid values fall back (e.g. app name mistaken for version).
+ * Admin API version must be YYYY-MM. Invalid values fall back to the pin
+ * (e.g. an app name mistaken for a version).
  */
 export function getShopifyApiVersion(): string {
-  const raw = process.env.SHOPIFY_API_VERSION?.trim() || API_VERSION_FALLBACK;
-  return /^\d{4}-\d{2}$/.test(raw) ? raw : API_VERSION_FALLBACK;
+  const raw = process.env.SHOPIFY_API_VERSION?.trim() || PINNED_API_VERSION;
+  return /^\d{4}-\d{2}$/.test(raw) ? raw : PINNED_API_VERSION;
+}
+
+/** The version compiled into this build, whatever the environment says. */
+export function getPinnedShopifyApiVersion(): string {
+  return PINNED_API_VERSION;
+}
+
+/**
+ * How the effective version was arrived at. Diagnostics needs the distinction:
+ * an unset env var and a malformed one both produce the pin, but only one of
+ * them is somebody's mistake, and reporting neither is how a two-year-old
+ * version goes unnoticed.
+ */
+export function describeShopifyApiVersion(): {
+  effective: string;
+  pinned: string;
+  source: 'pin' | 'override' | 'pin-after-invalid-override';
+} {
+  const raw = process.env.SHOPIFY_API_VERSION?.trim();
+  if (!raw) return { effective: PINNED_API_VERSION, pinned: PINNED_API_VERSION, source: 'pin' };
+  if (/^\d{4}-\d{2}$/.test(raw)) {
+    return { effective: raw, pinned: PINNED_API_VERSION, source: 'override' };
+  }
+  return {
+    effective: PINNED_API_VERSION,
+    pinned: PINNED_API_VERSION,
+    source: 'pin-after-invalid-override',
+  };
 }
 
 /**
