@@ -5,6 +5,7 @@ import {
   type DatabaseHostClass,
 } from "@/lib/db/database-env";
 import { prisma } from "@/lib/db/prisma";
+import { getEmailHealth, type EmailHealth } from "@/lib/email/health";
 
 /**
  * Liveness + database readiness.
@@ -34,6 +35,13 @@ interface HealthResponse {
     /** Operator guidance for a failure whose cause the host shape gives away. */
     hint?: string;
   };
+  /**
+   * Outbound transactional email (UNI-2671). Reports `configured` and
+   * `authenticated` as separate states on purpose: outbound email was dead
+   * from July to September precisely because "the settings are filled in" was
+   * read as "the provider accepts us", and nobody asked the provider.
+   */
+  email: EmailHealth;
   verification_system: {
     enabled: boolean;
     independent_verification: boolean;
@@ -157,16 +165,50 @@ async function probeDatabase(): Promise<HealthResponse["database"]> {
   }
 }
 
+/**
+ * Probe SendGrid only when someone has actually switched sending on. An
+ * un-provisioned deployment therefore makes no outbound call from this public,
+ * unauthenticated endpoint, and a provisioned one is rate-limited by the
+ * 5-minute cache inside `getEmailHealth`.
+ *
+ * Email never makes the service `unhealthy` — the app works without it. But
+ * email that has been ENABLED and is not authenticated is a real, actionable
+ * fault, so it degrades.
+ */
+async function probeEmail(): Promise<EmailHealth> {
+  try {
+    return await getEmailHealth();
+  } catch (error) {
+    console.error("[health] email probe failed", error);
+    return {
+      state: "unconfigured",
+      enabled: false,
+      sandbox: false,
+      from: null,
+      from_name: null,
+      reply_to: null,
+      missing: [],
+      from_matches_approved_identity: false,
+      verified: null,
+      verified_at: null,
+      message: "Email health could not be determined; treat as not working.",
+    };
+  }
+}
+
 export async function GET(): Promise<NextResponse<HealthResponse>> {
-  const database = await probeDatabase();
+  const [database, email] = await Promise.all([probeDatabase(), probeEmail()]);
+
+  const emailFaulted = email.enabled && email.state !== "authenticated";
 
   const body: HealthResponse = {
-    status: database.reachable ? "healthy" : "unhealthy",
+    status: !database.reachable ? "unhealthy" : emailFaulted ? "degraded" : "healthy",
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || "1.0.0",
     uptime: Math.floor((Date.now() - startTime) / 1000),
     environment: process.env.NODE_ENV || "development",
     database,
+    email,
     verification_system: {
       enabled: true,
       independent_verification: true,
