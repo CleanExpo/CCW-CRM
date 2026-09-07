@@ -2329,3 +2329,56 @@ model CcwIndustryEvent {
   @@index([startsAt])
   @@map("ccw_industry_events")
 }
+
+/// Receipt for every transactional send ATTEMPT (UNI-2671 A3).
+///
+/// One row is written before the provider is called and updated with the
+/// outcome, so a send that fails leaves the same trace as one that succeeds.
+/// This is the record that makes "outbound email is dead" observable instead of
+/// silent: an empty table, or a table of `failed` rows, is the answer.
+///
+/// `recipient_hash` is permanent and is what reporting reads. `recipient_email`
+/// exists only so a queued message can actually be retried, and is cleared once
+/// the row reaches a terminal state.
+model TransactionalEmail {
+  id       String @id @default(uuid()) @db.Uuid
+  /// Template name, e.g. team-invitation | password-reset | booking-confirmation.
+  template String
+
+  /// SHA-256 of the lowercased recipient address. Never reversible, always kept.
+  recipientHash String  @map("recipient_hash")
+  /// Cleared on reaching a terminal state; present only while a retry needs it.
+  recipientEmail String? @map("recipient_email")
+
+  subject  String
+  bodyText String? @map("body_text") @db.Text
+  bodyHtml String? @map("body_html") @db.Text
+
+  /// Send-attempt lifecycle: pending | sent | failed | refused.
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(5) @map("max_attempts")
+  nextAttemptAt DateTime? @map("next_attempt_at")
+  lastError     String?   @map("last_error")
+
+  provider          String?
+  providerMessageId String? @map("provider_message_id")
+  /// True when the provider validated the message and deliberately did not deliver it.
+  sandboxed         Boolean @default(false)
+
+  /// Provider delivery events, applied by the SendGrid event webhook:
+  /// delivered | bounce | dropped | blocked | deferred | spamreport | open | click.
+  deliveryStatus String?   @map("delivery_status")
+  deliveryDetail String?   @map("delivery_detail")
+  lastEventAt    DateTime? @map("last_event_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  sentAt    DateTime? @map("sent_at")
+
+  @@index([status, nextAttemptAt])
+  @@index([providerMessageId])
+  @@index([recipientHash])
+  @@index([template])
+  @@map("transactional_emails")
+}
