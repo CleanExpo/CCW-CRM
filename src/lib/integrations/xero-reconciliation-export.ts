@@ -41,16 +41,20 @@ export async function exportReconciledFeedToXero(input: {
         ? `Split reconciliation (${feed.allocations.length} lines)`
         : 'Bank reconciliation';
 
+  // UNI-2668: this module makes no HTTP call to Xero — there is no `fetch(`
+  // anywhere in it. It previously wrote `xeroExportStatus: 'exported'` and
+  // returned "recorded against Xero tenant …", so the ledger and the operator
+  // both believed a reconciled line had reached the accounting system. Until a
+  // real Xero payment/journal client exists, every path is `queued` and says so.
   const xeroMode = getXeroMode();
-  let status = xeroMode === 'live' ? 'queued' : 'exported';
-  let liveMessage = `${summary} — queued for Xero export when connection is live`;
+  const status = 'queued';
+  let liveMessage = `${summary} — queued for Xero export; not yet sent (no Xero export client is wired)`;
 
   if (xeroMode === 'live') {
     const workspaceId = await getWorkspaceIdForUser(input.performedBy);
     const connection = workspaceId ? await loadWorkspaceXeroConnection(workspaceId) : null;
     if (connection?.accessToken) {
-      status = 'exported';
-      liveMessage = `${summary} — recorded against Xero tenant ${connection.tenantName ?? connection.tenantId}`;
+      liveMessage = `${summary} — queued for Xero tenant ${connection.tenantName ?? connection.tenantId}; not yet sent (no Xero export client is wired)`;
     }
   }
 
@@ -73,7 +77,7 @@ export async function exportReconciledFeedToXero(input: {
     return {
       ok: true,
       export_ref: exportRef,
-      message: `${summary} — recorded for Xero export (demo mode)`,
+      message: `${summary} — queued for Xero export (demo mode); not yet sent`,
       mode: 'queued',
     };
   }
@@ -82,6 +86,6 @@ export async function exportReconciledFeedToXero(input: {
     ok: true,
     export_ref: exportRef,
     message: liveMessage,
-    mode: 'live',
+    mode: 'queued',
   };
 }

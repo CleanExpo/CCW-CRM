@@ -86,12 +86,18 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
                 Live
               </Badge>
             ) : null}
-            {health ? (
+            {health && health.grade != null && health.score != null ? (
               <Badge
                 variant="outline"
                 className={`text-xs font-bold ${GRADE_BADGE[health.grade] ?? 'border-white/15 text-zinc-200'}`}
               >
                 {health.grade} ({health.score})
+              </Badge>
+            ) : health ? (
+              // UNI-2668: no measured grade. Say so rather than rendering a
+              // fabricated "A (100)" the way this badge used to.
+              <Badge variant="outline" className="border-white/15 text-xs font-bold text-zinc-400" title={health.reason}>
+                Grade unknown
               </Badge>
             ) : null}
             <Button asChild variant="outline" size="sm" className="border-white/15 text-zinc-200 hover:bg-white/10">
@@ -104,7 +110,7 @@ export const Cin7SyncStatusWidget = memo(function Cin7SyncStatusWidget() {
         }
       />
 
-      {health ? (
+      {health?.details ? (
         <div className="mb-4 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-2 ring-1 ring-white/[0.04]">
             <p className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">Success rate</p>

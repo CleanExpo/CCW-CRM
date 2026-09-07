@@ -91,8 +91,11 @@ export interface Cin7PollStatus {
  * Cin7 sync health score
  */
 export interface Cin7SyncHealth {
-  score: number;
-  grade: string;
+  /** UNI-2668: null when the grade has not been measured. Never render a null score. */
+  score: number | null;
+  grade: string | null;
+  status?: 'ok' | 'unknown';
+  reason?: string;
   details: {
     success_rate: number;
     success_score: number;
@@ -100,7 +103,7 @@ export interface Cin7SyncHealth {
     volume_score: number;
     total_syncs: number;
     avg_duration_ms: number;
-  };
+  } | null;
 }
 
 /**
