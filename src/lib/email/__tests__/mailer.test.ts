@@ -196,6 +196,29 @@ describe('a send is only "sent" when the provider accepted it', () => {
     expect(outcome.status).toBe('failed');
   });
 
+  it('creates the receipt already due, so a crashed send is recoverable', async () => {
+    // Regression: an earlier revision created the row with nextAttemptAt null.
+    // The queue only claims rows with a non-null nextAttemptAt, so a process
+    // that died mid-send left the receipt stranded in `pending` forever —
+    // holding the plaintext recipient address it should eventually drop.
+    await sendTransactionalEmail({
+      to: 'someone@example.com',
+      email: EMAIL,
+      config: CONFIGURED,
+      transport: transportReturning({
+        accepted: true,
+        providerMessageId: 'sg-1',
+        sandboxed: false,
+      }),
+    });
+
+    const created = prismaMock.transactionalEmail.create.mock.calls[0][0].data;
+    expect(created.status).toBe('pending');
+    expect(created.nextAttemptAt).toBeInstanceOf(Date);
+    // Far enough out that the queue cannot race a send that is merely slow.
+    expect(created.nextAttemptAt.getTime()).toBeGreaterThan(Date.now() + 10 * 60_000);
+  });
+
   it('writes the receipt before the provider is called', async () => {
     const order: string[] = [];
     prismaMock.transactionalEmail.create.mockImplementation(async () => {
@@ -290,5 +313,36 @@ describe('queue runs report why they did not run', () => {
     });
 
     expect(summary).toMatchObject({ claimed: 1, sent: 1, queued: 0, failed: 0 });
+  });
+
+  it('leases a claimed row before attempting it, so two ticks cannot send it twice', async () => {
+    const now = new Date('2026-09-07T00:00:00Z');
+    prismaMock.transactionalEmail.findMany.mockResolvedValue([
+      {
+        id: 'receipt-9',
+        template: 'password-reset',
+        subject: 'Reset your Optix password',
+        bodyText: 'text',
+        bodyHtml: '<p>html</p>',
+        recipientEmail: 'someone@example.com',
+        attempts: 1,
+      },
+    ]);
+
+    await runEmailQueue({
+      config: CONFIGURED,
+      now,
+      transport: transportReturning({
+        accepted: true,
+        providerMessageId: 'sg-retry',
+        sandboxed: false,
+      }),
+    });
+
+    // First update is the lease, pushing the due time out of reach of a
+    // concurrent tick. The send outcome is written after it.
+    const lease = prismaMock.transactionalEmail.update.mock.calls[0][0];
+    expect(lease.where.id).toBe('receipt-9');
+    expect(lease.data.nextAttemptAt.getTime()).toBeGreaterThan(now.getTime() + 10 * 60_000);
   });
 });

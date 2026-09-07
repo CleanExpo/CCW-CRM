@@ -38,6 +38,24 @@ const TERMINAL = new Set(['sent', 'failed', 'refused']);
 /** Backoff schedule in minutes, indexed by attempt number (1-based). */
 const BACKOFF_MINUTES = [1, 5, 15, 60, 240];
 
+/**
+ * How long a receipt may sit in `pending` before the queue assumes the process
+ * that created it died.
+ *
+ * A receipt is written before the provider call, which is the point — a crash
+ * mid-send leaves evidence. But evidence is not enough on its own: an earlier
+ * revision created the row with `nextAttemptAt: null`, and the queue only claims
+ * rows with a non-null `nextAttemptAt`, so a crashed send was stranded in
+ * `pending` forever while still holding the plaintext recipient address. It
+ * looked like a queued message and was in fact an abandoned one.
+ *
+ * So every receipt is born already due at now + this margin. The margin has to
+ * exceed the transport timeout by enough that the queue never races a send that
+ * is simply slow: the request timeout is 15 seconds, and the first attempt
+ * rewrites `nextAttemptAt` the moment it resolves either way.
+ */
+const STALLED_ATTEMPT_MINUTES = 15;
+
 export function hashRecipient(email: string): string {
   return createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
 }
@@ -99,7 +117,9 @@ export async function sendTransactionalEmail(
     return { status: 'refused', receiptId: receipt, reason };
   }
 
-  // The receipt exists before the network call, so a crash mid-send is visible.
+  // The receipt exists before the network call, so a crash mid-send is visible —
+  // and `nextAttemptAt` is set here so it is also RECOVERABLE. Without it the
+  // queue could never claim the row again.
   const receipt = await prisma.transactionalEmail.create({
     data: {
       template: email.template,
@@ -109,6 +129,7 @@ export async function sendTransactionalEmail(
       bodyText: email.text,
       bodyHtml: email.html,
       status: 'pending',
+      nextAttemptAt: new Date(Date.now() + STALLED_ATTEMPT_MINUTES * 60_000),
       provider: transport.name,
       sandboxed: config.sandbox,
     },
@@ -282,6 +303,14 @@ export async function runEmailQueue(options?: {
 
   for (const row of due) {
     if (!row.recipientEmail) continue;
+    // Lease the row before attempting it: push its due time out by the stall
+    // margin so a second cron tick overlapping this one cannot claim the same
+    // receipt and send the message twice. `attemptSend` overwrites this the
+    // moment it resolves.
+    await prisma.transactionalEmail.update({
+      where: { id: row.id },
+      data: { nextAttemptAt: new Date(now.getTime() + STALLED_ATTEMPT_MINUTES * 60_000) },
+    });
     const outcome = await attemptSend(
       row.id,
       row.recipientEmail,
