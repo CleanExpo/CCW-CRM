@@ -1,5 +1,5 @@
 import { getCin7Mode } from '@/lib/integrations/cin7-core';
-import { getShopifyApiVersion, getShopifyMode, normalizeShopifyHostInput } from '@/lib/integrations/shopify';
+import { describeShopifyApiVersion, getShopifyMode, normalizeShopifyHostInput } from '@/lib/integrations/shopify';
 import { getXeroMode } from '@/lib/integrations/xero';
 
 type Level = 'ok' | 'warning' | 'error';
@@ -64,8 +64,25 @@ export function getIntegrationDiagnostics(): IntegrationDiagnostic[] {
   if (shopDomain && !shopDomain.endsWith('.myshopify.com')) {
     shopChecks.push({ level: 'error', message: 'SHOPIFY_SHOP_DOMAIN must be *.myshopify.com for Admin API.' });
   }
-  if (process.env.SHOPIFY_API_VERSION?.trim() && getShopifyApiVersion() !== process.env.SHOPIFY_API_VERSION?.trim()) {
-    shopChecks.push({ level: 'warning', message: 'SHOPIFY_API_VERSION format is invalid; fallback version is used.' });
+  // UNI-2672: report the version and how it was chosen. The old check fired only
+  // for a malformed override, so a deployment that never set the variable at all
+  // ran a silently pinned version with no signal anywhere.
+  const apiVersion = describeShopifyApiVersion();
+  if (apiVersion.source === 'pin-after-invalid-override') {
+    shopChecks.push({
+      level: 'warning',
+      message: `SHOPIFY_API_VERSION is not YYYY-MM; the pinned version ${apiVersion.pinned} is being used instead.`,
+    });
+  } else if (apiVersion.source === 'override' && apiVersion.effective !== apiVersion.pinned) {
+    shopChecks.push({
+      level: 'warning',
+      message: `Admin API version ${apiVersion.effective} comes from SHOPIFY_API_VERSION and differs from the version this build's queries are written against (${apiVersion.pinned}).`,
+    });
+  } else {
+    shopChecks.push({
+      level: 'ok',
+      message: `Admin API version ${apiVersion.effective} (pinned in code).`,
+    });
   }
   if (shopMode === 'demo') shopChecks.push({ level: 'warning', message: 'SHOPIFY_MODE is demo; switch to live for production sync.' });
   diagnostics.push({
