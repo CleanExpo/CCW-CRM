@@ -307,9 +307,16 @@ export async function runEmailQueue(options?: {
     // margin so a second cron tick overlapping this one cannot claim the same
     // receipt and send the message twice. `attemptSend` overwrites this the
     // moment it resolves.
+    //
+    // The margin runs from NOW, not from `now` — the batch start. A batch of 50
+    // rows each hitting the 15-second transport timeout takes over twelve
+    // minutes, so a lease measured from the batch start would already have
+    // expired by the time the later rows were claimed, and a concurrent tick
+    // could take a row that is still in flight. The lease has to be relative to
+    // the claim, which is the only moment it is protecting.
     await prisma.transactionalEmail.update({
       where: { id: row.id },
-      data: { nextAttemptAt: new Date(now.getTime() + STALLED_ATTEMPT_MINUTES * 60_000) },
+      data: { nextAttemptAt: new Date(Date.now() + STALLED_ATTEMPT_MINUTES * 60_000) },
     });
     const outcome = await attemptSend(
       row.id,

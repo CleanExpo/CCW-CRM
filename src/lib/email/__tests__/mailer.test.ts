@@ -316,7 +316,13 @@ describe('queue runs report why they did not run', () => {
   });
 
   it('leases a claimed row before attempting it, so two ticks cannot send it twice', async () => {
-    const now = new Date('2026-09-07T00:00:00Z');
+    // `now` here is the batch-start time the queue was given, and it is
+    // deliberately in the past: the lease must be measured from the moment the
+    // row is CLAIMED, not from when the batch began. A batch of 50 rows each
+    // hitting the 15-second transport timeout runs for over twelve minutes, so
+    // a lease anchored to the batch start would be expired for the later rows
+    // and a concurrent tick could double-send them.
+    const now = new Date(Date.now() - 60 * 60_000);
     prismaMock.transactionalEmail.findMany.mockResolvedValue([
       {
         id: 'receipt-9',
@@ -343,6 +349,7 @@ describe('queue runs report why they did not run', () => {
     // concurrent tick. The send outcome is written after it.
     const lease = prismaMock.transactionalEmail.update.mock.calls[0][0];
     expect(lease.where.id).toBe('receipt-9');
-    expect(lease.data.nextAttemptAt.getTime()).toBeGreaterThan(now.getTime() + 10 * 60_000);
+    // Measured from real now, not from the hour-old batch-start time.
+    expect(lease.data.nextAttemptAt.getTime()).toBeGreaterThan(Date.now() + 10 * 60_000);
   });
 });
