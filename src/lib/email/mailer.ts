@@ -246,6 +246,12 @@ export type QueueRunSummary = {
   sent: number;
   queued: number;
   failed: number;
+  /**
+   * Rows this run read but did not get: another run claimed them first. A rising
+   * number here means overlapping ticks, which is the compare-and-set doing its
+   * job — not a fault, and not a send.
+   */
+  skippedRaced: number;
   /** Set when the queue could not run at all; `claimed` is then 0, not "nothing due". */
   skipped?: string;
 };
@@ -266,7 +272,7 @@ export async function runEmailQueue(options?: {
   const now = options?.now ?? new Date();
 
   if (config.status === 'unconfigured') {
-    return { claimed: 0, sent: 0, queued: 0, failed: 0, skipped: config.reason };
+    return { claimed: 0, sent: 0, queued: 0, failed: 0, skippedRaced: 0, skipped: config.reason };
   }
   if (!config.enabled) {
     return {
@@ -274,6 +280,7 @@ export async function runEmailQueue(options?: {
       sent: 0,
       queued: 0,
       failed: 0,
+      skippedRaced: 0,
       skipped: 'EMAIL_ENABLED is not "true"; the queue did not run.',
     };
   }
@@ -285,6 +292,7 @@ export async function runEmailQueue(options?: {
       sent: 0,
       queued: 0,
       failed: 0,
+      skippedRaced: 0,
       skipped: 'No mail transport is available for the current configuration.',
     };
   }
@@ -299,25 +307,42 @@ export async function runEmailQueue(options?: {
     take: options?.limit ?? 50,
   });
 
-  const summary: QueueRunSummary = { claimed: due.length, sent: 0, queued: 0, failed: 0 };
+  const summary: QueueRunSummary = {
+    claimed: due.length,
+    sent: 0,
+    queued: 0,
+    failed: 0,
+    skippedRaced: 0,
+  };
 
   for (const row of due) {
     if (!row.recipientEmail) continue;
-    // Lease the row before attempting it: push its due time out by the stall
-    // margin so a second cron tick overlapping this one cannot claim the same
-    // receipt and send the message twice. `attemptSend` overwrites this the
-    // moment it resolves.
+    // Claim the row before attempting it, as a compare-and-set.
     //
-    // The margin runs from NOW, not from `now` — the batch start. A batch of 50
-    // rows each hitting the 15-second transport timeout takes over twelve
-    // minutes, so a lease measured from the batch start would already have
-    // expired by the time the later rows were claimed, and a concurrent tick
-    // could take a row that is still in flight. The lease has to be relative to
-    // the claim, which is the only moment it is protecting.
-    await prisma.transactionalEmail.update({
-      where: { id: row.id },
+    // Three things have to be true at once and each was got wrong in turn:
+    //
+    //   * The claim must be CONDITIONAL. `findMany` takes no locks, so a cron
+    //     tick starting five minutes into a long batch sees the same
+    //     not-yet-processed rows. An unconditional update lets both ticks claim
+    //     the same receipt and send the message twice. The `where` therefore
+    //     repeats the state this run observed — same id, same due time, still
+    //     pending — so exactly one writer wins and the loser is told by `count`.
+    //   * The new due time runs from NOW, not from `now`, the batch start. A
+    //     batch of 50 rows each hitting the 15-second transport timeout runs
+    //     over twelve minutes, so a lease anchored to the batch start would
+    //     already have expired for the later rows.
+    //   * `attemptSend` overwrites the due time the moment it resolves, so the
+    //     lease only ever covers an attempt that is genuinely in flight.
+    const claimed = await prisma.transactionalEmail.updateMany({
+      where: { id: row.id, status: 'pending', nextAttemptAt: row.nextAttemptAt },
       data: { nextAttemptAt: new Date(Date.now() + STALLED_ATTEMPT_MINUTES * 60_000) },
     });
+    if (claimed.count === 0) {
+      // Another run took this row between our read and our claim. Not an error,
+      // and emphatically not a send: skip it and let that run finish it.
+      summary.skippedRaced += 1;
+      continue;
+    }
     const outcome = await attemptSend(
       row.id,
       row.recipientEmail,

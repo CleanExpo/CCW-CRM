@@ -17,6 +17,7 @@ const prismaMock = vi.hoisted(() => ({
     update: vi.fn(),
     findUnique: vi.fn(),
     findMany: vi.fn(),
+    updateMany: vi.fn(),
   },
 }));
 
@@ -31,6 +32,9 @@ const EMAIL = buildPasswordResetEmail({
   resetUrl: 'https://optix.ccwarehouse.com.au/reset-password?token=t',
   expiresInMinutes: 60,
 });
+
+/** The due time a queued row carries when this run reads it. */
+const DUE_AT = new Date('2026-09-07T00:00:00.000Z');
 
 const CONFIGURED: EmailConfig = {
   status: 'configured',
@@ -55,6 +59,8 @@ beforeEach(() => {
   prismaMock.transactionalEmail.create.mockResolvedValue({ id: 'receipt-1' });
   prismaMock.transactionalEmail.update.mockResolvedValue({});
   prismaMock.transactionalEmail.findUnique.mockResolvedValue({ maxAttempts: 5 });
+  // Default: this run wins the claim.
+  prismaMock.transactionalEmail.updateMany.mockResolvedValue({ count: 1 });
 });
 
 describe('fail-closed configuration', () => {
@@ -300,6 +306,7 @@ describe('queue runs report why they did not run', () => {
         bodyHtml: '<p>html</p>',
         recipientEmail: 'someone@example.com',
         attempts: 1,
+        nextAttemptAt: DUE_AT,
       },
     ]);
 
@@ -332,6 +339,7 @@ describe('queue runs report why they did not run', () => {
         bodyHtml: '<p>html</p>',
         recipientEmail: 'someone@example.com',
         attempts: 1,
+        nextAttemptAt: DUE_AT,
       },
     ]);
 
@@ -345,11 +353,45 @@ describe('queue runs report why they did not run', () => {
       }),
     });
 
-    // First update is the lease, pushing the due time out of reach of a
-    // concurrent tick. The send outcome is written after it.
-    const lease = prismaMock.transactionalEmail.update.mock.calls[0][0];
-    expect(lease.where.id).toBe('receipt-9');
+    // The claim is a compare-and-set: it repeats the state this run observed, so
+    // exactly one of two overlapping ticks can win it.
+    const claim = prismaMock.transactionalEmail.updateMany.mock.calls[0][0];
+    expect(claim.where).toMatchObject({
+      id: 'receipt-9',
+      status: 'pending',
+      nextAttemptAt: DUE_AT,
+    });
     // Measured from real now, not from the hour-old batch-start time.
-    expect(lease.data.nextAttemptAt.getTime()).toBeGreaterThan(Date.now() + 10 * 60_000);
+    expect(claim.data.nextAttemptAt.getTime()).toBeGreaterThan(Date.now() + 10 * 60_000);
+  });
+
+  it('does not send a row it lost the race for', async () => {
+    // `findMany` takes no locks, so a tick starting partway through a long batch
+    // reads the same not-yet-processed rows. The loser of the compare-and-set
+    // must skip — sending here is a duplicate email to a real person.
+    prismaMock.transactionalEmail.updateMany.mockResolvedValue({ count: 0 });
+    prismaMock.transactionalEmail.findMany.mockResolvedValue([
+      {
+        id: 'receipt-9',
+        template: 'password-reset',
+        subject: 'Reset your Optix password',
+        bodyText: 'text',
+        bodyHtml: '<p>html</p>',
+        recipientEmail: 'someone@example.com',
+        attempts: 1,
+        nextAttemptAt: DUE_AT,
+      },
+    ]);
+
+    const transport = transportReturning({
+      accepted: true,
+      providerMessageId: 'sg-should-never-send',
+      sandboxed: false,
+    });
+
+    const summary = await runEmailQueue({ config: CONFIGURED, transport });
+
+    expect(transport.send).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ claimed: 1, sent: 0, skippedRaced: 1 });
   });
 });
