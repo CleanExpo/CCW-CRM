@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   applyPostgresSslParams,
+  classifyDatabaseHost,
   getDatabaseConnectionString,
   getPgSslConfig,
   hasDatabaseConfig,
@@ -112,6 +113,33 @@ describe('getDatabaseConnectionString', () => {
     process.env.DB_HOST = 'db.example.com';
     // DB_PASSWORD deliberately absent
     expect(getDatabaseConnectionString()).toBe('');
+  });
+});
+
+describe('classifyDatabaseHost', () => {
+  it('is none without configuration', () => {
+    expect(classifyDatabaseHost()).toBe('none');
+  });
+
+  it('recognises a Supabase direct host, which Vercel cannot route to', () => {
+    process.env.DATABASE_URL = 'postgresql://postgres:pw@db.abcdefghijklmnop.supabase.co:5432/postgres';
+    expect(classifyDatabaseHost()).toBe('supabase-direct');
+  });
+
+  it('recognises the Supabase transaction pooler', () => {
+    process.env.DATABASE_URL =
+      'postgresql://postgres.abcdefghijklmnop:pw@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true';
+    expect(classifyDatabaseHost()).toBe('supabase-pooler');
+  });
+
+  it('classifies localhost and everything else without echoing the host', () => {
+    process.env.DATABASE_URL = 'postgresql://u:p@localhost:5432/app';
+    expect(classifyDatabaseHost()).toBe('local');
+    process.env.DB_USER = 'u';
+    process.env.DB_PASSWORD = 'p';
+    process.env.DB_HOST = 'db.example.com';
+    delete process.env.DATABASE_URL;
+    expect(classifyDatabaseHost()).toBe('other');
   });
 });
 

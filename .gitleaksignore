@@ -1,0 +1,9 @@
+# gitleaks fingerprints (commit:path:rule:line) that are known non-secrets.
+#
+# 6a2ea73 carried a deliberately AWS-shaped fixture ("AKIA" + sixteen letters)
+# in a redaction test, so the redactor could be proven to catch that shape.
+# 9e1beb6 replaced it with a value assembled at runtime, so no such literal is
+# in the tree, but gitleaks scans history and still reports the old commit.
+# The value was never a credential: it is the alphabet.
+6a2ea738e4125d4cc7937f64c31f1685fef4f4b4:src/lib/proof/__tests__/runtime-receipt.test.ts:aws-access-token:43
+6a2ea738e4125d4cc7937f64c31f1685fef4f4b4:src/lib/proof/__tests__/runtime-receipt.test.ts:aws-access-token:48

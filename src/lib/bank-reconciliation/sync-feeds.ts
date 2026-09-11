@@ -76,27 +76,13 @@ export async function syncBankAccountFeeds(input: {
   } else if (account.feedProvider === 'manual') {
     message = 'Manual account — import CSV or switch feed provider to CDR/Basiq for automated sync.';
   } else {
-    const n = Math.floor(1 + Math.random() * 3);
-    for (let i = 0; i < n; i++) {
-      const amt = Math.round((20 + Math.random() * 200) * 100) / 100;
-      const isCredit = Math.random() > 0.4;
-      const row = await prisma.bankFeedTransaction.create({
-        data: {
-          bankAccountId: accountId,
-          transactionDate: new Date(),
-          description: isCredit ? 'Customer payment — demo feed' : 'Supplier payment — demo feed',
-          rawNarration: `Demo sync ${account.accountName}`,
-          reference: `SYNC-${Date.now()}-${i}`,
-          credit: isCredit ? amt : null,
-          debit: isCredit ? null : amt,
-          balance: null,
-          reconciled: false,
-          status: 'unmatched',
-          externalFeedId: `demo-${Date.now()}-${i}`,
-        },
-      });
-      createdIds.push(row.id);
-    }
+    // UNI-2668: this branch used Math.random() to fabricate one to three bank
+    // transactions with invented amounts and a "demo feed" description, and
+    // wrote them into the production bankFeedTransaction table — then reported
+    // them as synced. Fabricated money rows are indistinguishable from real
+    // ones once they land. Write nothing; say the provider has no sync.
+    mode = 'unsupported';
+    message = `Feed provider "${account.feedProvider}" has no automated sync — import CSV or switch the account to a CDR provider.`;
   }
 
   await prisma.bankAccount.update({

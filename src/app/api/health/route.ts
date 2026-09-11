@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
-import { hasDatabaseConfig } from "@/lib/db/database-env";
+import {
+  classifyDatabaseHost,
+  hasDatabaseConfig,
+  type DatabaseHostClass,
+} from "@/lib/db/database-env";
 import { prisma } from "@/lib/db/prisma";
+import { getEmailHealth, type EmailHealth } from "@/lib/email/health";
 
 /**
  * Liveness + database readiness.
@@ -25,7 +30,18 @@ interface HealthResponse {
     reachable: boolean;
     /** Error CLASS only — never the message, which can carry the DSN. */
     error?: string;
+    /** Shape of the configured host — never the host itself. */
+    host_class: DatabaseHostClass;
+    /** Operator guidance for a failure whose cause the host shape gives away. */
+    hint?: string;
   };
+  /**
+   * Outbound transactional email (UNI-2671). Reports `configured` and
+   * `authenticated` as separate states on purpose: outbound email was dead
+   * from July to September precisely because "the settings are filled in" was
+   * read as "the provider accepts us", and nobody asked the provider.
+   */
+  email: EmailHealth;
   verification_system: {
     enabled: boolean;
     independent_verification: boolean;
@@ -109,9 +125,20 @@ function describeFailure(error: unknown): string {
   return "UnknownError";
 }
 
+/**
+ * A Supabase direct host publishes no IPv4 address (unless the IPv4 add-on is
+ * bought) and Vercel has no IPv6 egress, so a probe against it times out. Say
+ * so, hedged, rather than leaving the operator to guess between "paused",
+ * "wrong project" and "unroutable".
+ */
+const SUPABASE_DIRECT_HOST_HINT =
+  "DATABASE_URL points at a Supabase direct host (db.<ref>.supabase.co). Direct hosts publish no IPv4 address unless the project has the IPv4 add-on, and Vercel functions have no IPv6 egress, so this shape usually times out from Vercel; the transaction pooler URI (aws-<n>-<region>.pooler.supabase.com:6543) is the supported form.";
+
 async function probeDatabase(): Promise<HealthResponse["database"]> {
+  const host_class = classifyDatabaseHost();
+
   if (!hasDatabaseConfig()) {
-    return { configured: false, reachable: false, error: "NotConfigured" };
+    return { configured: false, reachable: false, error: "NotConfigured", host_class };
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -121,26 +148,67 @@ async function probeDatabase(): Promise<HealthResponse["database"]> {
     });
     // Cheapest round trip that proves the connection is live, not merely configured.
     await Promise.race([prisma.$queryRaw`SELECT 1`, timeout]);
-    return { configured: true, reachable: true };
+    return { configured: true, reachable: true, host_class };
   } catch (error) {
     // Full detail stays server-side; only a recognised identifier goes public.
     console.error("[health] database probe failed", error);
-    return { configured: true, reachable: false, error: describeFailure(error) };
+    const failure: HealthResponse["database"] = {
+      configured: true,
+      reachable: false,
+      error: describeFailure(error),
+      host_class,
+    };
+    if (host_class === "supabase-direct") failure.hint = SUPABASE_DIRECT_HOST_HINT;
+    return failure;
   } finally {
     if (timer) clearTimeout(timer);
   }
 }
 
+/**
+ * Probe SendGrid only when someone has actually switched sending on. An
+ * un-provisioned deployment therefore makes no outbound call from this public,
+ * unauthenticated endpoint, and a provisioned one is rate-limited by the
+ * 5-minute cache inside `getEmailHealth`.
+ *
+ * Email never makes the service `unhealthy` — the app works without it. But
+ * email that has been ENABLED and is not authenticated is a real, actionable
+ * fault, so it degrades.
+ */
+async function probeEmail(): Promise<EmailHealth> {
+  try {
+    return await getEmailHealth();
+  } catch (error) {
+    console.error("[health] email probe failed", error);
+    return {
+      state: "unconfigured",
+      enabled: false,
+      sandbox: false,
+      from: null,
+      from_name: null,
+      reply_to: null,
+      missing: [],
+      from_matches_approved_identity: false,
+      verified: null,
+      verified_at: null,
+      message: "Email health could not be determined; treat as not working.",
+    };
+  }
+}
+
 export async function GET(): Promise<NextResponse<HealthResponse>> {
-  const database = await probeDatabase();
+  const [database, email] = await Promise.all([probeDatabase(), probeEmail()]);
+
+  const emailFaulted = email.enabled && email.state !== "authenticated";
 
   const body: HealthResponse = {
-    status: database.reachable ? "healthy" : "unhealthy",
+    status: !database.reachable ? "unhealthy" : emailFaulted ? "degraded" : "healthy",
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || "1.0.0",
     uptime: Math.floor((Date.now() - startTime) / 1000),
     environment: process.env.NODE_ENV || "development",
     database,
+    email,
     verification_system: {
       enabled: true,
       independent_verification: true,

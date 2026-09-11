@@ -374,10 +374,13 @@ export async function sendDunningLetter(workspaceId: string, invoiceId?: string)
     return { sent: false, reason: 'No overdue billing invoice found' };
   }
 
+  // UNI-2668: this function has never sent mail. Reporting `sent: true` told
+  // the caller a dunning notice had gone out when nothing left the building.
+  // Fail loud until a real mail send is wired.
   return {
-    sent: true,
+    sent: false,
     invoice_id: invoice.id,
-    message: 'Dunning notice queued (SendGrid integration when production billing is live)',
+    reason: 'Dunning notice delivery is not implemented — no email was sent',
   };
 }
 
@@ -396,15 +399,15 @@ export async function retryFailedPayment(workspaceId: string, paymentMethodId?: 
     return { success: false, reason: 'No payment method on file' };
   }
 
-  await prisma.workspaceSubscription.update({
-    where: { workspaceId },
-    data: {
-      status: 'active',
-      lastPaymentFailedAt: null,
-      currentPeriodStart: new Date(),
-      currentPeriodEnd: addMonths(new Date(), sub.billingInterval === 'annual' ? 12 : 1),
-    },
-  });
-
-  return { success: true, payment_method_id: method.id };
+  // UNI-2668: no payment processor is wired here. The previous body flipped
+  // the subscription to `active`, cleared `lastPaymentFailedAt` and extended
+  // the billing period WITHOUT charging the card — granting a paid tier for
+  // free and silencing dunning. Never write that state from a code path that
+  // does not take money. Fail loud until a real charge call exists.
+  void sub;
+  return {
+    success: false,
+    payment_method_id: method.id,
+    reason: 'Payment retry is not implemented — no charge was attempted',
+  };
 }
