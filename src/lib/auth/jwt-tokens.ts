@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 
 function getJwtSecret(): Uint8Array | null {
   const raw = process.env.JWT_SECRET ?? process.env.JWT_SECRET_KEY;
@@ -83,8 +83,9 @@ export async function verifyAuthAccessJwt(token: string): Promise<{
   }
 }
 
-function sessionVersionFromPayload(payload: { sv?: unknown }): number {
-  return typeof payload.sv === 'number' && Number.isFinite(payload.sv) ? payload.sv : 0;
+function sessionVersionFromPayload(payload: JWTPayload): number {
+  const sv = (payload as JWTPayload & { sv?: unknown }).sv;
+  return typeof sv === 'number' && Number.isFinite(sv) ? sv : 0;
 }
 
 export async function verifyRefreshJwt(token: string): Promise<{
