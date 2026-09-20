@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { grnToApi } from '@/lib/db/grn-serialize';
+import { recordStockMovements } from '@/lib/inventory/stock-movement';
 
 export async function POST(
   request: NextRequest,
@@ -50,6 +51,21 @@ export async function POST(
           cin7ReceiptId: receiptId,
         },
       });
+      await recordStockMovements(
+        tx,
+        grn.lines
+          .filter((line) => line.receivedQty !== 0 && line.sku)
+          .map((line) => ({
+            ownerUserId: uid,
+            productId: line.productId,
+            sku: line.sku,
+            branchName: grn.locationId || 'unassigned',
+            quantity: line.receivedQty,
+            movementType: 'receipt' as const,
+            sourceType: 'goods_receipt',
+            sourceId: grn.id,
+          }))
+      );
     });
 
     const updated = await prisma.goodsReceipt.findFirstOrThrow({
