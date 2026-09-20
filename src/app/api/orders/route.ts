@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
-import { generateOrderNumber, resolveLinesFromPayload } from '@/lib/db/order-lines';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { logOperationalEvent } from '@/lib/comms/operational-events';
+import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
+import { generateOrderNumber, resolveLinesFromPayload } from '@/lib/db/order-lines';
+import { prisma } from '@/lib/db/prisma';
+import { parseSaleBranch } from '@/lib/inventory/stock-movement';
 import { dispatchWorkflowTrigger } from '@/lib/workflows/workflow-engine';
 import type { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 const ORDER_LIST_INCLUDE = {
   customer: { select: { companyName: true } },
@@ -93,7 +94,10 @@ export async function POST(request: NextRequest) {
       customerId
     );
     if (lines.length === 0) {
-      return NextResponse.json({ detail: 'At least one valid line item is required' }, { status: 400 });
+      return NextResponse.json(
+        { detail: 'At least one valid line item is required' },
+        { status: 400 }
+      );
     }
 
     const totalWithTax = subtotal * 1.1;
@@ -109,8 +113,7 @@ export async function POST(request: NextRequest) {
         },
         _sum: { total: true, amountPaid: true },
       });
-      const outstanding =
-        (outstandingAgg._sum.total ?? 0) - (outstandingAgg._sum.amountPaid ?? 0);
+      const outstanding = (outstandingAgg._sum.total ?? 0) - (outstandingAgg._sum.amountPaid ?? 0);
 
       if (outstanding + totalWithTax > creditLimit) {
         const managerOverride = body.managerOverride === true || body.manager_override === true;
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
         orderNumber,
         status,
         total: totalWithTax,
+        branchName: parseSaleBranch(body.fulfillment_location ?? body.branch_name ?? body.branch),
         lineItems: {
           create: lines.map((l) => ({
             productId: l.productId,
