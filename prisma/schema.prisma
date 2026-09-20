@@ -1492,8 +1492,9 @@ model WorkshopEquipment {
 
   customer  Customer                  @relation(fields: [customerId], references: [id], onDelete: Restrict)
   product   Product?                  @relation(fields: [productId], references: [id], onDelete: SetNull)
-  bookings  WorkshopBooking[]
-  reminders WorkshopServiceReminder[]
+  bookings   WorkshopBooking[]
+  reminders  WorkshopServiceReminder[]
+  recallCase WorkshopRecallCase?
 
   @@index([ownerUserId])
   @@index([customerId])
@@ -1593,6 +1594,50 @@ model WorkshopServiceReminder {
   @@index([status])
   @@index([scheduledSendAt])
   @@map("workshop_service_reminders")
+}
+
+/// Pilot centre capacity — filled from Toby’s workshop form, not guessed.
+model WorkshopCentre {
+  id                 String    @id @default(uuid()) @db.Uuid
+  ownerUserId        String    @map("owner_user_id") @db.Uuid
+  code               String
+  name               String
+  technicianCount    Int?      @map("technician_count")
+  paidHoursPerWeek   Float?    @map("paid_hours_per_week")
+  hoursNextFourWeeks Json      @default("[]") @map("hours_next_four_weeks")
+  bayCount           Int?      @map("bay_count")
+  labourRate         Float?    @map("labour_rate")
+  managerName        String?   @map("manager_name")
+  outreachApprover   String?   @map("outreach_approver")
+  formReceivedAt     DateTime? @map("form_received_at")
+  notes              String?   @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([ownerUserId, code])
+  @@index([ownerUserId])
+  @@map("workshop_centres")
+}
+
+/// Staff review of a due machine. Never implies the customer was contacted.
+model WorkshopRecallCase {
+  id            String    @id @default(uuid()) @db.Uuid
+  ownerUserId   String    @map("owner_user_id") @db.Uuid
+  equipmentId   String    @unique @map("equipment_id") @db.Uuid
+  centreCode    String    @map("centre_code")
+  status        String    @default("queued")
+  reviewedBy    String?   @map("reviewed_by") @db.Uuid
+  reviewedAt    DateTime? @map("reviewed_at")
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  equipment WorkshopEquipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+  @@index([centreCode])
+  @@index([status])
+  @@map("workshop_recall_cases")
 }
 
 model AgentRun {
