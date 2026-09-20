@@ -13,9 +13,9 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { resolveDatabaseUrl } from './database-url.mjs';
 import {
-  formatOptixStockTotals,
-  loadOptixStockTotals,
-  parseOptixStockTotalsCliArgs,
+    formatOptixStockTotals,
+    loadOptixStockTotals,
+    parseOptixStockTotalsCliArgs,
 } from './lib/optix-stock-totals.mjs';
 
 config({ path: join(dirname(fileURLToPath(import.meta.url)), '..', '.env') });
