@@ -1,6 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import {
@@ -9,6 +6,10 @@ import {
   normalizeWarehouseLocation,
   syncProductStockTotal,
 } from '@/lib/db/inventory-location-transfer';
+import { prisma } from '@/lib/db/prisma';
+import { recordStockMovements } from '@/lib/inventory/stock-movement';
+import { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 function transferToApi(
   row: {
@@ -24,7 +25,7 @@ function transferToApi(
     updatedAt: Date;
     product: { name: string; sku: string };
   },
-  userId: string,
+  userId: string
 ) {
   const completedAt = row.status === 'completed' ? row.createdAt.toISOString() : undefined;
   return {
@@ -75,12 +76,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail: 'product_id is required' }, { status: 400 });
     }
 
-    const fromRaw = String(body.from_location ?? body.fromLocation ?? '').toLowerCase().trim();
-    const toRaw = String(body.to_location ?? body.toLocation ?? '').toLowerCase().trim();
+    const fromRaw = String(body.from_location ?? body.fromLocation ?? '')
+      .toLowerCase()
+      .trim();
+    const toRaw = String(body.to_location ?? body.toLocation ?? '')
+      .toLowerCase()
+      .trim();
     if (!isWarehouseLocation(fromRaw) || !isWarehouseLocation(toRaw)) {
       return NextResponse.json(
         { detail: 'from_location and to_location must be brisbane, sydney, or melbourne' },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const fromLoc = normalizeWarehouseLocation(fromRaw);
@@ -88,7 +93,7 @@ export async function POST(request: NextRequest) {
     if (fromLoc === toLoc) {
       return NextResponse.json(
         { detail: 'Source and destination locations must differ' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -106,7 +111,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         ownerUserId: { in: workspaceUserIds },
       },
-      select: { id: true, stock: true, warehouseLocation: true },
+      select: { id: true, sku: true, stock: true, warehouseLocation: true },
     });
 
     if (!product) {
@@ -134,7 +139,7 @@ export async function POST(request: NextRequest) {
       const available = fromRow.quantity - fromRow.reserved;
       if (available < quantity) {
         const err = new Error(
-          `Insufficient available stock at ${fromLoc} (available ${available}, requested ${quantity})`,
+          `Insufficient available stock at ${fromLoc} (available ${available}, requested ${quantity})`
         );
         (err as Error & { code: string }).code = 'INSUFFICIENT_STOCK';
         throw err;
@@ -163,6 +168,28 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       });
 
+      await recordStockMovements(tx, [
+        {
+          ownerUserId: scope.userId,
+          productId: product.id,
+          sku: product.sku,
+          branchName: fromLoc,
+          quantity: -quantity,
+          movementType: 'transfer_out',
+          sourceType: 'stock_transfer',
+          sourceId: transferId,
+        },
+        {
+          ownerUserId: scope.userId,
+          productId: product.id,
+          sku: product.sku,
+          branchName: toLoc,
+          quantity,
+          movementType: 'transfer_in',
+          sourceType: 'stock_transfer',
+          sourceId: transferId,
+        },
+      ]);
       await syncProductStockTotal(tx, product.id);
 
       return tx.stockTransfer.findUniqueOrThrow({
@@ -183,21 +210,21 @@ export async function POST(request: NextRequest) {
           detail:
             'Inventory tables are not in the database. Run `npx prisma migrate deploy` (or `prisma migrate dev`) and try again.',
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === 'P2002') {
         return NextResponse.json(
           { detail: 'Transfer conflict — retry. If this persists, refresh and try again.' },
-          { status: 409 },
+          { status: 409 }
         );
       }
     }
     console.error('[POST /api/inventory/transfer]', e);
     return NextResponse.json(
       { detail: e instanceof Error ? e.message : String(e) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
