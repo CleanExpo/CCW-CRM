@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { invoiceSummaryToApi, invoiceToApi } from '@/lib/db/api-serialize';
-import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
-import { nextInvoiceNumber, resolveInvoiceLinesFromPayload } from '@/lib/db/invoice-mutations';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
-import type { Prisma } from '@prisma/client';
+import { invoiceSummaryToApi, invoiceToApi } from '@/lib/db/api-serialize';
+import { nextInvoiceNumber, resolveInvoiceLinesFromPayload } from '@/lib/db/invoice-mutations';
+import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
+import { prisma } from '@/lib/db/prisma';
+import { parseSaleBranch } from '@/lib/inventory/stock-movement';
 import type { CreateInvoiceRequest } from '@/types/invoices';
+import type { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,10 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('page_size') || '50', 10)));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get('page_size') || '50', 10))
+    );
     const search = searchParams.get('search')?.trim();
     const status = searchParams.get('status')?.trim();
     const customerId = searchParams.get('customer_id')?.trim();
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  return NextResponse.json({
+    return NextResponse.json({
       data: rows
         .map((r) =>
           invoiceSummaryToApi({
@@ -160,6 +164,17 @@ export async function POST(request: NextRequest) {
         taxTotal,
         total,
         amountPaid: 0,
+        branchName: parseSaleBranch(
+          (
+            body as CreateInvoiceRequest & {
+              fulfillment_location?: string;
+              branch_name?: string;
+              branch?: string;
+            }
+          ).fulfillment_location ??
+            (body as { branch_name?: string }).branch_name ??
+            (body as { branch?: string }).branch
+        ),
         items: {
           create: lines.map((l) => ({
             productId: l.productId,
