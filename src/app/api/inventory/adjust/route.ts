@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { isMissingInventoryTableError } from '@/lib/db/inventory-api-helpers';
 import {
   ensureProductLocationStockRows,
   isWarehouseLocation,
   normalizeWarehouseLocation,
   syncProductStockTotal,
 } from '@/lib/db/inventory-location-transfer';
-import { isMissingInventoryTableError } from '@/lib/db/inventory-api-helpers';
+import { prisma } from '@/lib/db/prisma';
+import { recordStockMovements } from '@/lib/inventory/stock-movement';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +27,9 @@ export async function POST(request: NextRequest) {
     }
 
     const productId = String(body.product_id ?? '').trim();
-    const locRaw = String(body.location ?? '').toLowerCase().trim();
+    const locRaw = String(body.location ?? '')
+      .toLowerCase()
+      .trim();
     const quantityChange = Math.trunc(Number(body.quantity_change ?? 0));
 
     if (!productId) {
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
         isActive: true,
         ownerUserId: { in: workspaceUserIds },
       },
-      select: { id: true, stock: true, warehouseLocation: true },
+      select: { id: true, sku: true, stock: true, warehouseLocation: true },
     });
 
     if (!product) {
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest) {
       const nextQty = row.quantity + quantityChange;
       if (nextQty < row.reserved) {
         throw new Error(
-          `Adjusted quantity would be below reserved (${row.reserved}). Release reservations first.`,
+          `Adjusted quantity would be below reserved (${row.reserved}). Release reservations first.`
         );
       }
       if (nextQty < 0) {
@@ -72,6 +75,18 @@ export async function POST(request: NextRequest) {
         where: { id: row.id },
         data: { quantity: nextQty },
       });
+      await recordStockMovements(tx, [
+        {
+          ownerUserId: scope.userId,
+          productId: product.id,
+          sku: product.sku,
+          branchName: location,
+          quantity: quantityChange,
+          movementType: 'adjustment',
+          sourceType: 'inventory_adjust',
+          sourceId: product.id,
+        },
+      ]);
       await syncProductStockTotal(tx, product.id);
     });
 
