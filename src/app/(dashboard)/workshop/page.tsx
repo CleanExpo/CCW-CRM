@@ -31,8 +31,20 @@ const WORKSHOP_MODULES: HubModuleItem[] = [
     icon: 'ClipboardList',
   },
   {
+    title: 'Recall review',
+    description: 'Staff check customer and machine. No customer contact.',
+    href: '/dashboard/workshop/recall',
+    icon: 'Bell',
+  },
+  {
+    title: 'Centres',
+    description: 'Hours, bays, rates — wait for Toby’s form.',
+    href: '/dashboard/workshop/centres',
+    icon: 'Factory',
+  },
+  {
     title: 'Reminders',
-    description: 'Planned service comms and follow-up queue.',
+    description: 'Internal due queue. Send to customers is blocked.',
     href: '/dashboard/workshop/reminders',
     icon: 'Bell',
   },
