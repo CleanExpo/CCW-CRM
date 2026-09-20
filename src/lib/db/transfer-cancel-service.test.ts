@@ -2,12 +2,13 @@
  * Unit tests for transfer-cancel-service
  * Uses relative imports (vitest has no @/ alias configured).
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---- Prisma mock helpers ----
 const mockFindFirst = vi.fn();
 const mockUpdateMany = vi.fn();
 const mockUpdate = vi.fn();
+const mockCreateManyMovements = vi.fn();
 const mockSyncProductStockTotal = vi.fn();
 
 // We hold a reference to the $transaction mock so we can reset it in beforeEach
@@ -32,6 +33,7 @@ function makeTx() {
   return {
     productLocationStock: { updateMany: mockUpdateMany },
     stockTransfer: { update: mockUpdate },
+    stockMovement: { createMany: mockCreateManyMovements },
   };
 }
 
@@ -64,8 +66,12 @@ describe('cancelTransfer service', () => {
   // ---- 409: completed ----
   it('returns 409 for a "completed" transfer and does not touch stock', async () => {
     mockFindFirst.mockResolvedValue({
-      id: 'tf-done', status: 'completed', productId: 'p1',
-      fromLocation: 'brisbane', toLocation: 'sydney', quantity: 10,
+      id: 'tf-done',
+      status: 'completed',
+      productId: 'p1',
+      fromLocation: 'brisbane',
+      toLocation: 'sydney',
+      quantity: 10,
     });
 
     const result = await cancelTransfer({ id: 'tf-done', workspaceUserIds: WS_USERS });
@@ -83,8 +89,12 @@ describe('cancelTransfer service', () => {
   // ---- 409: already cancelled ----
   it('returns 409 for an already "cancelled" transfer and does not touch stock', async () => {
     mockFindFirst.mockResolvedValue({
-      id: 'tf-cx', status: 'cancelled', productId: 'p1',
-      fromLocation: 'brisbane', toLocation: 'sydney', quantity: 5,
+      id: 'tf-cx',
+      status: 'cancelled',
+      productId: 'p1',
+      fromLocation: 'brisbane',
+      toLocation: 'sydney',
+      quantity: 5,
     });
 
     const result = await cancelTransfer({ id: 'tf-cx', workspaceUserIds: WS_USERS });
@@ -101,14 +111,23 @@ describe('cancelTransfer service', () => {
   // ---- pending: cancel without stock rollback ----
   it('cancels a "pending" transfer: sets status=cancelled, does NOT adjust stock', async () => {
     mockFindFirst.mockResolvedValue({
-      id: 'tf-pend', status: 'pending', productId: 'p2',
-      fromLocation: 'sydney', toLocation: 'melbourne', quantity: 8,
+      id: 'tf-pend',
+      status: 'pending',
+      productId: 'p2',
+      fromLocation: 'sydney',
+      toLocation: 'melbourne',
+      quantity: 8,
     });
 
     mockUpdate.mockResolvedValue({
-      id: 'tf-pend', status: 'cancelled', productId: 'p2',
-      fromLocation: 'sydney', toLocation: 'melbourne', quantity: 8,
-      reason: null, notes: null,
+      id: 'tf-pend',
+      status: 'cancelled',
+      productId: 'p2',
+      fromLocation: 'sydney',
+      toLocation: 'melbourne',
+      quantity: 8,
+      reason: null,
+      notes: null,
       updatedAt: new Date('2026-06-11T00:00:00Z'),
       product: { name: 'Widget', sku: 'WGT-001' },
     });
@@ -136,15 +155,27 @@ describe('cancelTransfer service', () => {
   // ---- in_transit: cancel WITH stock rollback ----
   it('cancels an "in_transit" transfer: restores fromLocation, decrements toLocation', async () => {
     mockFindFirst.mockResolvedValue({
-      id: 'tf-tr', status: 'in_transit', productId: 'p3',
-      fromLocation: 'brisbane', toLocation: 'sydney', quantity: 20,
+      id: 'tf-tr',
+      status: 'in_transit',
+      productId: 'p3',
+      fromLocation: 'brisbane',
+      toLocation: 'sydney',
+      quantity: 20,
+      ownerUserId: 'user-abc',
+      product: { sku: 'GDG-002' },
     });
+    mockCreateManyMovements.mockResolvedValue({ count: 2 });
 
     mockUpdateMany.mockResolvedValue({ count: 1 });
     mockUpdate.mockResolvedValue({
-      id: 'tf-tr', status: 'cancelled', productId: 'p3',
-      fromLocation: 'brisbane', toLocation: 'sydney', quantity: 20,
-      reason: null, notes: null,
+      id: 'tf-tr',
+      status: 'cancelled',
+      productId: 'p3',
+      fromLocation: 'brisbane',
+      toLocation: 'sydney',
+      quantity: 20,
+      reason: null,
+      notes: null,
       updatedAt: new Date('2026-06-11T00:00:00Z'),
       product: { name: 'Gadget', sku: 'GDG-002' },
     });
@@ -163,7 +194,10 @@ describe('cancelTransfer service', () => {
       where: { productId: string; location: string };
       data: { quantity: { increment?: number; decrement?: number } };
     };
-    const [fromCall, toCall] = mockUpdateMany.mock.calls as [UpdateManyArg[], UpdateManyArg[]][number][];
+    const [fromCall, toCall] = mockUpdateMany.mock.calls as [
+      UpdateManyArg[],
+      UpdateManyArg[],
+    ][number][];
 
     // fromLocation (brisbane) incremented — stock restored
     expect(fromCall[0]).toMatchObject({
