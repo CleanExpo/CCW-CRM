@@ -128,14 +128,17 @@ export default function RemindersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Service Reminders</h1>
-          <p className="text-neutral-600 dark:text-neutral-400">{total} reminders</p>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            {total} reminders. Customer send is blocked until stock sign-off and the workshop scope
+            note.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleGenerate} disabled={generating}>
             <Bell className="mr-2 h-4 w-4" /> {generating ? 'Generating...' : 'Generate Reminders'}
           </Button>
-          <Button onClick={handleSendAll} disabled={sendingAll}>
-            <Send className="mr-2 h-4 w-4" /> {sendingAll ? 'Sending...' : 'Send All Pending'}
+          <Button onClick={handleSendAll} disabled={sendingAll} variant="outline">
+            <Send className="mr-2 h-4 w-4" /> {sendingAll ? 'Blocked…' : 'Send (blocked)'}
           </Button>
         </div>
       </div>
