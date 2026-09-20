@@ -4,9 +4,11 @@ import type {
   Equipment,
   EquipmentCreate,
   Paginated,
+  RecallQueueItem,
   ServiceReminder,
   ServiceTemplate,
   WorkshopBooking,
+  WorkshopCentre,
 } from '@/lib/api/workshop-types';
 
 export type {
@@ -16,11 +18,13 @@ export type {
   EquipmentCreate,
   EquipmentStatus,
   Paginated,
+  RecallQueueItem,
   ReminderStatus,
   ServiceReminder,
   ServiceTemplate,
   ServiceTemplateItem,
   WorkshopBooking,
+  WorkshopCentre,
 } from '@/lib/api/workshop-types';
 
 // Equipment API
@@ -158,6 +162,16 @@ export const workshopApi = {
   suppressReminder: (id: string) => apiClient.put(`/api/workshop/reminders/${id}/suppress`, {}),
 
   // Dashboard
+  listCentres: () => apiClient.get<{ items: WorkshopCentre[] }>('/api/workshop/centres'),
+  updateCentre: (code: string, data: Partial<WorkshopCentre> & { form_received?: boolean }) =>
+    apiClient.put<WorkshopCentre>(`/api/workshop/centres/${code}`, data),
+  listRecallQueue: (centre?: string) => {
+    const qs = centre ? `?centre=${centre}` : '';
+    return apiClient.get<{ items: RecallQueueItem[] }>(`/api/workshop/recall${qs}`);
+  },
+  reviewRecall: (equipmentId: string, data: { status: string; notes?: string }) =>
+    apiClient.post(`/api/workshop/recall/${equipmentId}/review`, data),
+
   getDashboard: (location?: string) => {
     const qs = location ? `?location=${location}` : '';
     return apiClient.get<DashboardData>(`/api/workshop/dashboard${qs}`);
