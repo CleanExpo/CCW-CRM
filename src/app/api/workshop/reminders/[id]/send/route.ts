@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import * as workshop from '@/lib/db/workshop-service';
+import { WorkshopOutreachBlockedError } from '@/lib/workshop/customer-outreach-gate';
 
 export async function POST(
   request: NextRequest,
@@ -13,10 +14,12 @@ export async function POST(
 
     const { id } = await context.params;
     const workspaceUserIds = await getWorkspaceMemberUserIds(scope.userId);
-    const row = await workshop.sendWorkshopReminder(workspaceUserIds, id);
-    if (!row) return NextResponse.json({ detail: 'Reminder not found' }, { status: 404 });
-    return NextResponse.json(row);
+    await workshop.sendWorkshopReminder(workspaceUserIds, id);
+    return NextResponse.json({ sent: false });
   } catch (e) {
+    if (e instanceof WorkshopOutreachBlockedError) {
+      return NextResponse.json({ detail: e.message, code: e.code }, { status: e.status });
+    }
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
 }
