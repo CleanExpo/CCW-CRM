@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  formatOptixStockTotals,
-  loadOptixStockTotals,
-  parseOptixStockTotalsCliArgs,
+    formatOptixStockTotals,
+    loadOptixStockTotals,
+    parseOptixStockTotalsCliArgs,
 } from '../../../../scripts/lib/optix-stock-totals.mjs';
 
 describe('parseOptixStockTotalsCliArgs', () => {
