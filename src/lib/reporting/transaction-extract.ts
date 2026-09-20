@@ -30,6 +30,11 @@ export type ReportingExtract = {
   stock_movements: ExtractStockMovement[];
 };
 
+export function csvCell(value: string): string {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+}
+
 export function toReportingCsv(extract: ReportingExtract): string {
   const header = [
     'kind',
@@ -54,7 +59,9 @@ export function toReportingCsv(extract: ReportingExtract): string {
         String(row.unit_price),
         String(row.line_total),
         row.invoice_date,
-      ].join(',')
+      ]
+        .map(csvCell)
+        .join(',')
     ),
     ...extract.stock_movements.map((row) =>
       [
@@ -67,7 +74,9 @@ export function toReportingCsv(extract: ReportingExtract): string {
         '',
         '',
         row.occurred_at,
-      ].join(',')
+      ]
+        .map(csvCell)
+        .join(',')
     ),
   ];
   return [header.join(','), ...rows].join('\n');
