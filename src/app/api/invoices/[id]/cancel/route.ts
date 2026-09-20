@@ -4,6 +4,7 @@ import { invoiceToApi } from '@/lib/db/api-serialize';
 import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
+import { reverseInvoiceSaleMovements } from '@/lib/inventory/invoice-stock-posting';
 
 export async function POST(
   request: NextRequest,
@@ -18,6 +19,7 @@ export async function POST(
 
     const existing = await prisma.invoice.findFirst({
       where: { id, ownerUserId: { in: workspaceUserIds } },
+      include: { items: { include: { product: true } } },
     });
     if (!existing) {
       return NextResponse.json({ detail: 'Not found' }, { status: 404 });
@@ -29,14 +31,24 @@ export async function POST(
       return NextResponse.json({ detail: 'Paid invoices cannot be cancelled' }, { status: 400 });
     }
 
-    const updated = await prisma.invoice.update({
-      where: { id },
-      data: { status: 'cancelled' },
-      include: {
-        customer: { select: { companyName: true, email: true } },
-        items: { include: { product: true }, orderBy: { createdAt: 'asc' } },
-        payments: { orderBy: { paymentDate: 'desc' } },
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      if (existing.status !== 'draft') {
+        await reverseInvoiceSaleMovements(tx, {
+          ownerUserId: scope.userId,
+          invoiceId: existing.id,
+          branchName: existing.branchName,
+          items: existing.items,
+        });
+      }
+      return tx.invoice.update({
+        where: { id },
+        data: { status: 'cancelled' },
+        include: {
+          customer: { select: { companyName: true, email: true } },
+          items: { include: { product: true }, orderBy: { createdAt: 'asc' } },
+          payments: { orderBy: { paymentDate: 'desc' } },
+        },
+      });
     });
 
     const status = deriveInvoiceStatus(updated);
