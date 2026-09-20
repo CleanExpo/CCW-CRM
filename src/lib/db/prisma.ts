@@ -10,7 +10,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Bump when a schema change requires discarding the dev global PrismaClient cache. */
-const PRISMA_CLIENT_SCHEMA_VERSION = 9;
+const PRISMA_CLIENT_SCHEMA_VERSION = 10;
 
 /** Bump when Pool options change so hot-reload does not keep a stale pool. */
 const PG_POOL_CONFIG_VERSION = 2;
