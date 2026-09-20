@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { orderLinesToApi, orderToApi } from '@/lib/db/api-serialize';
 import { resolveLinesFromPayload } from '@/lib/db/order-lines';
+import { parseSaleBranch } from '@/lib/inventory/stock-movement';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import type { Prisma } from '@prisma/client';
@@ -64,6 +65,15 @@ export async function PUT(
     if (!hasItemsArray) {
       const data: Prisma.OrderUpdateInput = {};
       if (body.status != null) data.status = String(body.status);
+      if (
+        body.fulfillment_location != null ||
+        body.branch_name != null ||
+        body.branch != null
+      ) {
+        data.branchName = parseSaleBranch(
+          body.fulfillment_location ?? body.branch_name ?? body.branch
+        );
+      }
       if (body.customer_id != null || body.customerId != null) {
         const targetCustomerId = String(body.customer_id ?? body.customerId);
         const targetCustomer = await prisma.customer.findFirst({
@@ -122,6 +132,9 @@ export async function PUT(
         customerId,
         status,
         total: totalWithTax,
+        branchName:
+          parseSaleBranch(body.fulfillment_location ?? body.branch_name ?? body.branch) ??
+          existing.branchName,
         lineItems: {
           deleteMany: {},
           create: lines.map((l) => ({
