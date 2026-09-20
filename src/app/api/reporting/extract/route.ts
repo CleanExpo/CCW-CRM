@@ -14,6 +14,7 @@ import {
  * lines and stock movements — not the screen APIs, not a database URL.
  */
 export async function GET(request: NextRequest) {
+  try {
   const scope = await requireAuthScope(request);
   if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   if (scope.role !== 'owner' && scope.role !== 'admin' && !scope.isAdmin) {
@@ -97,4 +98,10 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(extract);
+  } catch (error) {
+    return NextResponse.json(
+      { detail: error instanceof Error ? error.message : 'Extract failed' },
+      { status: 500 }
+    );
+  }
 }
