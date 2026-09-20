@@ -9,9 +9,11 @@ These four entries stay on the list while the schema is open so Phase 2 work doe
 
 ## Ahead of this list (do not reorder)
 
-1. Phase 2 SoW (signable v1.1)
+1. Phase 2 SoW (signable v1.1) — July draft is in [`CCW-PHASE-2-SCOPE-OF-WORK.md`](./CCW-PHASE-2-SCOPE-OF-WORK.md); Toby has not signed v1.1
 2. Stock corroboration (frozen as-of; five control totals close Phase 1; SKU × branch × decimal is Area 1)
 3. SendGrid transactional email (Twilio relationship)
+
+Workshop recall → booking is a **separate commercial track**. Scope: [`CCW-WORKSHOP-PILOT-SCOPE.md`](./CCW-WORKSHOP-PILOT-SCOPE.md). Not Phase 2. No customer contact until stock is signed and that note is agreed.
 
 ---
 
