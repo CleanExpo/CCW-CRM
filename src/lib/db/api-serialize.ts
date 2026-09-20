@@ -4,9 +4,9 @@
 
 import type {
   Customer,
-  Invoice as InvoiceRow,
   InvoiceLineItem,
   InvoicePayment as InvoicePaymentRow,
+  Invoice as InvoiceRow,
   Order,
   Product,
   Quote,
@@ -85,6 +85,8 @@ export function orderToApi(
     order_number: o.orderNumber,
     status: o.status,
     total: o.total,
+    fulfillment_location: o.branchName ?? undefined,
+    branch_name: o.branchName ?? undefined,
     created_at: o.createdAt,
     updated_at: o.updatedAt,
     customer_name: name,
@@ -136,9 +138,7 @@ export function paymentToApi(p: InvoicePaymentRow) {
   };
 }
 
-export function invoiceLineToApi(
-  line: InvoiceLineItem & { product?: Product | null }
-) {
+export function invoiceLineToApi(line: InvoiceLineItem & { product?: Product | null }) {
   return {
     id: line.id,
     invoice_id: line.invoiceId,
@@ -182,6 +182,8 @@ export function invoiceToApi(
     total: inv.total,
     amount_paid: inv.amountPaid,
     amount_due: amountDue,
+    branch_name: inv.branchName ?? undefined,
+    fulfillment_location: inv.branchName ?? undefined,
     items: (inv.items ?? []).map((li) => invoiceLineToApi(li)),
     payments: (inv.payments ?? []).map(paymentToApi),
     created_at: inv.createdAt.toISOString(),
