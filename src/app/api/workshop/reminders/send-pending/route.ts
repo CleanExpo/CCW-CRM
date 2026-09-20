@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import * as workshop from '@/lib/db/workshop-service';
+import { WorkshopOutreachBlockedError } from '@/lib/workshop/customer-outreach-gate';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest) {
           : 'No due pending reminders to send.',
     });
   } catch (e) {
+    if (e instanceof WorkshopOutreachBlockedError) {
+      return NextResponse.json({ detail: e.message, code: e.code }, { status: e.status });
+    }
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
 }
