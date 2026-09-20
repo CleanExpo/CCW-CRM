@@ -13,6 +13,7 @@ import {
 } from '@/lib/integrations/sendgrid-mail';
 import { logOperationalEvent } from '@/lib/comms/operational-events';
 import { dispatchWorkflowTrigger } from '@/lib/workflows/workflow-engine';
+import { postInvoiceSaleMovements } from '@/lib/inventory/invoice-stock-posting';
 
 export async function POST(
   request: NextRequest,
@@ -27,6 +28,7 @@ export async function POST(
 
     const existing = await prisma.invoice.findFirst({
       where: { id, ownerUserId: { in: workspaceUserIds } },
+      include: { items: { include: { product: true } } },
     });
     if (!existing) {
       return NextResponse.json({ detail: 'Not found' }, { status: 404 });
@@ -35,14 +37,23 @@ export async function POST(
       return NextResponse.json({ detail: 'Only draft invoices can be marked sent' }, { status: 400 });
     }
 
-    const updated = await prisma.invoice.update({
-      where: { id },
-      data: { status: 'sent' },
-      include: {
-        customer: { select: { companyName: true, email: true } },
-        items: { include: { product: true }, orderBy: { createdAt: 'asc' } },
-        payments: { orderBy: { paymentDate: 'desc' } },
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.invoice.update({
+        where: { id },
+        data: { status: 'sent' },
+        include: {
+          customer: { select: { companyName: true, email: true } },
+          items: { include: { product: true }, orderBy: { createdAt: 'asc' } },
+          payments: { orderBy: { paymentDate: 'desc' } },
+        },
+      });
+      await postInvoiceSaleMovements(tx, {
+        ownerUserId: scope.userId,
+        invoiceId: row.id,
+        branchName: row.branchName,
+        items: row.items,
+      });
+      return row;
     });
 
     const status = deriveInvoiceStatus(updated);
