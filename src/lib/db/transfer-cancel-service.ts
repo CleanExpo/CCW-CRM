@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 import { syncProductStockTotal } from './inventory-location-transfer';
+import { recordStockMovements } from '@/lib/inventory/stock-movement';
 
 export interface CancelTransferOptions {
   /** Transfer id to cancel */
@@ -55,6 +56,8 @@ export async function cancelTransfer(
       fromLocation: true,
       toLocation: true,
       quantity: true,
+      ownerUserId: true,
+      product: { select: { sku: true } },
     },
   });
 
@@ -87,6 +90,30 @@ export async function cancelTransfer(
         data: { quantity: { decrement: transfer.quantity } },
       });
       await syncProductStockTotal(tx, transfer.productId);
+      await recordStockMovements(tx, [
+        {
+          ownerUserId: transfer.ownerUserId,
+          productId: transfer.productId,
+          sku: transfer.product.sku,
+          branchName: transfer.toLocation,
+          quantity: -transfer.quantity,
+          movementType: 'transfer_out',
+          sourceType: 'stock_transfer_cancel',
+          sourceId: transfer.id,
+          notes: 'in_transit rollback',
+        },
+        {
+          ownerUserId: transfer.ownerUserId,
+          productId: transfer.productId,
+          sku: transfer.product.sku,
+          branchName: transfer.fromLocation,
+          quantity: transfer.quantity,
+          movementType: 'transfer_in',
+          sourceType: 'stock_transfer_cancel',
+          sourceId: transfer.id,
+          notes: 'in_transit rollback',
+        },
+      ]);
     }
     // For pending: stock was not moved — no stock adjustment needed
 
