@@ -64,9 +64,9 @@ Not “a few extra fields.” Own scope and price after go-live.
 
 ## Status
 
-| #   | Item                      | When           | Now                                                  |
-| --- | ------------------------- | -------------- | ---------------------------------------------------- |
-| 1   | Stock-movement ledger     | Cutover prereq | MVP — `stock_movements` on adjust and transfer       |
-| 2   | Branch on a sale          | Cutover prereq | MVP — `branch_name` on order and invoice             |
-| 3   | Defined read path         | Cutover prereq | MVP — `GET /api/reporting/extract` (+ `?format=csv`) |
-| 4   | Navision-style dimensions | After go-live  | Not built                                            |
+| #   | Item                      | When           | Now                                                        |
+| --- | ------------------------- | -------------- | ---------------------------------------------------------- |
+| 1   | Stock-movement ledger     | Cutover prereq | Adjust, transfer, cancel, GRN confirm, invoice send/cancel |
+| 2   | Branch on a sale          | Cutover prereq | MVP — `branch_name` on order and invoice                   |
+| 3   | Defined read path         | Cutover prereq | MVP — `GET /api/reporting/extract` (+ `?format=csv`)       |
+| 4   | Navision-style dimensions | After go-live  | Not built                                                  |
