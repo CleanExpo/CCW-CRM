@@ -10,6 +10,8 @@ import {
   subDays,
 } from 'date-fns';
 import { prisma } from '@/lib/db/prisma';
+import { assertWorkshopCustomerOutreachAllowed } from '@/lib/workshop/customer-outreach-gate';
+import { inferCentreCode, PILOT_CENTRES } from '@/lib/workshop/centres';
 import type {
   DashboardData,
   Equipment,
@@ -836,30 +838,14 @@ export async function generateWorkshopReminders(workspaceUserIds: string[]): Pro
 }
 
 export async function sendWorkshopReminder(workspaceUserIds: string[], id: string) {
-  const row = await prisma.workshopServiceReminder.findFirst({
-    where: { id, ownerUserId: { in: workspaceUserIds } },
-  });
-  if (!row) return null;
-  if (row.status !== 'pending' && row.status !== 'failed') return reminderToApi(row);
-
-  const updated = await prisma.workshopServiceReminder.update({
-    where: { id },
-    data: { status: 'sent', sentAt: new Date() },
-  });
-  return reminderToApi(updated);
+  void workspaceUserIds;
+  void id;
+  assertWorkshopCustomerOutreachAllowed();
 }
 
 export async function sendPendingWorkshopReminders(workspaceUserIds: string[]): Promise<number> {
-  const now = new Date();
-  const result = await prisma.workshopServiceReminder.updateMany({
-    where: {
-      ownerUserId: { in: workspaceUserIds },
-      status: 'pending',
-      scheduledSendAt: { lte: now },
-    },
-    data: { status: 'sent', sentAt: now },
-  });
-  return result.count;
+  void workspaceUserIds;
+  assertWorkshopCustomerOutreachAllowed();
 }
 
 export async function suppressWorkshopReminder(workspaceUserIds: string[], id: string) {
@@ -992,4 +978,196 @@ export async function getEquipmentWarrantyStats(workspaceUserIds: string[]) {
   }));
 
   return { expiring_soon: total, warranty_alerts };
+}
+
+export type RecallReviewStatus =
+  | 'queued'
+  | 'ready_to_book'
+  | 'held'
+  | 'wrong_customer'
+  | 'wrong_machine';
+
+export function centreToApi(row: {
+  id: string;
+  code: string;
+  name: string;
+  technicianCount: number | null;
+  paidHoursPerWeek: number | null;
+  hoursNextFourWeeks: unknown;
+  bayCount: number | null;
+  labourRate: number | null;
+  managerName: string | null;
+  outreachApprover: string | null;
+  formReceivedAt: Date | null;
+  notes: string | null;
+  updatedAt: Date;
+}) {
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    technician_count: row.technicianCount,
+    paid_hours_per_week: row.paidHoursPerWeek,
+    hours_next_four_weeks: Array.isArray(row.hoursNextFourWeeks) ? row.hoursNextFourWeeks : [],
+    bay_count: row.bayCount,
+    labour_rate: row.labourRate,
+    manager_name: row.managerName,
+    outreach_approver: row.outreachApprover,
+    form_received_at: row.formReceivedAt?.toISOString() ?? null,
+    notes: row.notes,
+    updated_at: row.updatedAt.toISOString(),
+  };
+}
+
+export async function ensureWorkshopCentres(ownerUserId: string) {
+  for (const c of PILOT_CENTRES) {
+    await prisma.workshopCentre.upsert({
+      where: { ownerUserId_code: { ownerUserId, code: c.code } },
+      create: { ownerUserId, code: c.code, name: c.name },
+      update: {},
+    });
+  }
+  const rows = await prisma.workshopCentre.findMany({
+    where: { ownerUserId, code: { in: [...PILOT_CENTRES.map((c) => c.code)] } },
+    orderBy: { name: 'asc' },
+  });
+  return rows.map(centreToApi);
+}
+
+export async function updateWorkshopCentre(
+  ownerUserId: string,
+  code: string,
+  body: {
+    technician_count?: number | null;
+    paid_hours_per_week?: number | null;
+    hours_next_four_weeks?: unknown;
+    bay_count?: number | null;
+    labour_rate?: number | null;
+    manager_name?: string | null;
+    outreach_approver?: string | null;
+    notes?: string | null;
+    form_received?: boolean;
+  }
+) {
+  const known = PILOT_CENTRES.some((c) => c.code === code);
+  if (!known) return null;
+  await ensureWorkshopCentres(ownerUserId);
+  const row = await prisma.workshopCentre.update({
+    where: { ownerUserId_code: { ownerUserId, code } },
+    data: {
+      technicianCount: body.technician_count ?? undefined,
+      paidHoursPerWeek: body.paid_hours_per_week ?? undefined,
+      hoursNextFourWeeks: body.hours_next_four_weeks ?? undefined,
+      bayCount: body.bay_count ?? undefined,
+      labourRate: body.labour_rate ?? undefined,
+      managerName: body.manager_name ?? undefined,
+      outreachApprover: body.outreach_approver ?? undefined,
+      notes: body.notes ?? undefined,
+      formReceivedAt: body.form_received ? new Date() : undefined,
+    },
+  });
+  return centreToApi(row);
+}
+
+export async function listRecallQueue(
+  workspaceUserIds: string[],
+  centreCode?: string
+) {
+  const ownerUserId = workspaceUserIds[0];
+  if (!ownerUserId) return [];
+
+  const horizon = addDays(startOfDay(new Date()), 14);
+  const equipment = await prisma.workshopEquipment.findMany({
+    where: {
+      ownerUserId: { in: workspaceUserIds },
+      status: 'active',
+      nextServiceDate: { lte: horizon },
+    },
+    include: { customer: true, recallCase: true },
+    orderBy: { nextServiceDate: 'asc' },
+  });
+
+  const items = [];
+  for (const e of equipment) {
+    const inferred = inferCentreCode(e.location);
+    if (centreCode && inferred !== centreCode) continue;
+
+    let review = e.recallCase;
+    if (!review) {
+      review = await prisma.workshopRecallCase.create({
+        data: {
+          ownerUserId: e.ownerUserId,
+          equipmentId: e.id,
+          centreCode: inferred,
+          status: 'queued',
+        },
+      });
+    }
+
+    items.push({
+      id: review.id,
+      equipment_id: e.id,
+      centre_code: review.centreCode,
+      status: review.status,
+      notes: review.notes,
+      reviewed_at: review.reviewedAt?.toISOString() ?? null,
+      serial_number: e.serialNumber,
+      make: e.make,
+      model: e.model,
+      location: e.location,
+      next_service_date: isoDate(e.nextServiceDate),
+      customer_id: e.customerId,
+      company_name: e.customer.companyName,
+      contact_name: e.customer.contactName,
+    });
+  }
+  return items;
+}
+
+export async function reviewRecallCase(
+  workspaceUserIds: string[],
+  equipmentId: string,
+  input: { status: RecallReviewStatus; notes?: string | null },
+  reviewedBy: string
+) {
+  const allowed: RecallReviewStatus[] = [
+    'queued',
+    'ready_to_book',
+    'held',
+    'wrong_customer',
+    'wrong_machine',
+  ];
+  if (!allowed.includes(input.status)) return null;
+
+  const equipment = await prisma.workshopEquipment.findFirst({
+    where: { id: equipmentId, ownerUserId: { in: workspaceUserIds } },
+  });
+  if (!equipment) return null;
+
+  const row = await prisma.workshopRecallCase.upsert({
+    where: { equipmentId },
+    create: {
+      ownerUserId: equipment.ownerUserId,
+      equipmentId,
+      centreCode: inferCentreCode(equipment.location),
+      status: input.status,
+      notes: input.notes ?? null,
+      reviewedBy,
+      reviewedAt: new Date(),
+    },
+    update: {
+      status: input.status,
+      notes: input.notes ?? undefined,
+      reviewedBy,
+      reviewedAt: new Date(),
+    },
+  });
+  return {
+    id: row.id,
+    equipment_id: row.equipmentId,
+    centre_code: row.centreCode,
+    status: row.status,
+    notes: row.notes,
+    reviewed_at: row.reviewedAt?.toISOString() ?? null,
+  };
 }
