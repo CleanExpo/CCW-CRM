@@ -381,6 +381,9 @@ model StockTransfer {
   @@map("stock_transfers")
 }
 
+/// Sale header. No branch today — cutover list item 2. Do not design this so a later
+/// posted dimension set (list item 4) cannot sit on the header or lines.
+/// See docs/OPTIX-CUTOVER-AND-DIMENSIONS-LIST.md
 model Order {
   id          String   @id @default(uuid()) @db.Uuid
   ownerUserId String   @map("owner_user_id") @db.Uuid
@@ -388,6 +391,8 @@ model Order {
   orderNumber String   @map("order_number")
   status      String
   total       Float    @default(0)
+  /// Sale branch (cutover list item 2). UI fulfilment location until Cin7 branch ids are wired.
+  branchName  String?  @map("branch_name")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -451,6 +456,8 @@ model QuoteLineItem {
   @@map("quote_line_items")
 }
 
+/// Posted sale. No branch on header or lines today — cutover list item 2.
+/// See docs/OPTIX-CUTOVER-AND-DIMENSIONS-LIST.md
 model Invoice {
   id            String   @id @default(uuid()) @db.Uuid
   ownerUserId   String   @map("owner_user_id") @db.Uuid
@@ -465,6 +472,8 @@ model Invoice {
   taxTotal      Float    @default(0) @map("tax_total")
   total         Float    @default(0)
   amountPaid    Float    @default(0) @map("amount_paid")
+  /// Sale branch (cutover list item 2). Copied from the order when invoiced from an order.
+  branchName    String?  @map("branch_name")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -687,7 +696,8 @@ model Cin7UnitOfMeasure {
   @@map("cin7_units_of_measure")
 }
 
-/// Per-branch stock levels from Cin7 /v1/Stock (warehouse quantities).
+/// Snapshot by branch × SKU only — not a movement ledger (cutover list item 1).
+/// See docs/OPTIX-CUTOVER-AND-DIMENSIONS-LIST.md
 model Cin7StockLevel {
   id           String   @id @default(uuid()) @db.Uuid
   ownerUserId  String   @map("owner_user_id") @db.Uuid
@@ -705,6 +715,27 @@ model Cin7StockLevel {
   @@index([ownerUserId, sku])
   @@index([ownerUserId, cin7BranchId])
   @@map("cin7_stock_levels")
+}
+
+/// In / out / adjustment history. Snapshot table above is not this ledger (cutover list item 1).
+model StockMovement {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @map("owner_user_id") @db.Uuid
+  productId    String?  @map("product_id") @db.Uuid
+  sku          String
+  branchName   String   @map("branch_name")
+  quantity     Int
+  movementType String   @map("movement_type")
+  sourceType   String   @map("source_type")
+  sourceId     String   @map("source_id")
+  notes        String?
+  occurredAt   DateTime @default(now()) @map("occurred_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([ownerUserId, occurredAt])
+  @@index([ownerUserId, sku])
+  @@index([ownerUserId, branchName])
+  @@map("stock_movements")
 }
 
 /// Latest sync status per entity (one row per owner + entity type) with resume checkpoints.
