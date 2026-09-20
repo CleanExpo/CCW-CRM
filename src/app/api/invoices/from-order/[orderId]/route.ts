@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuthScope } from '@/lib/auth/data-scope';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
-import { nextInvoiceNumber } from '@/lib/db/invoice-mutations';
 import { invoiceToApi } from '@/lib/db/api-serialize';
+import { nextInvoiceNumber } from '@/lib/db/invoice-mutations';
 import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
+import { prisma } from '@/lib/db/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   _request: NextRequest,
@@ -83,6 +83,7 @@ export async function POST(
         taxTotal,
         total,
         amountPaid: 0,
+        branchName: order.branchName,
         items: {
           create: lines.map((l) => ({
             productId: l.productId,
