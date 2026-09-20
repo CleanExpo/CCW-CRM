@@ -121,6 +121,39 @@ export interface Paginated<T> {
   total_pages: number;
 }
 
+export interface WorkshopCentre {
+  id: string;
+  code: string;
+  name: string;
+  technician_count: number | null;
+  paid_hours_per_week: number | null;
+  hours_next_four_weeks: unknown[];
+  bay_count: number | null;
+  labour_rate: number | null;
+  manager_name: string | null;
+  outreach_approver: string | null;
+  form_received_at: string | null;
+  notes: string | null;
+  updated_at: string;
+}
+
+export interface RecallQueueItem {
+  id: string;
+  equipment_id: string;
+  centre_code: string;
+  status: string;
+  notes: string | null;
+  reviewed_at: string | null;
+  serial_number: string;
+  make: string;
+  model: string;
+  location: string;
+  next_service_date: string | null;
+  customer_id: string;
+  company_name: string;
+  contact_name: string | null;
+}
+
 export interface DashboardData {
   location: string;
   today: { bookings: WorkshopBooking[]; count: number };
