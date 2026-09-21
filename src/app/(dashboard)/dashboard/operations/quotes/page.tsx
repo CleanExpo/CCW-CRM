@@ -189,7 +189,7 @@ export default function QuotesPage() {
                 <CardDescription className="dark:text-foreground/70">
                   {total} quotes in system
                   {lastUpdated && (
-                    <span className="text-muted-foreground ml-2 text-xs dark:text-foreground/60">
+                    <span className="text-muted-foreground dark:text-foreground/60 ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>
                   )}
@@ -304,6 +304,23 @@ export default function QuotesPage() {
                             Convert
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Copies a portal link that opens this quote for its own customer. Online ordering must be open."
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/portal/cart?quote=${quote.id}`;
+                            try {
+                              await navigator.clipboard.writeText(url);
+                              toast({ title: 'Quote-to-cart link copied' });
+                            } catch {
+                              toast({ title: 'Copy this link', description: url });
+                            }
+                          }}
+                        >
+                          Copy cart link
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

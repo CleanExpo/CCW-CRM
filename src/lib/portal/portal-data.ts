@@ -131,6 +131,7 @@ export async function getPortalOrdersForCustomer(customerId: string): Promise<Po
       status: mapOrderStatus(order.status),
       total: order.total,
       items: order.lineItems.map((line) => ({
+        line_id: line.id,
         sku: line.product.sku,
         name: line.product.name,
         qty: line.quantity,

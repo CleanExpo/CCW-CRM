@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/portal', icon: LayoutDashboard },
   { label: 'Orders', href: '/portal/orders', icon: Package },
+  { label: 'Products', href: '/portal/products', icon: Package },
   { label: 'Tracking', href: '/portal/tracking', icon: Truck },
   { label: 'Invoices', href: '/portal/invoices', icon: FileText },
   { label: 'Certifications', href: '/portal/certifications', icon: Award },

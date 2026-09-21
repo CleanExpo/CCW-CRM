@@ -9,6 +9,8 @@
  */
 
 export interface PortalOrderItem {
+  /** Order line id; absent on demo fixtures. Used by "order again" for one line. */
+  line_id?: string;
   sku: string;
   name: string;
   qty: number;
