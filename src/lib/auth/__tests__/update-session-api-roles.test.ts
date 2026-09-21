@@ -100,6 +100,48 @@ describe('member role on gated API paths', () => {
   });
 });
 
+describe('percent-encoded paths', () => {
+  // Next.js runs middleware on the raw path and only then decodes it to find the
+  // route, so /api/settings%2Fcompany is served by /api/settings/company.
+  it.each([
+    '/api/settings%2Fcompany',
+    '/api/settings%2fcompany',
+    '/api%2Fsettings/company',
+    '/api/team%2Finvite',
+    '/api/integrations/cin7%2Fstock-prune',
+    '/api/%61pprovals',
+  ])('403 for member on %s, the same as the decoded path', async (path) => {
+    const res = await call(path, 'member', 'POST');
+    expect(res.status).toBe(403);
+  });
+
+  it('member still passes through on an encoded path to an API they may use', async () => {
+    const res = await call('/api/monitoring/alerts%2Fpos-failures', 'member');
+    expect(passedThrough(res)).toBe(true);
+  });
+
+  it('owner still passes through on an encoded gated path', async () => {
+    const res = await call('/api/settings%2Fcompany', 'owner', 'POST');
+    expect(passedThrough(res)).toBe(true);
+  });
+
+  it('treats an encoded API path as an API path for billing, not as a page', async () => {
+    const res = await call('/api%2Finvoices', 'billing');
+    expect(passedThrough(res)).toBe(true);
+  });
+
+  it('member is redirected from an encoded blocked page, like the decoded one', async () => {
+    const res = await call('/dashboard%2Ffinance', 'member');
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get('location') ?? '').pathname).toBe('/dashboard');
+  });
+
+  it('refuses a path that is not valid percent-encoding with 400', async () => {
+    const res = await call('/api/settings%E0%A4%A', 'member');
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('owner and admin are not affected', () => {
   it.each(['owner', 'admin'])('%s passes through on every member-gated API', async (role) => {
     for (const path of MEMBER_GATED_APIS) {
@@ -111,7 +153,11 @@ describe('owner and admin are not affected', () => {
 
 describe('billing role on API paths', () => {
   it('403 on monitoring APIs whose only page (/monitoring) billing cannot open', async () => {
-    for (const path of ['/api/monitoring/health', '/api/monitoring/metrics', '/api/monitoring/range']) {
+    for (const path of [
+      '/api/monitoring/health',
+      '/api/monitoring/metrics',
+      '/api/monitoring/range',
+    ]) {
       const res = await call(path, 'billing');
       expect(res.status, path).toBe(403);
     }

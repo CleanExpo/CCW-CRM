@@ -169,8 +169,19 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname.startsWith('/api/')) {
-    const pathname = request.nextUrl.pathname;
+  // Middleware sees the raw path, but Next.js decodes it before choosing a
+  // route, so /api/settings%2Fcompany is served by /api/settings/company. Role
+  // rules therefore match the decoded path, and a path that cannot be decoded
+  // is refused rather than passed through unchecked.
+  let decodedPath = request.nextUrl.pathname;
+  try {
+    decodedPath = decodeURIComponent(decodedPath);
+  } catch {
+    if (user) return NextResponse.json({ detail: 'Malformed request path' }, { status: 400 });
+  }
+
+  if (user && decodedPath.startsWith('/api/')) {
+    const pathname = decodedPath;
     const blocked =
       (user.role === 'member' &&
         matchesPrefix(pathname, memberBlockedApiPrefixes) &&
@@ -186,11 +197,10 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (user && !request.nextUrl.pathname.startsWith('/api/')) {
+  if (user && !decodedPath.startsWith('/api/')) {
     if (user.role === 'billing') {
       const canAccess = billingAllowedPrefixes.some(
-        (path) =>
-          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) => decodedPath === path || decodedPath.startsWith(path + '/')
       );
       if (!canAccess) {
         const url = request.nextUrl.clone();
@@ -200,8 +210,7 @@ export async function updateSession(request: NextRequest) {
     }
     if (user.role === 'member') {
       const blocked = memberBlockedPrefixes.some(
-        (path) =>
-          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) => decodedPath === path || decodedPath.startsWith(path + '/')
       );
       if (blocked) {
         const url = request.nextUrl.clone();
