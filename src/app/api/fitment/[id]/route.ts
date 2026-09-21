@@ -15,7 +15,12 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     const row = await fitment.reviewFitment(ids, scope.userId, id, {
       status: body.status,
       kind: body.kind,
-      usageQuantity: body.usage_quantity === undefined ? undefined : body.usage_quantity === null ? null : Number(body.usage_quantity),
+      usageQuantity:
+        body.usage_quantity === undefined
+          ? undefined
+          : body.usage_quantity === null
+            ? null
+            : Number(body.usage_quantity),
       usagePer: body.usage_per,
     });
     if (!row) return NextResponse.json({ detail: 'Fitment not found' }, { status: 404 });

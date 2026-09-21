@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
     }
     const parsed = parseFitmentCsv(csv);
     const ids = await getWorkspaceMemberUserIds(scope.userId);
-    const res = await importFitments(ids, scope.userId, parsed.rows, { confirm: body.confirm === true });
+    const res = await importFitments(ids, scope.userId, parsed.rows, {
+      confirm: body.confirm === true,
+    });
     const errors = [...parsed.errors, ...res.errors].sort((a, b) => a.line - b.line);
     return NextResponse.json({ imported: res.imported, errors });
   } catch (e) {

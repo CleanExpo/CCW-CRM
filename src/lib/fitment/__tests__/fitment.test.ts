@@ -7,7 +7,15 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-type P = { id: string; ownerUserId: string; name: string; sku: string; category: string | null; price: number; isActive: boolean };
+type P = {
+  id: string;
+  ownerUserId: string;
+  name: string;
+  sku: string;
+  category: string | null;
+  price: number;
+  isActive: boolean;
+};
 type F = {
   id: string;
   ownerUserId: string;
@@ -48,7 +56,8 @@ function matchValue(actual: unknown, cond: unknown): boolean {
 function matchProduct(p: P | undefined, where: Record<string, unknown>): boolean {
   if (!p) return false;
   for (const [k, v] of Object.entries(where)) {
-    if (!['id', 'ownerUserId', 'isActive', 'sku'].includes(k)) throw new Error(`fake prisma: product.${k}`);
+    if (!['id', 'ownerUserId', 'isActive', 'sku'].includes(k))
+      throw new Error(`fake prisma: product.${k}`);
     if (!matchValue(p[k as keyof P], v)) return false;
   }
   return true;
@@ -58,7 +67,13 @@ function matchFitment(f: F, where: Record<string, unknown>): boolean {
   for (const [k, v] of Object.entries(where)) {
     if (k === 'fitProduct' || k === 'machineProduct') {
       const pid = k === 'fitProduct' ? f.fitProductId : f.machineProductId;
-      if (!matchProduct(db.products.find((p) => p.id === pid), v as Record<string, unknown>)) return false;
+      if (
+        !matchProduct(
+          db.products.find((p) => p.id === pid),
+          v as Record<string, unknown>
+        )
+      )
+        return false;
     } else if (['id', 'ownerUserId', 'machineProductId', 'fitProductId', 'status'].includes(k)) {
       if (!matchValue(f[k as keyof F], v)) return false;
     } else {
@@ -84,8 +99,9 @@ vi.mock('@/lib/db/prisma', () => ({
       findMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
         db.fitments.filter((f) => matchFitment(f, where)).map(withProducts)
       ),
-      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
-        db.fitments.find((f) => matchFitment(f, where)) ?? null
+      findFirst: vi.fn(
+        async ({ where }: { where: Record<string, unknown> }) =>
+          db.fitments.find((f) => matchFitment(f, where)) ?? null
       ),
       update: vi.fn(async ({ where, data }: { where: { id: string }; data: Partial<F> }) => {
         const f = db.fitments.find((x) => x.id === where.id)!;
@@ -98,7 +114,9 @@ vi.mock('@/lib/db/prisma', () => ({
         return { count: before - db.fitments.length };
       }),
       createMany: vi.fn(async ({ data }: { data: Omit<F, 'id'>[] }) => {
-        data.forEach((d, i) => db.fitments.push({ id: `new-${i}`, usageQuantity: null, usagePer: null, confirmedBy: null, confirmedAt: null, ...d } as F));
+        data.forEach((d, i) =>
+          db.fitments.push({ id: `new-${i}`, ...d } as F)
+        );
         return { count: data.length };
       }),
     },
@@ -108,8 +126,11 @@ vi.mock('@/lib/db/prisma', () => ({
       ),
     },
     workshopEquipment: {
-      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
-        db.equipment.find((e) => matchValue(e.id, where.id) && matchValue(e.ownerUserId, where.ownerUserId)) ?? null
+      findFirst: vi.fn(
+        async ({ where }: { where: Record<string, unknown> }) =>
+          db.equipment.find(
+            (e) => matchValue(e.id, where.id) && matchValue(e.ownerUserId, where.ownerUserId)
+          ) ?? null
       ),
       findMany: vi.fn(async () => db.equipment.filter((e) => e.productId)),
     },
@@ -132,12 +153,32 @@ const WS = ['user-a'];
 const OTHER = 'user-other';
 
 function product(id: string, over: Partial<P> = {}): P {
-  return { id, ownerUserId: 'user-a', name: id, sku: id.toUpperCase(), category: null, price: 10, isActive: true, ...over };
+  return {
+    id,
+    ownerUserId: 'user-a',
+    name: id,
+    sku: id.toUpperCase(),
+    category: null,
+    price: 10,
+    isActive: true,
+    ...over,
+  };
 }
 function fit(id: string, machine: string, fitP: string, status: string, over: Partial<F> = {}): F {
   return {
-    id, ownerUserId: 'user-a', machineProductId: machine, fitProductId: fitP, kind: 'consumable', status,
-    source: 'manual', usageQuantity: null, usagePer: null, evidence: null, confirmedBy: null, confirmedAt: null, ...over,
+    id,
+    ownerUserId: 'user-a',
+    machineProductId: machine,
+    fitProductId: fitP,
+    kind: 'consumable',
+    status,
+    source: 'manual',
+    usageQuantity: null,
+    usagePer: null,
+    evidence: null,
+    confirmedBy: null,
+    confirmedAt: null,
+    ...over,
   };
 }
 
@@ -231,7 +272,9 @@ describe('reviewFitment', () => {
   });
 
   it('rejects an unknown status', async () => {
-    await expect(reviewFitment(WS, 'staff-1', 'f3', { status: 'live' })).rejects.toThrow('Invalid status');
+    await expect(reviewFitment(WS, 'staff-1', 'f3', { status: 'live' })).rejects.toThrow(
+      'Invalid status'
+    );
   });
 });
 
@@ -256,7 +299,13 @@ describe('generateSuggestions', () => {
     expect(res).toEqual({ fromBom: 1, fromOrders: 0, skippedExisting: 2 });
     const added = db.fitments.filter((f) => f.id.startsWith('new-'));
     expect(added).toHaveLength(1);
-    expect(added[0]).toMatchObject({ machineProductId: 'machine-y', fitProductId: 'hose', status: 'suggested', source: 'bom', kind: 'part' });
+    expect(added[0]).toMatchObject({
+      machineProductId: 'machine-y',
+      fitProductId: 'hose',
+      status: 'suggested',
+      source: 'bom',
+      kind: 'part',
+    });
     expect(db.fitments.find((f) => f.id === 'f1')?.status).toBe('confirmed');
   });
 });

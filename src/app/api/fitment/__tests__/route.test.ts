@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/data-scope', () => ({ requireAuthScope: vi.fn() }));
-vi.mock('@/lib/auth/workspace-scope', () => ({ getWorkspaceMemberUserIds: vi.fn(async () => ['user-a']) }));
+vi.mock('@/lib/auth/workspace-scope', () => ({
+  getWorkspaceMemberUserIds: vi.fn(async () => ['user-a']),
+}));
 vi.mock('@/lib/fitment/fitment-service', async (orig) => {
   const real = await orig<typeof import('@/lib/fitment/fitment-service')>();
   return { ...real, listFitsForMachine: vi.fn(), listFitments: vi.fn() };
@@ -15,14 +17,25 @@ import { GET } from '@/app/api/fitment/route';
 
 const product = (id: string) => ({ id, name: id, sku: id, category: null, price: 1 });
 const row = {
-  id: 'f1', kind: 'consumable', status: 'confirmed', source: 'bom', evidence: 'x',
-  usageQuantity: null, usagePer: null, confirmedAt: null,
-  machineProduct: product('m'), fitProduct: product('p'),
+  id: 'f1',
+  kind: 'consumable',
+  status: 'confirmed',
+  source: 'bom',
+  evidence: 'x',
+  usageQuantity: null,
+  usagePer: null,
+  confirmedAt: null,
+  machineProduct: product('m'),
+  fitProduct: product('p'),
 };
 const req = (qs: string) => new NextRequest(`http://localhost/api/fitment${qs}`);
 
 beforeEach(() => {
-  vi.mocked(requireAuthScope).mockResolvedValue({ userId: 'user-a', role: 'member', isAdmin: false } as never);
+  vi.mocked(requireAuthScope).mockResolvedValue({
+    userId: 'user-a',
+    role: 'member',
+    isAdmin: false,
+  } as never);
   vi.mocked(svc.listFitsForMachine).mockResolvedValue([row] as never);
 });
 

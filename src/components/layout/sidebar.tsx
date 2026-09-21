@@ -130,6 +130,7 @@ const navGroups: NavGroup[] = [
       { name: 'Schedule', href: '/dashboard/workshop/schedule', icon: CalendarDays },
       { name: 'Equipment', href: '/dashboard/workshop/equipment', icon: Factory },
       { name: 'Job templates', href: '/dashboard/workshop/templates', icon: ClipboardList },
+      { name: 'Parts map', href: '/dashboard/workshop/fitment', icon: ClipboardList },
       { name: 'Recall review', href: '/dashboard/workshop/recall', icon: Bell },
       { name: 'Centres', href: '/dashboard/workshop/centres', icon: Factory },
       { name: 'Reminders', href: '/dashboard/workshop/reminders', icon: Bell },

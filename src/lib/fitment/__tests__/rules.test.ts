@@ -20,8 +20,22 @@ describe('parseFitmentCsv', () => {
     const { rows, errors } = parseFitmentCsv(csv);
     expect(errors).toEqual([]);
     expect(rows).toEqual([
-      { line: 2, machineSku: 'HD-500', fitSku: 'FLT-1', kind: 'consumable', usageQuantity: 1, usagePer: '250 hours' },
-      { line: 3, machineSku: 'HD-500', fitSku: 'NOZ, 25°', kind: 'part', usageQuantity: null, usagePer: null },
+      {
+        line: 2,
+        machineSku: 'HD-500',
+        fitSku: 'FLT-1',
+        kind: 'consumable',
+        usageQuantity: 1,
+        usagePer: '250 hours',
+      },
+      {
+        line: 3,
+        machineSku: 'HD-500',
+        fitSku: 'NOZ, 25°',
+        kind: 'part',
+        usageQuantity: null,
+        usagePer: null,
+      },
     ]);
   });
 

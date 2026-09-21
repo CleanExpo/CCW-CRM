@@ -8,6 +8,7 @@ import { inventoryApi } from '@/lib/api/inventory';
 import { useToast } from '@/hooks/use-toast';
 import { ProductSchema } from '@/components/seo/JsonLd';
 import { ProductForm } from '../components/ProductForm';
+import { FitsPanel } from '@/components/fitment/FitsPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -411,6 +412,8 @@ export default function ProductDetailPage() {
         </Card>
 
         {/* Attributes & Variants */}
+        <FitsPanel productId={params.id} />
+
         <Tabs defaultValue="attributes">
           <TabsList>
             <TabsTrigger value="attributes">Attributes ({attributes.length})</TabsTrigger>

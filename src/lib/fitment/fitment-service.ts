@@ -158,7 +158,10 @@ export async function createFitment(
   if (input.machineProductId === input.fitProductId) {
     throw new FitmentInputError('A product cannot fit itself');
   }
-  const ok = await productsInWorkspace(workspaceUserIds, [input.machineProductId, input.fitProductId]);
+  const ok = await productsInWorkspace(workspaceUserIds, [
+    input.machineProductId,
+    input.fitProductId,
+  ]);
   if (ok.size !== 2) throw new FitmentInputError('Product not found');
   const data = {
     kind: input.kind,
@@ -176,7 +179,12 @@ export async function createFitment(
         fitProductId: input.fitProductId,
       },
     },
-    create: { ...data, ownerUserId: actorUserId, machineProductId: input.machineProductId, fitProductId: input.fitProductId },
+    create: {
+      ...data,
+      ownerUserId: actorUserId,
+      machineProductId: input.machineProductId,
+      fitProductId: input.fitProductId,
+    },
     update: data,
     include,
   });
@@ -245,7 +253,10 @@ export async function importFitments(
     if (m.length !== 1 || f.length !== 1) {
       const bad = m.length !== 1 ? r.machineSku : r.fitSku;
       const n = m.length !== 1 ? m.length : f.length;
-      errors.push({ line: r.line, message: n === 0 ? `Unknown SKU ${bad}` : `SKU ${bad} matches ${n} products` });
+      errors.push({
+        line: r.line,
+        message: n === 0 ? `Unknown SKU ${bad}` : `SKU ${bad} matches ${n} products`,
+      });
       continue;
     }
     const data = {

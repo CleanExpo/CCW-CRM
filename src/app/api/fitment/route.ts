@@ -32,7 +32,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         items: rows.map((r) =>
           audience === 'customer'
-            ? { kind: r.kind, machine: { id: r.machineProduct.id, name: r.machineProduct.name, sku: r.machineProduct.sku } }
+            ? {
+                kind: r.kind,
+                machine: {
+                  id: r.machineProduct.id,
+                  name: r.machineProduct.name,
+                  sku: r.machineProduct.sku,
+                },
+              }
             : fitment.fitmentToApi(r)
         ),
       });
@@ -49,7 +56,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (audience === 'customer') {
-      return NextResponse.json({ detail: 'A machine, product or equipment id is required' }, { status: 400 });
+      return NextResponse.json(
+        { detail: 'A machine, product or equipment id is required' },
+        { status: 400 }
+      );
     }
     const page = Math.max(parseInt(sp.get('page') || '1', 10) || 1, 1);
     const pageSize = Math.min(Math.max(parseInt(sp.get('page_size') || '50', 10) || 50, 1), 200);
@@ -59,7 +69,12 @@ export async function GET(request: NextRequest) {
       page,
       pageSize,
     });
-    return NextResponse.json({ items: rows.map(fitment.fitmentToApi), total, page, page_size: pageSize });
+    return NextResponse.json({
+      items: rows.map(fitment.fitmentToApi),
+      total,
+      page,
+      page_size: pageSize,
+    });
   } catch (e) {
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
