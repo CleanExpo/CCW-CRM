@@ -256,8 +256,8 @@ export const authApi = {
 
   async requestPasswordReset(email: string): Promise<{
     message: string;
-    /** What happened to the reset email. Only `sent` means the provider accepted it. */
-    delivery?: { status: string; receipt_id?: string | null };
+    /** False when this deployment cannot email reset links at all. Same for every address. */
+    resets_available?: boolean;
   }> {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',

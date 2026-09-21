@@ -42,11 +42,10 @@ export function ForgotPasswordForm() {
     setIsLoading(true);
     try {
       const res = await authApi.requestPasswordReset(values.email);
-      // `refused` and `failed` mean the reset email was not sent, so a success
-      // message here would be false. `not_applicable` (no such account) keeps the
-      // generic confirmation so the page does not reveal whether an account exists.
-      const status = res.delivery?.status;
-      if (status === 'refused' || status === 'failed') {
+      // When this deployment cannot email reset links at all, "a link is on its
+      // way" would be false. The flag is the same for every address, so this
+      // does not reveal whether an account exists.
+      if (res.resets_available === false) {
         toast.error(UNAVAILABLE_MESSAGE, { id: 'forgot-error' });
         setUnavailable(true);
         return;
@@ -74,7 +73,11 @@ export function ForgotPasswordForm() {
         <p role="alert" className="text-zinc-300">
           {UNAVAILABLE_MESSAGE}
         </p>
-        <Button asChild variant="outline" className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800">
+        <Button
+          asChild
+          variant="outline"
+          className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800"
+        >
           <Link href="/login">Back to sign in</Link>
         </Button>
       </div>
@@ -87,8 +90,14 @@ export function ForgotPasswordForm() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-500/15">
           <CheckCircle2 className="h-7 w-7 text-emerald-300" />
         </div>
-        <p className="text-zinc-300">If an account exists for that address, we sent reset instructions.</p>
-        <Button asChild variant="outline" className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800">
+        <p className="text-zinc-300">
+          If an account exists for that address, we sent reset instructions.
+        </p>
+        <Button
+          asChild
+          variant="outline"
+          className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800"
+        >
           <Link href="/login">Back to sign in</Link>
         </Button>
       </div>

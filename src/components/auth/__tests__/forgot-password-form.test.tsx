@@ -25,56 +25,30 @@ async function submit(email = 'ops@example.com') {
   await userEvent.click(screen.getByRole('button', { name: /send reset link/i }));
 }
 
-describe('ForgotPasswordForm delivery status', () => {
+describe('ForgotPasswordForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it.each(['refused', 'failed'])(
-    'tells the user resets are unavailable when delivery is %s',
-    async (status) => {
-      requestPasswordReset.mockResolvedValue({
-        message: GENERIC,
-        delivery: { status },
-      });
-
-      await submit();
-
-      await waitFor(() => {
-        expect(screen.getByText(/password resets are unavailable right now/i)).toBeInTheDocument();
-      });
-      expect(screen.getByText(/contact an administrator/i)).toBeInTheDocument();
-      expect(
-        screen.queryByText(/if an account exists for that address, we sent reset instructions/i)
-      ).not.toBeInTheDocument();
-      expect(toast.success).not.toHaveBeenCalled();
-    }
-  );
-
-  it('shows the success confirmation when delivery is sent', async () => {
-    requestPasswordReset.mockResolvedValue({
-      message: GENERIC,
-      delivery: { status: 'sent', receipt_id: 'r1' },
-    });
+  it('tells the user resets are unavailable when email is switched off', async () => {
+    requestPasswordReset.mockResolvedValue({ message: GENERIC, resets_available: false });
 
     await submit();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/if an account exists for that address, we sent reset instructions/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/password resets are unavailable right now/i)).toBeInTheDocument();
     });
-    expect(toast.success).toHaveBeenCalledWith(GENERIC);
-    expect(screen.queryByText(/password resets are unavailable/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/contact an administrator/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/if an account exists for that address, we sent reset instructions/i)
+    ).not.toBeInTheDocument();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
-  it('keeps the generic confirmation for an unknown account so existence is not revealed', async () => {
-    requestPasswordReset.mockResolvedValue({
-      message: GENERIC,
-      delivery: { status: 'not_applicable' },
-    });
+  it('shows the generic confirmation when resets can be emailed', async () => {
+    requestPasswordReset.mockResolvedValue({ message: GENERIC, resets_available: true });
 
-    await submit('nobody@example.com');
+    await submit();
 
     await waitFor(() => {
       expect(
