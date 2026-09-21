@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 
 function rowToApi(s: {
@@ -28,10 +29,17 @@ function rowToApi(s: {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Admin-only for the same reason as the collection route: no tenant column to filter on.
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    if (!scope.isAdmin) {
+      return NextResponse.json({ detail: 'Admin access required' }, { status: 403 });
+    }
+
     const { id } = await context.params;
     const row = await prisma.contactSubmission.findUnique({ where: { id } });
     if (!row) return NextResponse.json({ detail: 'Not found' }, { status: 404 });

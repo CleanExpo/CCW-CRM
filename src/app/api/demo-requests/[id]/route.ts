@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthScope } from '@/lib/auth/data-scope';
 import { prisma } from '@/lib/db/prisma';
 
 function rowToApi(r: {
@@ -29,10 +30,19 @@ function rowToApi(r: {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // DemoRequest has no owner or workspace column, so this row cannot be
+    // tenant-filtered. Until one exists (UNI-2675), restrict to platform admins rather
+    // than let any authenticated user of any workspace read another workspace's lead.
+    const scope = await requireAuthScope(request);
+    if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    if (!scope.isAdmin) {
+      return NextResponse.json({ detail: 'Admin access required' }, { status: 403 });
+    }
+
     const { id } = await context.params;
     const row = await prisma.demoRequest.findUnique({ where: { id } });
     if (!row) return NextResponse.json({ detail: 'Not found' }, { status: 404 });
