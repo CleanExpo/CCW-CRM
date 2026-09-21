@@ -119,7 +119,10 @@ export function robotsAllows(robotsTxt: string, path: string, agent = USER_AGENT
         cur = { agents: [], rules: [] };
         groups.push(cur);
       }
-      cur.agents.push(val.toLowerCase());
+      // Keep only the product token ("name/1.0" -> "name"). An empty value names no
+      // one; storing '' would match every agent through a substring test.
+      const token = val.toLowerCase().split('/')[0].trim();
+      if (token) cur.agents.push(token);
       lastWasAgent = true;
     } else if ((key === 'allow' || key === 'disallow') && cur) {
       lastWasAgent = false;
@@ -130,7 +133,8 @@ export function robotsAllows(robotsTxt: string, path: string, agent = USER_AGENT
     }
   }
   const name = agent.toLowerCase().split('/')[0];
-  const mine = groups.filter((g) => g.agents.some((a) => a !== '*' && name.includes(a)));
+  // Our group is one that names our product token exactly; otherwise `*` applies.
+  const mine = groups.filter((g) => g.agents.some((a) => a !== '*' && a === name));
   const chosen = mine.length > 0 ? mine : groups.filter((g) => g.agents.includes('*'));
   let best: { allow: boolean; len: number } | null = null;
   for (const g of chosen) {

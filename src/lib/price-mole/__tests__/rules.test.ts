@@ -69,6 +69,27 @@ describe('extractPrice — other published formats', () => {
 });
 
 describe('robotsAllows — guard', () => {
+  it('an empty or partial User-agent line never overrides the * group', () => {
+    const empty = ['User-agent:', 'Allow: /', '', 'User-agent: *', 'Disallow: /'].join('\n');
+    expect(robotsAllows(empty, '/anything')).toBe(false);
+    const partial = ['User-agent: c', 'Allow: /', '', 'User-agent: *', 'Disallow: /'].join('\n');
+    expect(robotsAllows(partial, '/anything')).toBe(false);
+  });
+
+  it('a group naming our agent, with or without a version, applies to us', () => {
+    const versioned = ['User-agent: CCW-Optix-PriceMole/1.0', 'Disallow: /'].join('\n');
+    expect(robotsAllows(versioned, '/anything')).toBe(false);
+    // Positive control: our own group can also open a path that * closes.
+    const opens = [
+      'User-agent: ccw-optix-pricemole',
+      'Allow: /',
+      '',
+      'User-agent: *',
+      'Disallow: /',
+    ].join('\n');
+    expect(robotsAllows(opens, '/anything')).toBe(true);
+  });
+
   const robots = `
 User-agent: *
 Disallow: /checkout
