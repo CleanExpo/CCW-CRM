@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { ReorderRadarPanel } from '@/components/crm/ReorderRadarPanel';
 
 interface HealthScore {
   customer_id: string;
@@ -132,6 +133,8 @@ export default function CustomerHealthPage() {
             Refresh
           </Button>
         </div>
+
+        <ReorderRadarPanel />
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-4">
