@@ -77,6 +77,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Overview', href: '/dashboard/operations', icon: LayoutDashboard },
       { name: 'Quotes', href: '/dashboard/operations/quotes', icon: FileText },
+      { name: 'Price Mole', href: '/dashboard/operations/price-mole', icon: FileText },
       { name: 'Sales orders', href: '/dashboard/operations/orders', icon: ShoppingCart },
       { name: 'Fulfilment', href: '/dashboard/operations/fulfilment', icon: PackageCheck },
       {
