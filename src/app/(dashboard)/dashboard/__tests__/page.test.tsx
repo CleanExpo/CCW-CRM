@@ -15,8 +15,14 @@ vi.mock('@/hooks/use-sse', () => ({
   usePOSFailureAlerts: () => ({ data: null, status: 'disconnected' }),
   useDashboardMetricsStream: () => ({ data: null, status: 'disconnected' }),
 }));
-vi.mock('@/components/charts/CategorySalesChart', () => ({ CategorySalesChart: () => null }));
-vi.mock('@/components/charts/RevenueChart', () => ({ RevenueChart: () => null }));
+// Each chart renders its own empty-state copy for an empty series, so the stand-in
+// renders a marker: a chart mounted over a failed read is the defect under test.
+vi.mock('@/components/charts/CategorySalesChart', () => ({
+  CategorySalesChart: () => <div>category chart</div>,
+}));
+vi.mock('@/components/charts/RevenueChart', () => ({
+  RevenueChart: () => <div>revenue chart</div>,
+}));
 vi.mock('@/components/dashboard/OrderStatusBreakdownWidget', () => ({
   OrderStatusBreakdownWidget: () => null,
 }));
@@ -107,6 +113,26 @@ describe('DashboardPage per-source load failures', () => {
 
     expect(await screen.findByText("Couldn't load dashboard metrics")).toBeInTheDocument();
     expect(screen.queryByText('stat tiles')).not.toBeInTheDocument();
+  });
+
+  it('does not draw the revenue and category charts as empty when metrics fail', async () => {
+    respond(['aggregated']);
+
+    render(<DashboardPage />);
+
+    expect(await screen.findByText("Couldn't load the revenue trend")).toBeInTheDocument();
+    expect(screen.getByText("Couldn't load category sales")).toBeInTheDocument();
+    expect(screen.queryByText('revenue chart')).not.toBeInTheDocument();
+    expect(screen.queryByText('category chart')).not.toBeInTheDocument();
+  });
+
+  it('still draws the charts when metrics load', async () => {
+    respond();
+
+    render(<DashboardPage />);
+
+    expect(await screen.findByText('revenue chart')).toBeInTheDocument();
+    expect(screen.getByText('category chart')).toBeInTheDocument();
   });
 
   it('keeps "Needs attention today" visible when the warranty and certification reads fail', async () => {

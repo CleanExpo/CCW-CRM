@@ -548,7 +548,11 @@ export default function DashboardPage() {
             span={2}
             className="min-h-[400px] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900/80 to-black/90 ring-1 ring-white/[0.05]"
           >
-            <RevenueChart data={revenueData} />
+            {failed.metrics ? (
+              <ErrorState title="Couldn't load the revenue trend" onRetry={retry} />
+            ) : (
+              <RevenueChart data={revenueData} />
+            )}
           </BentoCard>
 
           <BentoCard
@@ -564,7 +568,11 @@ export default function DashboardPage() {
             span={1}
             className="min-h-[350px] overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-950/90 via-black/80 to-zinc-900/60 ring-1 ring-white/[0.05]"
           >
-            <CategorySalesChart data={categorySales} />
+            {failed.metrics ? (
+              <ErrorState title="Couldn't load category sales" onRetry={retry} />
+            ) : (
+              <CategorySalesChart data={categorySales} />
+            )}
           </BentoCard>
 
           <BentoCard
