@@ -60,7 +60,9 @@ describe('Products page wording (UNI-2688)', () => {
     expect(await screen.findByText('No products found')).toBeInTheDocument();
     expect(screen.getByText('Add your first product to get started.')).toBeInTheDocument();
     expect(screen.getByText('Product Catalogue')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search by product name, model, or SKU...')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Search by product name, model, or SKU...')
+    ).toBeInTheDocument();
     expect(screen.queryByText(/equipment/i)).not.toBeInTheDocument();
   });
 });
