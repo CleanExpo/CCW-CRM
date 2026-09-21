@@ -28,6 +28,10 @@ async function userFromAccessToken(token: string): Promise<SessionUser | null> {
   };
 }
 
+function matchesPrefix(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((path) => pathname === path || pathname.startsWith(path + '/'));
+}
+
 export async function updateSession(request: NextRequest) {
   const billingAllowedPrefixes = [
     '/dashboard/settings/billing',
@@ -44,6 +48,42 @@ export async function updateSession(request: NextRequest) {
     '/faq',
     '/dashboard/finance',
   ];
+
+  // The same role rules for the API routes behind those pages. Pages redirect;
+  // APIs answer 403 JSON. Each entry is only called from a page the role is
+  // blocked from above. APIs the role's own pages call stay open.
+  const memberBlockedApiPrefixes = [
+    // settings/company, settings/team, settings/billing
+    '/api/settings',
+    '/api/team',
+    '/api/billing',
+    // Cin7 repair tools on settings/integrations
+    '/api/integrations/cin7/cleanup-duplicates',
+    '/api/integrations/cin7/stock-prune',
+    '/api/integrations/cin7/stock-freeze',
+    '/api/integrations/cin7/field-heal',
+    '/api/integrations/cin7/product-heal',
+    '/api/integrations/cin7/scheduled-sync',
+    '/api/integrations/cin7/heal-audit',
+    // /approvals
+    '/api/approvals',
+    // /alerts and /monitoring
+    '/api/monitoring',
+    // /dashboard/finance pages only (invoices and bank-feeds are shared with operations)
+    '/api/trade-finance',
+    '/api/bank-reconciliation',
+    '/api/reconciliation',
+  ];
+  const memberAllowedApiPrefixes = [
+    // POS failure count on the /dashboard home page
+    '/api/monitoring/alerts/pos-failures',
+    // Accepting an invite is not team management
+    '/api/team/invite/accept',
+  ];
+  // Billing can open every /dashboard page (see '/dashboard' above), so only
+  // the /monitoring page is out of reach; /dashboard/alerts stays reachable.
+  const billingBlockedApiPrefixes = ['/api/monitoring'];
+  const billingAllowedApiPrefixes = ['/api/monitoring/alerts'];
 
   const response = NextResponse.next({
     request,
@@ -129,11 +169,38 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && !request.nextUrl.pathname.startsWith('/api/')) {
+  // Middleware sees the raw path, but Next.js decodes it before choosing a
+  // route, so /api/settings%2Fcompany is served by /api/settings/company. Role
+  // rules therefore match the decoded path, and a path that cannot be decoded
+  // is refused rather than passed through unchecked.
+  let decodedPath = request.nextUrl.pathname;
+  try {
+    decodedPath = decodeURIComponent(decodedPath);
+  } catch {
+    if (user) return NextResponse.json({ detail: 'Malformed request path' }, { status: 400 });
+  }
+
+  if (user && decodedPath.startsWith('/api/')) {
+    const pathname = decodedPath;
+    const blocked =
+      (user.role === 'member' &&
+        matchesPrefix(pathname, memberBlockedApiPrefixes) &&
+        !matchesPrefix(pathname, memberAllowedApiPrefixes)) ||
+      (user.role === 'billing' &&
+        matchesPrefix(pathname, billingBlockedApiPrefixes) &&
+        !matchesPrefix(pathname, billingAllowedApiPrefixes));
+    if (blocked) {
+      return NextResponse.json(
+        { detail: 'Your role does not have access to this resource' },
+        { status: 403 }
+      );
+    }
+  }
+
+  if (user && !decodedPath.startsWith('/api/')) {
     if (user.role === 'billing') {
       const canAccess = billingAllowedPrefixes.some(
-        (path) =>
-          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) => decodedPath === path || decodedPath.startsWith(path + '/')
       );
       if (!canAccess) {
         const url = request.nextUrl.clone();
@@ -143,8 +210,7 @@ export async function updateSession(request: NextRequest) {
     }
     if (user.role === 'member') {
       const blocked = memberBlockedPrefixes.some(
-        (path) =>
-          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) => decodedPath === path || decodedPath.startsWith(path + '/')
       );
       if (blocked) {
         const url = request.nextUrl.clone();

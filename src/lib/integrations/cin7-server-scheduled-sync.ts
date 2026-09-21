@@ -53,7 +53,13 @@ async function postCin7SyncChunk(
   if (!user) {
     throw new Error('Scheduled sync user was not found');
   }
-  const token = await signAccessToken(user.id, user.email, user.isAdmin, user.role);
+  const token = await signAccessToken(
+    user.id,
+    user.email,
+    user.isAdmin,
+    user.role,
+    user.sessionVersion
+  );
   const params = new URLSearchParams();
   if (opts.restart) params.set('restart', 'true');
   if (opts.full) params.set('full', 'true');
