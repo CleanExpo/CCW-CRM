@@ -147,6 +147,7 @@ export default function ContactsPage() {
   const columns = [
     {
       key: 'select',
+      mobileLabel: 'Select',
       label: (
         <Checkbox
           checked={contacts.length > 0 && selectedContactIds.length === contacts.length}

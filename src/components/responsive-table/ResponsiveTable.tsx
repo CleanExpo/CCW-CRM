@@ -29,6 +29,15 @@ interface ResponsiveTableProps<T> {
   mobileCardClassName?: string;
 }
 
+// A column label that is not a string is a header control (the select column's
+// label is the select-all checkbox). Repeating it inside every mobile row card
+// puts "select every row" next to each row's own checkbox (UNI-2706), so a card
+// only ever shows mobileLabel or a plain string label.
+function mobileCardLabel<T>(column: Column<T>): string | null {
+  if (column.mobileLabel) return column.mobileLabel;
+  return typeof column.label === "string" ? column.label : null;
+}
+
 export function ResponsiveTable<T>({
   data,
   columns,
@@ -90,7 +99,7 @@ export function ResponsiveTable<T>({
                 .map((column) => (
                   <div key={`${rowKey}-${column.key}`} className="flex justify-between items-start gap-4">
                     <span className="text-sm font-medium text-muted-foreground min-w-[100px]">
-                      {column.mobileLabel || column.label}
+                      {mobileCardLabel(column)}
                     </span>
                     <div className="text-sm text-right flex-1">{column.render(item)}</div>
                   </div>

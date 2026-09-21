@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { workshopApi, type Equipment } from '@/lib/api/workshop';
 import { Plus, Search, RefreshCw, Eye } from 'lucide-react';
 import Link from 'next/link';
@@ -26,13 +28,18 @@ export default function EquipmentPage() {
   const { toast } = useToast();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [location, setLocation] = useState('');
   const [status, setStatus] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
 
+  const beginLoad = useLatestLoad();
   const load = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const data = await workshopApi.listEquipment({
@@ -40,20 +47,30 @@ export default function EquipmentPage() {
         location: location || undefined,
         status: status || undefined,
         overdue_only: overdueOnly || undefined,
-        page_size: 100,
+        page,
+        page_size: pageSize,
       });
+      if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (data.items.length === 0 && data.total > 0 && page > data.total_pages) {
+        setPage(data.total_pages);
+        return;
+      }
       setEquipment(data.items);
       setTotal(data.total);
+      setTotalPages(data.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to load equipment',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [search, location, status, overdueOnly, toast]);
+  }, [search, location, status, overdueOnly, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     load();
@@ -79,13 +96,19 @@ export default function EquipmentPage() {
             <Input
               placeholder="Search make, model, serial..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-64 pl-9"
             />
           </div>
           <select
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={(e) => {
+              setLocation(e.target.value);
+              setPage(1);
+            }}
             className="bg-background rounded-md border px-3 py-2 text-sm"
           >
             <option value="">All Locations</option>
@@ -95,7 +118,10 @@ export default function EquipmentPage() {
           </select>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
             className="bg-background rounded-md border px-3 py-2 text-sm"
           >
             <option value="">All Status</option>
@@ -107,7 +133,10 @@ export default function EquipmentPage() {
             <input
               type="checkbox"
               checked={overdueOnly}
-              onChange={(e) => setOverdueOnly(e.target.checked)}
+              onChange={(e) => {
+                setOverdueOnly(e.target.checked);
+                setPage(1);
+              }}
               className="rounded"
             />
             Overdue only
@@ -186,6 +215,20 @@ export default function EquipmentPage() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && equipment.length > 0 && (
+          <PaginationControls
+            currentPage={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={total}
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
+          />
         )}
       </div>
     </ErrorBoundary>

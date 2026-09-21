@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 import { Cin7EmptyState } from '@/components/integrations/Cin7EmptyState';
@@ -37,23 +39,37 @@ export default function BranchesPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 300);
     return () => window.clearTimeout(timer);
   }, [search]);
 
+  const beginLoad = useLatestLoad();
   const loadBranches = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const response = await listCin7Branches({
-        page: 1,
-        page_size: 100,
+        page,
+        page_size: pageSize,
         search: debouncedSearch || undefined,
       });
+      if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (response.items.length === 0 && response.total > 0 && page > response.total_pages) {
+        setPage(response.total_pages);
+        return;
+      }
       setBranches(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         variant: 'destructive',
         title: 'Could not load branches',
@@ -62,9 +78,9 @@ export default function BranchesPage() {
       setBranches([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [debouncedSearch, toast]);
+  }, [debouncedSearch, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     void loadBranches();
@@ -79,7 +95,7 @@ export default function BranchesPage() {
         className="space-y-1"
       >
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-primary/10">
+          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10">
             <MapPin className="text-primary h-5 w-5" />
           </div>
           <div>
@@ -99,7 +115,10 @@ export default function BranchesPage() {
         <Input
           placeholder="Search branches…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9"
         />
       </div>
@@ -119,7 +138,7 @@ export default function BranchesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.05 }}
-          className="rounded-xl border bg-card/50 shadow-sm"
+          className="bg-card/50 rounded-xl border shadow-sm"
         >
           <div className="border-b px-4 py-3">
             <p className="text-muted-foreground text-sm">
@@ -146,11 +165,10 @@ export default function BranchesPage() {
                   </TableCell>
                   <TableCell>{branch.branch_type ?? '—'}</TableCell>
                   <TableCell>
-                    {[branch.city, branch.state, branch.post_code].filter(Boolean).join(', ') || '—'}
+                    {[branch.city, branch.state, branch.post_code].filter(Boolean).join(', ') ||
+                      '—'}
                   </TableCell>
-                  <TableCell className="text-sm">
-                    {branch.email ?? branch.phone ?? '—'}
-                  </TableCell>
+                  <TableCell className="text-sm">{branch.email ?? branch.phone ?? '—'}</TableCell>
                   <TableCell>
                     <Badge variant={branch.is_active ? 'default' : 'secondary'}>
                       {branch.is_active ? 'Active' : 'Inactive'}
@@ -160,6 +178,19 @@ export default function BranchesPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="border-t px-2">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          </div>
         </motion.div>
       )}
     </div>

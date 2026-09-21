@@ -111,6 +111,7 @@ export function PaginationControls({
             variant="outline"
             size="icon"
             onClick={() => onPageChange(1)}
+            aria-label="First page"
             disabled={currentPage === 1}
             className="h-8 w-8"
           >
@@ -122,6 +123,7 @@ export function PaginationControls({
             variant="outline"
             size="icon"
             onClick={() => onPageChange(currentPage - 1)}
+            aria-label="Previous page"
             disabled={currentPage === 1}
             className="h-8 w-8"
           >
@@ -152,6 +154,7 @@ export function PaginationControls({
             variant="outline"
             size="icon"
             onClick={() => onPageChange(currentPage + 1)}
+            aria-label="Next page"
             disabled={currentPage === totalPages}
             className="h-8 w-8"
           >
@@ -163,6 +166,7 @@ export function PaginationControls({
             variant="outline"
             size="icon"
             onClick={() => onPageChange(totalPages)}
+            aria-label="Last page"
             disabled={currentPage === totalPages}
             className="h-8 w-8"
           >
