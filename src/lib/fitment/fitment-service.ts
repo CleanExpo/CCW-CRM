@@ -61,7 +61,9 @@ export async function listFitsForMachine(
       ownerUserId: { in: workspaceUserIds },
       machineProductId,
       status: { in: statusesVisibleTo(audience) },
-      ...(audience === 'customer' ? { fitProduct: { isActive: true } } : {}),
+      ...(audience === 'customer'
+        ? { fitProduct: { isActive: true }, machineProduct: { isActive: true } }
+        : {}),
     },
     include,
     orderBy: [{ kind: 'asc' }, { fitProduct: { name: 'asc' } }],
@@ -181,22 +183,29 @@ export async function createFitment(
     confirmedBy: actorUserId,
     confirmedAt: new Date(),
   };
-  return prisma.productFitment.upsert({
-    where: {
-      machineProductId_fitProductId: {
-        machineProductId: input.machineProductId,
-        fitProductId: input.fitProductId,
-      },
-    },
-    create: {
-      ...data,
-      ownerUserId: actorUserId,
-      machineProductId: input.machineProductId,
-      fitProductId: input.fitProductId,
-    },
-    update: data,
+  const pair = { machineProductId: input.machineProductId, fitProductId: input.fitProductId };
+  // A suggestion may be confirmed by hand. A row staff already confirmed or
+  // rejected is never overwritten here; it is changed through reviewFitment.
+  const promoted = await prisma.productFitment.updateMany({
+    where: { ...pair, ownerUserId: { in: workspaceUserIds }, status: 'suggested' },
+    data,
+  });
+  if (promoted.count === 0) {
+    try {
+      await prisma.productFitment.create({ data: { ...data, ...pair, ownerUserId: actorUserId } });
+    } catch (e) {
+      if ((e as { code?: string })?.code === 'P2002') {
+        throw new FitmentInputError('This pair is already decided. Edit the existing row instead.');
+      }
+      throw e;
+    }
+  }
+  const row = await prisma.productFitment.findFirst({
+    where: { ...pair, ownerUserId: { in: workspaceUserIds } },
     include,
   });
+  if (!row) throw new FitmentInputError('Product not found');
+  return row;
 }
 
 /** Confirm, reject, or edit one row. */

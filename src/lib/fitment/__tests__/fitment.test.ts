@@ -99,10 +99,10 @@ vi.mock('@/lib/db/prisma', () => ({
       findMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
         db.fitments.filter((f) => matchFitment(f, where)).map(withProducts)
       ),
-      findFirst: vi.fn(
-        async ({ where }: { where: Record<string, unknown> }) =>
-          db.fitments.find((f) => matchFitment(f, where)) ?? null
-      ),
+      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
+        const hit = db.fitments.find((f) => matchFitment(f, where));
+        return hit ? withProducts(hit) : null;
+      }),
       update: vi.fn(async ({ where, data }: { where: { id: string }; data: Partial<F> }) => {
         const f = db.fitments.find((x) => x.id === where.id)!;
         Object.assign(f, data);
@@ -278,6 +278,13 @@ describe('listFitsForMachine', () => {
     expect(ids(rows)).not.toContain('foreign');
   });
 
+  it('customer audience shows nothing for an inactive machine; staff still sees its rows', async () => {
+    db.products.push(product('retired-machine', { isActive: false }));
+    db.fitments.push(fit('f10', 'retired-machine', 'filter', 'confirmed'));
+    expect(await listFitsForMachine(WS, 'retired-machine', 'customer')).toEqual([]);
+    expect(ids(await listFitsForMachine(WS, 'retired-machine', 'staff'))).toEqual(['filter']);
+  });
+
   it('the customer shape carries no status, source or evidence', async () => {
     const [row] = await listFitsForMachine(WS, 'machine-x', 'customer');
     const out = fitmentToCustomerApi(row);
@@ -431,5 +438,39 @@ describe('createFitment', () => {
         })
       ).rejects.toBeInstanceOf(FitmentInputError);
     }
+  });
+
+  it('never overwrites a row staff already rejected or confirmed', async () => {
+    for (const status of ['rejected', 'confirmed']) {
+      db.fitments.push(fit(`d-${status}`, 'machine-y', 'hose', status));
+      await expect(
+        createFitment(WS, 'staff-2', {
+          machineProductId: 'machine-y',
+          fitProductId: 'hose',
+          kind: 'consumable',
+        })
+      ).rejects.toThrow(/already decided/);
+      const row = db.fitments.find((f) => f.id === `d-${status}`)!;
+      expect(row.status).toBe(status);
+      expect(row.confirmedBy).toBeNull();
+      db.fitments = db.fitments.filter((f) => f.id !== `d-${status}`);
+    }
+  });
+
+  it('confirms an existing suggestion, and creates a new pair as confirmed', async () => {
+    db.fitments.push(fit('s1', 'machine-y', 'hose', 'suggested'));
+    const promoted = await createFitment(WS, 'staff-2', {
+      machineProductId: 'machine-y',
+      fitProductId: 'hose',
+      kind: 'part',
+    });
+    expect(promoted).toMatchObject({ id: 's1', status: 'confirmed', confirmedBy: 'staff-2' });
+    const created = await createFitment(WS, 'user-a', {
+      machineProductId: 'machine-y',
+      fitProductId: 'detergent',
+      kind: 'consumable',
+    });
+    expect(created).toMatchObject({ status: 'confirmed', source: 'manual' });
+    expect(created.fitProduct.id).toBe('detergent');
   });
 });
