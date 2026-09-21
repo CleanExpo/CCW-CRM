@@ -11,6 +11,7 @@ import {
 import { BorderBeam } from '@/components/ui/border-beam';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorState } from '@/components/ui/empty-state';
 import { getDashboardInsights, type Insight } from '@/lib/api/ai-insights';
 import { apiClient } from '@/lib/api/client';
 import {
@@ -140,6 +141,29 @@ interface CertStats {
   expiring_alerts: CertAlert[];
 }
 
+/**
+ * Each read the dashboard makes. A failed read is recorded against its source
+ * so the page can say what it could not load, instead of rendering a zero or
+ * hiding the card as if the read had succeeded and found nothing.
+ */
+type DashboardSource = 'metrics' | 'insights' | 'posFailures' | 'warranties' | 'certifications';
+
+const NONE_FAILED: Record<DashboardSource, boolean> = {
+  metrics: false,
+  insights: false,
+  posFailures: false,
+  warranties: false,
+  certifications: false,
+};
+
+const ALL_FAILED: Record<DashboardSource, boolean> = {
+  metrics: true,
+  insights: true,
+  posFailures: true,
+  warranties: true,
+  certifications: true,
+};
+
 function activityTypeIcon(type: string) {
   const t = type.toLowerCase();
   if (t === 'stock') return AlertTriangle;
@@ -160,6 +184,9 @@ export default function DashboardPage() {
   const [urgentItems, setUrgentItems] = useState<UrgentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [rollup, setRollup] = useState<DashboardRollup | null>(null);
+  const [failed, setFailed] = useState<Record<DashboardSource, boolean>>(NONE_FAILED);
+  const [reloadKey, setReloadKey] = useState(0);
+  const retry = () => setReloadKey((key) => key + 1);
 
   const [posFailureCount, setPosFailureCount] = useState(0);
   const { data: posFailure, status: posAlertStatus } = usePOSFailureAlerts();
@@ -171,52 +198,66 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
-        const [dashboardData, insightsData, posFailures, warrantyStats, certStats] =
-          await Promise.all([
-            apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
-            getDashboardInsights(3).catch(() => ({ insights: [], total: 0, categories: [] })),
-            apiClient
-              .get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24')
-              .catch(() => ({ alert_count: 0 })),
-            apiClient
-              .get<EquipmentStats>('/api/equipment/stats')
-              .catch(() => ({ expiring_soon: 0, warranty_alerts: [] })),
-            apiClient
-              .get<CertStats>('/api/certifications/stats')
-              .catch(() => ({ expiring_soon: 0, expiring_alerts: [] })),
-          ]);
+        const [dashboardRes, insightsRes, posRes, warrantyRes, certRes] = await Promise.allSettled([
+          apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
+          getDashboardInsights(3),
+          apiClient.get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24'),
+          apiClient.get<EquipmentStats>('/api/equipment/stats'),
+          apiClient.get<CertStats>('/api/certifications/stats'),
+        ]);
 
         if (cancelled) return;
 
-        setRollup(dashboardData.rollup ?? 'inventory');
-        setMetrics(dashboardData.metrics);
-        setRevenueData(dashboardData.revenue_chart);
-        setCategorySales(dashboardData.category_sales);
-        setTopProducts(dashboardData.top_products);
-        setActivity(dashboardData.recent_activity);
-        setInsights(insightsData.insights.filter((i) => i.priority === 'high').slice(0, 3));
-        setPosFailureCount(posFailures.alert_count);
+        for (const res of [dashboardRes, insightsRes, posRes, warrantyRes, certRes]) {
+          if (res.status === 'rejected')
+            console.error('Failed to load dashboard data:', res.reason);
+        }
+        setFailed({
+          metrics: dashboardRes.status === 'rejected',
+          insights: insightsRes.status === 'rejected',
+          posFailures: posRes.status === 'rejected',
+          warranties: warrantyRes.status === 'rejected',
+          certifications: certRes.status === 'rejected',
+        });
+
+        const dashboardData = dashboardRes.status === 'fulfilled' ? dashboardRes.value : null;
+        setRollup(dashboardData ? (dashboardData.rollup ?? 'inventory') : null);
+        setMetrics(dashboardData?.metrics ?? null);
+        setRevenueData(dashboardData?.revenue_chart ?? []);
+        setCategorySales(dashboardData?.category_sales ?? []);
+        setTopProducts(dashboardData?.top_products ?? []);
+        setActivity(dashboardData?.recent_activity ?? []);
+        setInsights(
+          insightsRes.status === 'fulfilled'
+            ? insightsRes.value.insights.filter((i) => i.priority === 'high').slice(0, 3)
+            : []
+        );
+        setPosFailureCount(posRes.status === 'fulfilled' ? posRes.value.alert_count : 0);
 
         const urgent: UrgentItem[] = [];
-        (warrantyStats.warranty_alerts || []).slice(0, 3).forEach((w) => {
-          urgent.push({
-            type: 'warranty',
-            label: `Warranty expiring: ${w.product_name || w.serial_number}`,
-            detail: w.company_name ? `Customer: ${w.company_name}` : w.serial_number,
-            daysLeft: w.days_until_expiry,
-            href: '/warehouse/equipment',
+        if (warrantyRes.status === 'fulfilled') {
+          (warrantyRes.value.warranty_alerts || []).slice(0, 3).forEach((w) => {
+            urgent.push({
+              type: 'warranty',
+              label: `Warranty expiring: ${w.product_name || w.serial_number}`,
+              detail: w.company_name ? `Customer: ${w.company_name}` : w.serial_number,
+              daysLeft: w.days_until_expiry,
+              href: '/warehouse/equipment',
+            });
           });
-        });
-        (certStats.expiring_alerts || []).slice(0, 3).forEach((c) => {
-          urgent.push({
-            type: 'certification',
-            label: `${c.cert_type} expiring`,
-            detail: c.technician_name || c.company_name || 'Unknown technician',
-            daysLeft: c.days_until_expiry,
-            href: '/dashboard/crm/customers',
+        }
+        if (certRes.status === 'fulfilled') {
+          (certRes.value.expiring_alerts || []).slice(0, 3).forEach((c) => {
+            urgent.push({
+              type: 'certification',
+              label: `${c.cert_type} expiring`,
+              detail: c.technician_name || c.company_name || 'Unknown technician',
+              daysLeft: c.days_until_expiry,
+              href: '/dashboard/crm/customers',
+            });
           });
-        });
-        if (dashboardData.metrics.low_stock_alerts > 0) {
+        }
+        if (dashboardData && dashboardData.metrics.low_stock_alerts > 0) {
           urgent.push({
             type: 'stock',
             label: `${dashboardData.metrics.low_stock_alerts} products below reorder point`,
@@ -226,7 +267,10 @@ export default function DashboardPage() {
         }
         setUrgentItems(urgent);
       } catch (error) {
+        // A response that could not be processed is a failed read, not an empty one.
         console.error('Failed to load dashboard data:', error);
+        if (cancelled) return;
+        setFailed(ALL_FAILED);
         setRollup(null);
         setMetrics(null);
         setRevenueData([]);
@@ -244,7 +288,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   useEffect(() => {
     if (posFailure) {
@@ -318,6 +362,14 @@ export default function DashboardPage() {
 
   const todayLabel = format(new Date(), 'EEEE, d MMMM yyyy');
 
+  // Sources that feed "Needs attention today". If any failed, the card stays
+  // visible and says so, rather than vanishing as if nothing needed attention.
+  const attentionFailures = [
+    failed.warranties && "Couldn't load warranty alerts",
+    failed.certifications && "Couldn't load certification alerts",
+    failed.metrics && "Couldn't load low-stock alerts",
+  ].filter((title): title is string => Boolean(title));
+
   return (
     <div className="relative space-y-12 pb-12">
       <DashboardAmbient />
@@ -364,6 +416,9 @@ export default function DashboardPage() {
                   </Card>
                 </Link>
               ) : null}
+              {failed.posFailures ? (
+                <ErrorState title="Couldn't load POS failure alerts" onRetry={retry} />
+              ) : null}
             </div>
           }
         />
@@ -388,7 +443,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Urgent Today Card */}
-      {urgentItems.length > 0 && (
+      {(urgentItems.length > 0 || attentionFailures.length > 0) && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -402,11 +457,16 @@ export default function DashboardPage() {
                   Needs attention today
                 </CardTitle>
               </div>
-              <p className="text-sm text-amber-200/80">
-                {urgentItems.length} item{urgentItems.length !== 1 ? 's' : ''} · tap to open
-              </p>
+              {urgentItems.length > 0 && (
+                <p className="text-sm text-amber-200/80">
+                  {urgentItems.length} item{urgentItems.length !== 1 ? 's' : ''} · tap to open
+                </p>
+              )}
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="space-y-3 pt-0">
+              {attentionFailures.map((title) => (
+                <ErrorState key={title} title={title} onRetry={retry} />
+              ))}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {urgentItems.map((item, idx) => (
                   <Link key={idx} href={item.href}>
@@ -460,12 +520,18 @@ export default function DashboardPage() {
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
-              <DashboardStatTiles metrics={metrics} formatCurrency={formatCurrency} />
+              {failed.metrics ? (
+                <ErrorState title="Couldn't load dashboard metrics" onRetry={retry} />
+              ) : (
+                <>
+                  <DashboardStatTiles metrics={metrics} formatCurrency={formatCurrency} />
 
-              <div className="border-border/40 mt-8 space-y-8 border-t border-white/[0.06] pt-6">
-                <DashboardOperationalMix metrics={metrics} />
-                <MiniRevenueSparkline data={revenueData} />
-              </div>
+                  <div className="border-border/40 mt-8 space-y-8 border-t border-white/[0.06] pt-6">
+                    <DashboardOperationalMix metrics={metrics} />
+                    <MiniRevenueSparkline data={revenueData} />
+                  </div>
+                </>
+              )}
             </BentoCardContent>
           </BentoCard>
         </BentoGrid>
@@ -525,7 +591,12 @@ export default function DashboardPage() {
         description="AI highlights, sales signals, transfers, integrations, and agent activity."
       >
         <BentoGrid columns={3} gap="lg">
-          {insights.length > 0 && (
+          {failed.insights ? (
+            <BentoCard variant="glass" span={2}>
+              <ErrorState title="Couldn't load AI insights" onRetry={retry} />
+            </BentoCard>
+          ) : null}
+          {!failed.insights && insights.length > 0 && (
             <BorderBeam>
               <BentoCard variant="glass" span={2} glowOnHover className="min-h-[350px]">
                 <BentoCardHeader>
@@ -620,6 +691,7 @@ export default function DashboardPage() {
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
+              {failed.metrics && <ErrorState title="Couldn't load top products" />}
               <ul className="divide-border/60 divide-y">
                 {Array.isArray(topProducts) &&
                   topProducts.map((product, index) => (
@@ -703,6 +775,7 @@ export default function DashboardPage() {
               </BentoCardDescription>
             </BentoCardHeader>
             <BentoCardContent>
+              {failed.metrics && <ErrorState title="Couldn't load recent activity" />}
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {Array.isArray(activity) &&
                   activity.slice(0, 6).map((item, index) => {
