@@ -34,6 +34,23 @@ describe('ProductSearch load failure', () => {
     expect(screen.queryByText("Couldn't search products")).not.toBeInTheDocument();
   });
 
+  it('drops the failed-search message as soon as the search term changes', async () => {
+    get.mockRejectedValue(new Error('Network down'));
+    render(<ProductSearch onAddProduct={vi.fn()} />);
+    const input = screen.getByPlaceholderText(/search by sku/i);
+    await userEvent.type(input, 'mop');
+    await screen.findByText("Couldn't search products");
+
+    get.mockResolvedValue({ items: [], total: 0 });
+    await userEvent.type(input, 'x');
+
+    // Still inside the 300ms debounce: the old failure must not show against the new term,
+    // and the old term must not be reported as having no products.
+    expect(screen.queryByText("Couldn't search products")).not.toBeInTheDocument();
+    expect(screen.queryByText(/No products found/)).not.toBeInTheDocument();
+    expect(await screen.findByText('No products found for "mopx"')).toBeInTheDocument();
+  });
+
   it('re-runs the search when Retry is pressed', async () => {
     get.mockRejectedValue(new Error('Network down'));
     render(<ProductSearch onAddProduct={vi.fn()} />);

@@ -139,11 +139,16 @@ export function LocationAwareProductSelect({
     if (!open || !searchActive) {
       setSearchResults([]);
       setSearchError(false);
+      setLoadingSearch(false);
       return;
     }
 
     let cancelled = false;
     const q = searchQuery;
+    // A new term is "searching" from the first keystroke, so an earlier failure never
+    // shows against it during the debounce.
+    setSearchError(false);
+    setLoadingSearch(true);
     const handle = setTimeout(() => {
       void (async () => {
         setLoadingSearch(true);

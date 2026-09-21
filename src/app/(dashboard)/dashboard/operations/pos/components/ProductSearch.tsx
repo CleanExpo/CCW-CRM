@@ -83,7 +83,8 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
       </div>
 
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
-        {loading ? (
+        {/* After a failure, a changed term shows as loading until its own search settles. */}
+        {loading || (searchError && search !== debouncedSearch) ? (
           <>
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-20 w-full" />

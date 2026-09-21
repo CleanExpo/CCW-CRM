@@ -76,6 +76,28 @@ describe('LocationAwareProductSelect load failure', () => {
     expect(screen.queryByText(EMPTY_SEARCH)).not.toBeInTheDocument();
   });
 
+  it('drops the failed-search message as soon as the search term changes', async () => {
+    let failSearch = true;
+    get.mockImplementation(async (url: string) => {
+      if (url.includes('search=') && failSearch) throw new Error('Network down');
+      return { items: [] };
+    });
+    await openSelect();
+    await screen.findByText(EMPTY_CATALOG);
+    const input = screen.getByPlaceholderText(/filter by sku/i);
+    await userEvent.type(input, 'mop');
+    await screen.findByText("Couldn't search products.");
+
+    failSearch = false;
+    await userEvent.type(input, 'x');
+
+    // Still inside the 280ms debounce: the old failure must not show against the new term,
+    // and the new term must not be reported as matching nothing before it was searched.
+    expect(screen.queryByText("Couldn't search products.")).not.toBeInTheDocument();
+    expect(screen.queryByText(EMPTY_SEARCH)).not.toBeInTheDocument();
+    expect(await screen.findByText(EMPTY_SEARCH)).toBeInTheDocument();
+  });
+
   it('still says "No products match your search" when the search finds nothing', async () => {
     get.mockResolvedValue({ items: [] });
     await openSelect();
