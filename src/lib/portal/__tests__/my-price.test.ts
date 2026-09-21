@@ -174,6 +174,7 @@ vi.mock('@/lib/auth/workspace-scope', () => ({
 }));
 
 import {
+  getQuoteCart,
   listMyPrices,
   orderAgain,
   orderQuote,
@@ -473,5 +474,96 @@ describe('orderQuote', () => {
       await expect(orderQuote('cust-a', 'qx')).rejects.toBeInstanceOf(PortalOrderError);
     }
     expect(db.orders).toHaveLength(1);
+  });
+
+  it('refuses a quote with a product that can no longer be ordered, and leaves it unconverted', async () => {
+    db.quotes = [
+      {
+        id: 'q-retired',
+        customerId: 'cust-a',
+        quoteNumber: 'QR',
+        status: 'sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [
+          { productId: 'soap', quantity: 1, unitPrice: 70 },
+          { productId: 'retired', quantity: 2, unitPrice: 20 },
+        ],
+      },
+    ];
+    const err = await orderQuote('cust-a', 'q-retired').catch((e) => e);
+    expect(err).toBeInstanceOf(PortalOrderError);
+    expect(err.status).toBe(409);
+    expect(db.quotes[0].status).toBe('sent');
+    expect(db.orders.filter((o) => o.id.startsWith('new-'))).toHaveLength(0);
+  });
+
+  it('refuses when a product is retired between the check and the write', async () => {
+    db.quotes = [
+      {
+        id: 'q-race',
+        customerId: 'cust-a',
+        quoteNumber: 'QX',
+        status: 'sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [
+          { productId: 'soap', quantity: 1, unitPrice: 70 },
+          { productId: 'wand', quantity: 1, unitPrice: 50 },
+        ],
+      },
+    ];
+    const { prisma } = await import('@/lib/db/prisma');
+    vi.mocked(prisma.$transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => Promise<unknown>
+    ) => {
+      db.products.find((x) => x.id === 'wand')!.isActive = false;
+      return fn(prisma);
+    }) as never);
+    const err = await orderQuote('cust-a', 'q-race').catch((e) => e);
+    expect(err).toBeInstanceOf(PortalOrderError);
+    expect(err.status).toBe(409);
+  });
+});
+
+describe('getQuoteCart', () => {
+  const line = (productId: string, name: string) => ({
+    productId,
+    quantity: 1,
+    unitPrice: 70,
+    product: { name, sku: name.toUpperCase() },
+  });
+
+  it('flags lines that can no longer be ordered and says the quote cannot be ordered online', async () => {
+    db.quotes = [
+      {
+        id: 'q-cart',
+        customerId: 'cust-a',
+        quoteNumber: 'QC',
+        status: 'sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [line('soap', 'soap'), line('retired', 'retired')],
+      },
+    ];
+    const cart = await getQuoteCart('cust-a', 'q-cart');
+    expect(cart.orderable).toBe(false);
+    expect(cart.lines.map((l) => [l.product_id, l.available])).toEqual([
+      ['soap', true],
+      ['retired', false],
+    ]);
+  });
+
+  it('is orderable when every line can be ordered', async () => {
+    db.quotes = [
+      {
+        id: 'q-ok',
+        customerId: 'cust-a',
+        quoteNumber: 'QO',
+        status: 'sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [line('soap', 'soap'), line('wand', 'wand')],
+      },
+    ];
+    const cart = await getQuoteCart('cust-a', 'q-ok');
+    expect(cart.orderable).toBe(true);
+    expect(cart.lines.every((l) => l.available)).toBe(true);
   });
 });

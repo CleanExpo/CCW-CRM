@@ -11,7 +11,15 @@ type Cart = {
   quote_number: string;
   valid_until: string | null;
   quoted_prices_honoured: boolean;
-  lines: { product_id: string; sku: string; name: string; quantity: number; unit_price: number }[];
+  orderable: boolean;
+  lines: {
+    product_id: string;
+    sku: string;
+    name: string;
+    quantity: number;
+    unit_price: number;
+    available: boolean;
+  }[];
 };
 
 /** UNI-2747: a quote CCW sent during a call, ready to order as a draft. */
@@ -50,7 +58,12 @@ function QuoteCart() {
           <tbody>
             {cart.lines.map((l) => (
               <tr key={l.product_id} className="border-t">
-                <td className="py-2">{l.name}</td>
+                <td className="py-2">
+                  {l.name}
+                  {!l.available && (
+                    <span className="ml-2 text-xs text-amber-700">No longer available</span>
+                  )}
+                </td>
                 <td className="py-2 text-slate-500">× {l.quantity}</td>
                 <td className="py-2 text-right">${(l.unit_price * l.quantity).toFixed(2)}</td>
               </tr>
@@ -63,6 +76,11 @@ function QuoteCart() {
         </div>
         {placed ? (
           <p className="text-green-700">Sent as {placed}. CCW will confirm your order.</p>
+        ) : !cart.orderable ? (
+          <p className="text-amber-700">
+            Some products on this quote can no longer be ordered online. Please call CCW to update
+            the quote.
+          </p>
         ) : (
           <Button
             disabled={busy}

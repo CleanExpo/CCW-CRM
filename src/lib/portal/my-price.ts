@@ -197,6 +197,10 @@ export async function getQuoteCart(customerId: string, quoteId: string) {
   });
   if (!quote) throw new PortalOrderError('Quote not found', 404);
   assertQuoteOrderable(quote.status);
+  const unavailable = await unavailableProductIds(
+    quote.lineItems.map((l) => l.productId),
+    workspaceUserIds
+  );
   const lines = [];
   for (const l of quote.lineItems) {
     const r = await resolvePrice(customerId, l.productId, l.quantity, workspaceUserIds);
@@ -207,6 +211,7 @@ export async function getQuoteCart(customerId: string, quoteId: string) {
       quantity: l.quantity,
       quoted_unit_price: l.unitPrice,
       unit_price: quoteStillValid(quote.validUntil) ? l.unitPrice : r.unitPrice,
+      available: !unavailable.has(l.productId),
     });
   }
   return {
@@ -214,9 +219,29 @@ export async function getQuoteCart(customerId: string, quoteId: string) {
     quote_number: quote.quoteNumber,
     valid_until: quote.validUntil,
     quoted_prices_honoured: quoteStillValid(quote.validUntil),
+    // orderQuote refuses the whole quote when any line cannot be ordered, so
+    // the cart can say so before the customer presses the button.
+    orderable: unavailable.size === 0,
     lines,
   };
 }
+
+/** Products on a quote that are inactive or outside the customer's supplier workspace. */
+async function unavailableProductIds(
+  productIds: string[],
+  workspaceUserIds: string[],
+  db: Pick<typeof prisma, 'product'> = prisma
+): Promise<Set<string>> {
+  const active = await db.product.findMany({
+    where: { id: { in: productIds }, ownerUserId: { in: workspaceUserIds }, isActive: true },
+    select: { id: true },
+  });
+  const activeIds = new Set(active.map((p) => p.id));
+  return new Set(productIds.filter((id) => !activeIds.has(id)));
+}
+
+const QUOTE_HAS_UNAVAILABLE_LINES =
+  'Some products on this quote can no longer be ordered online. Please call CCW to update the quote.';
 
 /** Quote statuses a customer may order from. Draft, rejected, expired, cancelled and converted may not. */
 export const ORDERABLE_QUOTE_STATUSES = ['sent', 'accepted', 'pending'];
@@ -241,6 +266,12 @@ export async function orderQuote(customerId: string, quoteId: string) {
   });
   if (!quote) throw new PortalOrderError('Quote not found', 404);
   assertQuoteOrderable(quote.status);
+  // A quote is ordered whole or not at all: dropping a line would convert the
+  // quote on an order the customer never agreed to.
+  const productIds = quote.lineItems.map((l) => l.productId);
+  if ((await unavailableProductIds(productIds, workspaceUserIds)).size > 0) {
+    throw new PortalOrderError(QUOTE_HAS_UNAVAILABLE_LINES, 409);
+  }
   const honoured = quoteStillValid(quote.validUntil);
   return prisma.$transaction(async (tx) => {
     const claimed = await tx.quote.updateMany({
@@ -252,7 +283,7 @@ export async function orderQuote(customerId: string, quoteId: string) {
     if (claimed.count === 0) {
       throw new PortalOrderError('This quote has already been ordered', 409);
     }
-    return createDraftOrder(
+    const result = await createDraftOrder(
       customer,
       workspaceUserIds,
       quote.lineItems.map((l) => ({
@@ -262,6 +293,12 @@ export async function orderQuote(customerId: string, quoteId: string) {
       })),
       tx
     );
+    // A product retired between the check above and this write: roll the whole
+    // transaction back rather than convert the quote on a partial order.
+    if (result.unavailable.length > 0) {
+      throw new PortalOrderError(QUOTE_HAS_UNAVAILABLE_LINES, 409);
+    }
+    return result;
   });
 }
 
