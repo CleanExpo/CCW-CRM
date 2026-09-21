@@ -16,7 +16,10 @@ type Plan = {
   includes: string;
   start_date: string;
   renewal_date: string;
+  service_template_id?: string | null;
 };
+
+type Template = { id: string; name: string };
 
 /** UNI-2750: the machine's service plan, or a form to put it on one. */
 export function ServicePlanCard({ equipmentId }: { equipmentId: string }) {
@@ -30,7 +33,23 @@ export function ServicePlanCard({ equipmentId }: { equipmentId: string }) {
     price: '',
     includes: '',
     start_date: new Date().toISOString().slice(0, 10),
+    service_template_id: '',
   });
+  const [templates, setTemplates] = useState<Template[] | null>(null);
+  const [templatesFailed, setTemplatesFailed] = useState(false);
+
+  useEffect(() => {
+    apiClient
+      .get<{ items: Template[] }>('/api/workshop/templates?is_active=true&page_size=100')
+      .then((res) => setTemplates(res.items))
+      .catch(() => setTemplatesFailed(true));
+  }, []);
+
+  const templateName = (id: string | null | undefined) => {
+    if (templatesFailed) return 'could not load the template name';
+    if (templates === null) return 'loading...';
+    return templates.find((t) => t.id === id)?.name ?? 'inactive or deleted template';
+  };
 
   const load = useCallback(async () => {
     try {
@@ -57,6 +76,20 @@ export function ServicePlanCard({ equipmentId }: { equipmentId: string }) {
     } catch (e) {
       toast({
         title: 'Could not add plan',
+        description: e instanceof Error ? e.message : 'Failed',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  async function cancelPlan(id: string) {
+    try {
+      await apiClient.delete(`/api/workshop/plans/${id}`);
+      toast({ title: 'Plan cancelled' });
+      load();
+    } catch (e) {
+      toast({
+        title: 'Could not cancel plan',
         description: e instanceof Error ? e.message : 'Failed',
         variant: 'destructive',
       });
@@ -95,6 +128,19 @@ export function ServicePlanCard({ equipmentId }: { equipmentId: string }) {
             {plan.includes && (
               <div className="text-muted-foreground">Includes: {plan.includes}</div>
             )}
+            {plan.service_template_id ? (
+              <div className="text-muted-foreground">
+                Template: {templateName(plan.service_template_id)}
+              </div>
+            ) : (
+              <div className="text-amber-700">
+                No service template, so bookings from this plan start without template items. Cancel
+                the plan and add it again with a template to fix this.
+              </div>
+            )}
+            <Button variant="outline" size="sm" onClick={() => cancelPlan(plan.id)}>
+              Cancel plan
+            </Button>
           </div>
         )}
         {state === 'ready' && !plan && (
@@ -119,6 +165,28 @@ export function ServicePlanCard({ equipmentId }: { equipmentId: string }) {
               value={form.start_date}
               onChange={(e) => setForm({ ...form, start_date: e.target.value })}
             />
+            <label className="col-span-2 flex flex-col gap-1">
+              <span className="text-muted-foreground">Service template</span>
+              <select
+                aria-label="Service template"
+                value={form.service_template_id}
+                onChange={(e) => setForm({ ...form, service_template_id: e.target.value })}
+                className="bg-background rounded-md border px-3 py-2 text-sm"
+              >
+                <option value="">No template</option>
+                {templates?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              {templatesFailed && (
+                <span className="text-red-600">
+                  Could not load service templates. This is a failed read, not &ldquo;no
+                  templates&rdquo;.
+                </span>
+              )}
+            </label>
             <Input
               className="col-span-2"
               placeholder="What the plan includes"
