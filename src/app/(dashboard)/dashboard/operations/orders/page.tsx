@@ -393,6 +393,7 @@ export default function OrdersPage() {
                 columns={[
                   {
                     key: 'select',
+                    mobileLabel: 'Select',
                     label: (
                       <Checkbox
                         checked={orders.length > 0 && selectedOrderIds.length === orders.length}

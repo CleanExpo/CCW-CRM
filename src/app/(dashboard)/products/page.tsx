@@ -350,6 +350,7 @@ export default function ProductsPage() {
                 columns={[
                   {
                     key: 'select',
+                    mobileLabel: 'Select',
                     label: (
                       <Checkbox
                         checked={
