@@ -119,7 +119,32 @@ vi.mock('@/lib/db/prisma', () => ({
         async ({ where }: { where: { id: string; customerId: string } }) =>
           db.quotes.find((q) => q.id === where.id && q.customerId === where.customerId) ?? null
       ),
+      updateMany: vi.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { id: string; customerId: string; status: { in: string[] } };
+          data: { status: string };
+        }) => {
+          const q = db.quotes.find(
+            (x) =>
+              x.id === where.id &&
+              x.customerId === where.customerId &&
+              where.status.in.includes(x.status as string)
+          );
+          if (!q) return { count: 0 };
+          q.status = data.status;
+          return { count: 1 };
+        }
+      ),
     },
+    // Runs the callback against the same fake; a thrown error leaves earlier writes,
+    // which is stricter than Postgres, so a test passing here also passes with rollback.
+    $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
+      const { prisma } = await import('@/lib/db/prisma');
+      return fn(prisma);
+    }),
   },
 }));
 vi.mock('@/lib/auth/workspace-scope', () => ({
@@ -279,6 +304,7 @@ describe('orderQuote', () => {
         id: 'q-valid',
         customerId: 'cust-a',
         quoteNumber: 'Q1',
+        status: 'sent',
         validUntil: new Date(Date.now() + 86_400_000),
         lineItems: lines,
       },
@@ -286,12 +312,47 @@ describe('orderQuote', () => {
         id: 'q-old',
         customerId: 'cust-a',
         quoteNumber: 'Q2',
+        status: 'sent',
         validUntil: new Date(Date.now() - 86_400_000),
         lineItems: lines,
       },
     ];
+    await expect(orderQuote('cust-b', 'q-valid')).rejects.toBeInstanceOf(PortalOrderError);
     expect((await orderQuote('cust-a', 'q-valid')).order.lineItems[0].unitPrice).toBe(70);
     expect((await orderQuote('cust-a', 'q-old')).order.lineItems[0].unitPrice).toBe(80);
-    await expect(orderQuote('cust-b', 'q-valid')).rejects.toBeInstanceOf(PortalOrderError);
+  });
+
+  it('a quote can be ordered only once, and is marked converted', async () => {
+    db.quotes = [
+      {
+        id: 'q1',
+        customerId: 'cust-a',
+        quoteNumber: 'Q1',
+        status: 'sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [{ productId: 'soap', quantity: 1, unitPrice: 70 }],
+      },
+    ];
+    await orderQuote('cust-a', 'q1');
+    await expect(orderQuote('cust-a', 'q1')).rejects.toThrow(/no longer be ordered|already/);
+    expect(db.quotes[0].status).toBe('converted');
+    expect(db.orders.filter((o) => o.id.startsWith('new-'))).toHaveLength(1);
+  });
+
+  it('refuses draft, rejected, expired and cancelled quotes and writes nothing', async () => {
+    for (const status of ['draft', 'rejected', 'expired', 'cancelled', 'converted']) {
+      db.quotes = [
+        {
+          id: 'qx',
+          customerId: 'cust-a',
+          quoteNumber: 'QX',
+          status,
+          validUntil: new Date(Date.now() + 86_400_000),
+          lineItems: [{ productId: 'soap', quantity: 1, unitPrice: 70 }],
+        },
+      ];
+      await expect(orderQuote('cust-a', 'qx')).rejects.toBeInstanceOf(PortalOrderError);
+    }
+    expect(db.orders).toHaveLength(1);
   });
 });

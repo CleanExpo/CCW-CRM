@@ -94,12 +94,15 @@ export async function listMyPrices(
   return { items, total };
 }
 
+type Db = Pick<typeof prisma, 'product' | 'order'>;
+
 async function createDraftOrder(
   customer: { id: string; ownerUserId: string },
   workspaceUserIds: string[],
-  wanted: { productId: string; quantity: number; unitPrice?: number }[]
+  wanted: { productId: string; quantity: number; unitPrice?: number }[],
+  db: Db = prisma
 ) {
-  const active = await prisma.product.findMany({
+  const active = await db.product.findMany({
     where: {
       id: { in: wanted.map((w) => w.productId) },
       ownerUserId: { in: workspaceUserIds },
@@ -121,7 +124,7 @@ async function createDraftOrder(
   }
   if (lines.length === 0)
     throw new PortalOrderError('None of these products can be ordered now', 409);
-  const order = await prisma.order.create({
+  const order = await db.order.create({
     data: {
       ownerUserId: customer.ownerUserId,
       customerId: customer.id,
@@ -165,6 +168,7 @@ export async function getQuoteCart(customerId: string, quoteId: string) {
     include: { lineItems: { include: { product: { select: { name: true, sku: true } } } } },
   });
   if (!quote) throw new PortalOrderError('Quote not found', 404);
+  assertQuoteOrderable(quote.status);
   const lines = [];
   for (const l of quote.lineItems) {
     const r = await resolvePrice(customerId, l.productId, l.quantity, workspaceUserIds);
@@ -186,9 +190,20 @@ export async function getQuoteCart(customerId: string, quoteId: string) {
   };
 }
 
+/** Quote statuses a customer may order from. Draft, rejected, expired, cancelled and converted may not. */
+export const ORDERABLE_QUOTE_STATUSES = ['sent', 'accepted', 'pending'];
+
+function assertQuoteOrderable(status: string) {
+  if (!ORDERABLE_QUOTE_STATUSES.includes(status.toLowerCase())) {
+    throw new PortalOrderError('This quote can no longer be ordered online', 409);
+  }
+}
+
 /**
  * Turns the customer's own quote into a draft order: at the quoted prices while
- * the quote is valid, at today's prices once it has expired.
+ * the quote is valid, at today's prices once it has expired. The quote is marked
+ * "converted" in the same transaction (as the staff convert path does), so it
+ * can only be ordered once, even if the button is pressed twice.
  */
 export async function orderQuote(customerId: string, quoteId: string) {
   const { customer, workspaceUserIds } = await customerScope(customerId);
@@ -197,16 +212,27 @@ export async function orderQuote(customerId: string, quoteId: string) {
     include: { lineItems: true },
   });
   if (!quote) throw new PortalOrderError('Quote not found', 404);
+  assertQuoteOrderable(quote.status);
   const honoured = quoteStillValid(quote.validUntil);
-  return createDraftOrder(
-    customer,
-    workspaceUserIds,
-    quote.lineItems.map((l) => ({
-      productId: l.productId,
-      quantity: l.quantity,
-      ...(honoured ? { unitPrice: l.unitPrice } : {}),
-    }))
-  );
+  return prisma.$transaction(async (tx) => {
+    const claimed = await tx.quote.updateMany({
+      where: { id: quote.id, customerId, status: { in: ORDERABLE_QUOTE_STATUSES } },
+      data: { status: 'converted' },
+    });
+    if (claimed.count === 0) {
+      throw new PortalOrderError('This quote has already been ordered', 409);
+    }
+    return createDraftOrder(
+      customer,
+      workspaceUserIds,
+      quote.lineItems.map((l) => ({
+        productId: l.productId,
+        quantity: l.quantity,
+        ...(honoured ? { unitPrice: l.unitPrice } : {}),
+      })),
+      tx
+    );
+  });
 }
 
 export function quoteStillValid(validUntil: Date | null, now = new Date()): boolean {
