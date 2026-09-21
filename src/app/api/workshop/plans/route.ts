@@ -67,6 +67,12 @@ export async function POST(request: NextRequest) {
     if (e instanceof ServicePlanError) {
       return NextResponse.json({ detail: e.message }, { status: e.status });
     }
+    if ((e as { code?: string })?.code === 'P2002') {
+      return NextResponse.json(
+        { detail: 'This machine already has an active plan' },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ detail: String(e) }, { status: 500 });
   }
 }

@@ -7,7 +7,6 @@
  */
 import { addMonths } from 'date-fns';
 import { prisma } from '@/lib/db/prisma';
-import { createWorkshopBooking } from '@/lib/db/workshop-service';
 import { listFitsForMachine } from '@/lib/fitment/fitment-service';
 
 export class ServicePlanError extends Error {
@@ -48,6 +47,17 @@ export async function createServicePlan(
   if (!input.intervalMonths && !input.intervalHours) {
     throw new ServicePlanError('Set an interval in months, hours, or both');
   }
+  const wholeInRange = (v: number | null | undefined, max: number) =>
+    v == null || (Number.isInteger(v) && v >= 1 && v <= max);
+  if (!wholeInRange(input.intervalMonths, 120)) {
+    throw new ServicePlanError('interval_months must be a whole number from 1 to 120');
+  }
+  if (!wholeInRange(input.intervalHours, 100_000)) {
+    throw new ServicePlanError('interval_hours must be a whole number from 1 to 100000');
+  }
+  if (input.price != null && !(Number.isFinite(input.price) && input.price >= 0)) {
+    throw new ServicePlanError('price must be zero or more');
+  }
   const start = new Date(`${input.startDate}T00:00:00Z`);
   if (Number.isNaN(start.getTime())) throw new ServicePlanError('start_date must be YYYY-MM-DD');
   const equipment = await prisma.workshopEquipment.findFirst({
@@ -67,6 +77,8 @@ export async function createServicePlan(
     select: { id: true },
   });
   if (existing) throw new ServicePlanError('This machine already has an active plan', 409);
+  // The partial unique index (one active plan per machine) closes the gap between
+  // the check above and this insert; a racing second insert lands here as P2002.
   return prisma.workshopServicePlan.create({
     data: {
       ownerUserId: actorUserId,
@@ -139,21 +151,6 @@ export async function bookFromPlan(
   });
   if (!plan) throw new ServicePlanError('This machine has no active service plan', 409);
 
-  const open = await prisma.workshopBooking.findFirst({
-    where: { equipmentId, ownerUserId: { in: workspaceUserIds }, status: { in: OPEN_BOOKING } },
-    include: { parts: true },
-  });
-  if (open) return { created: false, bookingId: open.id, parts: open.parts };
-
-  const when =
-    scheduledDate ?? (equipment.nextServiceDate ?? new Date()).toISOString().slice(0, 10);
-  const booking = await createWorkshopBooking(workspaceUserIds, actorUserId, {
-    equipment_id: equipmentId,
-    service_template_id: plan.serviceTemplateId ?? undefined,
-    location: equipment.location,
-    scheduled_date: when,
-  });
-
   const kit = new Map<string, { productId: string; quantity: number; source: string }>();
   if (plan.serviceTemplateId) {
     const items = await prisma.workshopServiceTemplateItem.findMany({
@@ -171,13 +168,39 @@ export async function bookFromPlan(
     }
   }
   const parts = [...kit.values()];
-  if (parts.length > 0) {
-    await prisma.workshopBookingPart.createMany({
-      data: parts.map((p) => ({ ...p, bookingId: booking.id })),
-      skipDuplicates: true,
+  const when = new Date(
+    scheduledDate ?? (equipment.nextServiceDate ?? new Date()).toISOString().slice(0, 10)
+  );
+  if (Number.isNaN(when.getTime())) throw new ServicePlanError('scheduled_date must be a date');
+
+  // Check-then-create under a per-machine transaction lock, so two clicks at the
+  // same moment cannot both see "no open booking" and make two.
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`workshop-booking:${equipmentId}`}))`;
+    const open = await tx.workshopBooking.findFirst({
+      where: { equipmentId, ownerUserId: { in: workspaceUserIds }, status: { in: OPEN_BOOKING } },
+      include: { parts: true },
     });
-  }
-  return { created: true, bookingId: booking.id, parts };
+    if (open) return { created: false, bookingId: open.id, parts: open.parts };
+    const n = await tx.workshopBooking.count({ where: { ownerUserId: actorUserId } });
+    const booking = await tx.workshopBooking.create({
+      data: {
+        ownerUserId: actorUserId,
+        bookingNumber: `WB-${String(n + 1).padStart(5, '0')}`,
+        equipmentId,
+        serviceTemplateId: plan.serviceTemplateId ?? null,
+        location: equipment.location,
+        scheduledDate: when,
+      },
+    });
+    if (parts.length > 0) {
+      await tx.workshopBookingPart.createMany({
+        data: parts.map((p) => ({ ...p, bookingId: booking.id })),
+        skipDuplicates: true,
+      });
+    }
+    return { created: true, bookingId: booking.id, parts };
+  });
 }
 
 // ─── Booking → invoice ───────────────────────────────────────────────────────

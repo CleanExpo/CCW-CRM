@@ -22,6 +22,8 @@ CREATE TABLE "workshop_service_plans" (
 CREATE INDEX "workshop_service_plans_owner_user_id_idx" ON "workshop_service_plans"("owner_user_id");
 CREATE INDEX "workshop_service_plans_equipment_id_idx" ON "workshop_service_plans"("equipment_id");
 CREATE INDEX "workshop_service_plans_renewal_date_idx" ON "workshop_service_plans"("renewal_date");
+-- One active plan per machine. Partial index, so Prisma cannot express it in schema.prisma.
+CREATE UNIQUE INDEX "workshop_service_plans_one_active_per_equipment" ON "workshop_service_plans"("equipment_id") WHERE "status" = 'active';
 
 ALTER TABLE "workshop_service_plans"
   ADD CONSTRAINT "workshop_service_plans_equipment_id_fkey"

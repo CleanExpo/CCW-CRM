@@ -16,10 +16,16 @@ const db = vi.hoisted(() => ({
   bookings: [] as Booking[],
   templateItems: [] as { templateId: string; productId: string; quantity: number }[],
   invoiceWrites: 0,
+  events: [] as string[],
 }));
 
-vi.mock('@/lib/db/prisma', () => ({
-  prisma: {
+vi.mock('@/lib/db/prisma', () => {
+  const client = {
+    $executeRaw: vi.fn(async (_s: TemplateStringsArray, ...vals: unknown[]) => {
+      db.events.push(`lock:${String(vals[0])}`);
+      return 1;
+    }),
+    $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(client)),
     workshopEquipment: {
       findFirst: vi.fn(
         async ({ where }: { where: { id: string; ownerUserId: { in: string[] } } }) =>
@@ -37,10 +43,34 @@ vi.mock('@/lib/db/prisma', () => ({
     },
     workshopBooking: {
       findFirst: vi.fn(
-        async ({ where }: { where: { equipmentId: string; status: { in: string[] } } }) =>
-          db.bookings.find(
-            (b) => b.equipmentId === where.equipmentId && where.status.in.includes(b.status)
-          ) ?? null
+        async ({ where }: { where: { equipmentId: string; status: { in: string[] } } }) => {
+          db.events.push('find-open');
+          return (
+            db.bookings.find(
+              (b) => b.equipmentId === where.equipmentId && where.status.in.includes(b.status)
+            ) ?? null
+          );
+        }
+      ),
+      count: vi.fn(async () => db.bookings.length),
+      create: vi.fn(
+        async ({
+          data,
+        }: {
+          data: { ownerUserId: string; equipmentId: string; serviceTemplateId: string | null };
+        }) => {
+          db.events.push('create');
+          const b: Booking = {
+            id: `bk-${db.bookings.length + 1}`,
+            equipmentId: data.equipmentId,
+            ownerUserId: data.ownerUserId,
+            status: 'scheduled',
+            serviceTemplateId: data.serviceTemplateId,
+            parts: [],
+          };
+          db.bookings.push(b);
+          return b;
+        }
       ),
     },
     workshopServiceTemplateItem: {
@@ -66,32 +96,9 @@ vi.mock('@/lib/db/prisma', () => ({
         return {};
       }),
     },
-  },
-}));
-
-vi.mock('@/lib/db/workshop-service', async (orig) => {
-  const real = await orig<typeof import('@/lib/db/workshop-service')>();
-  return {
-    ...real,
-    createWorkshopBooking: vi.fn(
-      async (
-        _ids: string[],
-        owner: string,
-        body: { equipment_id: string; service_template_id?: string }
-      ) => {
-        const b: Booking = {
-          id: `bk-${db.bookings.length + 1}`,
-          equipmentId: body.equipment_id,
-          ownerUserId: owner,
-          status: 'scheduled',
-          serviceTemplateId: body.service_template_id ?? null,
-          parts: [],
-        };
-        db.bookings.push(b);
-        return { id: b.id };
-      }
-    ),
+    workshopServiceTemplate: { findFirst: vi.fn(async () => ({ id: 'tpl-annual' })) },
   };
+  return { prisma: client };
 });
 
 vi.mock('@/lib/fitment/fitment-service', () => ({
@@ -111,20 +118,17 @@ import {
   billableLabourHours,
   bookFromPlan,
   createInvoiceDraftFromBooking,
+  createServicePlan,
   PlanInvoiceBlockedError,
 } from '@/lib/workshop/service-plans';
-import {
-  createWorkshopBooking,
-  sendPendingWorkshopReminders,
-  sendWorkshopReminder,
-} from '@/lib/db/workshop-service';
+import { sendPendingWorkshopReminders, sendWorkshopReminder } from '@/lib/db/workshop-service';
 import { WorkshopOutreachBlockedError } from '@/lib/workshop/customer-outreach-gate';
 
 const WS = ['user-a'];
 
 beforeEach(() => {
-  vi.mocked(createWorkshopBooking).mockClear();
   db.invoiceWrites = 0;
+  db.events = [];
   db.equipment = [
     {
       id: 'eq-ready',
@@ -178,7 +182,11 @@ describe('bookFromPlan — one booking', () => {
     const b = await bookFromPlan(WS, 'staff-1', 'eq-ready');
     expect(b).toMatchObject({ created: false, bookingId: a.bookingId });
     expect(db.bookings).toHaveLength(1);
-    expect(createWorkshopBooking).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes the per-machine lock before looking for an open booking, inside one transaction', async () => {
+    await bookFromPlan(WS, 'staff-1', 'eq-ready');
+    expect(db.events).toEqual(['lock:workshop-booking:eq-ready', 'find-open', 'create']);
   });
 
   it('refuses a machine recall review has not marked ready, and one with no plan', async () => {
@@ -189,6 +197,24 @@ describe('bookFromPlan — one booking', () => {
 
   it('cannot book equipment outside the workspace', async () => {
     await expect(bookFromPlan(['user-other'], 's', 'eq-ready')).rejects.toThrow(/not found/);
+  });
+});
+
+describe('createServicePlan — validation', () => {
+  const base = { equipmentId: 'eq-ready', startDate: '2026-10-01' };
+  it('rejects non-whole, zero, negative or absurd intervals and a negative price', async () => {
+    for (const bad of [
+      { intervalMonths: 0 },
+      { intervalMonths: -3 },
+      { intervalMonths: 1.5 },
+      { intervalMonths: 121 },
+      { intervalHours: 0.25 },
+      { intervalMonths: 12, price: -1 },
+    ]) {
+      await expect(createServicePlan(WS, 's', { ...base, ...bad })).rejects.toThrow(
+        /whole number|zero or more|Set an interval/
+      );
+    }
   });
 });
 
