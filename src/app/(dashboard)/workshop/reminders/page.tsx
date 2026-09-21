@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { workshopApi, type ServiceReminder } from '@/lib/api/workshop';
 import { Bell, RefreshCw, Send } from 'lucide-react';
 
@@ -35,7 +36,9 @@ export default function RemindersPage() {
   const [sendingAll, setSendingAll] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
+  const beginLoad = useLatestLoad();
   const load = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const data = await workshopApi.listReminders({
@@ -43,6 +46,7 @@ export default function RemindersPage() {
         page,
         page_size: pageSize,
       });
+      if (!isCurrent()) return;
       // Sending or suppressing the last reminder on the last page empties it;
       // step back rather than show "none found" while others remain.
       if (data.items.length === 0 && data.total > 0 && page > data.total_pages) {
@@ -53,15 +57,16 @@ export default function RemindersPage() {
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [statusFilter, page, pageSize, toast]);
+  }, [statusFilter, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     load();

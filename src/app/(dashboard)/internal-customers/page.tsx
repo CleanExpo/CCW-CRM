@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { customersApi, type Customer } from '@/lib/api/customers';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
@@ -47,7 +48,9 @@ export default function InternalCustomersPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
+  const beginLoad = useLatestLoad();
   const loadCustomers = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const response = await customersApi.list({
@@ -56,10 +59,12 @@ export default function InternalCustomersPage() {
         search: debouncedSearch || undefined,
         cin7_contact_type: 'Internal',
       });
+      if (!isCurrent()) return;
       setCustomers(response.items);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         variant: 'destructive',
         title: 'Could not load internal customers',
@@ -68,9 +73,9 @@ export default function InternalCustomersPage() {
       setCustomers([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [debouncedSearch, page, pageSize, toast]);
+  }, [debouncedSearch, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     void loadCustomers();
@@ -127,7 +132,7 @@ export default function InternalCustomersPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-xl border bg-card/50 shadow-sm"
+          className="bg-card/50 rounded-xl border shadow-sm"
         >
           <div className="border-b px-4 py-3">
             <p className="text-muted-foreground text-sm">

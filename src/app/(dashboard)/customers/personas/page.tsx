@@ -16,6 +16,7 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 interface PersonaRecord {
@@ -104,24 +105,28 @@ export default function PersonasPage() {
     setPage(1);
   }, []);
 
+  const beginLoad = useLatestLoad();
   const load = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const paging = `page=${page}&page_size=${pageSize}`;
       const params =
         personaFilter !== 'all' ? `?persona_filter=${personaFilter}&${paging}` : `?${paging}`;
       const res = await apiClient.get<PersonasResponse>(`/api/crm/personas${params}`);
+      if (!isCurrent()) return;
       setData(res);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         variant: 'destructive',
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to load personas',
       });
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [personaFilter, page, pageSize, toast]);
+  }, [personaFilter, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     load();

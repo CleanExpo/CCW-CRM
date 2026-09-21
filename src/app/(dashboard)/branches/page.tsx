@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 import { Cin7EmptyState } from '@/components/integrations/Cin7EmptyState';
@@ -47,7 +48,9 @@ export default function BranchesPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
+  const beginLoad = useLatestLoad();
   const loadBranches = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const response = await listCin7Branches({
@@ -55,10 +58,12 @@ export default function BranchesPage() {
         page_size: pageSize,
         search: debouncedSearch || undefined,
       });
+      if (!isCurrent()) return;
       setBranches(response.items);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         variant: 'destructive',
         title: 'Could not load branches',
@@ -67,9 +72,9 @@ export default function BranchesPage() {
       setBranches([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [debouncedSearch, page, pageSize, toast]);
+  }, [debouncedSearch, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     void loadBranches();
@@ -84,7 +89,7 @@ export default function BranchesPage() {
         className="space-y-1"
       >
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-primary/10">
+          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10">
             <MapPin className="text-primary h-5 w-5" />
           </div>
           <div>
@@ -127,7 +132,7 @@ export default function BranchesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.05 }}
-          className="rounded-xl border bg-card/50 shadow-sm"
+          className="bg-card/50 rounded-xl border shadow-sm"
         >
           <div className="border-b px-4 py-3">
             <p className="text-muted-foreground text-sm">
@@ -154,11 +159,10 @@ export default function BranchesPage() {
                   </TableCell>
                   <TableCell>{branch.branch_type ?? '—'}</TableCell>
                   <TableCell>
-                    {[branch.city, branch.state, branch.post_code].filter(Boolean).join(', ') || '—'}
+                    {[branch.city, branch.state, branch.post_code].filter(Boolean).join(', ') ||
+                      '—'}
                   </TableCell>
-                  <TableCell className="text-sm">
-                    {branch.email ?? branch.phone ?? '—'}
-                  </TableCell>
+                  <TableCell className="text-sm">{branch.email ?? branch.phone ?? '—'}</TableCell>
                   <TableCell>
                     <Badge variant={branch.is_active ? 'default' : 'secondary'}>
                       {branch.is_active ? 'Active' : 'Inactive'}

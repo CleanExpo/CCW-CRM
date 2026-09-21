@@ -81,4 +81,43 @@ describe.each(cases)('$name list paging (UNI-2690)', ({ Page, fn, item }) => {
       expect(mockFn).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, page_size: 50 }))
     );
   });
+
+  it('ignores a slow older page that lands after the user searched', async () => {
+    let releaseOld: (v: unknown) => void = () => {};
+    mockFn.mockImplementation((params?: { page?: number; search?: string }) => {
+      if (params?.search)
+        return pageOf({ ...item, id: 'hit', name: 'SEARCH-HIT', company_name: 'SEARCH-HIT' })(
+          params
+        );
+      if ((params?.page ?? 1) === 2)
+        return new Promise((resolve) => {
+          releaseOld = resolve;
+        });
+      return pageOf(item)(params);
+    });
+
+    render(<Page />);
+    await screen.findByText(`Showing 1-50 of ${TOTAL} items`);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() =>
+      expect(mockFn).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+    );
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'hit' } });
+    expect(
+      (await screen.findAllByText('SEARCH-HIT', {}, { timeout: 2000 })).length
+    ).toBeGreaterThan(0);
+
+    releaseOld({
+      items: [{ ...item, id: 'old', name: 'OLD-PAGE-2', company_name: 'OLD-PAGE-2' }],
+      total: TOTAL,
+      page: 2,
+      page_size: 50,
+      total_pages: 3,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(screen.queryByText('OLD-PAGE-2')).not.toBeInTheDocument();
+    expect(screen.getAllByText('SEARCH-HIT').length).toBeGreaterThan(0);
+  });
 });

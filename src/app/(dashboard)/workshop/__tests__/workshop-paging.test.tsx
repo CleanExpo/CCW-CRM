@@ -126,6 +126,85 @@ describe.each(cases)('workshop $name list paging (UNI-2690)', ({ Page, fn, item 
   });
 });
 
+describe('workshop lists ignore a slow older page (UNI-2690)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('equipment: a slow page 2 does not replace the location the user picked', async () => {
+    let releaseOld: (v: unknown) => void = () => {};
+    api.listEquipment.mockImplementation((params?: { page?: number; location?: string }) => {
+      if (params?.location === 'sydney')
+        return pageOf({ ...machine, id: 'syd', serial_number: 'SYDNEY-MACHINE' })(params);
+      if ((params?.page ?? 1) === 2)
+        return new Promise((resolve) => {
+          releaseOld = resolve;
+        });
+      return pageOf(machine)(params);
+    });
+
+    render(<EquipmentPage />);
+    await screen.findByText(`Showing 1-50 of ${TOTAL} items`);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() =>
+      expect(api.listEquipment).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+    );
+
+    fireEvent.change(screen.getByDisplayValue('All Locations'), { target: { value: 'sydney' } });
+    expect((await screen.findAllByText(/SYDNEY-MACHINE/)).length).toBeGreaterThan(0);
+
+    releaseOld({
+      items: [{ ...machine, id: 'old', serial_number: 'OLD-PAGE-2' }],
+      total: TOTAL,
+      page: 2,
+      page_size: 50,
+      total_pages: 3,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(screen.queryByText(/OLD-PAGE-2/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/SYDNEY-MACHINE/).length).toBeGreaterThan(0);
+  });
+
+  it('reminders: a slow page 2 does not replace the status filter the user picked', async () => {
+    let releaseOld: (v: unknown) => void = () => {};
+    api.listReminders.mockImplementation((params?: { page?: number; status?: string }) => {
+      if (params?.status === 'sent')
+        return pageOf({ ...reminder, id: 'sent1', equipment_id: 'SENTROW1-xyz' })(params);
+      if ((params?.page ?? 1) === 2)
+        return new Promise((resolve) => {
+          releaseOld = resolve;
+        });
+      return pageOf(reminder)(params);
+    });
+
+    render(<RemindersPage />);
+    await screen.findByText(`Showing 1-50 of ${TOTAL} items`);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() =>
+      expect(api.listReminders).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }))
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'sent' }));
+    await waitFor(() =>
+      expect(api.listReminders).toHaveBeenLastCalledWith(
+        expect.objectContaining({ status: 'sent' })
+      )
+    );
+    expect((await screen.findAllByText(/SENTROW1/)).length).toBeGreaterThan(0);
+
+    releaseOld({
+      items: [{ ...reminder, id: 'old', equipment_id: 'OLDPAGE2-xyz' }],
+      total: TOTAL,
+      page: 2,
+      page_size: 50,
+      total_pages: 3,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(screen.queryByText(/OLDPAGE2/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/SENTROW1/).length).toBeGreaterThan(0);
+  });
+});
+
 /** The seven days the schedule page shows on load, computed the way the page does. */
 function thisWeek(): Date[] {
   const d = new Date();

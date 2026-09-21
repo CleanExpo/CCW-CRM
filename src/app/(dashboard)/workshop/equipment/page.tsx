@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { workshopApi, type Equipment } from '@/lib/api/workshop';
 import { Plus, Search, RefreshCw, Eye } from 'lucide-react';
 import Link from 'next/link';
@@ -36,7 +37,9 @@ export default function EquipmentPage() {
   const [status, setStatus] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
 
+  const beginLoad = useLatestLoad();
   const load = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const data = await workshopApi.listEquipment({
@@ -47,19 +50,21 @@ export default function EquipmentPage() {
         page,
         page_size: pageSize,
       });
+      if (!isCurrent()) return;
       setEquipment(data.items);
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to load equipment',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [search, location, status, overdueOnly, page, pageSize, toast]);
+  }, [search, location, status, overdueOnly, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     load();
