@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -25,9 +25,13 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+const UNAVAILABLE_MESSAGE =
+  'Password resets are unavailable right now. Please contact an administrator to reset your password.';
+
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -38,6 +42,15 @@ export function ForgotPasswordForm() {
     setIsLoading(true);
     try {
       const res = await authApi.requestPasswordReset(values.email);
+      // `refused` and `failed` mean the reset email was not sent, so a success
+      // message here would be false. `not_applicable` (no such account) keeps the
+      // generic confirmation so the page does not reveal whether an account exists.
+      const status = res.delivery?.status;
+      if (status === 'refused' || status === 'failed') {
+        toast.error(UNAVAILABLE_MESSAGE, { id: 'forgot-error' });
+        setUnavailable(true);
+        return;
+      }
       toast.success(res.message || 'If an account exists, we sent reset instructions.');
       setSent(true);
     } catch (error: unknown) {
@@ -51,6 +64,22 @@ export function ForgotPasswordForm() {
   const inputClass =
     'h-12 rounded-xl border-zinc-600 bg-zinc-900/95 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35';
   const labelClass = 'text-sm font-semibold text-zinc-200';
+
+  if (unavailable) {
+    return (
+      <div className="space-y-4 text-center text-sm text-zinc-300">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-red-400/30 bg-red-500/15">
+          <AlertTriangle className="h-7 w-7 text-red-300" aria-hidden="true" />
+        </div>
+        <p role="alert" className="text-zinc-300">
+          {UNAVAILABLE_MESSAGE}
+        </p>
+        <Button asChild variant="outline" className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800">
+          <Link href="/login">Back to sign in</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (sent) {
     return (

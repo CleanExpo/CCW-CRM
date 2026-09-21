@@ -254,7 +254,11 @@ export const authApi = {
     return res.json();
   },
 
-  async requestPasswordReset(email: string): Promise<{ message: string }> {
+  async requestPasswordReset(email: string): Promise<{
+    message: string;
+    /** What happened to the reset email. Only `sent` means the provider accepted it. */
+    delivery?: { status: string; receipt_id?: string | null };
+  }> {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
