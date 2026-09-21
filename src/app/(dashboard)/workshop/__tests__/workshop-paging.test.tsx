@@ -167,6 +167,102 @@ describe('workshop schedule week (UNI-2690)', () => {
     expect(api.listBookings).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
   });
 
+  it('keeps the rows it loaded and marks no day Free when a later page fails', async () => {
+    const [mon] = thisWeek();
+    api.listBookings.mockImplementation((params?: { page?: number }) =>
+      (params?.page ?? 1) === 1
+        ? Promise.resolve({
+            items: [{ ...booking, booking_number: 'WB-MON', scheduled_date: mon.toISOString() }],
+            total: 150,
+            page: 1,
+            page_size: 100,
+            total_pages: 2,
+          })
+        : Promise.reject(new Error('page 2 failed'))
+    );
+
+    render(<WorkshopSchedulePage />);
+
+    expect(
+      await screen.findByText(/Couldn't load every booking for this week/)
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('WB-MON').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Free')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('never says the week is empty or Free when the first page fails', async () => {
+    api.listBookings.mockRejectedValue(new Error('down'));
+
+    render(<WorkshopSchedulePage />);
+
+    expect(
+      await screen.findByText(/Couldn't load every booking for this week/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Free')).not.toBeInTheDocument();
+    expect(screen.queryByText('No bookings this week.')).not.toBeInTheDocument();
+  });
+
+  it('ignores an older walk that finishes after the user changed the filter', async () => {
+    const [mon] = thisWeek();
+    let releaseOldPage2: (v: unknown) => void = () => {};
+    api.listBookings.mockImplementation((params?: { page?: number; location?: string }) => {
+      if (params?.location === 'sydney') {
+        return Promise.resolve({
+          items: [
+            { ...booking, id: 'syd', booking_number: 'WB-SYD', scheduled_date: mon.toISOString() },
+          ],
+          total: 1,
+          page: 1,
+          page_size: 100,
+          total_pages: 1,
+        });
+      }
+      if ((params?.page ?? 1) === 1) {
+        return Promise.resolve({
+          items: [
+            {
+              ...booking,
+              id: 'old1',
+              booking_number: 'WB-OLD1',
+              scheduled_date: mon.toISOString(),
+            },
+          ],
+          total: 150,
+          page: 1,
+          page_size: 100,
+          total_pages: 2,
+        });
+      }
+      return new Promise((resolve) => {
+        releaseOldPage2 = resolve;
+      });
+    });
+
+    render(<WorkshopSchedulePage />);
+    await waitFor(() =>
+      expect(api.listBookings).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))
+    );
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'sydney' } });
+    expect((await screen.findAllByText('WB-SYD')).length).toBeGreaterThan(0);
+
+    releaseOldPage2({
+      items: [
+        { ...booking, id: 'old2', booking_number: 'WB-OLD2', scheduled_date: mon.toISOString() },
+      ],
+      total: 150,
+      page: 2,
+      page_size: 100,
+      total_pages: 2,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(screen.getAllByText('WB-SYD').length).toBeGreaterThan(0);
+    expect(screen.queryByText('WB-OLD2')).not.toBeInTheDocument();
+    expect(screen.queryByText('WB-OLD1')).not.toBeInTheDocument();
+  });
+
   it('never marks a day Free when it could not load the whole week', async () => {
     api.listBookings.mockImplementation((params?: { page?: number }) =>
       Promise.resolve({
