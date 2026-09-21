@@ -16,10 +16,17 @@ export async function POST(request: NextRequest) {
     const secret = process.env.CRON_SECRET?.trim();
     const isCron = Boolean(secret) && request.headers.get('authorization') === `Bearer ${secret}`;
     const body = await request.json().catch(() => ({}));
+    const pageBudget = body.page_budget === undefined ? undefined : Number(body.page_budget);
+    if (pageBudget !== undefined && !(Number.isFinite(pageBudget) && pageBudget >= 1)) {
+      return NextResponse.json(
+        { detail: 'page_budget must be a number of at least 1' },
+        { status: 400 }
+      );
+    }
     const ids = await getWorkspaceMemberUserIds(scope.userId);
     const res = await runCapture(ids, scope.userId, {
       trigger: isCron ? 'cron' : 'manual',
-      pageBudget: body.page_budget === undefined ? undefined : Number(body.page_budget),
+      pageBudget,
       onlyId:
         typeof body.competitor_product_id === 'string' ? body.competitor_product_id : undefined,
     });

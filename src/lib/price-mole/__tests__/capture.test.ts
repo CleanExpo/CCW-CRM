@@ -72,7 +72,7 @@ vi.mock('@/lib/db/prisma', () => ({
   },
 }));
 
-import { runCapture, type Fetcher } from '@/lib/price-mole/price-mole-service';
+import { clampPageBudget, runCapture, type Fetcher } from '@/lib/price-mole/price-mole-service';
 
 const PAGE = (price: string) =>
   `<script type="application/ld+json">{"@type":"Product","name":"Galaxy","offers":{"price":"${price}","priceCurrency":"AUD"}}</script>`;
@@ -198,6 +198,29 @@ describe('runCapture — guard', () => {
       pageBudget: 1_000_000,
     });
     expect(res.run.pageBudget).toBe(200);
+  });
+
+  it('a non-number budget cannot switch the hard stop off', async () => {
+    for (const bad of [NaN, Infinity, -Infinity, 'lots', null]) {
+      const b = clampPageBudget(bad);
+      expect(Number.isFinite(b), String(bad)).toBe(true);
+      expect(b).toBeGreaterThanOrEqual(1);
+      expect(b).toBeLessThanOrEqual(200);
+    }
+    db.cps = [1, 2, 3, 4, 5, 6].map((i) => cp(`n${i}`, `https://rival.example/n/${i}`));
+    const pages: Record<string, { status: number; text: string }> = {
+      'https://rival.example/robots.txt': { status: 200, text: '' },
+    };
+    for (let i = 1; i <= 6; i++)
+      pages[`https://rival.example/n/${i}`] = { status: 200, text: PAGE(String(i)) };
+    const { f } = fetcherFrom(pages);
+    const res = await runCapture(['user-a'], 'staff', {
+      trigger: 'manual',
+      fetcher: f,
+      now: NOW,
+      pageBudget: NaN,
+    });
+    expect(Number.isFinite(res.run.pageBudget)).toBe(true);
   });
 
   it('skips a page checked in the last 20 hours without fetching it', async () => {

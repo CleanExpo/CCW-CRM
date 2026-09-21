@@ -15,6 +15,7 @@ import {
   USER_AGENT,
   type PresentedPrice,
 } from '@/lib/price-mole/rules';
+import { createSafeFetch } from '@/lib/price-mole/safe-fetch';
 
 export type Fetcher = (url: string) => Promise<{ status: number; text: string }>;
 
@@ -26,21 +27,19 @@ export const MIN_HOURS_BETWEEN_ATTEMPTS = 20;
 export const MAX_PAGE_BUDGET = 200;
 export const DEFAULT_PAGE_BUDGET = 50;
 
-export const defaultFetcher: Fetcher = async (url) => {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,text/plain' },
-      redirect: 'follow',
-      signal: controller.signal,
-    });
-    const text = (await res.text()).slice(0, MAX_BODY_CHARS);
-    return { status: res.status, text };
-  } finally {
-    clearTimeout(t);
-  }
-};
+/** Every hop (including redirects and robots.txt) must resolve to a public address. */
+export const defaultFetcher: Fetcher = createSafeFetch({
+  headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,text/plain' },
+  timeoutMs: FETCH_TIMEOUT_MS,
+  maxBodyChars: MAX_BODY_CHARS,
+});
+
+/** A usable page budget: finite, at least 1, never above the ceiling. Anything else gets the default. */
+export function clampPageBudget(raw: unknown): number {
+  const n = typeof raw === 'number' ? raw : raw === undefined ? NaN : Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_PAGE_BUDGET;
+  return Math.min(Math.max(Math.floor(n), 1), MAX_PAGE_BUDGET);
+}
 
 export class PriceMoleInputError extends Error {}
 
@@ -208,10 +207,7 @@ export async function runCapture(
 ) {
   const fetcher = opts.fetcher ?? defaultFetcher;
   const now = opts.now ?? new Date();
-  const budget = Math.min(
-    Math.max(Math.floor(opts.pageBudget ?? DEFAULT_PAGE_BUDGET), 1),
-    MAX_PAGE_BUDGET
-  );
+  const budget = clampPageBudget(opts.pageBudget);
   const run = await prisma.competitorCaptureRun.create({
     data: { ownerUserId: actorUserId, trigger: opts.trigger, pageBudget: budget, startedAt: now },
   });
