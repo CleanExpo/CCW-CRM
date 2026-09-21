@@ -5,8 +5,11 @@ import { Package, Truck, Clock, CheckCircle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiClient } from '@/lib/api/client';
+import { OrderAgainButton } from '@/components/portal/OrderAgainButton';
+import { usePortalOrdering } from '@/components/portal/usePortalOrdering';
 
 interface OrderItem {
+  line_id?: string;
   sku: string;
   name: string;
   qty: number;
@@ -59,6 +62,7 @@ export default function PortalOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const ordering = usePortalOrdering();
 
   useEffect(() => {
     async function load() {
@@ -140,7 +144,7 @@ export default function PortalOrdersPage() {
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50">
                           <tr>
-                            {['SKU', 'Product', 'Qty', 'Unit Price', 'Total'].map((h) => (
+                            {['SKU', 'Product', 'Qty', 'Unit Price', 'Total', ''].map((h) => (
                               <th
                                 key={h}
                                 className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
@@ -170,11 +174,22 @@ export default function PortalOrdersPage() {
                                   minimumFractionDigits: 2,
                                 })}
                               </td>
+                              <td className="px-3 py-2 text-right">
+                                {ordering === 'open' && item.line_id && (
+                                  <OrderAgainButton
+                                    orderId={order.order_id}
+                                    lineId={item.line_id}
+                                    label="Order this again"
+                                  />
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
+
+                    {ordering === 'open' && <OrderAgainButton orderId={order.order_id} />}
 
                     {/* Delivery info */}
                     <div className="flex flex-wrap gap-6 text-sm">
