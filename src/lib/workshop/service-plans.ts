@@ -25,7 +25,8 @@ export function billableLabourHours(actualHours: number): number {
   if (!Number.isFinite(actualHours) || actualHours < 0) {
     throw new ServicePlanError('Hours must be zero or more');
   }
-  const quarters = Math.ceil(actualHours * 4 - 1e-9);
+  // Round away float noise first (1.1 * 4 = 4.4000000000000004), then round up to a quarter.
+  const quarters = Math.ceil(Math.round(actualHours * 4 * 1e6) / 1e6);
   return Math.max(0.5, quarters / 4);
 }
 
@@ -89,7 +90,8 @@ export async function createServicePlan(
       price: input.price ?? null,
       includes: input.includes ?? '',
       startDate: start,
-      renewalDate: addMonths(start, 12),
+      // A yearly plan, but never renewing before its first service falls due.
+      renewalDate: addMonths(start, Math.max(12, input.intervalMonths ?? 0)),
       createdBy: actorUserId,
     },
   });

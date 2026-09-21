@@ -40,6 +40,10 @@ vi.mock('@/lib/db/prisma', () => {
           db.plans.find((p) => p.equipmentId === where.equipmentId && p.status === where.status) ??
           null
       ),
+      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'plan-new',
+        ...data,
+      })),
     },
     workshopBooking: {
       findFirst: vi.fn(
@@ -218,6 +222,24 @@ describe('createServicePlan — validation', () => {
   });
 });
 
+describe('createServicePlan — renewal', () => {
+  it('renews a year on, or at the interval if that is longer, so it never renews before its first service', async () => {
+    db.plans = [];
+    const year = await createServicePlan(WS, 's', {
+      equipmentId: 'eq-ready',
+      intervalMonths: 6,
+      startDate: '2026-10-01',
+    });
+    expect(year.renewalDate.toISOString().slice(0, 10)).toBe('2027-10-01');
+    const long = await createServicePlan(WS, 's', {
+      equipmentId: 'eq-ready',
+      intervalMonths: 18,
+      startDate: '2026-10-01',
+    });
+    expect(long.renewalDate.toISOString().slice(0, 10)).toBe('2028-04-01');
+  });
+});
+
 describe('billableLabourHours — labour rounding', () => {
   it('rounds up to the next quarter hour with a 0.50 minimum', () => {
     expect(billableLabourHours(0)).toBe(0.5);
@@ -227,6 +249,11 @@ describe('billableLabourHours — labour rounding', () => {
     expect(billableLabourHours(1)).toBe(1);
     expect(billableLabourHours(1.01)).toBe(1.25);
     expect(billableLabourHours(2.3)).toBe(2.5);
+    // float noise must not bump an exact quarter, nor hide a real overrun
+    expect(billableLabourHours(0.75)).toBe(0.75);
+    expect(billableLabourHours(2.25)).toBe(2.25);
+    expect(billableLabourHours(0.7 + 0.05)).toBe(0.75);
+    expect(billableLabourHours(1.1)).toBe(1.25);
   });
 
   it('rejects negative hours', () => {
