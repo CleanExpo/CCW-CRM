@@ -41,13 +41,32 @@ function matchInvoice(inv: Inv, where: Record<string, unknown>): boolean {
 vi.mock('@/lib/db/prisma', () => ({
   prisma: {
     invoice: {
-      findMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
-        db.invoices
-          .filter((i) => matchInvoice(i, where))
-          .map((i) => ({
+      findMany: vi.fn(
+        async ({
+          where,
+          orderBy,
+          skip,
+          take,
+        }: {
+          where: Record<string, unknown>;
+          orderBy?: unknown;
+          skip?: number;
+          take?: number;
+        }) => {
+          let rows = db.invoices.filter((i) => matchInvoice(i, where));
+          if (orderBy !== undefined) {
+            // Only the extract's order is supported: newest invoice first, then id descending.
+            expect(orderBy).toEqual([{ invoiceDate: 'desc' }, { id: 'desc' }]);
+            rows = [...rows].sort(
+              (a, b) => b.invoiceDate.getTime() - a.invoiceDate.getTime() || (a.id < b.id ? 1 : -1)
+            );
+          }
+          rows = rows.slice(skip ?? 0, take === undefined ? undefined : (skip ?? 0) + take);
+          return rows.map((i) => ({
             ...i,
             items: i.items.map((it) => ({ ...it, product: { sku: it.productId.toUpperCase() } })),
-          }))
+          }));
+        }
       ),
     },
     stockMovement: { findMany: vi.fn(async () => []) },
@@ -82,7 +101,7 @@ import {
 } from '@/lib/reorder-radar/radar-service';
 import { buildRadar, radarLinesFromExtract } from '@/lib/reorder-radar/cadence';
 import { GET as extractGET } from '@/app/api/reporting/extract/route';
-import type { ReportingExtract } from '@/lib/reporting/transaction-extract';
+import { INVOICE_PAGE_SIZE, type ReportingExtract } from '@/lib/reporting/transaction-extract';
 
 let n = 0;
 function inv(
@@ -134,18 +153,65 @@ beforeEach(() => {
 
 const AS_OF = '2026-03-25';
 
+/** Reads every extract page for an as-of date, the way a replay must. */
+async function extractAllLines(asOf: string, maxPages = 50) {
+  const lines: ReportingExtract['invoice_lines'] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const res = await extractGET(
+      new NextRequest(`http://localhost/api/reporting/extract?as_of=${asOf}&page=${page}`)
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as ReportingExtract;
+    expect(body.invoice_page).toBe(page);
+    lines.push(...body.invoice_lines);
+    if (!body.invoice_next_page) return { lines, pages: page };
+  }
+  throw new Error('extract never reached its last page');
+}
+
 describe('live radar vs reporting extract', () => {
   it('produce the same radar for the same as-of date', async () => {
     const live = buildRadar(await loadPurchaseLines(['user-a'], AS_OF), AS_OF);
 
-    const res = await extractGET(new NextRequest('http://localhost/api/reporting/extract'));
-    expect(res.status).toBe(200);
-    const extract = (await res.json()) as ReportingExtract;
-    const replay = buildRadar(radarLinesFromExtract(extract.invoice_lines), AS_OF);
+    const { lines } = await extractAllLines(AS_OF);
+    const replay = buildRadar(radarLinesFromExtract(lines), AS_OF);
 
     expect(replay).toEqual(live);
     // Not vacuous: the seeded 30-day customer is actually due on this date.
     expect(live.due.map((c) => `${c.customerId}:${c.productId}`)).toEqual(['c30:soap']);
+  });
+
+  it('stays equal to the live radar when the history is longer than one extract page', async () => {
+    // Older daily history for another customer pushes the invoice count past one page.
+    const start = Date.UTC(2025, 11, 31);
+    for (let i = 0; i < INVOICE_PAGE_SIZE + 50; i++) {
+      const day = new Date(start - i * 86_400_000).toISOString().slice(0, 10);
+      db.invoices.push(inv('bulk', day, 'paid', [['wax', 1]]));
+    }
+    const liveLines = await loadPurchaseLines(['user-a'], AS_OF);
+    const live = buildRadar(liveLines, AS_OF);
+
+    const { lines, pages } = await extractAllLines(AS_OF);
+    expect(pages).toBeGreaterThan(1);
+    const replayLines = radarLinesFromExtract(lines);
+    expect(replayLines).toHaveLength(liveLines.length);
+    expect(buildRadar(replayLines, AS_OF)).toEqual(live);
+
+    // Control: page 1 alone is truncated, so it cannot stand in for the live read.
+    const first = (await (
+      await extractGET(new NextRequest(`http://localhost/api/reporting/extract?as_of=${AS_OF}`))
+    ).json()) as ReportingExtract;
+    expect(first.invoice_next_page).toBe(2);
+    expect(radarLinesFromExtract(first.invoice_lines).length).toBeLessThan(liveLines.length);
+  });
+
+  it('the extract filters to the as-of day and rejects a date that does not exist', async () => {
+    const { lines } = await extractAllLines(AS_OF);
+    expect(lines.some((l) => l.invoice_date > AS_OF)).toBe(false);
+    const bad = await extractGET(
+      new NextRequest('http://localhost/api/reporting/extract?as_of=2026-02-30')
+    );
+    expect(bad.status).toBe(400);
   });
 
   it('live read excludes draft and cancelled invoices, other workspaces and later lines', async () => {
