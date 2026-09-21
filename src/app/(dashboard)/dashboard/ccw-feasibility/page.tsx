@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -186,6 +187,7 @@ export default function CcwFeasibilityDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState(false);
 
   const selectedFindings = useMemo(() => detail?.findings ?? [], [detail?.findings]);
   const assumptions = useMemo(
@@ -199,11 +201,13 @@ export default function CcwFeasibilityDashboardPage() {
     try {
       const data = await readJson<ListResponse>(await fetch(API_BASE, { cache: 'no-store' }));
       setItems(data.items);
+      setListError(false);
       if (!selectedId && data.items[0]) {
         setSelectedId(data.items[0].id);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      setListError(true);
     } finally {
       setLoading(false);
     }
@@ -434,10 +438,12 @@ export default function CcwFeasibilityDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Saved Statements</CardTitle>
-            <CardDescription>{items.length} database-backed records</CardDescription>
+            {!listError && <CardDescription>{items.length} database-backed records</CardDescription>}
           </CardHeader>
           <CardContent className="space-y-2">
-            {items.length === 0 ? (
+            {listError ? (
+              <ErrorState title="Couldn't load saved statements" onRetry={loadList} />
+            ) : items.length === 0 ? (
               <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                 No saved feasibility statements yet.
               </div>
