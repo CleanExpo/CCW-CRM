@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type ServiceReminder } from '@/lib/api/workshop';
 import { Bell, RefreshCw, Send } from 'lucide-react';
@@ -25,6 +26,9 @@ export default function RemindersPage() {
   const { toast } = useToast();
   const [reminders, setReminders] = useState<ServiceReminder[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [generating, setGenerating] = useState(false);
@@ -36,10 +40,18 @@ export default function RemindersPage() {
     try {
       const data = await workshopApi.listReminders({
         status: statusFilter || undefined,
-        page_size: 100,
+        page,
+        page_size: pageSize,
       });
+      // Sending or suppressing the last reminder on the last page empties it;
+      // step back rather than show "none found" while others remain.
+      if (data.items.length === 0 && data.total > 0 && page > data.total_pages) {
+        setPage(data.total_pages);
+        return;
+      }
       setReminders(data.items);
       setTotal(data.total);
+      setTotalPages(data.total_pages);
     } catch (error: unknown) {
       toast({
         title: 'Error',
@@ -49,7 +61,7 @@ export default function RemindersPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, toast]);
+  }, [statusFilter, page, pageSize, toast]);
 
   useEffect(() => {
     load();
@@ -148,7 +160,10 @@ export default function RemindersPage() {
         {['', 'pending', 'sent', 'failed', 'suppressed'].map((s) => (
           <button
             key={s}
-            onClick={() => setStatusFilter(s)}
+            onClick={() => {
+              setStatusFilter(s);
+              setPage(1);
+            }}
             className={`rounded px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
               statusFilter === s
                 ? 'bg-primary text-primary-foreground'
@@ -251,6 +266,20 @@ export default function RemindersPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && reminders.length > 0 && (
+        <PaginationControls
+          currentPage={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       )}
     </div>
   );

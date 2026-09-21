@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type WorkshopBooking } from '@/lib/api/workshop';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
@@ -31,6 +32,10 @@ function getWeekDates(date: Date): Date[] {
 export default function WorkshopSchedulePage() {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<WorkshopBooking[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState('');
   const [weekStart, setWeekStart] = useState(new Date());
@@ -45,9 +50,12 @@ export default function WorkshopSchedulePage() {
         location: location || undefined,
         date_from: dateFrom,
         date_to: dateTo,
-        page_size: 100,
+        page,
+        page_size: pageSize,
       });
       setBookings(data.items);
+      setTotal(data.total);
+      setTotalPages(data.total_pages);
     } catch (error: unknown) {
       toast({
         title: 'Error',
@@ -57,7 +65,7 @@ export default function WorkshopSchedulePage() {
     } finally {
       setLoading(false);
     }
-  }, [location, weekDates, toast]);
+  }, [location, weekDates, page, pageSize, toast]);
 
   useEffect(() => {
     load();
@@ -67,11 +75,13 @@ export default function WorkshopSchedulePage() {
     const d = new Date(weekStart);
     d.setDate(d.getDate() - 7);
     setWeekStart(d);
+    setPage(1);
   }
   function nextWeek() {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + 7);
     setWeekStart(d);
+    setPage(1);
   }
 
   function bookingsForDay(date: Date): WorkshopBooking[] {
@@ -94,7 +104,10 @@ export default function WorkshopSchedulePage() {
           <div className="flex gap-2">
             <select
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                setPage(1);
+              }}
               className="bg-background rounded-md border px-3 py-2 text-sm"
             >
               <option value="">All Locations</option>
@@ -127,10 +140,24 @@ export default function WorkshopSchedulePage() {
           <Button variant="outline" size="sm" onClick={nextWeek}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setWeekStart(new Date())}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setWeekStart(new Date());
+              setPage(1);
+            }}
+          >
             Today
           </Button>
         </div>
+
+        {totalPages > 1 && (
+          <p className="text-muted-foreground text-sm">
+            This week has {total} bookings across {totalPages} pages. The grid shows page {page};
+            use the pager below the list to see the rest.
+          </p>
+        )}
 
         {/* Week Grid */}
         {loading ? (
@@ -178,7 +205,7 @@ export default function WorkshopSchedulePage() {
         {/* Booking List */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">All Bookings This Week ({bookings.length})</CardTitle>
+            <CardTitle className="text-base">All Bookings This Week ({total})</CardTitle>
           </CardHeader>
           <CardContent>
             {bookings.length === 0 ? (
@@ -216,6 +243,20 @@ export default function WorkshopSchedulePage() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {!loading && bookings.length > 0 && (
+              <PaginationControls
+                currentPage={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={total}
+                onPageChange={setPage}
+                onPageSizeChange={(newSize) => {
+                  setPageSize(newSize);
+                  setPage(1);
+                }}
+              />
             )}
           </CardContent>
         </Card>
