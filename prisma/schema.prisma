@@ -201,6 +201,7 @@ model Product {
   competitorProducts           CompetitorProduct[]
   fitsProducts                 ProductFitment[]              @relation("FitmentMachine")
   fitsMachines                 ProductFitment[]              @relation("FitmentFit")
+  workshopBookingParts         WorkshopBookingPart[]
 
   @@unique([ownerUserId, sku])
   @@index([ownerUserId])
@@ -1596,6 +1597,7 @@ model WorkshopEquipment {
   bookings   WorkshopBooking[]
   reminders  WorkshopServiceReminder[]
   recallCase WorkshopRecallCase?
+  servicePlans WorkshopServicePlan[]
 
   @@index([ownerUserId])
   @@index([customerId])
@@ -1664,6 +1666,7 @@ model WorkshopBooking {
   equipment WorkshopEquipment         @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
   template  WorkshopServiceTemplate?  @relation(fields: [serviceTemplateId], references: [id], onDelete: SetNull)
   reminders WorkshopServiceReminder[]
+  parts     WorkshopBookingPart[]
 
   @@unique([ownerUserId, bookingNumber])
   @@index([ownerUserId])
@@ -1721,6 +1724,51 @@ model WorkshopCentre {
 }
 
 /// Staff review of a due machine. Never implies the customer was contacted.
+/// UNI-2750: a yearly (or hours-based) service plan on a customer machine.
+/// Price is optional: plan pricing sits with Phill and is not invented here.
+model WorkshopServicePlan {
+  id                String    @id @default(uuid()) @db.Uuid
+  ownerUserId       String    @map("owner_user_id") @db.Uuid
+  equipmentId       String    @map("equipment_id") @db.Uuid
+  serviceTemplateId String?   @map("service_template_id") @db.Uuid
+  intervalMonths    Int?      @map("interval_months")
+  intervalHours     Int?      @map("interval_hours")
+  price             Float?
+  includes          String    @default("") @db.Text
+  startDate         DateTime  @map("start_date") @db.Date
+  renewalDate       DateTime  @map("renewal_date") @db.Date
+  /// active | cancelled
+  status            String    @default("active")
+  createdBy         String?   @map("created_by") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  equipment WorkshopEquipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+  @@index([equipmentId])
+  @@index([renewalDate])
+  @@map("workshop_service_plans")
+}
+
+/// UNI-2750: the parts kit pre-filled on a booking (template items plus the
+/// confirmed parts map). Staff can change it before the job.
+model WorkshopBookingPart {
+  id        String @id @default(uuid()) @db.Uuid
+  bookingId String @map("booking_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  quantity  Int    @default(1)
+  /// template | fitment
+  source    String
+
+  booking WorkshopBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingId, productId])
+  @@index([bookingId])
+  @@map("workshop_booking_parts")
+}
+
 model WorkshopRecallCase {
   id            String    @id @default(uuid()) @db.Uuid
   ownerUserId   String    @map("owner_user_id") @db.Uuid
