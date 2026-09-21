@@ -358,7 +358,12 @@ export function LocationAwareProductSelect({
                   {loading && <Loader2 className="h-5 w-5 animate-spin" />}
                   {emptyMessage()}
                   {!loading && (searchActive ? searchError : catalogError) && (
-                    <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReloadKey((k) => k + 1)}
+                    >
                       Retry
                     </Button>
                   )}

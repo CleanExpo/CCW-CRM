@@ -92,7 +92,7 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
         ) : searchError ? (
           <div className="text-center py-8 text-destructive">
             <p>Couldn&apos;t search products</p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={searchProducts}>
+            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={searchProducts}>
               Retry
             </Button>
           </div>
