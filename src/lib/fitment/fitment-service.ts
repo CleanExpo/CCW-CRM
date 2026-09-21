@@ -79,6 +79,7 @@ export async function listMachinesForProduct(
       ownerUserId: { in: workspaceUserIds },
       fitProductId,
       status: { in: statusesVisibleTo(audience) },
+      ...(audience === 'customer' ? { machineProduct: { isActive: true } } : {}),
     },
     include,
     orderBy: { machineProduct: { name: 'asc' } },
@@ -245,6 +246,21 @@ export async function importFitments(
   const bySku = new Map<string, string[]>();
   for (const p of products) bySku.set(p.sku, [...(bySku.get(p.sku) ?? []), p.id]);
 
+  // A staff decision (confirmed or rejected) is only overwritten when the importer
+  // explicitly marks the sheet as confirmed. An unconfirmed sheet never downgrades it.
+  const existing = await prisma.productFitment.findMany({
+    where: {
+      ownerUserId: { in: workspaceUserIds },
+      machineProductId: { in: products.map((p) => p.id) },
+    },
+    select: { machineProductId: true, fitProductId: true, status: true },
+  });
+  const decided = new Map(
+    existing
+      .filter((e) => e.status === 'confirmed' || e.status === 'rejected')
+      .map((e) => [`${e.machineProductId}:${e.fitProductId}`, e.status])
+  );
+
   const errors: { line: number; message: string }[] = [];
   let imported = 0;
   for (const r of rows) {
@@ -256,6 +272,14 @@ export async function importFitments(
       errors.push({
         line: r.line,
         message: n === 0 ? `Unknown SKU ${bad}` : `SKU ${bad} matches ${n} products`,
+      });
+      continue;
+    }
+    const prior = decided.get(`${m[0]}:${f[0]}`);
+    if (prior && !opts.confirm) {
+      errors.push({
+        line: r.line,
+        message: `Already ${prior} by staff, so left unchanged. Tick "Mark imported rows as confirmed" to overwrite.`,
       });
       continue;
     }

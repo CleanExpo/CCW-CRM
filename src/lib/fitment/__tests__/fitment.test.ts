@@ -113,10 +113,30 @@ vi.mock('@/lib/db/prisma', () => ({
         db.fitments = db.fitments.filter((f) => !matchFitment(f, where));
         return { count: before - db.fitments.length };
       }),
+      upsert: vi.fn(
+        async ({
+          where,
+          create,
+          update,
+        }: {
+          where: {
+            machineProductId_fitProductId: { machineProductId: string; fitProductId: string };
+          };
+          create: Omit<F, 'id'>;
+          update: Partial<F>;
+        }) => {
+          const k = where.machineProductId_fitProductId;
+          const hit = db.fitments.find(
+            (f) => f.machineProductId === k.machineProductId && f.fitProductId === k.fitProductId
+          );
+          if (hit) return Object.assign(hit, update);
+          const row = { id: `up-${db.fitments.length}`, ...create } as F;
+          db.fitments.push(row);
+          return row;
+        }
+      ),
       createMany: vi.fn(async ({ data }: { data: Omit<F, 'id'>[] }) => {
-        data.forEach((d, i) =>
-          db.fitments.push({ id: `new-${i}`, ...d } as F)
-        );
+        data.forEach((d, i) => db.fitments.push({ id: `new-${i}`, ...d } as F));
         return { count: data.length };
       }),
     },
@@ -146,6 +166,8 @@ import {
   deleteFitment,
   generateSuggestions,
   fitmentToCustomerApi,
+  importFitments,
+  listMachinesForProduct,
 } from '@/lib/fitment/fitment-service';
 import { prisma } from '@/lib/db/prisma';
 
@@ -307,5 +329,53 @@ describe('generateSuggestions', () => {
       kind: 'part',
     });
     expect(db.fitments.find((f) => f.id === 'f1')?.status).toBe('confirmed');
+  });
+});
+
+describe('importFitments', () => {
+  const row = (line: number, machineSku: string, fitSku: string) => ({
+    line,
+    machineSku,
+    fitSku,
+    kind: 'consumable' as const,
+    usageQuantity: null,
+    usagePer: null,
+  });
+
+  it('an unconfirmed sheet never downgrades a staff decision, and says so per line', async () => {
+    const res = await importFitments(
+      WS,
+      'staff-1',
+      [
+        row(2, 'MACHINE-X', 'FILTER'), // confirmed by staff
+        row(3, 'MACHINE-X', 'MACHINE-Y'), // rejected by staff
+        row(4, 'MACHINE-Y', 'HOSE'), // new pair
+      ],
+      { confirm: false }
+    );
+    expect(db.fitments.find((f) => f.id === 'f1')?.status).toBe('confirmed');
+    expect(db.fitments.find((f) => f.id === 'f7')?.status).toBe('rejected');
+    expect(res.errors.map((e) => e.line)).toEqual([2, 3]);
+    expect(res.imported).toBe(1);
+    const added = db.fitments.find(
+      (f) => f.machineProductId === 'machine-y' && f.fitProductId === 'hose'
+    );
+    expect(added?.status).toBe('suggested');
+  });
+
+  it('a sheet explicitly marked confirmed may overwrite a decision', async () => {
+    await importFitments(WS, 'staff-1', [row(2, 'MACHINE-X', 'MACHINE-Y')], { confirm: true });
+    expect(db.fitments.find((f) => f.id === 'f7')?.status).toBe('confirmed');
+  });
+});
+
+describe('listMachinesForProduct', () => {
+  it('customer audience never lists an inactive machine; staff still sees it', async () => {
+    db.products.push(product('old-machine', { isActive: false }));
+    db.fitments.push(fit('f9', 'old-machine', 'filter', 'confirmed'));
+    const ids = async (audience: 'customer' | 'staff') =>
+      (await listMachinesForProduct(WS, 'filter', audience)).map((r) => r.machineProductId).sort();
+    expect(await ids('customer')).toEqual(['machine-x', 'machine-y']);
+    expect(await ids('staff')).toContain('old-machine');
   });
 });
