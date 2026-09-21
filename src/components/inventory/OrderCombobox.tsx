@@ -157,6 +157,7 @@ export function OrderCombobox({
     if (!open || !searchActive) {
       setSearchResults([]);
       setSearchError(false);
+      setLoadingSearch(false);
       return;
     }
     let cancelled = false;

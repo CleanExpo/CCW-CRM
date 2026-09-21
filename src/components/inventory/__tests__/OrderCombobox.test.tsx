@@ -77,6 +77,28 @@ describe('OrderCombobox load failure', () => {
     expect(screen.queryByText(EMPTY_SEARCH)).not.toBeInTheDocument();
   });
 
+  it('does not stay stuck loading when the search is cleared while a search is in flight', async () => {
+    let resolveSearch: (page: typeof EMPTY_PAGE) => void = () => {};
+    list.mockImplementation((params: { search?: string }) =>
+      params.search
+        ? new Promise<typeof EMPTY_PAGE>((resolve) => {
+            resolveSearch = resolve;
+          })
+        : Promise.resolve(EMPTY_PAGE)
+    );
+    await openCombobox();
+    await screen.findByText(EMPTY_LIST);
+    const input = screen.getByPlaceholderText(/filter by order number/i);
+
+    await userEvent.type(input, 'SO');
+    await screen.findByText('Loading orders…');
+    await userEvent.clear(input);
+    resolveSearch(EMPTY_PAGE);
+
+    expect(await screen.findByText(EMPTY_LIST)).toBeInTheDocument();
+    expect(screen.queryByText('Loading orders…')).not.toBeInTheDocument();
+  });
+
   it('still says "No orders match that search" when the search finds nothing', async () => {
     list.mockResolvedValue(EMPTY_PAGE);
     await openCombobox();
