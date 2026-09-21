@@ -64,6 +64,39 @@ describe('DNS rebinding — guard', () => {
   });
 });
 
+describe('response size — guard', () => {
+  let server: http.Server;
+  let port = 0;
+  let closed = false;
+  beforeAll(async () => {
+    // Streams 64 KB chunks forever until the client hangs up.
+    server = http.createServer((_req, res) => {
+      const chunk = Buffer.alloc(65_536, 'a');
+      const pump = () => {
+        if (res.destroyed) return;
+        res.write(chunk, () => setImmediate(pump));
+      };
+      res.on('close', () => {
+        closed = true;
+      });
+      pump();
+    });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    port = (server.address() as AddressInfo).port;
+  });
+  afterAll(() => new Promise<void>((r) => server.close(() => r())));
+
+  it('stops reading an endless page at the byte cap and closes the connection', async () => {
+    const open: Parameters<typeof createPinnedFetch>[0] = (_h, opts, cb) =>
+      opts.all ? cb(null, [{ address: '127.0.0.1', family: 4 }]) : cb(null, '127.0.0.1', 4);
+    const res = await createPinnedFetch(open, 200_000)(`http://endless.example:${port}/`, {});
+    const body = await res.text();
+    expect(body.length).toBe(200_000);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(closed).toBe(true);
+  }, 5000);
+});
+
 const DNS: Record<string, string[]> = {
   'rival.example': ['93.184.216.34'],
   'sneaky.example': ['93.184.216.35', '10.0.0.5'],

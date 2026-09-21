@@ -110,8 +110,15 @@ export function makeGuardedLookup(resolve: Lookup = defaultLookup): NodeLookup {
   };
 }
 
-/** A fetch over node:http/https whose connections go through the guarded lookup. */
-export function createPinnedFetch(connectLookup: NodeLookup = makeGuardedLookup()): FetchImpl {
+/**
+ * A fetch over node:http/https whose connections go through the guarded lookup.
+ * It stops reading after maxBytes and closes the connection, so an endless or
+ * huge page cannot fill memory.
+ */
+export function createPinnedFetch(
+  connectLookup: NodeLookup = makeGuardedLookup(),
+  maxBytes = 4_000_000
+): FetchImpl {
   return (url, init) =>
     new Promise<Response>((resolve, reject) => {
       const mod = url.startsWith('https:') ? https : http;
@@ -125,8 +132,11 @@ export function createPinnedFetch(connectLookup: NodeLookup = makeGuardedLookup(
         },
         (res) => {
           const chunks: Buffer[] = [];
-          res.on('data', (c: Buffer) => chunks.push(c));
-          res.on('end', () => {
+          let size = 0;
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
             const raw = res.statusCode ?? 502;
             const status = raw >= 200 && raw <= 599 ? raw : 502;
             const nullBody = [204, 205, 304].includes(status);
@@ -137,8 +147,24 @@ export function createPinnedFetch(connectLookup: NodeLookup = makeGuardedLookup(
                 headers: location ? { location } : {},
               })
             );
+          };
+          res.on('data', (c: Buffer) => {
+            if (done) return;
+            const room = maxBytes - size;
+            if (c.length >= room) {
+              chunks.push(c.subarray(0, room));
+              size = maxBytes;
+              finish();
+              res.destroy();
+              return;
+            }
+            chunks.push(c);
+            size += c.length;
           });
-          res.on('error', reject);
+          res.on('end', finish);
+          res.on('error', (e) => {
+            if (!done) reject(e);
+          });
         }
       );
       req.on('error', reject);
@@ -154,7 +180,9 @@ export function createSafeFetch(opts: {
   maxBodyChars: number;
 }) {
   const lookup = opts.lookup ?? defaultLookup;
-  const fetchImpl: FetchImpl = opts.fetchImpl ?? createPinnedFetch(makeGuardedLookup(lookup));
+  // A UTF-8 character is at most 4 bytes, so this always holds maxBodyChars.
+  const fetchImpl: FetchImpl =
+    opts.fetchImpl ?? createPinnedFetch(makeGuardedLookup(lookup), opts.maxBodyChars * 4);
   return async (url: string): Promise<{ status: number; text: string }> => {
     let current = url;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {

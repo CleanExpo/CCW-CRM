@@ -223,6 +223,9 @@ export async function runCapture(
   });
 
   const robotsCache = new Map<string, string | null>();
+  // robots.txt fetches are capped by the same budget, so many distinct hosts
+  // cannot turn one run into an unbounded number of requests.
+  let robotsFetched = 0;
   const outcomes: CaptureOutcome[] = [];
   let attempted = 0;
   let succeeded = 0;
@@ -246,6 +249,11 @@ export async function runCapture(
     const u = new URL(t.url);
     const origin = u.origin;
     if (!robotsCache.has(origin)) {
+      if (robotsFetched >= budget) {
+        stoppedReason = `robots.txt budget of ${budget} reached`;
+        break;
+      }
+      robotsFetched++;
       try {
         const r = await fetcher(`${origin}/robots.txt`);
         // 4xx = no robots file = allowed. 5xx or network error = unknown = do not fetch.

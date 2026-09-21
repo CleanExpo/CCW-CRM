@@ -190,6 +190,23 @@ describe('runCapture — guard', () => {
     expect(res.run).toMatchObject({ attempted: 2, stoppedReason: 'page budget of 2 reached' });
   });
 
+  it('caps robots.txt fetches by the budget when every page is on a different host', async () => {
+    // Every robots.txt fails (503), so no page is fetched and only the robots cap can stop the run.
+    db.cps = [1, 2, 3, 4, 5, 6].map((i) => cp(`h${i}`, `https://h${i}.example/p`));
+    const pages: Record<string, { status: number; text: string }> = {};
+    for (let i = 1; i <= 6; i++)
+      pages[`https://h${i}.example/robots.txt`] = { status: 503, text: '' };
+    const { f, calls } = fetcherFrom(pages);
+    const res = await runCapture(['user-a'], 'staff', {
+      trigger: 'manual',
+      fetcher: f,
+      now: NOW,
+      pageBudget: 2,
+    });
+    expect(calls.filter((u) => u.endsWith('/robots.txt'))).toHaveLength(2);
+    expect(res.run).toMatchObject({ stoppedReason: 'robots.txt budget of 2 reached' });
+  });
+
   it('clamps an oversized budget to the ceiling', async () => {
     const res = await runCapture(['user-a'], 'staff', {
       trigger: 'manual',
