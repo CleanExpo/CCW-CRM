@@ -27,13 +27,13 @@ describe('InvoicesPage load failure', () => {
     sessionStorage.clear();
   });
 
-  it('shows an error state, not "No equipment invoices found", when the load fails', async () => {
+  it('shows an error state, not "No invoices found", when the load fails', async () => {
     get.mockRejectedValue(new Error('Network down'));
 
     render(<InvoicesPage />);
 
     expect(await screen.findByText("Couldn't load invoices")).toBeInTheDocument();
-    expect(screen.queryByText('No equipment invoices found')).not.toBeInTheDocument();
+    expect(screen.queryByText('No invoices found')).not.toBeInTheDocument();
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
   });
 
@@ -42,7 +42,7 @@ describe('InvoicesPage load failure', () => {
 
     render(<InvoicesPage />);
 
-    expect(await screen.findByText('No equipment invoices found')).toBeInTheDocument();
+    expect(await screen.findByText('No invoices found')).toBeInTheDocument();
     expect(screen.queryByText("Couldn't load invoices")).not.toBeInTheDocument();
   });
 
@@ -56,7 +56,7 @@ describe('InvoicesPage load failure', () => {
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
 
     await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(callsBefore));
-    expect(await screen.findByText('No equipment invoices found')).toBeInTheDocument();
+    expect(await screen.findByText('No invoices found')).toBeInTheDocument();
     expect(screen.queryByText("Couldn't load invoices")).not.toBeInTheDocument();
   });
 });

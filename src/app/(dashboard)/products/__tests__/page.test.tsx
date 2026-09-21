@@ -38,13 +38,13 @@ describe('ProductsPage load failure', () => {
     sessionStorage.clear();
   });
 
-  it('shows an error state, not "No equipment found", when the load fails', async () => {
+  it('shows an error state, not "No products found", when the load fails', async () => {
     get.mockRejectedValue(new Error('Network down'));
 
     render(<ProductsPage />);
 
     expect(await screen.findByText("Couldn't load products")).toBeInTheDocument();
-    expect(screen.queryByText('No equipment found')).not.toBeInTheDocument();
+    expect(screen.queryByText('No products found')).not.toBeInTheDocument();
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
   });
 
@@ -53,7 +53,7 @@ describe('ProductsPage load failure', () => {
 
     render(<ProductsPage />);
 
-    expect(await screen.findByText('No equipment found')).toBeInTheDocument();
+    expect(await screen.findByText('No products found')).toBeInTheDocument();
     expect(screen.queryByText("Couldn't load products")).not.toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe('ProductsPage load failure', () => {
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
 
     await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(callsBefore));
-    expect(await screen.findByText('No equipment found')).toBeInTheDocument();
+    expect(await screen.findByText('No products found')).toBeInTheDocument();
     expect(screen.queryByText("Couldn't load products")).not.toBeInTheDocument();
   });
 });
