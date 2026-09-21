@@ -19,9 +19,11 @@ import {
   ArrowRight,
   Award,
   Camera,
+  CheckCircle,
   Clock,
   FileText,
   Package,
+  PhoneCall,
   ShoppingCart,
   Sparkles,
   Users,
@@ -110,12 +112,53 @@ interface AggregatedDashboardData {
 }
 
 interface UrgentItem {
-  type: 'warranty' | 'certification' | 'invoice' | 'stock';
+  type: 'warranty' | 'certification' | 'invoice' | 'stock' | 'reorder' | 'recall' | 'approval';
   label: string;
   detail: string;
+  /** Extra lines under the detail, e.g. the first few calls to make. */
+  lines?: string[];
   daysLeft?: number;
   href: string;
 }
+
+/** Subset of GET /api/crm/reorder-radar (see src/lib/reorder-radar/radar-service.ts). */
+interface ReorderRadarCall {
+  customer: { company_name: string };
+  product: { name: string };
+}
+
+interface ReorderRadarSummary {
+  due: ReorderRadarCall[];
+  overdue: ReorderRadarCall[];
+}
+
+/** Subset of GET /api/workshop/recall. */
+interface RecallQueue {
+  items: { status: string }[];
+}
+
+/** Subset of GET /api/invoices/ageing. */
+interface DebtorAgeing {
+  rows: {
+    buckets: { '1-30': number; '31-60': number; '61-90': number; '90+': number };
+  }[];
+}
+
+/** Subset of GET /api/approvals. */
+interface ApprovalsPage {
+  total: number;
+}
+
+/** A 403 means the source is not for this role: hide it, don't call it a failure. */
+function isForbidden(reason: unknown): boolean {
+  return (reason as { status?: unknown } | null)?.status === 403;
+}
+
+function plural(count: number, one: string, many: string) {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+const audFormat = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
 
 interface WarrantyAlert {
   serial_number: string;
@@ -146,7 +189,16 @@ interface CertStats {
  * so the page can say what it could not load, instead of rendering a zero or
  * hiding the card as if the read had succeeded and found nothing.
  */
-type DashboardSource = 'metrics' | 'insights' | 'posFailures' | 'warranties' | 'certifications';
+type DashboardSource =
+  | 'metrics'
+  | 'insights'
+  | 'posFailures'
+  | 'warranties'
+  | 'certifications'
+  | 'reorderRadar'
+  | 'workshopRecall'
+  | 'overdueInvoices'
+  | 'approvals';
 
 const NONE_FAILED: Record<DashboardSource, boolean> = {
   metrics: false,
@@ -154,6 +206,10 @@ const NONE_FAILED: Record<DashboardSource, boolean> = {
   posFailures: false,
   warranties: false,
   certifications: false,
+  reorderRadar: false,
+  workshopRecall: false,
+  overdueInvoices: false,
+  approvals: false,
 };
 
 const ALL_FAILED: Record<DashboardSource, boolean> = {
@@ -162,6 +218,10 @@ const ALL_FAILED: Record<DashboardSource, boolean> = {
   posFailures: true,
   warranties: true,
   certifications: true,
+  reorderRadar: true,
+  workshopRecall: true,
+  overdueInvoices: true,
+  approvals: true,
 };
 
 function activityTypeIcon(type: string) {
@@ -198,26 +258,57 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
-        const [dashboardRes, insightsRes, posRes, warrantyRes, certRes] = await Promise.allSettled([
+        const [
+          dashboardRes,
+          insightsRes,
+          posRes,
+          warrantyRes,
+          certRes,
+          radarRes,
+          recallRes,
+          ageingRes,
+          approvalsRes,
+        ] = await Promise.allSettled([
           apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
           getDashboardInsights(3),
           apiClient.get<{ alert_count: number }>('/api/monitoring/alerts/pos-failures?hours=24'),
           apiClient.get<EquipmentStats>('/api/equipment/stats'),
           apiClient.get<CertStats>('/api/certifications/stats'),
+          apiClient.get<ReorderRadarSummary>('/api/crm/reorder-radar'),
+          apiClient.get<RecallQueue>('/api/workshop/recall'),
+          apiClient.get<DebtorAgeing>('/api/invoices/ageing'),
+          apiClient.get<ApprovalsPage>('/api/approvals?status_filter=pending&page_size=1'),
         ]);
 
         if (cancelled) return;
 
-        for (const res of [dashboardRes, insightsRes, posRes, warrantyRes, certRes]) {
+        const approvalsForbidden =
+          approvalsRes.status === 'rejected' && isForbidden(approvalsRes.reason);
+        for (const res of [
+          dashboardRes,
+          insightsRes,
+          posRes,
+          warrantyRes,
+          certRes,
+          radarRes,
+          recallRes,
+          ageingRes,
+        ]) {
           if (res.status === 'rejected')
             console.error('Failed to load dashboard data:', res.reason);
         }
+        if (approvalsRes.status === 'rejected' && !approvalsForbidden)
+          console.error('Failed to load dashboard data:', approvalsRes.reason);
         setFailed({
           metrics: dashboardRes.status === 'rejected',
           insights: insightsRes.status === 'rejected',
           posFailures: posRes.status === 'rejected',
           warranties: warrantyRes.status === 'rejected',
           certifications: certRes.status === 'rejected',
+          reorderRadar: radarRes.status === 'rejected',
+          workshopRecall: recallRes.status === 'rejected',
+          overdueInvoices: ageingRes.status === 'rejected',
+          approvals: approvalsRes.status === 'rejected' && !approvalsForbidden,
         });
 
         const dashboardData = dashboardRes.status === 'fulfilled' ? dashboardRes.value : null;
@@ -235,6 +326,55 @@ export default function DashboardPage() {
         setPosFailureCount(posRes.status === 'fulfilled' ? posRes.value.alert_count : 0);
 
         const urgent: UrgentItem[] = [];
+        if (ageingRes.status === 'fulfilled') {
+          const pastDue = ageingRes.value.rows
+            .map(
+              (r) => r.buckets['1-30'] + r.buckets['31-60'] + r.buckets['61-90'] + r.buckets['90+']
+            )
+            .filter((owed) => owed > 0);
+          if (pastDue.length > 0) {
+            const owed = pastDue.reduce((sum, v) => sum + v, 0);
+            urgent.push({
+              type: 'invoice',
+              label: `${audFormat.format(owed)} overdue`,
+              detail: `${plural(pastDue.length, 'customer', 'customers')} past due`,
+              href: '/dashboard/finance/debtors',
+            });
+          }
+        }
+        if (approvalsRes.status === 'fulfilled' && approvalsRes.value.total > 0) {
+          urgent.push({
+            type: 'approval',
+            label: `${plural(approvalsRes.value.total, 'approval', 'approvals')} waiting`,
+            detail: 'Review and decide',
+            href: '/dashboard/approvals',
+          });
+        }
+        if (radarRes.status === 'fulfilled') {
+          const { due, overdue } = radarRes.value;
+          if (due.length + overdue.length > 0) {
+            urgent.push({
+              type: 'reorder',
+              label: `${plural(due.length, 'reorder call', 'reorder calls')} due, ${overdue.length} overdue`,
+              detail: 'Call first:',
+              // Most overdue first; the API sorts each list by days late.
+              lines: [...overdue, ...due]
+                .slice(0, 3)
+                .map((c) => `${c.customer.company_name}: ${c.product.name}`),
+              href: '/customers/health',
+            });
+          }
+        }
+        if (recallRes.status === 'fulfilled' && recallRes.value.items.length > 0) {
+          const { items } = recallRes.value;
+          const queued = items.filter((i) => i.status === 'queued').length;
+          urgent.push({
+            type: 'recall',
+            label: `${plural(items.length, 'machine', 'machines')} due for service`,
+            detail: `${queued} awaiting review`,
+            href: '/dashboard/workshop/recall',
+          });
+        }
         if (warrantyRes.status === 'fulfilled') {
           (warrantyRes.value.warranty_alerts || []).slice(0, 3).forEach((w) => {
             urgent.push({
@@ -365,10 +505,16 @@ export default function DashboardPage() {
   // Sources that feed "Needs attention today". If any failed, the card stays
   // visible and says so, rather than vanishing as if nothing needed attention.
   const attentionFailures = [
+    failed.overdueInvoices && "Couldn't load overdue invoices",
+    failed.approvals && "Couldn't load approvals",
+    failed.reorderRadar && "Couldn't load reorder calls",
+    failed.workshopRecall && "Couldn't load workshop recalls",
     failed.warranties && "Couldn't load warranty alerts",
     failed.certifications && "Couldn't load certification alerts",
     failed.metrics && "Couldn't load low-stock alerts",
   ].filter((title): title is string => Boolean(title));
+  // Only a clean read of every source may say there is nothing to do.
+  const nothingNeedsYou = urgentItems.length === 0 && attentionFailures.length === 0;
 
   return (
     <div className="relative space-y-12 pb-12">
@@ -442,63 +588,77 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Urgent Today Card */}
-      {(urgentItems.length > 0 || attentionFailures.length > 0) && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <Card className="overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-zinc-950/90 to-black shadow-xl ring-1 shadow-amber-900/10 ring-amber-500/15">
-            <CardHeader className="space-y-1 pb-2">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-                <CardTitle className="text-base font-semibold text-amber-100">
-                  Needs attention today
-                </CardTitle>
-              </div>
-              {urgentItems.length > 0 && (
-                <p className="text-sm text-amber-200/80">
-                  {urgentItems.length} item{urgentItems.length !== 1 ? 's' : ''} · tap to open
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              {attentionFailures.map((title) => (
-                <ErrorState key={title} title={title} onRetry={retry} />
-              ))}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {urgentItems.map((item, idx) => (
-                  <Link key={idx} href={item.href}>
-                    <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-950/30 p-3.5 transition-colors hover:border-amber-400/35 hover:bg-amber-950/45">
-                      <span className="mt-0.5 shrink-0">
-                        {item.type === 'warranty' && <Wrench className="h-4 w-4 text-amber-400" />}
-                        {item.type === 'certification' && (
-                          <Award className="h-4 w-4 text-amber-400" />
-                        )}
-                        {item.type === 'stock' && <Package className="h-4 w-4 text-amber-400" />}
-                        {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-400" />}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-amber-50">{item.label}</p>
-                        <p className="truncate text-xs text-amber-200/80">{item.detail}</p>
-                        {item.daysLeft !== undefined && (
-                          <Badge
-                            variant="outline"
-                            className="mt-1 border-amber-500/40 text-xs text-amber-200"
-                          >
-                            {item.daysLeft <= 0 ? 'Expired' : `${item.daysLeft}d remaining`}
-                          </Badge>
-                        )}
-                      </div>
+      {/* Urgent Today Card: always shown, so "nothing to do" is a stated result */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <Card className="overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-zinc-950/90 to-black shadow-xl ring-1 shadow-amber-900/10 ring-amber-500/15">
+          <CardHeader className="space-y-1 pb-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+              <CardTitle className="text-base font-semibold text-amber-100">
+                Needs attention today
+              </CardTitle>
+            </div>
+            {urgentItems.length > 0 && (
+              <p className="text-sm text-amber-200/80">
+                {urgentItems.length} item{urgentItems.length !== 1 ? 's' : ''} · tap to open
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3 pt-0">
+            {attentionFailures.map((title) => (
+              <ErrorState key={title} title={title} onRetry={retry} />
+            ))}
+            {nothingNeedsYou && (
+              <p className="flex items-center gap-2 text-sm text-amber-100/90">
+                <CheckCircle className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
+                Nothing needs you today
+              </p>
+            )}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {urgentItems.map((item, idx) => (
+                <Link key={idx} href={item.href}>
+                  <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-950/30 p-3.5 transition-colors hover:border-amber-400/35 hover:bg-amber-950/45">
+                    <span className="mt-0.5 shrink-0">
+                      {item.type === 'warranty' && <Wrench className="h-4 w-4 text-amber-400" />}
+                      {item.type === 'certification' && (
+                        <Award className="h-4 w-4 text-amber-400" />
+                      )}
+                      {item.type === 'stock' && <Package className="h-4 w-4 text-amber-400" />}
+                      {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-400" />}
+                      {item.type === 'reorder' && <PhoneCall className="h-4 w-4 text-amber-400" />}
+                      {item.type === 'recall' && <Wrench className="h-4 w-4 text-amber-400" />}
+                      {item.type === 'approval' && (
+                        <CheckCircle className="h-4 w-4 text-amber-400" />
+                      )}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-amber-50">{item.label}</p>
+                      <p className="truncate text-xs text-amber-200/80">{item.detail}</p>
+                      {item.lines?.map((line) => (
+                        <p key={line} className="truncate text-xs text-amber-100/90">
+                          {line}
+                        </p>
+                      ))}
+                      {item.daysLeft !== undefined && (
+                        <Badge
+                          variant="outline"
+                          className="mt-1 border-amber-500/40 text-xs text-amber-200"
+                        >
+                          {item.daysLeft <= 0 ? 'Expired' : `${item.daysLeft}d remaining`}
+                        </Badge>
+                      )}
                     </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <DashboardSection
         id="section-performance"
