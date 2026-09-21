@@ -24,6 +24,7 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -37,6 +38,7 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
   const searchProducts = useCallback(async () => {
     if (!debouncedSearch.trim()) {
       setProducts([]);
+      setSearchError(false);
       return;
     }
 
@@ -46,9 +48,11 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
         `/api/products?search=${encodeURIComponent(debouncedSearch)}&page_size=10`
       );
       setProducts(response.items.filter((p) => p.is_active && p.stock > 0));
+      setSearchError(false);
     } catch (error) {
       console.error("Failed to search products:", error);
       setProducts([]);
+      setSearchError(true);
     } finally {
       setLoading(false);
     }
@@ -85,6 +89,13 @@ export function ProductSearch({ onAddProduct }: ProductSearchProps) {
               <Skeleton key={i} className="h-20 w-full" />
             ))}
           </>
+        ) : searchError ? (
+          <div className="text-center py-8 text-destructive">
+            <p>Couldn&apos;t search products</p>
+            <Button variant="outline" size="sm" className="mt-2" onClick={searchProducts}>
+              Retry
+            </Button>
+          </div>
         ) : products.length > 0 ? (
           products.map((product) => (
             <Card
