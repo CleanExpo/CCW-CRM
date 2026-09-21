@@ -8,7 +8,10 @@ export async function POST(request: NextRequest) {
   try {
     const scope = await requireAuthScope(request);
     if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body.customer_id !== 'string' || body.customer_id === '') {
+      return NextResponse.json({ detail: 'customer_id is required' }, { status: 400 });
+    }
     const ids = await getWorkspaceMemberUserIds(scope.userId);
     const row = await logCallOutcome(ids, scope.userId, {
       customerId: String(body.customer_id ?? ''),
