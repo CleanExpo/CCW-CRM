@@ -120,4 +120,22 @@ describe.each(cases)('$name list paging (UNI-2690)', ({ Page, fn, item }) => {
     expect(screen.queryByText('OLD-PAGE-2')).not.toBeInTheDocument();
     expect(screen.getAllByText('SEARCH-HIT').length).toBeGreaterThan(0);
   });
+
+  it('steps back to the last page when the page it is on comes back empty', async () => {
+    mockFn.mockImplementation((params?: { page?: number }) =>
+      (params?.page ?? 1) === 1
+        ? Promise.resolve({ items: [item], total: TOTAL, page: 1, page_size: 50, total_pages: 3 })
+        : Promise.resolve({ items: [], total: 40, page: 2, page_size: 50, total_pages: 1 })
+    );
+
+    render(<Page />);
+    await screen.findByText(`Showing 1-50 of ${TOTAL} items`);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+    await waitFor(() =>
+      expect(mockFn).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }))
+    );
+    expect(mockFn).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
+    expect(await screen.findByText(`Showing 1-50 of ${TOTAL} items`)).toBeInTheDocument();
+  });
 });

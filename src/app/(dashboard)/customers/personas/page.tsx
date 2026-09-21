@@ -115,6 +115,12 @@ export default function PersonasPage() {
         personaFilter !== 'all' ? `?persona_filter=${personaFilter}&${paging}` : `?${paging}`;
       const res = await apiClient.get<PersonasResponse>(`/api/crm/personas${params}`);
       if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (res.items.length === 0 && res.total > 0 && page > res.total_pages) {
+        setPage(res.total_pages);
+        return;
+      }
       setData(res);
     } catch (error: unknown) {
       if (!isCurrent()) return;

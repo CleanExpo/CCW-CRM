@@ -102,4 +102,41 @@ describe('personas list paging (UNI-2690)', () => {
     expect(screen.queryByText('OLD-PAGE-2')).not.toBeInTheDocument();
     expect(screen.getByText('FILTERED-ROW')).toBeInTheDocument();
   });
+
+  it('steps back to the last page when the page it is on comes back empty', async () => {
+    mockGet.mockImplementation((url: string) => {
+      const page = Number(new URL(url, 'http://test').searchParams.get('page') || 1);
+      return Promise.resolve(
+        page === 1
+          ? {
+              items: [
+                {
+                  customer_id: 'c1',
+                  company_name: 'Acme Cleaning',
+                  persona: 'consumables',
+                  confidence: 'high',
+                  reason: '',
+                  classified_at: null,
+                },
+              ],
+              total: TOTAL,
+              page: 1,
+              page_size: 50,
+              total_pages: 3,
+              summary: {},
+            }
+          : { items: [], total: 10, page: 2, page_size: 50, total_pages: 1, summary: {} }
+      );
+    });
+
+    render(<PersonasPage />);
+    await screen.findByText(`Showing 1-50 of ${TOTAL} items`);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+    await waitFor(() =>
+      expect(mockGet).toHaveBeenLastCalledWith(expect.stringMatching(/[?&]page=1&/))
+    );
+    expect(mockGet).toHaveBeenCalledWith(expect.stringMatching(/[?&]page=2&/));
+    expect(await screen.findByText('Acme Cleaning')).toBeInTheDocument();
+  });
 });

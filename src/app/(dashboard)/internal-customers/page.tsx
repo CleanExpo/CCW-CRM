@@ -60,6 +60,12 @@ export default function InternalCustomersPage() {
         cin7_contact_type: 'Internal',
       });
       if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (response.items.length === 0 && response.total > 0 && page > response.total_pages) {
+        setPage(response.total_pages);
+        return;
+      }
       setCustomers(response.items);
       setTotal(response.total);
       setTotalPages(response.total_pages);

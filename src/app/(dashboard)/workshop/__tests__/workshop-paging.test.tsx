@@ -164,6 +164,31 @@ describe('workshop lists ignore a slow older page (UNI-2690)', () => {
     expect(screen.getAllByText(/SYDNEY-MACHINE/).length).toBeGreaterThan(0);
   });
 
+  it('equipment: steps back to the last page when the page it is on comes back empty', async () => {
+    api.listEquipment.mockImplementation((params?: { page?: number }) =>
+      (params?.page ?? 1) === 1
+        ? Promise.resolve({
+            items: [machine],
+            total: TOTAL,
+            page: 1,
+            page_size: 50,
+            total_pages: 3,
+          })
+        : Promise.resolve({ items: [], total: 40, page: 2, page_size: 50, total_pages: 1 })
+    );
+
+    render(<EquipmentPage />);
+    await screen.findByText(`Showing 1-50 of ${TOTAL} items`);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+    await waitFor(() =>
+      expect(api.listEquipment).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }))
+    );
+    expect(api.listEquipment).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
+    expect(await screen.findByText(`Showing 1-50 of ${TOTAL} items`)).toBeInTheDocument();
+    expect(screen.queryByText(/No equipment found/)).not.toBeInTheDocument();
+  });
+
   it('reminders: a slow page 2 does not replace the status filter the user picked', async () => {
     let releaseOld: (v: unknown) => void = () => {};
     api.listReminders.mockImplementation((params?: { page?: number; status?: string }) => {

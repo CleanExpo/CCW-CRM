@@ -59,6 +59,12 @@ export default function BranchesPage() {
         search: debouncedSearch || undefined,
       });
       if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (response.items.length === 0 && response.total > 0 && page > response.total_pages) {
+        setPage(response.total_pages);
+        return;
+      }
       setBranches(response.items);
       setTotal(response.total);
       setTotalPages(response.total_pages);

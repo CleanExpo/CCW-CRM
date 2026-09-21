@@ -51,6 +51,12 @@ export default function EquipmentPage() {
         page_size: pageSize,
       });
       if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (data.items.length === 0 && data.total > 0 && page > data.total_pages) {
+        setPage(data.total_pages);
+        return;
+      }
       setEquipment(data.items);
       setTotal(data.total);
       setTotalPages(data.total_pages);
