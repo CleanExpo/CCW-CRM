@@ -10,6 +10,8 @@ export type ExtractInvoiceLine = {
   unit_price: number;
   line_total: number;
   invoice_date: string;
+  /** JSON only, not in the CSV. Lets a reader drop draft and cancelled invoices. */
+  invoice_status?: string;
 };
 
 export type ExtractStockMovement = {

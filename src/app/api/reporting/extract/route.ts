@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         customerId: true,
         branchName: true,
         invoiceDate: true,
+        status: true,
         items: {
           select: {
             productId: true,
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
       unit_price: item.unitPrice,
       line_total: item.lineTotal,
       invoice_date: inv.invoiceDate.toISOString().split('T')[0],
+      invoice_status: inv.status,
     }))
   );
 
