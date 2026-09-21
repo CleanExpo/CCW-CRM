@@ -25,7 +25,11 @@ export const RADAR_DEFAULTS = {
   leadDays: 7,
   /** Past expected by more than max(graceDays, 25% of cadence) = overdue. */
   graceDays: 7,
-  /** Past expected by more than this many cadences = dropped from overdue (see gone quiet). */
+  /**
+   * Past expected by more than this many cadences = dropped from overdue, but only when the
+   * customer is still buying other things (this product lapsed) or has been handed to gone
+   * quiet. A customer who has bought nothing since stays overdue until gone quiet takes over.
+   */
   staleCadences: 3,
   /** Customer is "gone quiet" when silent for this many of their usual gaps... */
   quietCadences: 2,
@@ -134,14 +138,6 @@ export function buildRadar(
     });
   }
 
-  const due: CadenceRow[] = [];
-  const overdue: CadenceRow[] = [];
-  for (const c of cadences) {
-    const grace = Math.max(o.graceDays, Math.round(c.cadenceDays * 0.25));
-    if (c.daysLate >= -o.leadDays && c.daysLate <= grace) due.push(c);
-    else if (c.daysLate > grace && c.daysLate <= c.cadenceDays * o.staleCadences) overdue.push(c);
-  }
-
   const goneQuiet: QuietRow[] = [];
   for (const [customerId, group] of byCustomer) {
     const { days } = purchaseDays(group);
@@ -157,6 +153,26 @@ export function buildRadar(
         lastDate: fromDay(last),
         daysSilent,
       });
+    }
+  }
+
+  // Last purchase day per customer, across every product.
+  const customerLast = new Map<string, number>();
+  for (const [customerId, group] of byCustomer) {
+    customerLast.set(customerId, Math.max(...group.map((l) => toDay(l.date))));
+  }
+  const quietIds = new Set(goneQuiet.map((q) => q.customerId));
+
+  const due: CadenceRow[] = [];
+  const overdue: CadenceRow[] = [];
+  for (const c of cadences) {
+    const grace = Math.max(o.graceDays, Math.round(c.cadenceDays * 0.25));
+    const stale = c.daysLate > c.cadenceDays * o.staleCadences;
+    // Silent since this product's last purchase: nothing else bought afterwards.
+    const silentSince = (customerLast.get(c.customerId) ?? 0) <= toDay(c.lastDate);
+    if (c.daysLate >= -o.leadDays && c.daysLate <= grace) due.push(c);
+    else if (c.daysLate > grace && (!stale || (silentSince && !quietIds.has(c.customerId)))) {
+      overdue.push(c);
     }
   }
 

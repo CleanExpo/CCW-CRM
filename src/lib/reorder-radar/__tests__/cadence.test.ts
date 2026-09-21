@@ -139,3 +139,41 @@ describe('parseAsOf', () => {
     expect(parseAsOf(null)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
+
+describe('hand-off from overdue to gone quiet', () => {
+  const weekly = (customerId: string, productId: string, dates: string[]) =>
+    dates.map((date) => ({ customerId, productId, date, quantity: 1 }));
+  const addDays = (day: string, n: number) =>
+    new Date(Date.parse(`${day}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
+  it('a weekly customer who stops buying is on a list every day, never on none', () => {
+    const lines = weekly('c7', 'wax', ['2026-01-01', '2026-01-08', '2026-01-15']);
+    for (let n = 0; n <= 120; n++) {
+      const asOf = addDays('2026-01-15', n);
+      const r = buildRadar(lines, asOf);
+      const listed =
+        r.due.length + r.overdue.length + r.goneQuiet.filter((q) => q.customerId === 'c7').length;
+      // From the expected reorder day onwards the customer must be somewhere.
+      expect(listed, asOf).toBeGreaterThan(0);
+    }
+    // The case the review found: 22 days late, 29 days silent.
+    const r = buildRadar(lines, '2026-02-13');
+    expect(r.overdue.map((c) => c.customerId)).toEqual(['c7']);
+  });
+
+  it('a product the customer stopped buying still drops once stale while they keep buying other things', () => {
+    const lines = [
+      ...weekly('c7', 'wax', ['2026-01-01', '2026-01-08', '2026-01-15']),
+      ...weekly('c7', 'soap', [
+        '2026-01-01',
+        '2026-01-15',
+        '2026-01-29',
+        '2026-02-12',
+        '2026-02-26',
+      ]),
+    ];
+    const r = buildRadar(lines, '2026-03-05');
+    expect(r.overdue.find((c) => c.productId === 'wax')).toBeUndefined();
+    expect(r.goneQuiet.map((q) => q.customerId)).not.toContain('c7');
+  });
+});
