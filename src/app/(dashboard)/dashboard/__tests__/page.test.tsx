@@ -2,14 +2,20 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { toast, get, getDashboardInsights } = vi.hoisted(() => ({
+const { toast, get, getDashboardInsights, getCurrentUser } = vi.hoisted(() => ({
   toast: vi.fn(),
   get: vi.fn(),
   getDashboardInsights: vi.fn(),
+  getCurrentUser: vi.fn(
+    async (): Promise<{ role: string; is_admin?: boolean } | null> => ({
+      role: 'admin',
+    })
+  ),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }));
 vi.mock('@/lib/api/client', () => ({ apiClient: { get } }));
+vi.mock('@/lib/api/auth', () => ({ authApi: { getCurrentUser } }));
 vi.mock('@/lib/api/ai-insights', () => ({ getDashboardInsights }));
 vi.mock('@/hooks/use-sse', () => ({
   usePOSFailureAlerts: () => ({ data: null, status: 'disconnected' }),
@@ -242,7 +248,8 @@ describe('DashboardPage "what do I do now" sources', () => {
     render(<DashboardPage />);
 
     const item = (await screen.findByText('2 reorder calls due, 2 overdue')).closest('a');
-    expect(item).toHaveAttribute('href', '/customers/health');
+    // Under /dashboard so the billing role, which may only open /dashboard pages, can follow it.
+    expect(item).toHaveAttribute('href', '/dashboard/crm/client-health');
     expect(within(item as HTMLElement).getByText('Alpha Wash: Detergent 20L')).toBeInTheDocument();
     expect(within(item as HTMLElement).getByText('Bravo Pty: Nozzle')).toBeInTheDocument();
     expect(within(item as HTMLElement).getByText('Delta Cleaning: Hose kit')).toBeInTheDocument();
@@ -328,6 +335,40 @@ describe('DashboardPage "what do I do now" sources', () => {
     const item = (await screen.findByText('$3,250.50 overdue')).closest('a');
     expect(item).toHaveAttribute('href', '/dashboard/finance/debtors');
     expect(within(item as HTMLElement).getByText('2 customers past due')).toBeInTheDocument();
+  });
+
+  it('does not show members an overdue-invoices row they cannot open', async () => {
+    getCurrentUser.mockResolvedValueOnce({ role: 'member' });
+    respond([], {
+      'invoices/ageing': {
+        as_of: '2026-09-21',
+        rows: [
+          {
+            customerId: 'c1',
+            companyName: 'Alpha Wash',
+            email: null,
+            creditLimitAUD: null,
+            buckets: { ...EMPTY_BUCKETS, '1-30': 1000, total: 1000 },
+          },
+        ],
+      },
+    });
+
+    render(<DashboardPage />);
+
+    expect(await screen.findByText('Nothing needs you today')).toBeInTheDocument();
+    expect(screen.queryByText(/overdue$/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load overdue invoices")).not.toBeInTheDocument();
+  });
+
+  it('does not tell members overdue invoices failed to load when they cannot open them', async () => {
+    getCurrentUser.mockResolvedValueOnce({ role: 'member' });
+    respond(['invoices/ageing']);
+
+    render(<DashboardPage />);
+
+    expect(await screen.findByText('Nothing needs you today')).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load overdue invoices")).not.toBeInTheDocument();
   });
 
   it('counts approvals waiting, linking to approvals', async () => {

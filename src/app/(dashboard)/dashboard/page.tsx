@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorState } from '@/components/ui/empty-state';
 import { getDashboardInsights, type Insight } from '@/lib/api/ai-insights';
 import { apiClient } from '@/lib/api/client';
+import { authApi } from '@/lib/api/auth';
 import {
   AlertTriangle,
   ArrowRight,
@@ -286,6 +287,7 @@ export default function DashboardPage() {
           renewalsRes,
           ageingRes,
           approvalsRes,
+          userRes,
         ] = await Promise.allSettled([
           apiClient.get<AggregatedDashboardData>('/api/dashboard/aggregated'),
           getDashboardInsights(3),
@@ -297,10 +299,16 @@ export default function DashboardPage() {
           apiClient.get<PlanRenewals>('/api/workshop/plans?renewal_within_days=30'),
           apiClient.get<DebtorAgeing>('/api/invoices/ageing'),
           apiClient.get<ApprovalsPage>('/api/approvals?status_filter=pending&page_size=1'),
+          authApi.getCurrentUser(),
         ]);
 
         if (cancelled) return;
 
+        // Members may not open /dashboard/finance, so debtor ageing is not theirs to
+        // act on: no row and no load error for it, the way a 403 hides approvals.
+        // An unknown role (the read failed) keeps the row.
+        const user = userRes.status === 'fulfilled' ? userRes.value : null;
+        const isMember = user?.role === 'member' && !user.is_admin;
         const approvalsForbidden =
           approvalsRes.status === 'rejected' && isForbidden(approvalsRes.reason);
         for (const res of [
@@ -328,7 +336,7 @@ export default function DashboardPage() {
           reorderRadar: radarRes.status === 'rejected',
           workshopRecall: recallRes.status === 'rejected',
           planRenewals: renewalsRes.status === 'rejected',
-          overdueInvoices: ageingRes.status === 'rejected',
+          overdueInvoices: ageingRes.status === 'rejected' && !isMember,
           approvals: approvalsRes.status === 'rejected' && !approvalsForbidden,
         });
 
@@ -347,7 +355,7 @@ export default function DashboardPage() {
         setPosFailureCount(posRes.status === 'fulfilled' ? posRes.value.alert_count : 0);
 
         const urgent: UrgentItem[] = [];
-        if (ageingRes.status === 'fulfilled') {
+        if (ageingRes.status === 'fulfilled' && !isMember) {
           const pastDue = ageingRes.value.rows
             .map(
               (r) => r.buckets['1-30'] + r.buckets['31-60'] + r.buckets['61-90'] + r.buckets['90+']
@@ -382,7 +390,7 @@ export default function DashboardPage() {
               lines: [...overdue, ...due]
                 .slice(0, 3)
                 .map((c) => `${c.customer.company_name}: ${c.product.name}`),
-              href: '/customers/health',
+              href: '/dashboard/crm/client-health',
             });
           }
         }
