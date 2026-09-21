@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
@@ -94,15 +95,21 @@ export default function PersonasPage() {
   const [data, setData] = useState<PersonasResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [classifying, setClassifying] = useState(false);
-  const [personaFilter, setPersonaFilter] = useState<string>('all');
+  const [personaFilter, setPersonaFilterState] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
+  const setPersonaFilter = useCallback((value: string) => {
+    setPersonaFilterState(value);
+    setPage(1);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const paging = `page=${page}&page_size=${pageSize}`;
       const params =
-        personaFilter !== 'all'
-          ? `?persona_filter=${personaFilter}&page_size=200`
-          : '?page_size=200';
+        personaFilter !== 'all' ? `?persona_filter=${personaFilter}&${paging}` : `?${paging}`;
       const res = await apiClient.get<PersonasResponse>(`/api/crm/personas${params}`);
       setData(res);
     } catch (error: unknown) {
@@ -114,7 +121,7 @@ export default function PersonasPage() {
     } finally {
       setLoading(false);
     }
-  }, [personaFilter, toast]);
+  }, [personaFilter, page, pageSize, toast]);
 
   useEffect(() => {
     load();
@@ -291,6 +298,19 @@ export default function PersonasPage() {
                 </tbody>
               </table>
             </div>
+            {!loading && data && data.items.length > 0 && (
+              <PaginationControls
+                currentPage={page}
+                totalPages={data.total_pages}
+                pageSize={pageSize}
+                totalItems={data.total}
+                onPageChange={setPage}
+                onPageSizeChange={(newSize) => {
+                  setPageSize(newSize);
+                  setPage(1);
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
