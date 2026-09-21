@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type WorkshopBooking } from '@/lib/api/workshop';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
@@ -29,13 +28,13 @@ function getWeekDates(date: Date): Date[] {
   });
 }
 
+/** 20 pages of 100: far beyond any real week, and a bound on the walk. */
+const MAX_WEEK_PAGES = 20;
+
 export default function WorkshopSchedulePage() {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<WorkshopBooking[]>([]);
   const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState('');
   const [weekStart, setWeekStart] = useState(new Date());
@@ -46,16 +45,24 @@ export default function WorkshopSchedulePage() {
     try {
       const dateFrom = weekDates[0].toISOString();
       const dateTo = new Date(weekDates[6].getTime() + 86400000).toISOString();
-      const data = await workshopApi.listBookings({
-        location: location || undefined,
-        date_from: dateFrom,
-        date_to: dateTo,
-        page,
-        page_size: pageSize,
-      });
-      setBookings(data.items);
-      setTotal(data.total);
-      setTotalPages(data.total_pages);
+      // The week grid needs every booking in the week, or a day on a later page
+      // would read "Free". The API caps page_size at 100, so walk the pages.
+      const all: WorkshopBooking[] = [];
+      let weekTotal = 0;
+      for (let page = 1; page <= MAX_WEEK_PAGES; page++) {
+        const data = await workshopApi.listBookings({
+          location: location || undefined,
+          date_from: dateFrom,
+          date_to: dateTo,
+          page,
+          page_size: 100,
+        });
+        all.push(...data.items);
+        weekTotal = data.total;
+        if (data.items.length === 0 || all.length >= data.total || page >= data.total_pages) break;
+      }
+      setBookings(all);
+      setTotal(weekTotal);
     } catch (error: unknown) {
       toast({
         title: 'Error',
@@ -65,7 +72,7 @@ export default function WorkshopSchedulePage() {
     } finally {
       setLoading(false);
     }
-  }, [location, weekDates, page, pageSize, toast]);
+  }, [location, weekDates, toast]);
 
   useEffect(() => {
     load();
@@ -75,14 +82,14 @@ export default function WorkshopSchedulePage() {
     const d = new Date(weekStart);
     d.setDate(d.getDate() - 7);
     setWeekStart(d);
-    setPage(1);
   }
   function nextWeek() {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + 7);
     setWeekStart(d);
-    setPage(1);
   }
+
+  const incomplete = bookings.length < total;
 
   function bookingsForDay(date: Date): WorkshopBooking[] {
     return bookings.filter((b) => {
@@ -104,10 +111,7 @@ export default function WorkshopSchedulePage() {
           <div className="flex gap-2">
             <select
               value={location}
-              onChange={(e) => {
-                setLocation(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setLocation(e.target.value)}
               className="bg-background rounded-md border px-3 py-2 text-sm"
             >
               <option value="">All Locations</option>
@@ -140,22 +144,15 @@ export default function WorkshopSchedulePage() {
           <Button variant="outline" size="sm" onClick={nextWeek}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setWeekStart(new Date());
-              setPage(1);
-            }}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setWeekStart(new Date())}>
             Today
           </Button>
         </div>
 
-        {totalPages > 1 && (
-          <p className="text-muted-foreground text-sm">
-            This week has {total} bookings across {totalPages} pages. The grid shows page {page};
-            use the pager below the list to see the rest.
+        {incomplete && (
+          <p className="text-sm text-amber-700">
+            Showing the first {bookings.length} of {total} bookings this week. Days may have more
+            bookings than shown.
           </p>
         )}
 
@@ -182,7 +179,7 @@ export default function WorkshopSchedulePage() {
                     {date.toLocaleDateString([], { weekday: 'short', day: 'numeric' })}
                   </div>
                   {dayBookings.length === 0 ? (
-                    <div className="text-muted-foreground/50 text-xs">Free</div>
+                    !incomplete && <div className="text-muted-foreground/50 text-xs">Free</div>
                   ) : (
                     <div className="space-y-1">
                       {dayBookings.map((b) => (
@@ -243,20 +240,6 @@ export default function WorkshopSchedulePage() {
                   </tbody>
                 </table>
               </div>
-            )}
-
-            {!loading && bookings.length > 0 && (
-              <PaginationControls
-                currentPage={page}
-                totalPages={totalPages}
-                pageSize={pageSize}
-                totalItems={total}
-                onPageChange={setPage}
-                onPageSizeChange={(newSize) => {
-                  setPageSize(newSize);
-                  setPage(1);
-                }}
-              />
             )}
           </CardContent>
         </Card>

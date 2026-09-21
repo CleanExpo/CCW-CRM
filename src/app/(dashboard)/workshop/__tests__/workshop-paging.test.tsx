@@ -1,8 +1,9 @@
 /**
  * UNI-2690: the workshop lists asked for one fixed page (page_size 100, and the
  * API clamps page_size to 100) with no pager, so anything past the first page
- * could not be reached. Each list now shows PaginationControls and fetches the
- * page the user asks for.
+ * could not be reached. Reminders and equipment now show PaginationControls and
+ * fetch the page the user asks for. The schedule has no pager: its week grid
+ * needs the whole week, so it walks every page instead.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -102,7 +103,6 @@ const booking = {
 const cases = [
   { name: 'reminders', Page: RemindersPage, fn: 'listReminders', item: reminder },
   { name: 'equipment', Page: EquipmentPage, fn: 'listEquipment', item: machine },
-  { name: 'schedule', Page: WorkshopSchedulePage, fn: 'listBookings', item: booking },
 ] as const;
 
 describe.each(cases)('workshop $name list paging (UNI-2690)', ({ Page, fn, item }) => {
@@ -123,5 +123,67 @@ describe.each(cases)('workshop $name list paging (UNI-2690)', ({ Page, fn, item 
       expect(api[fn]).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, page_size: 50 }))
     );
     expect(await screen.findByText(`Showing 51-100 of ${TOTAL} items`)).toBeInTheDocument();
+  });
+});
+
+/** The seven days the schedule page shows on load, computed the way the page does. */
+function thisWeek(): Date[] {
+  const d = new Date();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - d.getDay() + 1);
+  return Array.from({ length: 7 }, (_, i) => {
+    const x = new Date(monday);
+    x.setDate(monday.getDate() + i);
+    x.setHours(10, 0, 0, 0);
+    return x;
+  });
+}
+
+describe('workshop schedule week (UNI-2690)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('shows every booking in the week on the grid, walking every page of the API', async () => {
+    const [mon, tue] = thisWeek();
+    api.listBookings.mockImplementation((params?: { page?: number }) => {
+      const page = params?.page ?? 1;
+      const b =
+        page === 1
+          ? { ...booking, id: 'b-mon', booking_number: 'WB-MON', scheduled_date: mon.toISOString() }
+          : {
+              ...booking,
+              id: 'b-tue',
+              booking_number: 'WB-TUE',
+              scheduled_date: tue.toISOString(),
+            };
+      return Promise.resolve({ items: [b], total: 2, page, page_size: 1, total_pages: 2 });
+    });
+
+    render(<WorkshopSchedulePage />);
+
+    expect((await screen.findAllByText('WB-TUE')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('WB-MON').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Free')).toHaveLength(5);
+    expect(screen.getByText('All Bookings This Week (2)')).toBeInTheDocument();
+    expect(api.listBookings).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
+  });
+
+  it('never marks a day Free when it could not load the whole week', async () => {
+    api.listBookings.mockImplementation((params?: { page?: number }) =>
+      Promise.resolve({
+        items: [{ ...booking, id: `b${params?.page}` }],
+        total: 5000,
+        page: params?.page ?? 1,
+        page_size: 100,
+        total_pages: 50,
+      })
+    );
+
+    render(<WorkshopSchedulePage />);
+
+    expect(
+      await screen.findByText(/Showing the first \d+ of 5000 bookings this week/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Free')).not.toBeInTheDocument();
+    expect(api.listBookings).toHaveBeenCalledTimes(20);
   });
 });
