@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -37,6 +38,9 @@ export default function BranchesPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 300);
@@ -47,12 +51,13 @@ export default function BranchesPage() {
     setLoading(true);
     try {
       const response = await listCin7Branches({
-        page: 1,
-        page_size: 100,
+        page,
+        page_size: pageSize,
         search: debouncedSearch || undefined,
       });
       setBranches(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: unknown) {
       toast({
         variant: 'destructive',
@@ -64,7 +69,7 @@ export default function BranchesPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, toast]);
+  }, [debouncedSearch, page, pageSize, toast]);
 
   useEffect(() => {
     void loadBranches();
@@ -99,7 +104,10 @@ export default function BranchesPage() {
         <Input
           placeholder="Search branches…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9"
         />
       </div>
@@ -160,6 +168,19 @@ export default function BranchesPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="border-t px-2">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          </div>
         </motion.div>
       )}
     </div>

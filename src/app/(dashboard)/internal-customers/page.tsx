@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -37,6 +38,9 @@ export default function InternalCustomersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 300);
@@ -47,13 +51,14 @@ export default function InternalCustomersPage() {
     setLoading(true);
     try {
       const response = await customersApi.list({
-        page: 1,
-        page_size: 100,
+        page,
+        page_size: pageSize,
         search: debouncedSearch || undefined,
         cin7_contact_type: 'Internal',
       });
       setCustomers(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: unknown) {
       toast({
         variant: 'destructive',
@@ -65,7 +70,7 @@ export default function InternalCustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, toast]);
+  }, [debouncedSearch, page, pageSize, toast]);
 
   useEffect(() => {
     void loadCustomers();
@@ -100,7 +105,10 @@ export default function InternalCustomersPage() {
         <Input
           placeholder="Search internal accounts…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9"
         />
       </div>
@@ -152,6 +160,19 @@ export default function InternalCustomersPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="border-t px-2">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          </div>
         </motion.div>
       )}
     </div>
