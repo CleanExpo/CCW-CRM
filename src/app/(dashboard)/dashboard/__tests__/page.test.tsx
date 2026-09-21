@@ -74,6 +74,7 @@ type Source =
   | 'certifications'
   | 'reorder-radar'
   | 'workshop/recall'
+  | 'workshop/plans'
   | 'invoices/ageing'
   | 'approvals';
 
@@ -86,6 +87,7 @@ const RESPONSES: Record<Source, unknown> = {
   certifications: { expiring_soon: 0, expiring_alerts: [] },
   'reorder-radar': { as_of: '2026-09-21', due: [], overdue: [], gone_quiet: [] },
   'workshop/recall': { items: [] },
+  'workshop/plans': { items: [] },
   'invoices/ageing': { as_of: '2026-09-21', rows: [] },
   approvals: { data: [], total: 0, page: 1, page_size: 1, total_pages: 1 },
 };
@@ -266,6 +268,31 @@ describe('DashboardPage "what do I do now" sources', () => {
     expect(within(item as HTMLElement).getByText('2 awaiting review')).toBeInTheDocument();
   });
 
+  it('counts service plans due for renewal in the next 30 days, linking to the plans list', async () => {
+    respond([], {
+      'workshop/plans': {
+        items: [
+          {
+            id: 'p1',
+            customer: 'Alpha Wash',
+            machine: 'Kärcher HDS 8/18',
+            renewal_date: '2026-09-30',
+          },
+          { id: 'p2', customer: 'Bravo Pty', machine: 'Nilfisk MC 5M', renewal_date: '2026-10-12' },
+        ],
+      },
+    });
+
+    render(<DashboardPage />);
+
+    const item = (await screen.findByText('2 service plans due for renewal')).closest('a');
+    expect(item).toHaveAttribute('href', '/dashboard/workshop/plans');
+    expect(
+      within(item as HTMLElement).getByText('Next: Alpha Wash, Kärcher HDS 8/18')
+    ).toBeInTheDocument();
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('renewal_within_days=30'));
+  });
+
   it('shows overdue invoices as a count and total owed, linking to debtor ageing', async () => {
     respond([], {
       'invoices/ageing': {
@@ -316,6 +343,7 @@ describe('DashboardPage "what do I do now" sources', () => {
   it.each([
     ['reorder-radar', "Couldn't load reorder calls", /reorder calls? due/],
     ['workshop/recall', "Couldn't load workshop recalls", /due for service/],
+    ['workshop/plans', "Couldn't load service plan renewals", /due for renewal/],
     ['invoices/ageing', "Couldn't load overdue invoices", /overdue$/],
     ['approvals', "Couldn't load approvals", /approvals? waiting/],
   ] as const)(

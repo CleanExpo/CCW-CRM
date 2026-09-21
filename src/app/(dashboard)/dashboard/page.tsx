@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Award,
+  CalendarClock,
   Camera,
   CheckCircle,
   Clock,
@@ -112,7 +113,15 @@ interface AggregatedDashboardData {
 }
 
 interface UrgentItem {
-  type: 'warranty' | 'certification' | 'invoice' | 'stock' | 'reorder' | 'recall' | 'approval';
+  type:
+    | 'warranty'
+    | 'certification'
+    | 'invoice'
+    | 'stock'
+    | 'reorder'
+    | 'recall'
+    | 'renewal'
+    | 'approval';
   label: string;
   detail: string;
   /** Extra lines under the detail, e.g. the first few calls to make. */
@@ -135,6 +144,11 @@ interface ReorderRadarSummary {
 /** Subset of GET /api/workshop/recall. */
 interface RecallQueue {
   items: { status: string }[];
+}
+
+/** Subset of GET /api/workshop/plans?renewal_within_days=N, soonest renewal first. */
+interface PlanRenewals {
+  items: { customer: string; machine: string }[];
 }
 
 /** Subset of GET /api/invoices/ageing. */
@@ -197,6 +211,7 @@ type DashboardSource =
   | 'certifications'
   | 'reorderRadar'
   | 'workshopRecall'
+  | 'planRenewals'
   | 'overdueInvoices'
   | 'approvals';
 
@@ -208,6 +223,7 @@ const NONE_FAILED: Record<DashboardSource, boolean> = {
   certifications: false,
   reorderRadar: false,
   workshopRecall: false,
+  planRenewals: false,
   overdueInvoices: false,
   approvals: false,
 };
@@ -220,6 +236,7 @@ const ALL_FAILED: Record<DashboardSource, boolean> = {
   certifications: true,
   reorderRadar: true,
   workshopRecall: true,
+  planRenewals: true,
   overdueInvoices: true,
   approvals: true,
 };
@@ -266,6 +283,7 @@ export default function DashboardPage() {
           certRes,
           radarRes,
           recallRes,
+          renewalsRes,
           ageingRes,
           approvalsRes,
         ] = await Promise.allSettled([
@@ -276,6 +294,7 @@ export default function DashboardPage() {
           apiClient.get<CertStats>('/api/certifications/stats'),
           apiClient.get<ReorderRadarSummary>('/api/crm/reorder-radar'),
           apiClient.get<RecallQueue>('/api/workshop/recall'),
+          apiClient.get<PlanRenewals>('/api/workshop/plans?renewal_within_days=30'),
           apiClient.get<DebtorAgeing>('/api/invoices/ageing'),
           apiClient.get<ApprovalsPage>('/api/approvals?status_filter=pending&page_size=1'),
         ]);
@@ -292,6 +311,7 @@ export default function DashboardPage() {
           certRes,
           radarRes,
           recallRes,
+          renewalsRes,
           ageingRes,
         ]) {
           if (res.status === 'rejected')
@@ -307,6 +327,7 @@ export default function DashboardPage() {
           certifications: certRes.status === 'rejected',
           reorderRadar: radarRes.status === 'rejected',
           workshopRecall: recallRes.status === 'rejected',
+          planRenewals: renewalsRes.status === 'rejected',
           overdueInvoices: ageingRes.status === 'rejected',
           approvals: approvalsRes.status === 'rejected' && !approvalsForbidden,
         });
@@ -373,6 +394,15 @@ export default function DashboardPage() {
             label: `${plural(items.length, 'machine', 'machines')} due for service`,
             detail: `${queued} awaiting review`,
             href: '/dashboard/workshop/recall',
+          });
+        }
+        if (renewalsRes.status === 'fulfilled' && renewalsRes.value.items.length > 0) {
+          const { items } = renewalsRes.value;
+          urgent.push({
+            type: 'renewal',
+            label: `${plural(items.length, 'service plan', 'service plans')} due for renewal`,
+            detail: `Next: ${items[0].customer}, ${items[0].machine}`,
+            href: '/dashboard/workshop/plans',
           });
         }
         if (warrantyRes.status === 'fulfilled') {
@@ -509,6 +539,7 @@ export default function DashboardPage() {
     failed.approvals && "Couldn't load approvals",
     failed.reorderRadar && "Couldn't load reorder calls",
     failed.workshopRecall && "Couldn't load workshop recalls",
+    failed.planRenewals && "Couldn't load service plan renewals",
     failed.warranties && "Couldn't load warranty alerts",
     failed.certifications && "Couldn't load certification alerts",
     failed.metrics && "Couldn't load low-stock alerts",
@@ -631,6 +662,9 @@ export default function DashboardPage() {
                       {item.type === 'invoice' && <Clock className="h-4 w-4 text-amber-400" />}
                       {item.type === 'reorder' && <PhoneCall className="h-4 w-4 text-amber-400" />}
                       {item.type === 'recall' && <Wrench className="h-4 w-4 text-amber-400" />}
+                      {item.type === 'renewal' && (
+                        <CalendarClock className="h-4 w-4 text-amber-400" />
+                      )}
                       {item.type === 'approval' && (
                         <CheckCircle className="h-4 w-4 text-amber-400" />
                       )}
