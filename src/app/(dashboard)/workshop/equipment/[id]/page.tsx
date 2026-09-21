@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type Equipment } from '@/lib/api/workshop';
 import { FitsPanel } from '@/components/fitment/FitsPanel';
+import { ServicePlanCard } from '@/components/workshop/ServicePlanCard';
 import { ArrowLeft, Wrench, Clock, History, Bell } from 'lucide-react';
 
 interface ReminderRecord {
@@ -199,6 +200,8 @@ export default function EquipmentDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ServicePlanCard equipmentId={id} />
 
       <FitsPanel equipmentId={id} />
 
