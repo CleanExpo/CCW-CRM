@@ -27,6 +27,7 @@ import { DeleteProductDialog } from './components/DeleteProductDialog';
 import { ProductForm } from './components/ProductForm';
 // PHASE 4: Last updated timestamps
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { ErrorState } from '@/components/ui/empty-state';
 import { formatDistanceToNow } from 'date-fns';
 import {
   OperationsPageHeader,
@@ -84,6 +85,7 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
@@ -152,6 +154,7 @@ export default function ProductsPage() {
 
       // Stock data is now included in the response - no additional API calls needed!
       setProducts(data.items);
+      setLoadError(false);
       setTotal(data.total);
       setTotalPages(data.total_pages);
     } catch (error: unknown) {
@@ -166,6 +169,7 @@ export default function ProductsPage() {
         title: 'Could not load products',
         description: message,
       });
+      setLoadError(true);
       setProducts([]);
       setTotal(0);
     } finally {
@@ -328,6 +332,8 @@ export default function ProductsPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : loadError ? (
+              <ErrorState title="Couldn't load products" onRetry={() => void loadProducts()} />
             ) : products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-muted-foreground text-lg font-medium">No equipment found</p>

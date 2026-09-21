@@ -18,7 +18,7 @@ import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns'; // PHASE 4: Add timestamp display
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import {
   OperationsPageHeader,
   OperationsPageLayout,
@@ -55,6 +55,7 @@ export default function QuotesPage() {
   const [pageSize, setPageSize] = useState(50);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -68,6 +69,7 @@ export default function QuotesPage() {
         `/api/quotes?page=${page}&page_size=${pageSize}`
       );
       setQuotes(response.items);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -78,6 +80,7 @@ export default function QuotesPage() {
         title: 'Error',
         description: message,
       });
+      setLoadError(true);
       setQuotes([]);
       setTotal(0);
     } finally {
@@ -204,6 +207,8 @@ export default function QuotesPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : loadError ? (
+              <ErrorState title="Couldn't load quotes" onRetry={() => void loadQuotes()} />
             ) : !quotes || quotes.length === 0 ? (
               <EmptyState
                 icon={FileText}

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import { OrderStatusBadge } from '@/components/ui/order-status-badge';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -75,6 +75,7 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
 
   // PHASE 4: Search state persistence - remembers pagination on navigation
@@ -137,6 +138,7 @@ export default function OrdersPage() {
       }));
 
       setOrders(mappedOrders);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -147,6 +149,7 @@ export default function OrdersPage() {
         title: 'Error',
         description: message,
       });
+      setLoadError(true);
       setOrders([]);
       setTotal(0);
     } finally {
@@ -376,6 +379,8 @@ export default function OrdersPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : loadError ? (
+              <ErrorState title="Couldn't load orders" onRetry={() => void loadOrders()} />
             ) : orders.length === 0 ? (
               <EmptyState
                 icon={ShoppingCart}

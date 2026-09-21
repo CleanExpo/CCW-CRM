@@ -31,6 +31,7 @@ import { InvoiceForm } from './components/InvoiceForm';
 import { DeleteInvoiceDialog } from './components/DeleteInvoiceDialog';
 import { FinancialReportTab } from './components/FinancialReportTab';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { ErrorState } from '@/components/ui/empty-state';
 import { ScanComingSoon } from '@/components/dashboard/ScanComingSoon';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ export default function InvoicesPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const { state: searchState, updateField } = useSearchState({
@@ -76,6 +78,7 @@ export default function InvoicesPage() {
       });
 
       setInvoices(response.data);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -86,6 +89,7 @@ export default function InvoicesPage() {
         title: 'Error',
         description: message,
       });
+      setLoadError(true);
       setInvoices([]);
       setTotal(0);
     } finally {
@@ -424,6 +428,8 @@ export default function InvoicesPage() {
                       <Skeleton key={i} className="h-12 w-full" />
                     ))}
                   </div>
+                ) : loadError ? (
+                  <ErrorState title="Couldn't load invoices" onRetry={() => void loadInvoices()} />
                 ) : invoices.length === 0 ? (
                   <div className="py-12 text-center">
                     <FileText className="text-muted-foreground mx-auto h-12 w-12" />

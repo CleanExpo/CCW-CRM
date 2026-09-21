@@ -12,6 +12,7 @@ import { contactsApi } from '@/lib/api/contacts';
 import type { ContactWithCustomer } from '@/types/contacts';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/empty-state';
 import { ContactForm } from './components/ContactForm';
 import { DeleteContactDialog } from './components/DeleteContactDialog';
 import {
@@ -38,6 +39,7 @@ export default function ContactsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -67,6 +69,7 @@ export default function ContactsPage() {
         search: debouncedSearch || undefined,
       });
       setContacts(response.data);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -76,6 +79,7 @@ export default function ContactsPage() {
         title: 'Error',
         description: message,
       });
+      setLoadError(true);
       setContacts([]);
       setTotal(0);
     } finally {
@@ -338,6 +342,8 @@ export default function ContactsPage() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
+          ) : loadError ? (
+            <ErrorState title="Couldn't load contacts" onRetry={() => void loadContacts()} />
           ) : contacts.length === 0 ? (
             <div className="py-12 text-center">
               <User className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
