@@ -308,60 +308,62 @@ export default function InvoicesPage() {
           </TabsList>
 
           <TabsContent value="invoices" className="mt-6 space-y-6">
-            {/* Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
-                  <FileText className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{total}</div>
-                  <p className="text-muted-foreground text-xs">
-                    {stats.paidCount} paid, {stats.overdueCount} overdue
-                  </p>
-                </CardContent>
-              </Card>
+            {/* Summary Cards (hidden after a failed load so they never read as zero) */}
+            {!loadError && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
+                    <FileText className="text-muted-foreground h-4 w-4" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{total}</div>
+                    <p className="text-muted-foreground text-xs">
+                      {stats.paidCount} paid, {stats.overdueCount} overdue
+                    </p>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <DollarSign className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
-                  <p className="text-muted-foreground text-xs">From invoices on this page</p>
-                </CardContent>
-              </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    <DollarSign className="text-muted-foreground h-4 w-4" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
+                    <p className="text-muted-foreground text-xs">From invoices on this page</p>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-                  <DollarSign className="text-destructive h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-destructive text-2xl font-bold">
-                    ${stats.totalOutstanding.toFixed(2)}
-                  </div>
-                  <p className="text-muted-foreground text-xs">Outstanding balance</p>
-                </CardContent>
-              </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+                    <DollarSign className="text-destructive h-4 w-4" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-destructive text-2xl font-bold">
+                      ${stats.totalOutstanding.toFixed(2)}
+                    </div>
+                    <p className="text-muted-foreground text-xs">Outstanding balance</p>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
-                  <FileText className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {total > 0 ? ((stats.paidCount / total) * 100).toFixed(0) : 0}%
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    {stats.paidCount} of {total} paid
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
+                    <FileText className="text-muted-foreground h-4 w-4" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {total > 0 ? ((stats.paidCount / total) * 100).toFixed(0) : 0}%
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      {stats.paidCount} of {total} paid
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex items-center gap-2">
@@ -414,7 +416,7 @@ export default function InvoicesPage() {
               <CardHeader>
                 <CardTitle>Invoices</CardTitle>
                 <CardDescription>
-                  {lastUpdated && (
+                  {lastUpdated && !loadError && (
                     <span className="text-muted-foreground text-xs">
                       Last updated: {format(lastUpdated, 'h:mm:ss a')}
                     </span>
