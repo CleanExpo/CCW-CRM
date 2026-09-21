@@ -142,6 +142,33 @@ describe('isPrivateAddress — guard', () => {
       expect(isPrivateAddress(ip), ip).toBe(false);
     }
   });
+
+  it('refuses every written form of an IPv4-mapped, IPv4-compatible or NAT64 internal address', () => {
+    for (const ip of [
+      '::ffff:7f00:1',
+      '::ffff:a00:1',
+      '::ffff:a9fe:a9fe',
+      '0:0:0:0:0:ffff:127.0.0.1',
+      '::7f00:1',
+      '::127.0.0.1',
+      '64:ff9b::a00:1',
+      'fe80::1%lo0',
+      'fec0::1',
+    ]) {
+      expect(isPrivateAddress(ip), ip).toBe(true);
+    }
+    // Positive control: the same forms carrying a public IPv4 are allowed.
+    for (const ip of ['::ffff:5db8:d822', '::ffff:93.184.216.34', '64:ff9b::5db8:d822']) {
+      expect(isPrivateAddress(ip), ip).toBe(false);
+    }
+  });
+
+  it('judges the hostname exactly as a URL delivers it', () => {
+    const host = (u: string) => new URL(u).hostname.replace(/^\[|\]$/g, '');
+    expect(isPrivateAddress(host('http://[::ffff:127.0.0.1]/'))).toBe(true);
+    expect(isPrivateAddress(host('http://[::127.0.0.1]/'))).toBe(true);
+    expect(isPrivateAddress(host('http://[64:ff9b::10.0.0.1]/'))).toBe(true);
+  });
 });
 
 describe('safe fetch — guard', () => {
@@ -157,6 +184,22 @@ describe('safe fetch — guard', () => {
     });
     await expect(make(impl)('https://rival.example/p')).rejects.toBeInstanceOf(UnsafeUrlError);
     expect(calls).toEqual(['https://rival.example/p']);
+  });
+
+  it('refuses a redirect to an IPv4-mapped loopback address and never requests it', async () => {
+    for (const location of ['http://[::ffff:127.0.0.1]/secret', 'http://[::ffff:7f00:1]/secret']) {
+      const { impl, calls } = fakeFetch({
+        'https://rival.example/p': { status: 302, location },
+        'http://[::ffff:7f00:1]/secret': { status: 200, body: 'INTERNAL' },
+      });
+      await expect(make(impl)('https://rival.example/p')).rejects.toBeInstanceOf(UnsafeUrlError);
+      expect(calls).toEqual(['https://rival.example/p']);
+    }
+  });
+
+  it('refuses a public-looking name whose DNS answer is an IPv4-mapped internal address', async () => {
+    const mapped: Lookup = async () => [{ address: '::ffff:7f00:1', family: 6 }];
+    await expect(assertPublicUrl('https://mapped.example/', mapped)).rejects.toThrow(/non-public/);
   });
 
   it('refuses a redirect to a public-looking name that resolves to cloud metadata', async () => {

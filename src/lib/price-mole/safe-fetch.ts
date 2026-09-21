@@ -38,16 +38,50 @@ function ipv4Private(ip: string): boolean {
   );
 }
 
-/** True for loopback, private, link-local, CGNAT, multicast and reserved ranges. */
+/** The eight 16-bit groups of an IPv6 address, or null if it cannot be read. */
+function ipv6Groups(ip: string): number[] | null {
+  let x = ip.toLowerCase().split('%')[0];
+  const dotted = x.match(/^(.*:)(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (dotted) {
+    const [a, b, c, d] = dotted.slice(2).map(Number);
+    x = `${dotted[1]}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  }
+  const halves = x.split('::');
+  if (halves.length > 2) return null;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+  const fill = halves.length === 2 ? 8 - head.length - tail.length : 0;
+  if (fill < 0) return null;
+  const groups = [...head, ...Array<string>(fill).fill('0'), ...tail].map((g) => parseInt(g, 16));
+  return groups.length === 8 && groups.every((g) => g >= 0 && g <= 0xffff) ? groups : null;
+}
+
+/**
+ * True for loopback, private, link-local, CGNAT, multicast and reserved ranges.
+ * IPv6 is read group by group, because Node rewrites `[::ffff:127.0.0.1]` in a
+ * URL to `::ffff:7f00:1`; a text match on the dotted form misses it.
+ */
 export function isPrivateAddress(ip: string): boolean {
-  const v = isIP(ip);
+  const v = isIP(ip.split('%')[0]);
   if (v === 4) return ipv4Private(ip);
   if (v === 6) {
-    const x = ip.toLowerCase();
-    if (x === '::' || x === '::1') return true;
-    const mapped = x.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return ipv4Private(mapped[1]);
-    return /^(fc|fd|fe8|fe9|fea|feb|ff)/.test(x);
+    const g = ipv6Groups(ip);
+    if (!g) return true;
+    const embedded = `${g[6] >> 8}.${g[6] & 255}.${g[7] >> 8}.${g[7] & 255}`;
+    // ::/96 (unspecified, loopback, IPv4-compatible) and ::ffff:0:0/96 (IPv4-mapped)
+    if (g.slice(0, 5).every((n) => n === 0) && (g[5] === 0 || g[5] === 0xffff)) {
+      return ipv4Private(embedded);
+    }
+    // 64:ff9b::/96 NAT64 carries an IPv4 address too
+    if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((n) => n === 0)) {
+      return ipv4Private(embedded);
+    }
+    return (
+      (g[0] & 0xfe00) === 0xfc00 || // fc00::/7 unique local
+      (g[0] & 0xffc0) === 0xfe80 || // fe80::/10 link-local
+      (g[0] & 0xffc0) === 0xfec0 || // fec0::/10 old site-local
+      (g[0] & 0xff00) === 0xff00 // ff00::/8 multicast
+    );
   }
   return true; // not an IP at all: refuse rather than guess
 }
