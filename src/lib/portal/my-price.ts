@@ -13,6 +13,7 @@ import { prisma } from '@/lib/db/prisma';
 import { getWorkspaceMemberUserIds } from '@/lib/auth/workspace-scope';
 import { resolvePrice, type PriceSource } from '@/lib/pricing/resolve-price';
 import { generateOrderNumber } from '@/lib/db/order-lines';
+import { todayInBrisbane } from '@/lib/reorder-radar/as-of';
 
 export const PORTAL_ORDERING_BLOCKED_CODE = 'PORTAL_ORDERING_BLOCKED';
 export const PORTAL_ORDERING_BLOCKED_DETAIL =
@@ -94,7 +95,32 @@ export async function listMyPrices(
   return { items, total };
 }
 
-type Db = Pick<typeof prisma, 'product' | 'order'>;
+type Db = Pick<typeof prisma, 'product' | 'order' | 'customer' | 'invoice'>;
+
+/**
+ * The same credit check the staff order form runs (POST /api/orders): unpaid
+ * parts of live invoices plus this order must stay within the customer's limit.
+ * A portal customer cannot override it; staff can place the order themselves.
+ */
+async function assertWithinCreditLimit(customerId: string, orderTotal: number, db: Db) {
+  const row = await db.customer.findFirst({
+    where: { id: customerId },
+    select: { creditLimitAUD: true },
+  });
+  if (row?.creditLimitAUD == null) return;
+  const limit = Number(row.creditLimitAUD);
+  const agg = await db.invoice.aggregate({
+    where: { customerId, status: { notIn: ['draft', 'cancelled', 'paid'] } },
+    _sum: { total: true, amountPaid: true },
+  });
+  const outstanding = (agg._sum.total ?? 0) - (agg._sum.amountPaid ?? 0);
+  if (outstanding + orderTotal > limit) {
+    throw new PortalOrderError(
+      'This order would take your account over its credit limit. Please call CCW to place it.',
+      402
+    );
+  }
+}
 
 async function createDraftOrder(
   customer: { id: string; ownerUserId: string },
@@ -124,13 +150,15 @@ async function createDraftOrder(
   }
   if (lines.length === 0)
     throw new PortalOrderError('None of these products can be ordered now', 409);
+  const total = Math.round(subtotal * (1 + GST) * 100) / 100;
+  await assertWithinCreditLimit(customer.id, total, db);
   const order = await db.order.create({
     data: {
       ownerUserId: customer.ownerUserId,
       customerId: customer.id,
       orderNumber: generateOrderNumber(),
       status: 'draft',
-      total: Math.round(subtotal * (1 + GST) * 100) / 100,
+      total,
       lineItems: { create: lines },
     },
     include: { lineItems: true },
@@ -237,6 +265,17 @@ export async function orderQuote(customerId: string, quoteId: string) {
   });
 }
 
+/**
+ * A quote is good for the whole of its expiry date in Brisbane. Staff save
+ * valid_until as a date-only string, stored as UTC midnight of that date, so a
+ * UTC-midnight value is read as that calendar date; any other value by its
+ * Brisbane date.
+ */
 export function quoteStillValid(validUntil: Date | null, now = new Date()): boolean {
-  return validUntil !== null && validUntil.getTime() >= now.getTime();
+  if (validUntil === null) return false;
+  const iso = validUntil.toISOString();
+  const expiryDate = iso.endsWith('T00:00:00.000Z')
+    ? iso.slice(0, 10)
+    : todayInBrisbane(validUntil);
+  return todayInBrisbane(now) <= expiryDate;
 }

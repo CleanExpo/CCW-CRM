@@ -33,7 +33,13 @@ type Order = {
 
 const db = vi.hoisted(() => ({
   products: [] as Product[],
-  customers: [] as { id: string; ownerUserId: string; isActive: boolean }[],
+  customers: [] as {
+    id: string;
+    ownerUserId: string;
+    isActive: boolean;
+    creditLimitAUD?: number | null;
+  }[],
+  invoices: [] as { customerId: string; status: string; total: number; amountPaid: number }[],
   tiers: [] as {
     customerId: string;
     priceListId: string;
@@ -78,6 +84,21 @@ vi.mock('@/lib/db/prisma', () => ({
       findFirst: vi.fn(
         async ({ where }: { where: { id: string } }) =>
           db.customers.find((c) => c.id === where.id && c.isActive) ?? null
+      ),
+    },
+    invoice: {
+      aggregate: vi.fn(
+        async ({ where }: { where: { customerId: string; status: { notIn: string[] } } }) => {
+          const rows = db.invoices.filter(
+            (i) => i.customerId === where.customerId && !where.status.notIn.includes(i.status)
+          );
+          return {
+            _sum: {
+              total: rows.length ? rows.reduce((s, i) => s + i.total, 0) : null,
+              amountPaid: rows.length ? rows.reduce((s, i) => s + i.amountPaid, 0) : null,
+            },
+          };
+        }
       ),
     },
     customerPriceTier: {
@@ -152,7 +173,13 @@ vi.mock('@/lib/auth/workspace-scope', () => ({
   getWorkspaceMemberUserIds: vi.fn(async (owner: string) => [owner]),
 }));
 
-import { listMyPrices, orderAgain, orderQuote, PortalOrderError } from '@/lib/portal/my-price';
+import {
+  listMyPrices,
+  orderAgain,
+  orderQuote,
+  PortalOrderError,
+  quoteStillValid,
+} from '@/lib/portal/my-price';
 import { resolvePrice } from '@/lib/pricing/resolve-price';
 
 const WS = 'ccw-owner';
@@ -236,6 +263,81 @@ beforeEach(() => {
     },
   ];
   db.quotes = [];
+  db.invoices = [];
+});
+
+describe('credit limit on portal orders', () => {
+  it('refuses an order that would take the customer over their credit limit, and writes nothing', async () => {
+    db.customers[0].creditLimitAUD = 500;
+    db.invoices = [{ customerId: 'cust-a', status: 'sent', total: 200, amountPaid: 0 }];
+    // (3 x 80 + 4 x 40) x 1.1 = 440; 200 outstanding + 440 > 500.
+    const err = await orderAgain('cust-a', 'past-a').catch((e) => e);
+    expect(err).toBeInstanceOf(PortalOrderError);
+    expect(err.status).toBe(402);
+    expect(db.orders.filter((o) => o.id.startsWith('new-'))).toHaveLength(0);
+  });
+
+  it('counts only unpaid parts of live invoices, like the staff order form', async () => {
+    db.customers[0].creditLimitAUD = 500;
+    db.invoices = [
+      { customerId: 'cust-a', status: 'sent', total: 200, amountPaid: 150 },
+      { customerId: 'cust-a', status: 'paid', total: 900, amountPaid: 900 },
+      { customerId: 'cust-a', status: 'draft', total: 900, amountPaid: 0 },
+      { customerId: 'cust-b', status: 'sent', total: 900, amountPaid: 0 },
+    ];
+    // 50 outstanding + 440 = 490, within 500.
+    const { order } = await orderAgain('cust-a', 'past-a');
+    expect(order.status).toBe('draft');
+  });
+
+  it('places the order when the customer has no credit limit set', async () => {
+    db.invoices = [{ customerId: 'cust-a', status: 'sent', total: 100_000, amountPaid: 0 }];
+    const { order } = await orderAgain('cust-a', 'past-a');
+    expect(order.status).toBe('draft');
+  });
+
+  it('applies the same check to a quote ordered from the portal', async () => {
+    db.customers[0].creditLimitAUD = 100;
+    db.quotes = [
+      {
+        id: 'q-credit',
+        customerId: 'cust-a',
+        quoteNumber: 'QC',
+        status: 'sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [{ productId: 'soap', quantity: 2, unitPrice: 70 }],
+      },
+    ];
+    const err = await orderQuote('cust-a', 'q-credit').catch((e) => e);
+    expect(err).toBeInstanceOf(PortalOrderError);
+    expect(err.status).toBe(402);
+    expect(db.orders.filter((o) => o.id.startsWith('new-'))).toHaveLength(0);
+  });
+});
+
+describe('quoteStillValid', () => {
+  // Staff save valid_until as a date-only string, stored as UTC midnight of that date.
+  const expiresOn = new Date('2026-09-21');
+
+  it('is valid for the whole of the expiry date in Brisbane', () => {
+    expect(quoteStillValid(expiresOn, new Date('2026-09-21T00:01:00+10:00'))).toBe(true);
+    expect(quoteStillValid(expiresOn, new Date('2026-09-21T15:00:00+10:00'))).toBe(true);
+    expect(quoteStillValid(expiresOn, new Date('2026-09-21T23:59:00+10:00'))).toBe(true);
+  });
+
+  it('expires once the next day starts in Brisbane', () => {
+    expect(quoteStillValid(expiresOn, new Date('2026-09-22T00:00:00+10:00'))).toBe(false);
+  });
+
+  it('treats a valid_until with a time of day by its Brisbane date', () => {
+    const at = new Date('2026-09-21T14:30:00Z'); // 22/09 00:30 in Brisbane
+    expect(quoteStillValid(at, new Date('2026-09-22T12:00:00+10:00'))).toBe(true);
+    expect(quoteStillValid(at, new Date('2026-09-23T00:00:00+10:00'))).toBe(false);
+  });
+
+  it('is never valid without a date', () => {
+    expect(quoteStillValid(null)).toBe(false);
+  });
 });
 
 describe('listMyPrices', () => {
