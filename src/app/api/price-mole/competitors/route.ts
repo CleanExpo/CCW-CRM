@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (e instanceof mole.PriceMoleInputError) {
       return NextResponse.json({ detail: e.message }, { status: 400 });
     }
-    if (String(e).includes('Unique constraint')) {
+    if ((e as { code?: string })?.code === 'P2002') {
       return NextResponse.json({ detail: 'That page is already tracked' }, { status: 409 });
     }
     return NextResponse.json({ detail: String(e) }, { status: 500 });

@@ -2,15 +2,18 @@
  * UNI-2751: server-side fetch that only ever reaches public internet hosts.
  *
  * Staff type competitor URLs, and the server fetches them, so every hop is
- * checked: the scheme must be http(s), the host must resolve only to public
- * addresses, and redirects are followed by hand (at most MAX_REDIRECTS), each
- * re-checked, instead of letting fetch follow them blind.
+ * checked: the scheme must be http(s), and redirects are followed by hand (at
+ * most MAX_REDIRECTS), each re-checked, instead of letting fetch follow them.
  *
- * Residual risk, recorded rather than hidden: the address is resolved here and
- * again by fetch, so a hostile DNS server could answer differently between the
- * two lookups (DNS rebinding). Closing that needs connection pinning.
+ * DNS rebinding: the address is checked again AT CONNECT TIME. Requests go
+ * through node:http/https with a `lookup` hook that rejects any resolved
+ * non-public address right before the socket opens, so a DNS answer that flips
+ * between the early check and the connection cannot reach an internal host.
  */
+import { lookup as dnsLookupCb, type LookupAddress } from 'node:dns';
 import { lookup as dnsLookup } from 'node:dns/promises';
+import http from 'node:http';
+import https from 'node:https';
 import { isIP } from 'node:net';
 
 export class UnsafeUrlError extends Error {}
@@ -49,6 +52,8 @@ export function isPrivateAddress(ip: string): boolean {
   return true; // not an IP at all: refuse rather than guess
 }
 
+const defaultLookup: Lookup = (host) => dnsLookup(host, { all: true, verbatim: true });
+
 /** Throws UnsafeUrlError unless the URL is http(s) and its host resolves only to public addresses. */
 export async function assertPublicUrl(raw: string, lookup: Lookup = defaultLookup): Promise<URL> {
   let u: URL;
@@ -68,7 +73,78 @@ export async function assertPublicUrl(raw: string, lookup: Lookup = defaultLooku
   return u;
 }
 
-const defaultLookup: Lookup = (host) => dnsLookup(host, { all: true, verbatim: true });
+type NodeLookupCallback = (
+  err: NodeJS.ErrnoException | null,
+  address: string | LookupAddress[],
+  family?: number
+) => void;
+export type NodeLookup = (
+  hostname: string,
+  options: { all?: boolean },
+  callback: NodeLookupCallback
+) => void;
+
+/**
+ * A lookup for node:http/https that refuses any non-public address. It runs as
+ * the socket connects, which is what closes the DNS-rebinding window.
+ */
+export function makeGuardedLookup(resolve: Lookup = defaultLookup): NodeLookup {
+  return (hostname, options, callback) => {
+    resolve(hostname).then(
+      (addrs) => {
+        const bad = addrs.find((a) => isPrivateAddress(a.address));
+        if (addrs.length === 0 || bad) {
+          const err = new UnsafeUrlError(
+            bad
+              ? `${hostname} resolved to a non-public address (${bad.address}) at connect time`
+              : `${hostname} did not resolve`
+          ) as unknown as NodeJS.ErrnoException;
+          callback(err, '');
+          return;
+        }
+        if (options.all) callback(null, addrs as LookupAddress[]);
+        else callback(null, addrs[0].address, addrs[0].family);
+      },
+      (err) => callback(err as NodeJS.ErrnoException, '')
+    );
+  };
+}
+
+/** A fetch over node:http/https whose connections go through the guarded lookup. */
+export function createPinnedFetch(connectLookup: NodeLookup = makeGuardedLookup()): FetchImpl {
+  return (url, init) =>
+    new Promise<Response>((resolve, reject) => {
+      const mod = url.startsWith('https:') ? https : http;
+      const req = mod.request(
+        url,
+        {
+          method: 'GET',
+          headers: init.headers as Record<string, string> | undefined,
+          lookup: connectLookup as unknown as typeof dnsLookupCb,
+          signal: init.signal ?? undefined,
+        },
+        (res) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (c: Buffer) => chunks.push(c));
+          res.on('end', () => {
+            const raw = res.statusCode ?? 502;
+            const status = raw >= 200 && raw <= 599 ? raw : 502;
+            const nullBody = [204, 205, 304].includes(status);
+            const location = res.headers.location;
+            resolve(
+              new Response(nullBody ? null : Buffer.concat(chunks), {
+                status,
+                headers: location ? { location } : {},
+              })
+            );
+          });
+          res.on('error', reject);
+        }
+      );
+      req.on('error', reject);
+      req.end();
+    });
+}
 
 export function createSafeFetch(opts: {
   lookup?: Lookup;
@@ -78,7 +154,7 @@ export function createSafeFetch(opts: {
   maxBodyChars: number;
 }) {
   const lookup = opts.lookup ?? defaultLookup;
-  const fetchImpl: FetchImpl = opts.fetchImpl ?? ((url, init) => fetch(url, init));
+  const fetchImpl: FetchImpl = opts.fetchImpl ?? createPinnedFetch(makeGuardedLookup(lookup));
   return async (url: string): Promise<{ status: number; text: string }> => {
     let current = url;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {

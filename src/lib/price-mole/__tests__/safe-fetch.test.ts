@@ -1,13 +1,68 @@
 /** UNI-2751: the server fetch never reaches a non-public address, even via a redirect. */
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import {
   assertPublicUrl,
+  createPinnedFetch,
   createSafeFetch,
   isPrivateAddress,
+  makeGuardedLookup,
   UnsafeUrlError,
   type FetchImpl,
   type Lookup,
 } from '@/lib/price-mole/safe-fetch';
+
+describe('DNS rebinding — guard', () => {
+  let server: http.Server;
+  let port = 0;
+  let hits = 0;
+  beforeAll(async () => {
+    server = http.createServer((_req, res) => {
+      hits++;
+      res.end('internal secret');
+    });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    port = (server.address() as AddressInfo).port;
+  });
+  afterAll(() => new Promise<void>((r) => server.close(() => r())));
+
+  it('refuses at connect time when DNS flips from public to internal after the check', async () => {
+    let calls = 0;
+    // First answer (the early check) is public; every later answer (the connection) is loopback.
+    const rebinding: Lookup = async () => {
+      calls++;
+      return [{ address: calls === 1 ? '93.184.216.34' : '127.0.0.1', family: 4 }];
+    };
+    const safe = createSafeFetch({ lookup: rebinding, timeoutMs: 2000, maxBodyChars: 1000 });
+    hits = 0;
+    await expect(safe(`http://rebind.example:${port}/`)).rejects.toThrow(/connect time/);
+    expect(hits).toBe(0);
+    expect(calls).toBeGreaterThanOrEqual(2);
+  });
+
+  it('positive control: the same pinned fetch does connect when the lookup allows the address', async () => {
+    // A lookup that skips the guard proves the server and transport work, so the refusal above is the guard.
+    const open: Parameters<typeof createPinnedFetch>[0] = (_h, opts, cb) =>
+      opts.all ? cb(null, [{ address: '127.0.0.1', family: 4 }]) : cb(null, '127.0.0.1', 4);
+    hits = 0;
+    const res = await createPinnedFetch(open)(`http://anything.example:${port}/`, {});
+    expect(await res.text()).toBe('internal secret');
+    expect(hits).toBe(1);
+  });
+
+  it('the guarded lookup refuses any private answer, including a mixed one', async () => {
+    const lookupOf = (addrs: string[]) =>
+      makeGuardedLookup(async () => addrs.map((address) => ({ address, family: 4 })));
+    const run = (l: ReturnType<typeof makeGuardedLookup>) =>
+      new Promise<string>((resolve) =>
+        l('h.example', {}, (err, addr) => resolve(err ? 'refused' : String(addr)))
+      );
+    expect(await run(lookupOf(['93.184.216.34']))).toBe('93.184.216.34');
+    expect(await run(lookupOf(['93.184.216.34', '10.0.0.1']))).toBe('refused');
+    expect(await run(lookupOf(['169.254.169.254']))).toBe('refused');
+  });
+});
 
 const DNS: Record<string, string[]> = {
   'rival.example': ['93.184.216.34'],
