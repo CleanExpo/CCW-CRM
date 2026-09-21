@@ -34,6 +34,8 @@ export async function loadPurchaseLines(
   const invoices = await prisma.invoice.findMany({
     where: {
       ownerUserId: { in: workspaceUserIds },
+      // invoice_date is a DATE column (@db.Date, no time of day): Prisma reads it back
+      // as that calendar day at 00:00Z, so `lte` this value includes the whole as-of day.
       invoiceDate: { lte: new Date(`${asOf}T00:00:00Z`) },
       status: { notIn: [...NON_SALE_STATUSES] },
     },

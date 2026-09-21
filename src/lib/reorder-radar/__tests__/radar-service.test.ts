@@ -155,6 +155,22 @@ describe('live radar vs reporting extract', () => {
     expect(lines.some((l) => l.date === '2026-03-28')).toBe(false);
     expect(lines.some((l) => l.customerId === 'cx')).toBe(false);
   });
+
+  it('includes an invoice dated exactly on the as-of day', async () => {
+    db.invoices.push(inv('c30', AS_OF, 'paid', [['soap', 4]]));
+    const lines = await loadPurchaseLines(['user-a'], AS_OF);
+    expect(lines.some((l) => l.date === AS_OF)).toBe(true);
+  });
+
+  it('the extract CSV keeps its exact columns; invoice_status is JSON only', async () => {
+    const res = await extractGET(
+      new NextRequest('http://localhost/api/reporting/extract?format=csv')
+    );
+    const [header, firstRow] = (await res.text()).split('\n');
+    expect(header).toBe('kind,id,ref,branch_name,sku,quantity,unit_price,line_total,occurred_at');
+    expect(header).not.toContain('invoice_status');
+    expect(firstRow.split(',')).toHaveLength(9);
+  });
 });
 
 describe('getInventoryForecast', () => {
