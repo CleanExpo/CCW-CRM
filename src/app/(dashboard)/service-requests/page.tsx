@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/empty-state';
 import {
   Select,
   SelectContent,
@@ -62,6 +63,7 @@ export default function ServiceRequestsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -87,11 +89,13 @@ export default function ServiceRequestsPage() {
         `/api/service-requests?${query.toString()}`
       );
       setRequests(response.items);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to load service requests';
       toast({ variant: 'destructive', title: 'Error', description: message });
+      setLoadError(true);
       setRequests([]);
       setTotal(0);
     } finally {
@@ -194,6 +198,11 @@ export default function ServiceRequestsPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : loadError ? (
+              <ErrorState
+                title="Couldn't load service requests"
+                onRetry={() => void loadRequests()}
+              />
             ) : requests.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Wrench className="text-muted-foreground mb-4 h-12 w-12" />

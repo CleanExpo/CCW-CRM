@@ -33,6 +33,16 @@ import type {
   ReconciliationAlert,
 } from '@/lib/api/bank-feeds';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { ErrorState } from '@/components/ui/empty-state';
+
+type FeedSource = 'feeds' | 'accounts' | 'stats' | 'alerts';
+
+const NONE_FAILED: Record<FeedSource, boolean> = {
+  feeds: false,
+  accounts: false,
+  stats: false,
+  alerts: false,
+};
 
 export default function BankFeedsPage() {
   const { toast } = useToast();
@@ -41,6 +51,9 @@ export default function BankFeedsPage() {
   const [stats, setStats] = useState<ReconciliationStats | null>(null);
   const [alerts, setAlerts] = useState<ReconciliationAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  // A failed fetch is recorded per source. Without this, a failed unreconciled
+  // fetch rendered as "All transactions reconciled".
+  const [failed, setFailed] = useState<Record<FeedSource, boolean>>(NONE_FAILED);
   const [syncing, setSyncing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
@@ -50,32 +63,44 @@ export default function BankFeedsPage() {
     try {
       const accountId = selectedAccountId !== 'all' ? selectedAccountId : undefined;
 
-      const [feedsData, accountsData, statsData, alertsData] = await Promise.all([
-        apiClient
-          .get<
-            BankFeedEntry[]
-          >(`/api/bank-feeds/unreconciled${accountId ? `?account_id=${accountId}` : ''}`)
-          .catch(() => [] as BankFeedEntry[]),
-        apiClient.get<BankAccount[]>('/api/bank-feeds/accounts').catch(() => [] as BankAccount[]),
-        apiClient
-          .get<ReconciliationStats>(
-            `/api/bank-feeds/stats${accountId ? `?account_id=${accountId}` : ''}`
-          )
-          .catch(() => null),
-        apiClient
-          .get<
-            ReconciliationAlert[]
-          >(`/api/bank-feeds/alerts${accountId ? `?account_id=${accountId}` : ''}`)
-          .catch(() => [] as ReconciliationAlert[]),
+      const [feedsRes, accountsRes, statsRes, alertsRes] = await Promise.allSettled([
+        apiClient.get<BankFeedEntry[]>(
+          `/api/bank-feeds/unreconciled${accountId ? `?account_id=${accountId}` : ''}`
+        ),
+        apiClient.get<BankAccount[]>('/api/bank-feeds/accounts'),
+        apiClient.get<ReconciliationStats>(
+          `/api/bank-feeds/stats${accountId ? `?account_id=${accountId}` : ''}`
+        ),
+        apiClient.get<ReconciliationAlert[]>(
+          `/api/bank-feeds/alerts${accountId ? `?account_id=${accountId}` : ''}`
+        ),
       ]);
 
-      setFeeds(feedsData);
-      setAccounts(accountsData);
-      setStats(statsData);
-      setAlerts(alertsData);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to load bank feed data';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      setFeeds(feedsRes.status === 'fulfilled' ? feedsRes.value : []);
+      setAccounts(accountsRes.status === 'fulfilled' ? accountsRes.value : []);
+      setStats(statsRes.status === 'fulfilled' ? statsRes.value : null);
+      setAlerts(alertsRes.status === 'fulfilled' ? alertsRes.value : []);
+
+      const nextFailed: Record<FeedSource, boolean> = {
+        feeds: feedsRes.status === 'rejected',
+        accounts: accountsRes.status === 'rejected',
+        stats: statsRes.status === 'rejected',
+        alerts: alertsRes.status === 'rejected',
+      };
+      setFailed(nextFailed);
+
+      const failedCount = Object.values(nextFailed).filter(Boolean).length;
+      if (failedCount > 0) {
+        for (const res of [feedsRes, accountsRes, statsRes, alertsRes]) {
+          if (res.status === 'rejected')
+            console.error('Failed to load bank feed data:', res.reason);
+        }
+        toast({
+          variant: 'destructive',
+          title: 'Some bank feed data could not be loaded',
+          description: `${failedCount} of 4 requests failed. Use Retry to load them again.`,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -218,6 +243,8 @@ export default function BankFeedsPage() {
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
+        ) : failed.stats ? (
+          <ErrorState title="Couldn't load reconciliation stats" onRetry={() => void loadData()} />
         ) : stats ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Card>
@@ -270,6 +297,9 @@ export default function BankFeedsPage() {
         ) : null}
 
         {/* Alerts */}
+        {!loading && failed.alerts && (
+          <ErrorState title="Couldn't load reconciliation alerts" onRetry={() => void loadData()} />
+        )}
         {alerts.length > 0 && (
           <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/20">
             <CardHeader>
@@ -306,6 +336,9 @@ export default function BankFeedsPage() {
         )}
 
         {/* Bank Accounts */}
+        {!loading && failed.accounts && (
+          <ErrorState title="Couldn't load bank accounts" onRetry={() => void loadData()} />
+        )}
         {accounts.length > 0 && (
           <Card>
             <CardHeader>
@@ -366,6 +399,11 @@ export default function BankFeedsPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : failed.feeds ? (
+              <ErrorState
+                title="Couldn't load unreconciled transactions"
+                onRetry={() => void loadData()}
+              />
             ) : feeds.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <CheckCircle2 className="mb-4 h-12 w-12 text-green-500" />

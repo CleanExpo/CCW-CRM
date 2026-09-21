@@ -6,8 +6,19 @@ import { findAppUserByEmail, setPasswordResetFields } from '@/lib/auth/app-user-
 import { sendTransactionalEmail, type SendOutcome } from '@/lib/email/mailer';
 import { buildPasswordResetEmail } from '@/lib/email/templates';
 import { passwordResetUrl } from '@/lib/email/links';
+import { resolveEmailConfig } from '@/lib/email/config';
 
 const RESET_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * Whether this deployment can email a reset link at all. It depends only on
+ * configuration, so it is the same answer for every email address and says
+ * nothing about whether an account exists.
+ */
+function resetsAvailable(): boolean {
+  const config = resolveEmailConfig();
+  return config.status === 'configured' && config.enabled;
+}
 
 /**
  * Password reset request (UNI-2671).
@@ -18,10 +29,11 @@ const RESET_TTL_MS = 60 * 60 * 1000;
  * was a 200 nothing anywhere reported a fault.
  *
  * Two things changed. The email is now actually sent, and the response no
- * longer asserts a delivery it cannot vouch for: `delivery` reports what really
- * happened to the send attempt, while the human-facing `message` stays
- * deliberately generic so the endpoint still does not disclose whether an
- * account exists.
+ * longer asserts a delivery it cannot vouch for: `resets_available` says
+ * whether this deployment can email resets at all, while the `message` stays
+ * deliberately generic. Both are the same for every address, so the endpoint
+ * does not disclose whether an account exists. A send that fails for one
+ * account is logged, not returned.
  */
 export async function POST(request: NextRequest) {
   const parsedBody = await readJsonBody(request);
@@ -30,16 +42,20 @@ export async function POST(request: NextRequest) {
   const parsed = forgotPasswordBodySchema.safeParse(parsedBody.body);
   if (!parsed.success) return jsonValidationError(parsed.error);
 
+  // The same body for a real account and an unknown email. What happened to one
+  // account's email is logged below, never returned: returning it told any
+  // caller which addresses have accounts.
   const generic = {
     message:
       'If an account exists with that email, a password reset link is on its way. Check your inbox, including junk mail.',
+    resets_available: resetsAvailable(),
   };
 
   try {
     const row = await findAppUserByEmail(parsed.data.email);
     if (!row || !row.isActive) {
       // No account: nothing to send, and the response must not reveal that.
-      return jsonOk({ ...generic, delivery: { status: 'not_applicable' } });
+      return jsonOk(generic);
     }
 
     const rawToken = randomBytes(32).toString('hex');
@@ -60,14 +76,10 @@ export async function POST(request: NextRequest) {
     }
 
     const expose =
-      process.env.NODE_ENV !== 'production' &&
-      process.env.AUTH_DEV_EXPOSE_RESET_TOKEN === 'true';
+      process.env.NODE_ENV !== 'production' && process.env.AUTH_DEV_EXPOSE_RESET_TOKEN === 'true';
 
     return jsonOk({
       ...generic,
-      // Truthful send state. `sent` is the only value that means the provider
-      // accepted the message; every other value means the user has not got it.
-      delivery: { status: outcome.status, receipt_id: outcome.receiptId },
       ...(expose ? { dev_reset_token: rawToken } : {}),
     });
   } catch (e) {
