@@ -143,6 +143,13 @@ async function productsInWorkspace(workspaceUserIds: string[], ids: string[]) {
 
 export class FitmentInputError extends Error {}
 
+/** Same rule as the spreadsheet import: absent, or a positive number. */
+function assertUsageQuantity(v: number | null | undefined) {
+  if (v != null && !(Number.isFinite(v) && v > 0)) {
+    throw new FitmentInputError('usage_quantity must be a positive number');
+  }
+}
+
 /** Staff adds a row by hand. A hand-entered row is confirmed by the person entering it. */
 export async function createFitment(
   workspaceUserIds: string[],
@@ -164,6 +171,7 @@ export async function createFitment(
     input.fitProductId,
   ]);
   if (ok.size !== 2) throw new FitmentInputError('Product not found');
+  assertUsageQuantity(input.usageQuantity);
   const data = {
     kind: input.kind,
     usageQuantity: input.usageQuantity ?? null,
@@ -215,7 +223,10 @@ export async function reviewFitment(
     if (!isFitmentKind(input.kind)) throw new FitmentInputError('Invalid kind');
     data.kind = input.kind;
   }
-  if (input.usageQuantity !== undefined) data.usageQuantity = input.usageQuantity;
+  if (input.usageQuantity !== undefined) {
+    assertUsageQuantity(input.usageQuantity);
+    data.usageQuantity = input.usageQuantity;
+  }
   if (input.usagePer !== undefined) data.usagePer = input.usagePer;
   return prisma.productFitment.update({ where: { id }, data, include });
 }
@@ -292,11 +303,35 @@ export async function importFitments(
       confirmedBy: opts.confirm ? actorUserId : null,
       confirmedAt: opts.confirm ? new Date() : null,
     };
-    await prisma.productFitment.upsert({
-      where: { machineProductId_fitProductId: { machineProductId: m[0], fitProductId: f[0] } },
-      create: { ...data, ownerUserId: actorUserId, machineProductId: m[0], fitProductId: f[0] },
-      update: data,
-    });
+    if (opts.confirm) {
+      await prisma.productFitment.upsert({
+        where: { machineProductId_fitProductId: { machineProductId: m[0], fitProductId: f[0] } },
+        create: { ...data, ownerUserId: actorUserId, machineProductId: m[0], fitProductId: f[0] },
+        update: data,
+      });
+    } else {
+      // The check above gives a clear message; this is what makes it safe. An
+      // unconfirmed sheet may only change a row that is STILL suggested, in one
+      // statement, so a confirmation landing mid-import cannot be overwritten.
+      const updated = await prisma.productFitment.updateMany({
+        where: { machineProductId: m[0], fitProductId: f[0], status: 'suggested' },
+        data,
+      });
+      if (updated.count === 0) {
+        try {
+          await prisma.productFitment.create({
+            data: { ...data, ownerUserId: actorUserId, machineProductId: m[0], fitProductId: f[0] },
+          });
+        } catch (e) {
+          if ((e as { code?: string })?.code !== 'P2002') throw e;
+          errors.push({
+            line: r.line,
+            message: `Already decided by staff, so left unchanged. Tick "Mark imported rows as confirmed" to overwrite.`,
+          });
+          continue;
+        }
+      }
+    }
     imported++;
   }
   return { imported, errors };

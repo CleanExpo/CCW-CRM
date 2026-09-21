@@ -122,7 +122,7 @@ export function parseFitmentCsv(text: string): { rows: ImportRow[]; errors: Impo
       }
       usageQuantity = n;
     }
-    const key = `${machineSku}\u0000${fitSku}`;
+    const key = JSON.stringify([machineSku, fitSku]);
     if (seen.has(key)) {
       errors.push({ line, message: 'Duplicate machine_sku and fit_sku pair' });
       continue;

@@ -139,6 +139,27 @@ vi.mock('@/lib/db/prisma', () => ({
         data.forEach((d, i) => db.fitments.push({ id: `new-${i}`, ...d } as F));
         return { count: data.length };
       }),
+      updateMany: vi.fn(
+        async ({ where, data }: { where: Record<string, unknown>; data: Partial<F> }) => {
+          const hits = db.fitments.filter((f) => matchFitment(f, where));
+          hits.forEach((f) => Object.assign(f, data));
+          return { count: hits.length };
+        }
+      ),
+      // Behaves like the (machine_product_id, fit_product_id) unique index.
+      create: vi.fn(async ({ data }: { data: Omit<F, 'id'> }) => {
+        if (
+          db.fitments.some(
+            (f) =>
+              f.machineProductId === data.machineProductId && f.fitProductId === data.fitProductId
+          )
+        ) {
+          throw Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
+        }
+        const row = { id: `cr-${db.fitments.length}`, ...data } as F;
+        db.fitments.push(row);
+        return row;
+      }),
     },
     product: {
       findMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
@@ -167,6 +188,8 @@ import {
   generateSuggestions,
   fitmentToCustomerApi,
   importFitments,
+  createFitment,
+  FitmentInputError,
   listMachinesForProduct,
 } from '@/lib/fitment/fitment-service';
 import { prisma } from '@/lib/db/prisma';
@@ -363,6 +386,22 @@ describe('importFitments', () => {
     expect(added?.status).toBe('suggested');
   });
 
+  it('a confirmation that lands mid-import is not overwritten by an unconfirmed sheet', async () => {
+    // Staff confirm the hose suggestion AFTER the import read its snapshot but before
+    // it writes. Simulated by confirming on the first write attempt.
+    const { prisma: p } = await import('@/lib/db/prisma');
+    vi.mocked(p.productFitment.updateMany).mockImplementationOnce((async () => {
+      db.fitments.find((f) => f.id === 'f3')!.status = 'confirmed';
+      return { count: 0 };
+    }) as never);
+    const res = await importFitments(WS, 'staff-1', [row(2, 'MACHINE-X', 'HOSE')], {
+      confirm: false,
+    });
+    expect(db.fitments.find((f) => f.id === 'f3')?.status).toBe('confirmed');
+    expect(res.imported).toBe(0);
+    expect(res.errors[0].line).toBe(2);
+  });
+
   it('a sheet explicitly marked confirmed may overwrite a decision', async () => {
     await importFitments(WS, 'staff-1', [row(2, 'MACHINE-X', 'MACHINE-Y')], { confirm: true });
     expect(db.fitments.find((f) => f.id === 'f7')?.status).toBe('confirmed');
@@ -377,5 +416,20 @@ describe('listMachinesForProduct', () => {
       (await listMachinesForProduct(WS, 'filter', audience)).map((r) => r.machineProductId).sort();
     expect(await ids('customer')).toEqual(['machine-x', 'machine-y']);
     expect(await ids('staff')).toContain('old-machine');
+  });
+});
+
+describe('createFitment', () => {
+  it('rejects a zero, negative or non-numeric usage quantity', async () => {
+    for (const q of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      await expect(
+        createFitment(WS, 'staff-1', {
+          machineProductId: 'machine-y',
+          fitProductId: 'hose',
+          kind: 'consumable',
+          usageQuantity: q,
+        })
+      ).rejects.toBeInstanceOf(FitmentInputError);
+    }
   });
 });
