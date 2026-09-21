@@ -62,6 +62,9 @@ export function OrderCombobox({
   const [searchResults, setSearchResults] = useState<OrderPickerRow[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [listError, setListError] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [labelOrder, setLabelOrder] = useState<OrderPickerRow | null>(null);
   const triggerWrapRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState<number | undefined>(undefined);
@@ -131,10 +134,16 @@ export function OrderCombobox({
             status: o.status,
           })
         );
-        if (!cancelled) setListOrders(rows);
+        if (!cancelled) {
+          setListOrders(rows);
+          setListError(false);
+        }
       } catch (e) {
         console.error("Failed to load orders:", e);
-        if (!cancelled) setListOrders([]);
+        if (!cancelled) {
+          setListOrders([]);
+          setListError(true);
+        }
       } finally {
         if (!cancelled) setLoadingList(false);
       }
@@ -142,11 +151,12 @@ export function OrderCombobox({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, reloadKey]);
 
   useEffect(() => {
     if (!open || !searchActive) {
       setSearchResults([]);
+      setSearchError(false);
       return;
     }
     let cancelled = false;
@@ -166,10 +176,16 @@ export function OrderCombobox({
             status: o.status,
           })
         );
-        if (!cancelled) setSearchResults(rows);
+        if (!cancelled) {
+          setSearchResults(rows);
+          setSearchError(false);
+        }
       } catch (e) {
         console.error("Order search failed:", e);
-        if (!cancelled) setSearchResults([]);
+        if (!cancelled) {
+          setSearchResults([]);
+          setSearchError(true);
+        }
       } finally {
         if (!cancelled) setLoadingSearch(false);
       }
@@ -177,7 +193,7 @@ export function OrderCombobox({
     return () => {
       cancelled = true;
     };
-  }, [open, searchActive, searchQuery]);
+  }, [open, searchActive, searchQuery, reloadKey]);
 
   const handleSelect = (order: OrderPickerRow) => {
     setLabelOrder(order);
@@ -190,6 +206,8 @@ export function OrderCombobox({
   const emptyMessage = () => {
     if (loading && displayOrders.length === 0) return "Loading orders…";
     if (searchActive && loadingSearch) return "Searching…";
+    if (searchActive && searchError) return "Couldn't search orders.";
+    if (!searchActive && listError) return "Couldn't load orders.";
     if (displayOrders.length === 0 && searchActive) return "No orders match that search.";
     if (displayOrders.length === 0 && !searchActive) return "No orders yet. Create one under Operations → Orders.";
     return "";
@@ -288,6 +306,16 @@ export function OrderCombobox({
                   <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm dark:text-zinc-400">
                     {loading && <Loader2 className="h-5 w-5 animate-spin" />}
                     {emptyMessage()}
+                    {!loading && (searchActive ? searchError : listError) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReloadKey((k) => k + 1)}
+                      >
+                        Retry
+                      </Button>
+                    )}
                   </div>
                 ) : null)}
 
