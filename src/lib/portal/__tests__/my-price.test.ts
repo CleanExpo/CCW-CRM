@@ -124,14 +124,15 @@ vi.mock('@/lib/db/prisma', () => ({
           where,
           data,
         }: {
-          where: { id: string; customerId: string; status: { in: string[] } };
+          where: { id: string; customerId: string; status: string | { in: string[] } };
           data: { status: string };
         }) => {
+          // Exact, case-sensitive match, as Postgres does.
+          const statusOk = (s: string) =>
+            typeof where.status === 'string' ? s === where.status : where.status.in.includes(s);
           const q = db.quotes.find(
             (x) =>
-              x.id === where.id &&
-              x.customerId === where.customerId &&
-              where.status.in.includes(x.status as string)
+              x.id === where.id && x.customerId === where.customerId && statusOk(x.status as string)
           );
           if (!q) return { count: 0 };
           q.status = data.status;
@@ -337,6 +338,22 @@ describe('orderQuote', () => {
     await expect(orderQuote('cust-a', 'q1')).rejects.toThrow(/no longer be ordered|already/);
     expect(db.quotes[0].status).toBe('converted');
     expect(db.orders.filter((o) => o.id.startsWith('new-'))).toHaveLength(1);
+  });
+
+  it('orders a quote whose status is stored with different casing ("Sent")', async () => {
+    db.quotes = [
+      {
+        id: 'qc',
+        customerId: 'cust-a',
+        quoteNumber: 'QC',
+        status: 'Sent',
+        validUntil: new Date(Date.now() + 86_400_000),
+        lineItems: [{ productId: 'soap', quantity: 1, unitPrice: 70 }],
+      },
+    ];
+    const { order } = await orderQuote('cust-a', 'qc');
+    expect(order.status).toBe('draft');
+    expect(db.quotes[0].status).toBe('converted');
   });
 
   it('refuses draft, rejected, expired and cancelled quotes and writes nothing', async () => {

@@ -216,7 +216,9 @@ export async function orderQuote(customerId: string, quoteId: string) {
   const honoured = quoteStillValid(quote.validUntil);
   return prisma.$transaction(async (tx) => {
     const claimed = await tx.quote.updateMany({
-      where: { id: quote.id, customerId, status: { in: ORDERABLE_QUOTE_STATUSES } },
+      // Compare-and-swap on the exact status just read and checked (any casing), so a
+      // concurrent order or status change makes this claim miss instead of double-ordering.
+      where: { id: quote.id, customerId, status: quote.status },
       data: { status: 'converted' },
     });
     if (claimed.count === 0) {
