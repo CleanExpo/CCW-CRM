@@ -28,6 +28,10 @@ async function userFromAccessToken(token: string): Promise<SessionUser | null> {
   };
 }
 
+function matchesPrefix(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((path) => pathname === path || pathname.startsWith(path + '/'));
+}
+
 export async function updateSession(request: NextRequest) {
   const billingAllowedPrefixes = [
     '/dashboard/settings/billing',
@@ -44,6 +48,42 @@ export async function updateSession(request: NextRequest) {
     '/faq',
     '/dashboard/finance',
   ];
+
+  // The same role rules for the API routes behind those pages. Pages redirect;
+  // APIs answer 403 JSON. Each entry is only called from a page the role is
+  // blocked from above. APIs the role's own pages call stay open.
+  const memberBlockedApiPrefixes = [
+    // settings/company, settings/team, settings/billing
+    '/api/settings',
+    '/api/team',
+    '/api/billing',
+    // Cin7 repair tools on settings/integrations
+    '/api/integrations/cin7/cleanup-duplicates',
+    '/api/integrations/cin7/stock-prune',
+    '/api/integrations/cin7/stock-freeze',
+    '/api/integrations/cin7/field-heal',
+    '/api/integrations/cin7/product-heal',
+    '/api/integrations/cin7/scheduled-sync',
+    '/api/integrations/cin7/heal-audit',
+    // /approvals
+    '/api/approvals',
+    // /alerts and /monitoring
+    '/api/monitoring',
+    // /dashboard/finance pages only (invoices and bank-feeds are shared with operations)
+    '/api/trade-finance',
+    '/api/bank-reconciliation',
+    '/api/reconciliation',
+  ];
+  const memberAllowedApiPrefixes = [
+    // POS failure count on the /dashboard home page
+    '/api/monitoring/alerts/pos-failures',
+    // Accepting an invite is not team management
+    '/api/team/invite/accept',
+  ];
+  // Billing can open every /dashboard page (see '/dashboard' above), so only
+  // the /monitoring page is out of reach; /dashboard/alerts stays reachable.
+  const billingBlockedApiPrefixes = ['/api/monitoring'];
+  const billingAllowedApiPrefixes = ['/api/monitoring/alerts'];
 
   const response = NextResponse.next({
     request,
@@ -127,6 +167,23 @@ export async function updateSession(request: NextRequest) {
     url.pathname = redirect || '/dashboard';
     url.searchParams.delete('redirect');
     return NextResponse.redirect(url);
+  }
+
+  if (user && request.nextUrl.pathname.startsWith('/api/')) {
+    const pathname = request.nextUrl.pathname;
+    const blocked =
+      (user.role === 'member' &&
+        matchesPrefix(pathname, memberBlockedApiPrefixes) &&
+        !matchesPrefix(pathname, memberAllowedApiPrefixes)) ||
+      (user.role === 'billing' &&
+        matchesPrefix(pathname, billingBlockedApiPrefixes) &&
+        !matchesPrefix(pathname, billingAllowedApiPrefixes));
+    if (blocked) {
+      return NextResponse.json(
+        { detail: 'Your role does not have access to this resource' },
+        { status: 403 }
+      );
+    }
   }
 
   if (user && !request.nextUrl.pathname.startsWith('/api/')) {
