@@ -151,6 +151,46 @@ describe('runCapture — positive control', () => {
 });
 
 describe('runCapture — guard', () => {
+  it('never fetches a redirect target robots.txt disallows, and records why', async () => {
+    db.cps = [cp('moved', 'https://rival.example/product')];
+    const calls: string[] = [];
+    // Behaves like createSafeFetch: asks before following the redirect to /secret.
+    const f: Fetcher = async (url, opts) => {
+      calls.push(url);
+      if (url === 'https://rival.example/robots.txt') {
+        return { status: 200, text: 'User-agent: *\nDisallow: /secret' };
+      }
+      if (url === 'https://rival.example/product') {
+        await opts?.allowRedirect?.(new URL('https://rival.example/secret'));
+        calls.push('https://rival.example/secret');
+        return { status: 200, text: PAGE('999') };
+      }
+      return { status: 404, text: '' };
+    };
+    const res = await runCapture(['user-a'], 'staff', { trigger: 'manual', fetcher: f, now: NOW });
+    expect(db.prices).toHaveLength(0);
+    expect(calls).not.toContain('https://rival.example/secret');
+    expect(res.outcomes[0]).toMatchObject({ ok: false, error: expect.stringMatching(/redirect/) });
+  });
+
+  it('positive control: a redirect to an allowed page on another site is checked and followed', async () => {
+    db.cps = [cp('moved', 'https://rival.example/product')];
+    const calls: string[] = [];
+    const f: Fetcher = async (url, opts) => {
+      calls.push(url);
+      if (url.endsWith('/robots.txt'))
+        return { status: 200, text: 'User-agent: *\nDisallow: /cart' };
+      if (url === 'https://rival.example/product') {
+        await opts?.allowRedirect?.(new URL('https://shop.rival.example/p/galaxy'));
+        return { status: 200, text: PAGE('42') };
+      }
+      return { status: 404, text: '' };
+    };
+    await runCapture(['user-a'], 'staff', { trigger: 'manual', fetcher: f, now: NOW });
+    expect(calls).toContain('https://shop.rival.example/robots.txt');
+    expect(db.prices.map((p) => p.price)).toEqual([42]);
+  });
+
   it('does not fetch a page robots.txt disallows', async () => {
     db.cps = [cp('blocked', 'https://strict.example/shop/item')];
     const { f, calls } = fetcherFrom({

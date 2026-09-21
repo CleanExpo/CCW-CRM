@@ -17,7 +17,11 @@ import {
 } from '@/lib/price-mole/rules';
 import { createSafeFetch } from '@/lib/price-mole/safe-fetch';
 
-export type Fetcher = (url: string) => Promise<{ status: number; text: string }>;
+export type FetchOptions = { allowRedirect?: (next: URL) => Promise<void> };
+export type Fetcher = (
+  url: string,
+  opts?: FetchOptions
+) => Promise<{ status: number; text: string }>;
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_BODY_CHARS = 3_000_000;
@@ -226,6 +230,35 @@ export async function runCapture(
   // robots.txt fetches are capped by the same budget, so many distinct hosts
   // cannot turn one run into an unbounded number of requests.
   let robotsFetched = 0;
+  /** Reads an origin's robots.txt once. 4xx = no file = allowed; 5xx or an error = unknown = refuse. */
+  const loadRobots = async (origin: string) => {
+    robotsFetched++;
+    try {
+      const r = await fetcher(`${origin}/robots.txt`);
+      robotsCache.set(origin, r.status >= 500 ? null : r.status >= 400 ? '' : r.text);
+    } catch {
+      robotsCache.set(origin, null);
+    }
+  };
+  /** A redirect target gets the same robots.txt check as the page itself. */
+  const allowRedirect = async (next: URL) => {
+    if (!robotsCache.has(next.origin)) {
+      if (robotsFetched >= budget) {
+        throw new Error(
+          'A redirect led to a site whose robots.txt could not be checked within the budget, so it was not fetched'
+        );
+      }
+      await loadRobots(next.origin);
+    }
+    const robots = robotsCache.get(next.origin);
+    if (
+      robots === null ||
+      robots === undefined ||
+      !robotsAllows(robots, next.pathname + next.search)
+    ) {
+      throw new Error('A redirect led to a page robots.txt does not allow, so it was not fetched');
+    }
+  };
   const outcomes: CaptureOutcome[] = [];
   let attempted = 0;
   let succeeded = 0;
@@ -253,14 +286,7 @@ export async function runCapture(
         stoppedReason = `robots.txt budget of ${budget} reached`;
         break;
       }
-      robotsFetched++;
-      try {
-        const r = await fetcher(`${origin}/robots.txt`);
-        // 4xx = no robots file = allowed. 5xx or network error = unknown = do not fetch.
-        robotsCache.set(origin, r.status >= 500 ? null : r.status >= 400 ? '' : r.text);
-      } catch {
-        robotsCache.set(origin, null);
-      }
+      await loadRobots(origin);
     }
     const robots = robotsCache.get(origin);
     if (robots === null || robots === undefined || !robotsAllows(robots, u.pathname + u.search)) {
@@ -279,7 +305,7 @@ export async function runCapture(
 
     attempted++;
     try {
-      const page = await fetcher(t.url);
+      const page = await fetcher(t.url, { allowRedirect });
       if (page.status >= 400) throw new Error(`Page returned HTTP ${page.status}`);
       const got = extractPrice(page.text);
       await prisma.competitorPrice.create({

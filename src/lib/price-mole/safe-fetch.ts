@@ -218,7 +218,10 @@ export function createSafeFetch(opts: {
   // A UTF-8 character is at most 4 bytes, so this always holds maxBodyChars.
   const fetchImpl: FetchImpl =
     opts.fetchImpl ?? createPinnedFetch(makeGuardedLookup(lookup), opts.maxBodyChars * 4);
-  return async (url: string): Promise<{ status: number; text: string }> => {
+  return async (
+    url: string,
+    fetchOpts?: { allowRedirect?: (next: URL) => Promise<void> }
+  ): Promise<{ status: number; text: string }> => {
     let current = url;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
       await assertPublicUrl(current, lookup);
@@ -233,7 +236,11 @@ export function createSafeFetch(opts: {
         if (res.status >= 300 && res.status < 400) {
           const loc = res.headers.get('location');
           if (!loc) return { status: res.status, text: '' };
-          current = new URL(loc, current).toString();
+          const next = new URL(loc, current);
+          // The caller decides whether the redirect target may be fetched at all
+          // (for Price Mole: robots.txt). Throwing refuses it before any request.
+          await fetchOpts?.allowRedirect?.(next);
+          current = next.toString();
           continue;
         }
         const text = (await res.text()).slice(0, opts.maxBodyChars);

@@ -179,6 +179,27 @@ describe('isPrivateAddress — guard', () => {
 });
 
 describe('safe fetch — guard', () => {
+  it('asks the caller before following a redirect, and a refusal stops the request', async () => {
+    const { impl, calls } = fakeFetch({
+      'https://rival.example/product': { status: 302, location: '/secret' },
+      'https://rival.example/secret': { status: 200, body: 'SECRET-PRICE' },
+    });
+    const asked: string[] = [];
+    await expect(
+      make(impl)('https://rival.example/product', {
+        allowRedirect: async (next) => {
+          asked.push(next.toString());
+          throw new Error('robots.txt does not allow it');
+        },
+      })
+    ).rejects.toThrow(/robots/);
+    expect(asked).toEqual(['https://rival.example/secret']);
+    expect(calls).toEqual(['https://rival.example/product']);
+    // Positive control: when the caller allows it, the redirect is followed.
+    const ok = await make(impl)('https://rival.example/product', { allowRedirect: async () => {} });
+    expect(ok.text).toBe('SECRET-PRICE');
+  });
+
   it('positive control: a public page is fetched', async () => {
     const { impl } = fakeFetch({ 'https://rival.example/p': { status: 200, body: 'ok' } });
     expect(await make(impl)('https://rival.example/p')).toEqual({ status: 200, text: 'ok' });
