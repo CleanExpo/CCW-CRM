@@ -199,6 +199,8 @@ model Product {
   workshopServiceTemplateItems WorkshopServiceTemplateItem[]
   sds                          ProductSds?
   competitorProducts           CompetitorProduct[]
+  fitsProducts                 ProductFitment[]              @relation("FitmentMachine")
+  fitsMachines                 ProductFitment[]              @relation("FitmentFit")
 
   @@unique([ownerUserId, sku])
   @@index([ownerUserId])
@@ -269,6 +271,39 @@ model CompetitorCaptureRun {
 
   @@index([ownerUserId, startedAt(sort: Desc)])
   @@map("competitor_capture_runs")
+}
+
+/// UNI-2748: which consumables, parts and accessories fit a machine product.
+/// Rows start "suggested" (drafted from BOMs or order history) and only a staff
+/// confirmation makes them "confirmed". Customer-facing reads return confirmed only.
+model ProductFitment {
+  id               String    @id @default(uuid()) @db.Uuid
+  ownerUserId      String    @map("owner_user_id") @db.Uuid
+  machineProductId String    @map("machine_product_id") @db.Uuid
+  fitProductId     String    @map("fit_product_id") @db.Uuid
+  /// consumable | part | accessory
+  kind             String
+  /// Optional usage rate, e.g. 1 per 250 hours. Free text unit.
+  usageQuantity    Float?    @map("usage_quantity")
+  usagePer         String?   @map("usage_per")
+  /// suggested | confirmed | rejected
+  status           String    @default("suggested")
+  /// manual | import | bom | order_history
+  source           String    @default("manual")
+  evidence         String?   @db.Text
+  confirmedBy      String?   @map("confirmed_by") @db.Uuid
+  confirmedAt      DateTime? @map("confirmed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  machineProduct Product @relation("FitmentMachine", fields: [machineProductId], references: [id], onDelete: Cascade)
+  fitProduct     Product @relation("FitmentFit", fields: [fitProductId], references: [id], onDelete: Cascade)
+
+  @@unique([machineProductId, fitProductId])
+  @@index([ownerUserId])
+  @@index([fitProductId])
+  @@index([status])
+  @@map("product_fitments")
 }
 
 model ProductSds {
