@@ -76,12 +76,13 @@ export function isPrivateAddress(ip: string): boolean {
     if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every((n) => n === 0)) {
       return ipv4Private(embedded);
     }
-    return (
-      (g[0] & 0xfe00) === 0xfc00 || // fc00::/7 unique local
-      (g[0] & 0xffc0) === 0xfe80 || // fe80::/10 link-local
-      (g[0] & 0xffc0) === 0xfec0 || // fec0::/10 old site-local
-      (g[0] & 0xff00) === 0xff00 // ff00::/8 multicast
-    );
+    // Allow-list: only global unicast (2000::/3) is public. Inside it, refuse the
+    // ranges that tunnel or embed another address, where an internal IPv4 can hide:
+    // 2002::/16 (6to4), 2001:0::/32 (Teredo) and 2001:db8::/32 (documentation).
+    if ((g[0] & 0xe000) !== 0x2000) return true;
+    if (g[0] === 0x2002) return true;
+    if (g[0] === 0x2001 && (g[1] === 0 || g[1] === 0xdb8)) return true;
+    return false;
   }
   return true; // not an IP at all: refuse rather than guess
 }

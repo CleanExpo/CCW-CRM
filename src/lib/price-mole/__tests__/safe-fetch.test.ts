@@ -154,6 +154,13 @@ describe('isPrivateAddress — guard', () => {
       '64:ff9b::a00:1',
       'fe80::1%lo0',
       'fec0::1',
+      '2002:7f00:1::1',
+      '2002:a9fe:a9fe::1',
+      '2001:0:4136:e378:8000:63bf:3fff:fdd2',
+      '2001:db8::1',
+      'fd00::1',
+      'ff02::1',
+      '100::1',
     ]) {
       expect(isPrivateAddress(ip), ip).toBe(true);
     }
@@ -195,6 +202,11 @@ describe('safe fetch — guard', () => {
       await expect(make(impl)('https://rival.example/p')).rejects.toBeInstanceOf(UnsafeUrlError);
       expect(calls).toEqual(['https://rival.example/p']);
     }
+  });
+
+  it('refuses a public-looking name whose DNS answer is a 6to4 address embedding loopback', async () => {
+    const sixToFour: Lookup = async () => [{ address: '2002:7f00:1::1', family: 6 }];
+    await expect(assertPublicUrl('https://evil.example/', sixToFour)).rejects.toThrow(/non-public/);
   });
 
   it('refuses a public-looking name whose DNS answer is an IPv4-mapped internal address', async () => {
