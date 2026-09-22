@@ -5,6 +5,7 @@ import { nextInvoiceNumber, resolveInvoiceLinesFromPayload } from '@/lib/db/invo
 import { deriveInvoiceStatus } from '@/lib/db/invoice-status';
 import { prisma } from '@/lib/db/prisma';
 import { parseSaleBranch } from '@/lib/inventory/stock-movement';
+import { invoicesToCsv } from '@/lib/invoices/invoice-export';
 import type { CreateInvoiceRequest } from '@/types/invoices';
 import type { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
@@ -72,16 +73,27 @@ export async function GET(request: NextRequest) {
     ]);
 
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const data = rows
+      .map((r) =>
+        invoiceSummaryToApi({
+          ...r,
+          status: deriveInvoiceStatus(r),
+        })
+      )
+      .filter((inv) => (overdueOnly ? inv.status === 'overdue' : true));
+
+    if (searchParams.get('format') === 'csv') {
+      return new NextResponse(invoicesToCsv(data), {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'attachment; filename="invoices.csv"',
+        },
+      });
+    }
 
     return NextResponse.json({
-      data: rows
-        .map((r) =>
-          invoiceSummaryToApi({
-            ...r,
-            status: deriveInvoiceStatus(r),
-          })
-        )
-        .filter((inv) => (overdueOnly ? inv.status === 'overdue' : true)),
+      data,
       total,
       page,
       page_size: pageSize,
