@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "erp:seed-smoke": "node scripts/ci/seed-erp-smoke.mjs",
     "test:lighthouse": "lhci autorun",
     "db:migrate": "prisma migrate dev",
     "removetemp-accounts": "node scripts/remove-temp-accounts.mjs",
