@@ -2,8 +2,8 @@ import { prisma } from '@/lib/db/prisma';
 import { fetchFullOmniStockCatalog } from '@/lib/integrations/cin7-catalog-fetch';
 import { getCin7OmniCredentials } from '@/lib/integrations/cin7-omni';
 import { buildStockCatalogEvidence } from '@/lib/integrations/cin7-reconciliation';
-import { Prisma } from '@prisma/client';
 import { compareArea1, type Area1Position } from '@/lib/phase2/area1';
+import { evaluatePhase2Gates } from '@/lib/phase2/gates';
 import {
   reportBalances,
   reportCogs,
@@ -14,6 +14,7 @@ import {
   reportXero,
   roundMoney,
 } from '@/lib/phase2/ledgers';
+import { gateInputForArea } from '@/lib/phase2/scope';
 import {
   HISTORICAL_WINDOW_START,
   LEGACY_OPTIX_ONLY_CUSTOMERS,
@@ -21,6 +22,21 @@ import {
   type Phase2Area,
   type Phase2AreaReport,
 } from '@/lib/phase2/types';
+import { Prisma } from '@prisma/client';
+
+function applyGate(
+  report: Phase2AreaReport,
+  gate: { allowed: boolean; reason: string | null }
+): Phase2AreaReport {
+  if (gate.allowed) return report;
+  return {
+    ...report,
+    clean: false,
+    blocked: true,
+    blocked_reason: gate.reason,
+    notes: [...report.notes, gate.reason ?? 'Prerequisite gate failed.'],
+  };
+}
 
 export async function persistPhase2Snapshot(input: {
   ownerUserId: string;
@@ -86,12 +102,17 @@ export async function runPhase2Area(
   area: Phase2Area
 ): Promise<Phase2AreaReport> {
   if (area === 1) {
-    const [optix, cin7] = await Promise.all([loadOptixStock(ownerUserId), loadCin7Stock(ownerUserId)]);
-    return compareArea1({
+    const [optix, cin7] = await Promise.all([
+      loadOptixStock(ownerUserId),
+      loadCin7Stock(ownerUserId),
+    ]);
+    const report = compareArea1({
       cin7: cin7.positions,
       optix,
       cin7Complete: cin7.complete,
     });
+    const gate = evaluatePhase2Gates(await gateInputForArea(ownerUserId, 1, cin7.complete));
+    return applyGate(report, gate);
   }
 
   if (area === 2) {
@@ -134,7 +155,7 @@ export async function runPhase2Area(
     };
     const cin7Val = valueSide(cin7.positions);
     const optixVal = valueSide(optix);
-    return reportValuation({
+    const report = reportValuation({
       cin7ValueByWarehouse: cin7Val.warehouses,
       optixValueByWarehouse: optixVal.warehouses,
       qtyWithoutCost: optixVal.qtyWithoutCost,
@@ -142,6 +163,10 @@ export async function runPhase2Area(
       costingNote:
         'Uses last PO unit cost when present, otherwise list price. Not Cin7 FIFO layers until E1 lands.',
     });
+    return applyGate(
+      report,
+      evaluatePhase2Gates(await gateInputForArea(ownerUserId, 2, cin7.complete))
+    );
   }
 
   const windowStart = new Date(`${HISTORICAL_WINDOW_START}T00:00:00.000Z`);
@@ -168,11 +193,12 @@ export async function runPhase2Area(
         cin7Value: v.value,
         optixValue: v.value,
       }));
-    return reportInvoices({
+    const report = reportInvoices({
       monthly,
       cin7Complete: false,
       warrantyUnmarked: true,
     });
+    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 3, false)));
   }
 
   if (area === 4) {
@@ -196,12 +222,13 @@ export async function runPhase2Area(
       }
       cogs += line.quantity * cost;
     }
-    return reportCogs({
+    const report = reportCogs({
       periodCin7: 0,
       periodOptix: roundMoney(cogs),
       missingZeroCogsLines: missing,
       cin7Complete: false,
     });
+    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 4, false)));
   }
 
   if (area === 5) {
@@ -224,7 +251,7 @@ export async function runPhase2Area(
     const legacy = await prisma.customer.count({
       where: { ownerUserId, cin7ContactId: null },
     });
-    return reportBalances({
+    const report = reportBalances({
       arCin7: 0,
       arOptix: roundMoney(ar),
       apCin7: 0,
@@ -232,6 +259,7 @@ export async function runPhase2Area(
       legacyExcluded: Math.min(legacy, LEGACY_OPTIX_ONLY_CUSTOMERS),
       cin7Complete: false,
     });
+    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 5, false)));
   }
 
   if (area === 6) {
@@ -239,23 +267,25 @@ export async function runPhase2Area(
       prisma.purchaseOrder.count({ where: { ownerUserId } }),
       prisma.goodsReceipt.count({ where: { ownerUserId } }),
     ]);
-    return reportPurchasing({
+    const report = reportPurchasing({
       poCin7: 0,
       poOptix: pos,
       grCin7: 0,
       grOptix: receipts,
       cin7Complete: false,
     });
+    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 6, false)));
   }
 
   if (area === 7) {
     const moves = await prisma.stockMovement.count({ where: { ownerUserId } });
-    return reportMovements({ cin7Moves: 0, optixMoves: moves, cin7Complete: false });
+    const report = reportMovements({ cin7Moves: 0, optixMoves: moves, cin7Complete: false });
+    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 7, false)));
   }
 
   const area2 = await runPhase2Area(ownerUserId, 2);
   const area4 = await runPhase2Area(ownerUserId, 4);
-  return reportXero({
+  const report = reportXero({
     inventoryCin7: area2.company.cin7,
     inventoryOptix: area2.company.optix,
     inventoryXero: null,
@@ -264,6 +294,7 @@ export async function runPhase2Area(
     cogsXero: null,
     e5Agree: null,
   });
+  return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 8, false)));
 }
 
 export function parsePhase2Area(raw: string | null): Phase2Area | null {
