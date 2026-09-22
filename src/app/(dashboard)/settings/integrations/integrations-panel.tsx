@@ -13,6 +13,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Cin7ConnectionCard } from './components/Cin7ConnectionCard';
 import { Cin7ReconciliationCard } from './components/Cin7ReconciliationCard';
+import { Phase2Panel } from './components/Phase2Panel';
 import { Cin7ShadowSyncCard } from './components/Cin7ShadowSyncCard';
 import { Cin7SyncControls } from './components/Cin7SyncControls';
 import { Cin7WebhookSubscriptionsCard } from './components/Cin7WebhookSubscriptionsCard';
@@ -304,6 +305,7 @@ function IntegrationsContent() {
                 <Cin7SyncControls isConnected={cin7Connected} />
               </div>
               <Cin7ReconciliationCard isConnected={cin7Connected} />
+              <Phase2Panel isConnected={cin7Connected} />
               <details
                 className="border-border/60 bg-muted/20 group mt-4 rounded-lg border"
                 onToggle={(e) => setCin7ExtrasOpen((e.target as HTMLDetailsElement).open)}
