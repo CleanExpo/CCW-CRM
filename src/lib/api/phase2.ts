@@ -13,3 +13,11 @@ export function comparePhase2Area(area: Phase2Area): Promise<Phase2AreaReport> {
 export function getPhase2SameAnswer(): Promise<Record<string, unknown>> {
   return apiClient.get('/api/phase2/same-answer', undefined, 300_000);
 }
+
+export function getPhase2Scope(): Promise<Record<string, unknown>> {
+  return apiClient.get('/api/phase2/scope');
+}
+
+export function getPhase2EvidenceUrl(area: Phase2Area): string {
+  return `/api/phase2/evidence?area=${area}`;
+}
