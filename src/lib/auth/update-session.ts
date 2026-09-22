@@ -3,6 +3,7 @@
  */
 
 import { verifyAuthAccessJwt } from '@/lib/auth/jwt-tokens';
+import { memberMayAccessPath } from '@/lib/auth/member-settings-access';
 import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from '@/lib/auth/session-cookies';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -142,11 +143,11 @@ export async function updateSession(request: NextRequest) {
       }
     }
     if (user.role === 'member') {
+      const pathname = request.nextUrl.pathname;
       const blocked = memberBlockedPrefixes.some(
-        (path) =>
-          request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+        (path) => pathname === path || pathname.startsWith(path + '/')
       );
-      if (blocked) {
+      if (blocked && !memberMayAccessPath(pathname)) {
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
