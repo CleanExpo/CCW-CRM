@@ -3,6 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api/phase2', () => ({
+  getPhase2Scope: vi.fn(async () => ({
+    unsigned: true,
+    phase1_missing: 0,
+    price_lists_complete: false,
+    preflight: [{ id: 'E1', check: 'stock control', result: 'pending' }],
+    source_of_truth: [],
+    out_of_scope: [],
+  })),
+  getPhase2EvidenceUrl: vi.fn(() => '/api/phase2/evidence?area=1'),
+  getPhase2SameAnswer: vi.fn(),
   comparePhase2Area: vi.fn(async () => ({
     area: 1,
     title: 'Inventory quantities by warehouse',
@@ -31,7 +41,6 @@ vi.mock('@/lib/api/phase2', () => ({
     notes: ['Compares Stock On Hand, not Available (open Shopify orders allocate Available only).'],
     source_of_truth: { cin7: 'cin7', optix: 'optix' },
   })),
-  getPhase2SameAnswer: vi.fn(),
 }));
 
 import { comparePhase2Area } from '@/lib/api/phase2';
