@@ -151,6 +151,72 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  # UNI-2108. Kept off the deploy gate until this job has passed on the candidate
+  # three times — an unrehearsed required check would red main on first fire.
+  smoke-erp:
+    name: ERP smoke pack (UNI-2108)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ccw_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ccw_smoke
+      JWT_SECRET: ci-ephemeral-not-a-real-secret
+      JWT_SECRET_KEY: ci-ephemeral-not-a-real-secret
+      MFA_ENFORCE: 'false'
+      ALLOW_PUBLIC_REGISTRATION: 'false'
+      E2E_EMAIL: smoke.owner@local.test
+      E2E_PASSWORD: SmokeOwner12ab
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+      - name: Seed smoke owner
+        run: npm run erp:seed-smoke
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start the candidate
+        run: |
+          npm run dev > /tmp/dev-smoke.log 2>&1 &
+          PORT=""
+          for i in $(seq 1 90); do
+            PORT=$(grep -oE 'http://localhost:[0-9]+' /tmp/dev-smoke.log | head -1 | grep -oE '[0-9]+$' || true)
+            if [ -n "$PORT" ] && curl -sf --connect-timeout 5 --max-time 20 -o /dev/null "http://localhost:$PORT/"; then
+              echo "E2E_BASE_URL=http://localhost:$PORT" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "dev server never became ready"; cat /tmp/dev-smoke.log; exit 1
+      - name: Run ERP smoke
+        run: npx playwright test e2e/erp-smoke.spec.ts --project=desktop
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: erp-smoke-report
+          path: playwright-report/
+          retention-days: 7
+
   deploy:
     name: Deploy Gate
     needs: [test, validate, security, e2e-public]
