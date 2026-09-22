@@ -17,14 +17,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
+import { pathAfterRegister } from '@/lib/auth/after-register';
 import toast from 'react-hot-toast';
 
 const formSchema = z
   .object({
     full_name: z.string().min(1, 'Name is required').max(120),
     email: z.string().email('Invalid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirm: z.string().min(8, 'Confirm your password'),
+    password: z.string().min(12, 'Password must be at least 12 characters'),
+    confirm: z.string().min(12, 'Confirm your password'),
   })
   .refine((data) => data.password === data.confirm, {
     message: 'Passwords do not match',
@@ -57,11 +58,7 @@ export function RegisterForm() {
 
       toast.success(response.message || `Account created — welcome, ${response.user.email}`);
 
-      if (response.access_token) {
-        window.location.href = '/dashboard/settings/welcome?from=register';
-      } else {
-        window.location.href = '/login?registered=1';
-      }
+      window.location.href = pathAfterRegister(response);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Could not create account';
       toast.error(errorMessage, { id: 'register-error' });
@@ -90,6 +87,7 @@ export function RegisterForm() {
                 <Input
                   type="text"
                   autoComplete="name"
+                  data-testid="register-name"
                   placeholder="Alex Supplier"
                   className={inputClass}
                   {...field}
@@ -109,6 +107,7 @@ export function RegisterForm() {
                 <Input
                   type="email"
                   autoComplete="email"
+                  data-testid="register-email"
                   placeholder="you@company.com"
                   className={inputClass}
                   {...field}
@@ -128,7 +127,8 @@ export function RegisterForm() {
                 <Input
                   type="password"
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  data-testid="register-password"
+                  placeholder="At least 12 characters"
                   className={inputClass}
                   {...field}
                 />
@@ -147,6 +147,7 @@ export function RegisterForm() {
                 <Input
                   type="password"
                   autoComplete="new-password"
+                  data-testid="register-confirm"
                   placeholder="Repeat password"
                   className={inputClass}
                   {...field}
@@ -163,6 +164,7 @@ export function RegisterForm() {
           size="lg"
           className="mt-1 h-12 w-full rounded-xl text-base font-semibold text-white shadow-lg shadow-indigo-500/30 hover:brightness-110"
           disabled={isLoading}
+          data-testid="register-submit"
           rightIcon={!isLoading ? <ArrowRight className="h-4 w-4 opacity-90" /> : undefined}
         >
           {isLoading ? 'Creating account…' : 'Create account'}
