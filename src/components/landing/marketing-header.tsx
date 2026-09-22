@@ -1,5 +1,6 @@
 import { CcwLogo } from '@/components/brand/ccw-logo';
 import { marketingShell } from '@/components/landing/marketing-shell';
+import { isPublicRegistrationEnabled } from '@/lib/auth/public-registration';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
@@ -20,6 +21,7 @@ const display: CSSProperties = {
  * Server component for LCP. Premium chrome + CSS-only mobile menu (no client JS).
  */
 export function MarketingHeader() {
+  const publicSignup = isPublicRegistrationEnabled();
   return (
     <header className="sticky top-0 z-50">
       {/* Hairline sky accent */}
@@ -64,6 +66,15 @@ export function MarketingHeader() {
           </nav>
 
           <div className="relative z-10 flex shrink-0 items-center gap-2 sm:gap-3">
+            {publicSignup ? (
+              <Link
+                href="/register"
+                data-testid="marketing-signup"
+                className="hidden min-h-10 items-center justify-center px-3 text-[13px] font-semibold text-zinc-200 transition hover:text-white sm:inline-flex"
+              >
+                Sign up
+              </Link>
+            ) : null}
             <Link
               href="/login"
               className="group inline-flex min-h-10 items-center justify-center gap-2 bg-sky-500 px-4 text-[13px] font-semibold text-zinc-950 transition hover:bg-sky-400 sm:px-5"
@@ -101,6 +112,15 @@ export function MarketingHeader() {
                     </Link>
                   ))}
                   <div className="my-1 h-px bg-white/[0.06]" />
+                  {publicSignup ? (
+                    <Link
+                      href="/register"
+                      data-testid="marketing-signup-mobile"
+                      className="px-3 py-2.5 text-center text-[14px] font-semibold text-zinc-200 transition hover:bg-white/[0.04] hover:text-white"
+                    >
+                      Sign up
+                    </Link>
+                  ) : null}
                   <Link
                     href="/login"
                     className="mt-1 bg-sky-500 px-3 py-2.5 text-center text-[14px] font-semibold text-zinc-950 transition hover:bg-sky-400"
