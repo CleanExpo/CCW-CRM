@@ -22,6 +22,7 @@ import {
   marketingShell as shell,
   marketingShellWide as shellWide,
 } from '@/components/landing/marketing-shell';
+import { isPublicRegistrationEnabled } from '@/lib/auth/public-registration';
 import { cn } from '@/lib/utils';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
@@ -104,6 +105,7 @@ export interface MarketingLandingProps {
 }
 
 export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
+  const publicSignup = isPublicRegistrationEnabled();
   return (
     <div
       className={cn(
@@ -157,13 +159,24 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                   </p>
 
                   <div className="mt-8 flex flex-wrap items-center gap-3">
-                    <Link
-                      href="/login"
-                      className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
-                    >
-                      Enter workspace
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                    {publicSignup ? (
+                      <Link
+                        href="/register"
+                        data-testid="marketing-signup-hero"
+                        className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
+                      >
+                        Sign up
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/login"
+                        className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
+                      >
+                        Enter workspace
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    )}
                     <Link
                       href="/product"
                       className="inline-flex h-12 items-center justify-center border border-white/20 px-7 text-[15px] font-semibold text-white transition hover:bg-white/[0.06]"
