@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
+import { settingsApi } from '@/lib/api/settings';
 
 const formSchema = z.object({
   company_name: z.string().min(2, 'Company name must be at least 2 characters'),
@@ -32,19 +32,17 @@ const formSchema = z.object({
   country: z.string().default('AU'),
 });
 
-type FormData = z.infer<typeof formSchema>;
+export type CompanySetupValues = z.infer<typeof formSchema>;
 
 interface CompanySetupStepProps {
-  onComplete: (data: FormData) => void;
-  onBack?: () => void;
-  canGoBack?: boolean;
-  data?: FormData;
+  onComplete: (data: CompanySetupValues) => void;
+  data?: CompanySetupValues;
 }
 
 export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<FormData>({
+  const form = useForm<CompanySetupValues>({
     resolver: zodResolver(formSchema),
     defaultValues: data || {
       company_name: '',
@@ -54,17 +52,11 @@ export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
     },
   });
 
-  async function onSubmit(values: FormData) {
+  async function onSubmit(values: CompanySetupValues) {
     setIsLoading(true);
     try {
-      // Non-fatal: user can update company info from Settings later
-      await apiClient
-        .patch('/api/auth/me', {
-          company_name: values.company_name,
-          industry: values.industry,
-          company_size: values.company_size,
-          country: values.country,
-        })
+      await settingsApi
+        .updateCompany({ name: values.company_name })
         .catch(() => undefined);
       onComplete(values);
     } finally {
@@ -82,7 +74,12 @@ export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
             <FormItem>
               <FormLabel>Company Name *</FormLabel>
               <FormControl>
-                <Input placeholder="Acme Corp" {...field} disabled={isLoading} />
+                <Input
+                  data-testid="onboarding-company-name"
+                  placeholder="Acme Corp"
+                  {...field}
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormDescription>Your legal business name</FormDescription>
               <FormMessage />
@@ -150,7 +147,7 @@ export function CompanySetupStep({ onComplete, data }: CompanySetupStepProps) {
         />
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" data-testid="onboarding-company-continue" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Continue
           </Button>
