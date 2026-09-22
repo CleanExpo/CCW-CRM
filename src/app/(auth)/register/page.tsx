@@ -10,7 +10,7 @@ export default function RegisterPage() {
         title="Registration is closed"
         description="New Optix accounts are created by an administrator. Self-registration is off."
       >
-        <p className="text-muted-foreground text-sm">
+        <p data-testid="registration-closed" className="text-muted-foreground text-sm">
           If you already have an account,{' '}
           <Link href="/login" className="text-primary font-medium hover:underline">
             sign in
