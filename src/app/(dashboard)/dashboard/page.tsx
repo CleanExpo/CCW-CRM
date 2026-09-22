@@ -50,6 +50,7 @@ import { Cin7SyncStatusWidget } from '@/components/dashboard/Cin7SyncStatusWidge
 import { AgentMetricsWidget } from '@/components/dashboard/AgentMetricsWidget';
 import { DashboardAmbient } from '@/components/dashboard/dashboard-ambient';
 import { DashboardHero } from '@/components/dashboard/dashboard-hero';
+import { SignedInGreeting } from '@/components/dashboard/signed-in-greeting';
 import { DashboardQuickActions } from '@/components/dashboard/dashboard-quick-actions';
 import {
   DashboardOperationalMix,
@@ -329,14 +330,7 @@ export default function DashboardPage() {
       >
         <DashboardHero
           eyebrow={todayLabel}
-          title={
-            <>
-              Operations hub for{' '}
-              <span className="bg-gradient-to-r from-sky-200 via-white to-indigo-200 bg-clip-text text-transparent">
-                equipment suppliers
-              </span>
-            </>
-          }
+          title={<SignedInGreeting />}
           description="Real-time trading, inventory signals, and pipeline health — aligned with your CCW Online brand experience."
           aside={
             <div className="flex flex-col gap-4">
