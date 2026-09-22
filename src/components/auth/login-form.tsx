@@ -253,6 +253,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
                     type="email"
                     placeholder="you@company.com"
                     autoComplete="email"
+                    data-testid="login-email"
                     className={
                       isMarketing
                         ? 'h-12 rounded-xl border-zinc-600 bg-zinc-900/95 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35'
@@ -281,6 +282,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
                     type="password"
                     placeholder="Enter your password"
                     autoComplete="current-password"
+                    data-testid="login-password"
                     className={
                       isMarketing
                         ? 'h-12 rounded-xl border-zinc-600 bg-zinc-900/95 text-zinc-50 shadow-inner shadow-black/30 placeholder:text-zinc-500 focus-visible:border-sky-500/70 focus-visible:ring-2 focus-visible:ring-sky-500/35'
@@ -331,6 +333,7 @@ export function LoginForm({ variant = 'default' }: LoginFormProps) {
 
           <Button
             type="submit"
+            data-testid="login-submit"
             variant={isMarketing ? 'gradient' : 'default'}
             size={isMarketing ? 'lg' : 'default'}
             className={
