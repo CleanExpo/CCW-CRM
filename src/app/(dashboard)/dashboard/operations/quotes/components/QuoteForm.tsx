@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { QuoteLineItems, LineItem } from './QuoteLineItems';
 import { Quote, Customer, QuoteItem } from '../types';
 import { useRecentItems } from '@/hooks/use-recent-items';
+import { QuoteCompetitorPanel } from '@/components/price-mole/QuoteCompetitorPanel';
 // PHASE C: AI Quote Assistant imports
 import { AIQuoteGenerator } from '@/components/ai/AIQuoteGenerator';
 import { Sparkles } from 'lucide-react';
@@ -455,6 +456,10 @@ export function QuoteForm({ quote, open, onOpenChange, onSuccess }: QuoteFormPro
                 onChange={setLineItems}
                 errors={lineItemErrors}
                 selectedLocation={selectedLocation}
+              />
+
+              <QuoteCompetitorPanel
+                productIds={lineItems.map((i) => i.product_id).filter(Boolean)}
               />
 
               {lineItems.length > 0 && (

@@ -12,9 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 interface PersonaRecord {
@@ -94,27 +96,43 @@ export default function PersonasPage() {
   const [data, setData] = useState<PersonasResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [classifying, setClassifying] = useState(false);
-  const [personaFilter, setPersonaFilter] = useState<string>('all');
+  const [personaFilter, setPersonaFilterState] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
+  const setPersonaFilter = useCallback((value: string) => {
+    setPersonaFilterState(value);
+    setPage(1);
+  }, []);
+
+  const beginLoad = useLatestLoad();
   const load = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
+      const paging = `page=${page}&page_size=${pageSize}`;
       const params =
-        personaFilter !== 'all'
-          ? `?persona_filter=${personaFilter}&page_size=200`
-          : '?page_size=200';
+        personaFilter !== 'all' ? `?persona_filter=${personaFilter}&${paging}` : `?${paging}`;
       const res = await apiClient.get<PersonasResponse>(`/api/crm/personas${params}`);
+      if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (res.items.length === 0 && res.total > 0 && page > res.total_pages) {
+        setPage(res.total_pages);
+        return;
+      }
       setData(res);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         variant: 'destructive',
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to load personas',
       });
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [personaFilter, toast]);
+  }, [personaFilter, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     load();
@@ -291,6 +309,19 @@ export default function PersonasPage() {
                 </tbody>
               </table>
             </div>
+            {!loading && data && data.items.length > 0 && (
+              <PaginationControls
+                currentPage={page}
+                totalPages={data.total_pages}
+                pageSize={pageSize}
+                totalItems={data.total}
+                onPageChange={setPage}
+                onPageSizeChange={(newSize) => {
+                  setPageSize(newSize);
+                  setPage(1);
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

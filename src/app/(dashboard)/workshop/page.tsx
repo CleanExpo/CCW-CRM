@@ -31,6 +31,12 @@ const WORKSHOP_MODULES: HubModuleItem[] = [
     icon: 'ClipboardList',
   },
   {
+    title: 'Parts map',
+    description: 'What fits each machine. Staff confirm before customers see it.',
+    href: '/dashboard/workshop/fitment',
+    icon: 'ClipboardList',
+  },
+  {
     title: 'Recall review',
     description: 'Staff check customer and machine. No customer contact.',
     href: '/dashboard/workshop/recall',

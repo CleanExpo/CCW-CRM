@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,35 +28,61 @@ function getWeekDates(date: Date): Date[] {
   });
 }
 
+/** 20 pages of 100: far beyond any real week, and a bound on the walk. */
+const MAX_WEEK_PAGES = 20;
+
 export default function WorkshopSchedulePage() {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<WorkshopBooking[]>([]);
+  const [total, setTotal] = useState(0);
+  const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Each load() takes a number; a walk that finishes after a newer one started
+  // (week or location changed) must not overwrite the newer week.
+  const loadGeneration = useRef(0);
   const [location, setLocation] = useState('');
   const [weekStart, setWeekStart] = useState(new Date());
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
   const load = useCallback(async () => {
+    const generation = ++loadGeneration.current;
+    const current = () => generation === loadGeneration.current;
     setLoading(true);
+    const dateFrom = weekDates[0].toISOString();
+    const dateTo = new Date(weekDates[6].getTime() + 86400000).toISOString();
+    // The week grid needs every booking in the week, or a day on a later page
+    // would read "Free". The API caps page_size at 100, so walk the pages.
+    const all: WorkshopBooking[] = [];
+    let weekTotal = 0;
+    let walkFailed = false;
     try {
-      const dateFrom = weekDates[0].toISOString();
-      const dateTo = new Date(weekDates[6].getTime() + 86400000).toISOString();
-      const data = await workshopApi.listBookings({
-        location: location || undefined,
-        date_from: dateFrom,
-        date_to: dateTo,
-        page_size: 100,
-      });
-      setBookings(data.items);
+      for (let page = 1; page <= MAX_WEEK_PAGES; page++) {
+        const data = await workshopApi.listBookings({
+          location: location || undefined,
+          date_from: dateFrom,
+          date_to: dateTo,
+          page,
+          page_size: 100,
+        });
+        if (!current()) return;
+        all.push(...data.items);
+        weekTotal = data.total;
+        if (data.items.length === 0 || all.length >= data.total || page >= data.total_pages) break;
+      }
     } catch (error: unknown) {
+      if (!current()) return;
+      walkFailed = true;
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed',
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
     }
+    // Rows already loaded are kept even when a later page failed.
+    setBookings(all);
+    setTotal(weekTotal);
+    setFailed(walkFailed);
+    setLoading(false);
   }, [location, weekDates, toast]);
 
   useEffect(() => {
@@ -73,6 +99,8 @@ export default function WorkshopSchedulePage() {
     d.setDate(d.getDate() + 7);
     setWeekStart(d);
   }
+
+  const incomplete = failed || bookings.length < total;
 
   function bookingsForDay(date: Date): WorkshopBooking[] {
     return bookings.filter((b) => {
@@ -132,6 +160,24 @@ export default function WorkshopSchedulePage() {
           </Button>
         </div>
 
+        {!loading && failed && (
+          <div className="flex items-center gap-3 text-sm text-amber-700">
+            <p>
+              Couldn&apos;t load every booking for this week. Days may have more bookings than
+              shown.
+            </p>
+            <Button variant="outline" size="sm" onClick={load}>
+              Retry
+            </Button>
+          </div>
+        )}
+        {!loading && !failed && incomplete && (
+          <p className="text-sm text-amber-700">
+            Showing the first {bookings.length} of {total} bookings this week. Days may have more
+            bookings than shown.
+          </p>
+        )}
+
         {/* Week Grid */}
         {loading ? (
           <div className="grid grid-cols-7 gap-2">
@@ -155,7 +201,7 @@ export default function WorkshopSchedulePage() {
                     {date.toLocaleDateString([], { weekday: 'short', day: 'numeric' })}
                   </div>
                   {dayBookings.length === 0 ? (
-                    <div className="text-muted-foreground/50 text-xs">Free</div>
+                    !incomplete && <div className="text-muted-foreground/50 text-xs">Free</div>
                   ) : (
                     <div className="space-y-1">
                       {dayBookings.map((b) => (
@@ -178,11 +224,11 @@ export default function WorkshopSchedulePage() {
         {/* Booking List */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">All Bookings This Week ({bookings.length})</CardTitle>
+            <CardTitle className="text-base">All Bookings This Week ({total})</CardTitle>
           </CardHeader>
           <CardContent>
             {bookings.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No bookings this week.</p>
+              !failed && <p className="text-muted-foreground text-sm">No bookings this week.</p>
             ) : (
               <div className="overflow-hidden rounded border">
                 <table className="w-full text-sm">

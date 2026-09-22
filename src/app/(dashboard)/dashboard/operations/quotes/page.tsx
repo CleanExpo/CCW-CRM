@@ -18,7 +18,7 @@ import { ResponsiveTable } from '@/components/responsive-table/ResponsiveTable';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns'; // PHASE 4: Add timestamp display
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import {
   OperationsPageHeader,
   OperationsPageLayout,
@@ -55,6 +55,7 @@ export default function QuotesPage() {
   const [pageSize, setPageSize] = useState(50);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -68,6 +69,7 @@ export default function QuotesPage() {
         `/api/quotes?page=${page}&page_size=${pageSize}`
       );
       setQuotes(response.items);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -78,6 +80,7 @@ export default function QuotesPage() {
         title: 'Error',
         description: message,
       });
+      setLoadError(true);
       setQuotes([]);
       setTotal(0);
     } finally {
@@ -189,7 +192,7 @@ export default function QuotesPage() {
                 <CardDescription className="dark:text-foreground/70">
                   {total} quotes in system
                   {lastUpdated && (
-                    <span className="text-muted-foreground ml-2 text-xs dark:text-foreground/60">
+                    <span className="text-muted-foreground dark:text-foreground/60 ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>
                   )}
@@ -204,6 +207,8 @@ export default function QuotesPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : loadError ? (
+              <ErrorState title="Couldn't load quotes" onRetry={() => void loadQuotes()} />
             ) : !quotes || quotes.length === 0 ? (
               <EmptyState
                 icon={FileText}
@@ -304,6 +309,23 @@ export default function QuotesPage() {
                             Convert
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Copies a portal link that opens this quote for its own customer. Online ordering must be open."
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/portal/cart?quote=${quote.id}`;
+                            try {
+                              await navigator.clipboard.writeText(url);
+                              toast({ title: 'Quote-to-cart link copied' });
+                            } catch {
+                              toast({ title: 'Copy this link', description: url });
+                            }
+                          }}
+                        >
+                          Copy cart link
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

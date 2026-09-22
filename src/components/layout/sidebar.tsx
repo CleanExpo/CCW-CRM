@@ -77,6 +77,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: 'Overview', href: '/dashboard/operations', icon: LayoutDashboard },
       { name: 'Quotes', href: '/dashboard/operations/quotes', icon: FileText },
+      { name: 'Price Mole', href: '/dashboard/operations/price-mole', icon: FileText },
       { name: 'Sales orders', href: '/dashboard/operations/orders', icon: ShoppingCart },
       { name: 'Fulfilment', href: '/dashboard/operations/fulfilment', icon: PackageCheck },
       {
@@ -130,6 +131,8 @@ const navGroups: NavGroup[] = [
       { name: 'Schedule', href: '/dashboard/workshop/schedule', icon: CalendarDays },
       { name: 'Equipment', href: '/dashboard/workshop/equipment', icon: Factory },
       { name: 'Job templates', href: '/dashboard/workshop/templates', icon: ClipboardList },
+      { name: 'Parts map', href: '/dashboard/workshop/fitment', icon: ClipboardList },
+      { name: 'Service plans', href: '/dashboard/workshop/plans', icon: CalendarDays },
       { name: 'Recall review', href: '/dashboard/workshop/recall', icon: Bell },
       { name: 'Centres', href: '/dashboard/workshop/centres', icon: Factory },
       { name: 'Reminders', href: '/dashboard/workshop/reminders', icon: Bell },

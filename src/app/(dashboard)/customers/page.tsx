@@ -21,6 +21,7 @@ import { CustomerForm } from './components/CustomerForm';
 import { DeleteCustomerDialog } from './components/DeleteCustomerDialog';
 // PHASE 4: Last updated timestamps
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { ErrorState } from '@/components/ui/empty-state';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
 import { formatDistanceToNow } from 'date-fns';
@@ -56,6 +57,7 @@ export default function CustomersPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null); // PHASE 4: Last updated timestamp
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -86,6 +88,7 @@ export default function CustomersPage() {
         }`
       );
       setCustomers(response.items);
+      setLoadError(false);
       setTotal(response.total);
       setTotalPages(response.total_pages);
     } catch (error: unknown) {
@@ -95,6 +98,7 @@ export default function CustomersPage() {
         title: 'Error',
         description: message,
       });
+      setLoadError(true);
       setCustomers([]);
       setTotal(0);
     } finally {
@@ -239,6 +243,8 @@ export default function CustomersPage() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : loadError ? (
+              <ErrorState title="Couldn't load customers" onRetry={() => void loadCustomers()} />
             ) : !customers || customers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-muted-foreground text-lg font-medium">No customers found</p>
@@ -261,6 +267,7 @@ export default function CustomersPage() {
                 columns={[
                   {
                     key: 'select',
+                    mobileLabel: 'Select',
                     label: (
                       <Checkbox
                         checked={

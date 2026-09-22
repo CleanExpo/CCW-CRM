@@ -10,7 +10,12 @@ export type ExtractInvoiceLine = {
   unit_price: number;
   line_total: number;
   invoice_date: string;
+  /** JSON only, not in the CSV. Lets a reader drop draft and cancelled invoices. */
+  invoice_status?: string;
 };
+
+/** Invoices per extract page. Read `invoice_next_page` until it is null for the full history. */
+export const INVOICE_PAGE_SIZE = 2000;
 
 export type ExtractStockMovement = {
   kind: 'stock_movement';
@@ -26,6 +31,9 @@ export type ExtractStockMovement = {
 
 export type ReportingExtract = {
   generated_at: string;
+  /** Which page of invoices this is (1-based), and the next one, or null on the last page. */
+  invoice_page?: number;
+  invoice_next_page?: number | null;
   invoice_lines: ExtractInvoiceLine[];
   stock_movements: ExtractStockMovement[];
 };

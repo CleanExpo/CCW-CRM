@@ -254,7 +254,11 @@ export const authApi = {
     return res.json();
   },
 
-  async requestPasswordReset(email: string): Promise<{ message: string }> {
+  async requestPasswordReset(email: string): Promise<{
+    message: string;
+    /** False when this deployment cannot email reset links at all. Same for every address. */
+    resets_available?: boolean;
+  }> {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

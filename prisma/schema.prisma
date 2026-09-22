@@ -198,11 +198,113 @@ model Product {
   workshopEquipment            WorkshopEquipment[]
   workshopServiceTemplateItems WorkshopServiceTemplateItem[]
   sds                          ProductSds?
+  competitorProducts           CompetitorProduct[]
+  fitsProducts                 ProductFitment[]              @relation("FitmentMachine")
+  fitsMachines                 ProductFitment[]              @relation("FitmentFit")
+  workshopBookingParts         WorkshopBookingPart[]
 
   @@unique([ownerUserId, sku])
   @@index([ownerUserId])
   @@index([ownerUserId, cin7StyleCode])
   @@map("products")
+}
+
+/// UNI-2751 Price Mole: a competitor's product page matched to a CCW product.
+/// Only staff-confirmed matches are shown in the quote builder.
+model CompetitorProduct {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerUserId     String    @map("owner_user_id") @db.Uuid
+  competitor      String
+  url             String    @db.Text
+  title           String?
+  competitorSku   String?   @map("competitor_sku")
+  productId       String?   @map("product_id") @db.Uuid
+  /// suggested | confirmed | rejected
+  matchStatus     String    @default("suggested") @map("match_status")
+  confirmedBy     String?   @map("confirmed_by") @db.Uuid
+  confirmedAt     DateTime? @map("confirmed_at")
+  isActive        Boolean   @default(true) @map("is_active")
+  lastAttemptAt   DateTime? @map("last_attempt_at")
+  lastError       String?   @map("last_error") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  product Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
+  prices  CompetitorPrice[]
+
+  @@unique([ownerUserId, url])
+  @@index([ownerUserId])
+  @@index([productId])
+  @@map("competitor_products")
+}
+
+/// One observed price. Rows are only written for a successful read; a failed
+/// read is recorded on the product (last_error) and the run, never as a price.
+model CompetitorPrice {
+  id                  String   @id @default(uuid()) @db.Uuid
+  competitorProductId String   @map("competitor_product_id") @db.Uuid
+  price               Float
+  currency            String   @default("AUD")
+  /// capture | manual
+  source              String
+  capturedAt          DateTime @map("captured_at")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  competitorProduct CompetitorProduct @relation(fields: [competitorProductId], references: [id], onDelete: Cascade)
+
+  @@index([competitorProductId, capturedAt(sort: Desc)])
+  @@map("competitor_prices")
+}
+
+/// One capture run and its budget, so a hard stop is visible after the fact.
+model CompetitorCaptureRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  ownerUserId   String    @map("owner_user_id") @db.Uuid
+  trigger       String
+  pageBudget    Int       @map("page_budget")
+  attempted     Int       @default(0)
+  succeeded     Int       @default(0)
+  failed        Int       @default(0)
+  skipped       Int       @default(0)
+  stoppedReason String?   @map("stopped_reason")
+  startedAt     DateTime  @default(now()) @map("started_at")
+  finishedAt    DateTime? @map("finished_at")
+
+  @@index([ownerUserId, startedAt(sort: Desc)])
+  @@map("competitor_capture_runs")
+}
+
+/// UNI-2748: which consumables, parts and accessories fit a machine product.
+/// Rows start "suggested" (drafted from BOMs or order history) and only a staff
+/// confirmation makes them "confirmed". Customer-facing reads return confirmed only.
+model ProductFitment {
+  id               String    @id @default(uuid()) @db.Uuid
+  ownerUserId      String    @map("owner_user_id") @db.Uuid
+  machineProductId String    @map("machine_product_id") @db.Uuid
+  fitProductId     String    @map("fit_product_id") @db.Uuid
+  /// consumable | part | accessory
+  kind             String
+  /// Optional usage rate, e.g. 1 per 250 hours. Free text unit.
+  usageQuantity    Float?    @map("usage_quantity")
+  usagePer         String?   @map("usage_per")
+  /// suggested | confirmed | rejected
+  status           String    @default("suggested")
+  /// manual | import | bom | order_history
+  source           String    @default("manual")
+  evidence         String?   @db.Text
+  confirmedBy      String?   @map("confirmed_by") @db.Uuid
+  confirmedAt      DateTime? @map("confirmed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  machineProduct Product @relation("FitmentMachine", fields: [machineProductId], references: [id], onDelete: Cascade)
+  fitProduct     Product @relation("FitmentFit", fields: [fitProductId], references: [id], onDelete: Cascade)
+
+  @@unique([machineProductId, fitProductId])
+  @@index([ownerUserId])
+  @@index([fitProductId])
+  @@index([status])
+  @@map("product_fitments")
 }
 
 model ProductSds {
@@ -1495,6 +1597,7 @@ model WorkshopEquipment {
   bookings   WorkshopBooking[]
   reminders  WorkshopServiceReminder[]
   recallCase WorkshopRecallCase?
+  servicePlans WorkshopServicePlan[]
 
   @@index([ownerUserId])
   @@index([customerId])
@@ -1563,6 +1666,7 @@ model WorkshopBooking {
   equipment WorkshopEquipment         @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
   template  WorkshopServiceTemplate?  @relation(fields: [serviceTemplateId], references: [id], onDelete: SetNull)
   reminders WorkshopServiceReminder[]
+  parts     WorkshopBookingPart[]
 
   @@unique([ownerUserId, bookingNumber])
   @@index([ownerUserId])
@@ -1620,6 +1724,51 @@ model WorkshopCentre {
 }
 
 /// Staff review of a due machine. Never implies the customer was contacted.
+/// UNI-2750: a yearly (or hours-based) service plan on a customer machine.
+/// Price is optional: plan pricing sits with Phill and is not invented here.
+model WorkshopServicePlan {
+  id                String    @id @default(uuid()) @db.Uuid
+  ownerUserId       String    @map("owner_user_id") @db.Uuid
+  equipmentId       String    @map("equipment_id") @db.Uuid
+  serviceTemplateId String?   @map("service_template_id") @db.Uuid
+  intervalMonths    Int?      @map("interval_months")
+  intervalHours     Int?      @map("interval_hours")
+  price             Float?
+  includes          String    @default("") @db.Text
+  startDate         DateTime  @map("start_date") @db.Date
+  renewalDate       DateTime  @map("renewal_date") @db.Date
+  /// active | cancelled
+  status            String    @default("active")
+  createdBy         String?   @map("created_by") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  equipment WorkshopEquipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId])
+  @@index([equipmentId])
+  @@index([renewalDate])
+  @@map("workshop_service_plans")
+}
+
+/// UNI-2750: the parts kit pre-filled on a booking (template items plus the
+/// confirmed parts map). Staff can change it before the job.
+model WorkshopBookingPart {
+  id        String @id @default(uuid()) @db.Uuid
+  bookingId String @map("booking_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  quantity  Int    @default(1)
+  /// template | fitment
+  source    String
+
+  booking WorkshopBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingId, productId])
+  @@index([bookingId])
+  @@map("workshop_booking_parts")
+}
+
 model WorkshopRecallCase {
   id            String    @id @default(uuid()) @db.Uuid
   ownerUserId   String    @map("owner_user_id") @db.Uuid

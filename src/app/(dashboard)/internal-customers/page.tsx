@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useLatestLoad } from '@/hooks/use-latest-load';
 import { customersApi, type Customer } from '@/lib/api/customers';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
 import { Cin7PageSyncToolbar } from '@/components/integrations/Cin7SyncButton';
@@ -37,24 +39,38 @@ export default function InternalCustomersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 300);
     return () => window.clearTimeout(timer);
   }, [search]);
 
+  const beginLoad = useLatestLoad();
   const loadCustomers = useCallback(async () => {
+    const isCurrent = beginLoad();
     setLoading(true);
     try {
       const response = await customersApi.list({
-        page: 1,
-        page_size: 100,
+        page,
+        page_size: pageSize,
         search: debouncedSearch || undefined,
         cin7_contact_type: 'Internal',
       });
+      if (!isCurrent()) return;
+      // A page emptied since it was opened (rows removed, or a sync or filter
+      // shrank the list): step back rather than show "none found" while others remain.
+      if (response.items.length === 0 && response.total > 0 && page > response.total_pages) {
+        setPage(response.total_pages);
+        return;
+      }
       setCustomers(response.items);
       setTotal(response.total);
+      setTotalPages(response.total_pages);
     } catch (error: unknown) {
+      if (!isCurrent()) return;
       toast({
         variant: 'destructive',
         title: 'Could not load internal customers',
@@ -63,9 +79,9 @@ export default function InternalCustomersPage() {
       setCustomers([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [debouncedSearch, toast]);
+  }, [debouncedSearch, page, pageSize, toast, beginLoad]);
 
   useEffect(() => {
     void loadCustomers();
@@ -100,7 +116,10 @@ export default function InternalCustomersPage() {
         <Input
           placeholder="Search internal accounts…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9"
         />
       </div>
@@ -119,7 +138,7 @@ export default function InternalCustomersPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-xl border bg-card/50 shadow-sm"
+          className="bg-card/50 rounded-xl border shadow-sm"
         >
           <div className="border-b px-4 py-3">
             <p className="text-muted-foreground text-sm">
@@ -152,6 +171,19 @@ export default function InternalCustomersPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="border-t px-2">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={total}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          </div>
         </motion.div>
       )}
     </div>

@@ -39,7 +39,11 @@ import { GET, POST } from '@/app/api/portal/service-requests/route';
 
 // ─── Type helpers ─────────────────────────────────────────────────────────────
 
-type MockScope = { userId: string; role: 'owner' | 'admin' | 'member' | 'billing'; isAdmin: boolean } | null;
+type MockScope = {
+  userId: string;
+  role: 'owner' | 'admin' | 'member' | 'billing';
+  isAdmin: boolean;
+} | null;
 
 const CUSTOMER_A = { id: 'cust-alpha-uuid', email: 'alice@example.com' };
 const CUSTOMER_B = { id: 'cust-beta-uuid', email: 'bob@example.com' };
@@ -52,7 +56,7 @@ function setSession(
   vi.mocked(requireAuthScope).mockResolvedValue(scope);
   vi.mocked(getAuthClaimsFromRequest).mockResolvedValue(
     scope && email
-      ? { sub: scope.userId, email, is_admin: false, role: scope.role }
+      ? { sub: scope.userId, email, is_admin: false, role: scope.role, session_version: 0 }
       : null
   );
   vi.mocked(prisma.customer.findFirst).mockResolvedValue(
@@ -138,7 +142,7 @@ describe('Portal service-requests: happy path', () => {
       }) as never
     );
     expect(res.status).toBe(201);
-    const body = await res.json() as {
+    const body = (await res.json()) as {
       request_id: string;
       customer_id: string;
       reference_number: string;
@@ -157,7 +161,7 @@ describe('Portal service-requests: happy path', () => {
 
     const res = await GET(makeGet() as never);
     expect(res.status).toBe(200);
-    const body = await res.json() as { requests: Array<{ customer_id: string }>; total: number };
+    const body = (await res.json()) as { requests: Array<{ customer_id: string }>; total: number };
     expect(body.total).toBe(1);
     expect(body.requests[0].customer_id).toBe(CUSTOMER_A.id);
   });
@@ -214,7 +218,7 @@ describe('UNI-2115 spoof rejection: forged customer_id in body → 403', () => {
       }) as never
     );
     expect(res.status).toBe(403);
-    const body = await res.json() as { detail: string };
+    const body = (await res.json()) as { detail: string };
     expect(body.detail).toContain('customer_id');
   });
 
@@ -244,9 +248,7 @@ describe('Portal service-requests: customers are isolated from each other', () =
       CUSTOMER_B.email,
       CUSTOMER_B.id
     );
-    await POST(
-      makePost({ request_type: 'general_inquiry', description: 'Bob only' }) as never
-    );
+    await POST(makePost({ request_type: 'general_inquiry', description: 'Bob only' }) as never);
 
     // CUSTOMER_A now requests their list — must not see Bob's entry
     setSession(
@@ -256,7 +258,7 @@ describe('Portal service-requests: customers are isolated from each other', () =
     );
     const res = await GET(makeGet() as never);
     expect(res.status).toBe(200);
-    const body = await res.json() as { requests: unknown[]; total: number };
+    const body = (await res.json()) as { requests: unknown[]; total: number };
     expect(body.total).toBe(0);
     expect(body.requests).toHaveLength(0);
   });

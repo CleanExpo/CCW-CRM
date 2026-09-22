@@ -52,6 +52,7 @@ describe('team invite route', () => {
       email: 'former-admin@example.com',
       is_admin: true,
       role: 'admin',
+      session_version: 0,
     });
     vi.mocked(findAppUserById).mockResolvedValue({
       id: 'former-admin',
@@ -86,6 +87,7 @@ describe('team invite route', () => {
       email: 'admin@example.com',
       is_admin: true,
       role: 'admin',
+      session_version: 0,
     });
     vi.mocked(findAppUserById).mockResolvedValue({
       id: 'admin-user',
@@ -135,6 +137,7 @@ describe('team invite route', () => {
       email: 'admin@example.com',
       is_admin: true,
       role: 'admin',
+      session_version: 0,
     });
     vi.mocked(findAppUserById).mockResolvedValue({
       id: 'admin-user',

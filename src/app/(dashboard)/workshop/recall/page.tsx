@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { workshopApi, type RecallQueueItem } from '@/lib/api/workshop';
+import { apiClient } from '@/lib/api/client';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
 const STATUSES = [
@@ -52,6 +53,25 @@ export default function WorkshopRecallPage() {
     } catch (error: unknown) {
       toast({
         title: 'Review failed',
+        description: error instanceof Error ? error.message : 'Failed',
+        variant: 'destructive',
+      });
+    }
+  }
+
+  async function bookFromPlan(equipmentId: string) {
+    try {
+      const res = await apiClient.post<{ created: boolean; booking_id: string }>(
+        '/api/workshop/recall/' + equipmentId + '/book'
+      );
+      toast({
+        title: res.created
+          ? 'Booked in the staff diary with the plan kit. Customer was not contacted.'
+          : 'This machine already has an open booking.',
+      });
+    } catch (error: unknown) {
+      toast({
+        title: 'Could not book',
         description: error instanceof Error ? error.message : 'Failed',
         variant: 'destructive',
       });
@@ -125,6 +145,11 @@ export default function WorkshopRecallPage() {
                         }
                       />
                       <div className="flex flex-wrap gap-1">
+                        {row.status === 'ready_to_book' && (
+                          <Button size="sm" onClick={() => bookFromPlan(row.equipment_id)}>
+                            Book from plan
+                          </Button>
+                        )}
                         {STATUSES.map((s) => (
                           <Button
                             key={s.id}
