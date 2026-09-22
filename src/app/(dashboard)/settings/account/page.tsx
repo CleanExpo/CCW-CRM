@@ -281,6 +281,7 @@ export default function AccountSettingsPage() {
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
+                  data-testid="account-full-name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Smith"
@@ -302,7 +303,7 @@ export default function AccountSettingsPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" data-testid="account-save-profile" disabled={isLoading}>
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
@@ -323,8 +324,9 @@ export default function AccountSettingsPage() {
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
+                <Input
                 id="currentPassword"
+                data-testid="account-current-password"
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -338,6 +340,7 @@ export default function AccountSettingsPage() {
                 <Label htmlFor="newPassword">New Password</Label>
                 <Input
                   id="newPassword"
+                  data-testid="account-new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -350,6 +353,7 @@ export default function AccountSettingsPage() {
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <Input
                   id="confirmPassword"
+                  data-testid="account-confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -360,7 +364,7 @@ export default function AccountSettingsPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" data-testid="account-change-password" disabled={isLoading}>
                 {isLoading ? 'Changing...' : 'Change Password'}
               </Button>
             </div>
