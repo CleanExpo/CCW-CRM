@@ -133,6 +133,16 @@ jobs:
           esac
       - name: Accessibility and console-error specs
         run: npx playwright test e2e/public-surface.spec.ts -g "accessibility|console"
+      # Signup→onboarding needs ALLOW_PUBLIC_REGISTRATION=true, MFA_ENFORCE=false,
+      # and a reachable database. This job has none of those. Run the spec here
+      # only when those secrets exist so a missing DB fails that dedicated step
+      # instead of skipping inside Playwright.
+      - name: Signup onboarding journey
+        if: ${{ env.E2E_SIGNUP_ENABLED == 'true' }}
+        env:
+          ALLOW_PUBLIC_REGISTRATION: 'true'
+          MFA_ENFORCE: 'false'
+        run: npx playwright test e2e/signup-onboarding.spec.ts --project=desktop
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
