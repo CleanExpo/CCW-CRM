@@ -276,6 +276,7 @@ export function Sidebar() {
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'member' | 'billing' | null>(null);
   const [roleResolved, setRoleResolved] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   // Persist collapsed state in localStorage
   useEffect(() => {
@@ -299,6 +300,7 @@ export function Sidebar() {
         const effectiveRole =
           user?.is_admin && user.role !== 'owner' ? 'admin' : (user?.role ?? null);
         setUserRole(effectiveRole);
+        setDisplayName(user?.full_name?.trim() || user?.email || null);
       } finally {
         if (mounted) setRoleResolved(true);
       }
@@ -422,7 +424,19 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-white/10 p-3">
+      <div className="shrink-0 border-t border-white/10 p-3 space-y-1">
+        {displayName ? (
+          <p data-testid="sidebar-signed-in-name" className="truncate px-3 pb-1 text-xs text-zinc-400">
+            {displayName}
+          </p>
+        ) : null}
+        <Link
+          href="/dashboard/settings/account"
+          data-testid="nav-account-settings"
+          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/[0.07] hover:text-white"
+        >
+          Account
+        </Link>
         <button
           type="button"
           onClick={handleLogout}
