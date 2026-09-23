@@ -36,6 +36,7 @@ function emptyReport(
       skipped: 0,
     },
     sample: extras.sample ?? [],
+    populations: extras.populations,
     ...extras,
   };
 }
@@ -91,7 +92,8 @@ export function reportValuation(input: {
       input.qtyWithoutCost
         ? `${input.qtyWithoutCost} quantity positions have no cost basis (visible exception).`
         : 'Every quantity position has a cost basis.',
-      'Landed cost and FX sit inside Cin7 product cost (E2/E3) before this area can sign off.',
+      'Landed cost reaches product cost by two routes (Schedule A E3): IMP-* / XFREIGHT-* PO lines plus Cin7 Landed Costs allocation. Area 2 reads both. FX is in scope (E2).',
+      'Kits (144, 10 with SOH) are their own population. Cin7→Xero Landed Costs mapping is unset until Toby sets it before E5.',
     ],
     source_of_truth: {
       cin7: 'Cin7 product cost × Stock On Hand (same as-of as Area 1)',
@@ -101,10 +103,18 @@ export function reportValuation(input: {
 }
 
 export function reportInvoices(input: {
-  monthly: Array<{ month: string; cin7Count: number; optixCount: number; cin7Value: number; optixValue: number }>;
+  monthly: Array<{
+    month: string;
+    cin7Count: number;
+    optixCount: number;
+    cin7Value: number;
+    optixValue: number;
+  }>;
   cin7Complete: boolean;
-  warrantyUnmarked: boolean;
+  warrantyUnmarked?: boolean;
+  populations?: Record<string, number>;
 }): Phase2AreaReport {
+  void input.warrantyUnmarked;
   const cin7 = input.monthly.reduce((s, r) => s + r.cin7Value, 0);
   const optix = input.monthly.reduce((s, r) => s + r.optixValue, 0);
   const sample: Phase2Variance[] = input.monthly
@@ -124,7 +134,11 @@ export function reportInvoices(input: {
       ? null
       : 'Price lists and a complete Cin7 invoice catalog are required before Area 3 can be clean.',
     cin7_complete: input.cin7Complete,
-    company: { cin7: roundMoney(cin7), optix: roundMoney(optix), difference: roundMoney(optix - cin7) },
+    company: {
+      cin7: roundMoney(cin7),
+      optix: roundMoney(optix),
+      difference: roundMoney(optix - cin7),
+    },
     sku_count: {
       cin7: input.monthly.reduce((s, r) => s + r.cin7Count, 0),
       optix: input.monthly.reduce((s, r) => s + r.optixCount, 0),
@@ -137,13 +151,13 @@ export function reportInvoices(input: {
       skipped: 0,
     },
     sample: sample.slice(0, 50),
+    populations: input.populations,
     notes: [
-      `Historical window from ${HISTORICAL_WINDOW_START} (working answer; accountant confirmation pending).`,
+      `Historical window from ${HISTORICAL_WINDOW_START} (Schedule A: full transactional recon).`,
       'Channels in scope: Shopify, walk-in counter, phone/email, workshop. No new channel tooling.',
       'Credit notes are their own population (order-derived vs standalone).',
-      input.warrantyUnmarked
-        ? 'E6 pending: warranty lines look like zero-price failures until Cin7 has a marker.'
-        : 'Warranty lines excluded from the pricing-exception check.',
+      '700-MISC trade-ins and Aberford Holdings re-books are their own populations (Part 1.5), not ordinary sales. Area 3 excludes Aberford from customer control totals.',
+      'E6: no warranty marker. Zero-priced lines are excluded from the pricing-exception check and reported separately.',
     ],
     source_of_truth: {
       cin7: 'Cin7 sales invoices (all four channels) + monthly count/value',
@@ -157,6 +171,7 @@ export function reportCogs(input: {
   periodOptix: number;
   missingZeroCogsLines: number;
   cin7Complete: boolean;
+  populations?: Record<string, number>;
 }): Phase2AreaReport {
   const difference = roundMoney(input.periodOptix - input.periodCin7);
   return emptyReport(4, {
@@ -190,10 +205,11 @@ export function reportCogs(input: {
               difference,
             },
           ],
+    populations: input.populations,
     notes: [
       'Non-stock: GP cost on the line and COGS sent to Xero are two numbers.',
       'Credits reverse COGS only when stock physically returned.',
-      'Warranty and workshop labour are reported as their own populations (E6/E7).',
+      'Warranty, workshop labour, 700-MISC trade-in COGS credits (82900), and Aberford revaluations are their own populations (Part 1.5 / E6 / E7).',
     ],
     source_of_truth: {
       cin7: 'Cin7 period / invoice / line COGS',
@@ -234,7 +250,9 @@ export function reportBalances(input: {
   return emptyReport(5, {
     clean: input.cin7Complete && sample.length === 0,
     blocked: !input.cin7Complete,
-    blocked_reason: input.cin7Complete ? null : 'Cin7 AR/AP control totals are required for a clean Area 5.',
+    blocked_reason: input.cin7Complete
+      ? null
+      : 'Cin7 AR/AP control totals are required for a clean Area 5.',
     cin7_complete: input.cin7Complete,
     company: {
       cin7: roundMoney(input.arCin7 + input.apCin7),
@@ -323,6 +341,7 @@ export function reportMovements(input: {
   cin7Moves: number;
   optixMoves: number;
   cin7Complete: boolean;
+  populations?: Record<string, number>;
 }): Phase2AreaReport {
   const difference = input.optixMoves - input.cin7Moves;
   return emptyReport(7, {
@@ -352,8 +371,10 @@ export function reportMovements(input: {
               difference,
             },
           ],
+    populations: input.populations,
     notes: [
       'Transfers, adjustments, stocktakes, sales and purchase returns.',
+      '700-MISC trade-ins are stock receipts (Area 7 own population), not sales. 85140 monthly adjustment journals are reconciled line by line (Part 1.5).',
       'COGS reverses on a credit only when stock physically returned.',
     ],
     source_of_truth: {
@@ -417,7 +438,8 @@ export function reportXero(input: {
     ],
     notes: [
       'COGS posts from Cin7 as a monthly manual journal — no line-level Xero agreement.',
-      'Cin7 can only push corrections for the past 12 months.',
+      'E5 waits until CCW clears the Cin7→Xero pending queue. Landed Costs mapping is unset until Toby sets it.',
+      '81000 Opening Stock, 83339 Closing Stock and 85160 Stock Movement are dormant ($0.00 FY26). 82900 and 85140 negatives are Part 1.5 — nothing is booked twice.',
       'Mapping issues are reported separately from value mismatches.',
     ],
     source_of_truth: {
