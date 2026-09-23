@@ -12,6 +12,13 @@ export async function GET(request: NextRequest) {
   if (scope.role === 'member') {
     return NextResponse.json({ detail: 'Your role does not have access to this resource' }, { status: 403 });
   }
-  const pack = await buildSameAnswerPack(scope.userId);
-  return NextResponse.json(pack);
+  try {
+    const pack = await buildSameAnswerPack(scope.userId);
+    return NextResponse.json(pack);
+  } catch {
+    return NextResponse.json(
+      { detail: 'Same-answer pack failed closed. Cin7 was not treated as clean.' },
+      { status: 503 }
+    );
+  }
 }
