@@ -32,6 +32,7 @@ vi.mock('@/lib/phase2/run', () => ({
 }));
 
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { runPhase2Area } from '@/lib/phase2/run';
 import { POST } from '../route';
 
 describe('POST /api/phase2/compare', () => {
@@ -73,6 +74,21 @@ describe('POST /api/phase2/compare', () => {
     expect(body.area).toBe(1);
     expect(body.read_only).toBe(true);
     expect(body.recon_run_id).toBe('run-1');
+    expect(body.clean).toBe(false);
+  });
+
+  it('fails closed when the compare throws', async () => {
+    vi.mocked(requireAuthScope).mockResolvedValue({
+      userId: 'u1',
+      role: 'admin',
+      isAdmin: true,
+    });
+    vi.mocked(runPhase2Area).mockRejectedValueOnce(new Error('cin7 down'));
+    const res = await POST(
+      new NextRequest('http://localhost/api/phase2/compare?area=1', { method: 'POST' })
+    );
+    expect(res.status).toBe(503);
+    const body = await res.json();
     expect(body.clean).toBe(false);
   });
 });
