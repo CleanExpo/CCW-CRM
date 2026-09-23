@@ -1,4 +1,4 @@
-import type { Phase2Area } from '@/lib/phase2/types';
+import type { Phase2Area, Phase2AreaReport } from '@/lib/phase2/types';
 
 export type Phase2GateInput = {
   area: Phase2Area;
@@ -119,4 +119,28 @@ export function previousAreaForSignOff(area: Phase2Area): Phase2Area | null {
   if (area === 7) return 4;
   if (area === 8) return 4;
   return (area - 1) as Phase2Area;
+}
+
+/** A blocked gate can never present as clean. */
+export function sealReport(
+  report: Phase2AreaReport,
+  gate: Phase2GateResult
+): Phase2AreaReport {
+  if (gate.allowed && !report.blocked) return report;
+  const reason = report.blocked_reason ?? gate.reason ?? 'Prerequisite gate failed.';
+  const notes = report.notes.includes(reason) ? report.notes : [...report.notes, reason];
+  return {
+    ...report,
+    clean: false,
+    blocked: true,
+    blocked_reason: reason,
+    notes,
+  };
+}
+
+/** Sign-off unlocks the next area only when Cin7 was complete and the run was clean. */
+export function isPhase2SignOff(summary: unknown): boolean {
+  if (!summary || typeof summary !== 'object') return false;
+  const row = summary as Partial<Phase2AreaReport>;
+  return row.clean === true && row.blocked === false && row.cin7_complete === true;
 }
