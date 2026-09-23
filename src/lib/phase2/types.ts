@@ -63,6 +63,8 @@ export type Phase2AreaReport = {
   sample: Phase2Variance[];
   notes: string[];
   source_of_truth: { cin7: string; optix: string };
+  /** Schedule A Rev 1 own populations — not blended into ordinary sales/COGS. */
+  populations?: Record<string, number>;
 };
 
 export const HISTORICAL_WINDOW_START = '2025-07-01';
