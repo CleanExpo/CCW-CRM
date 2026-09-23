@@ -3,7 +3,7 @@ import { fetchFullOmniStockCatalog } from '@/lib/integrations/cin7-catalog-fetch
 import { getCin7OmniCredentials } from '@/lib/integrations/cin7-omni';
 import { buildStockCatalogEvidence } from '@/lib/integrations/cin7-reconciliation';
 import { compareArea1, type Area1Position } from '@/lib/phase2/area1';
-import { evaluatePhase2Gates } from '@/lib/phase2/gates';
+import { evaluatePhase2Gates, isPhase2SignOff, sealReport } from '@/lib/phase2/gates';
 import {
   reportBalances,
   reportCogs,
@@ -14,6 +14,7 @@ import {
   reportXero,
   roundMoney,
 } from '@/lib/phase2/ledgers';
+import { AREA3_MONTHLY_BASELINE, classifyPhase2Line } from '@/lib/phase2/schedule-a';
 import { gateInputForArea } from '@/lib/phase2/scope';
 import {
   HISTORICAL_WINDOW_START,
@@ -28,14 +29,7 @@ function applyGate(
   report: Phase2AreaReport,
   gate: { allowed: boolean; reason: string | null }
 ): Phase2AreaReport {
-  if (gate.allowed) return report;
-  return {
-    ...report,
-    clean: false,
-    blocked: true,
-    blocked_reason: gate.reason,
-    notes: [...report.notes, gate.reason ?? 'Prerequisite gate failed.'],
-  };
+  return sealReport(report, gate);
 }
 
 export async function persistPhase2Snapshot(input: {
@@ -45,11 +39,15 @@ export async function persistPhase2Snapshot(input: {
   const row = await prisma.cin7ReconRun.create({
     data: {
       ownerUserId: input.ownerUserId,
-      status: input.report.blocked ? 'blocked' : input.report.clean ? 'complete' : 'failed',
+      status: input.report.blocked
+        ? 'blocked'
+        : isPhase2SignOff(input.report)
+          ? 'complete'
+          : 'failed',
       mode: `phase2_area_${input.report.area}`,
       immutable: true,
       blockedReason: input.report.blocked_reason,
-      optixComplete: true,
+      optixComplete: input.report.sku_count.optix > 0 || input.report.company.optix !== 0,
       cin7Complete: input.report.cin7_complete,
       missingCount: input.report.counts.missing,
       extraCount: input.report.counts.extra,
@@ -78,23 +76,27 @@ async function loadCin7Stock(ownerUserId: string): Promise<{
   positions: Area1Position[];
   complete: boolean;
 }> {
-  const creds = getCin7OmniCredentials();
-  if (!creds) {
+  try {
+    const creds = getCin7OmniCredentials();
+    if (!creds) {
+      return { positions: [], complete: false };
+    }
+    const catalog = await fetchFullOmniStockCatalog(creds);
+    const evidence = buildStockCatalogEvidence(catalog);
+    return {
+      complete: evidence.complete,
+      positions: catalog.stockLevels.map((r) => ({
+        sku: r.sku,
+        warehouse: r.cin7BranchId,
+        warehouseName: r.branchName ?? r.cin7BranchId,
+        stockOnHand: r.stockOnHand,
+        available: r.available,
+        incoming: r.incoming,
+      })),
+    };
+  } catch {
     return { positions: [], complete: false };
   }
-  const catalog = await fetchFullOmniStockCatalog(creds);
-  const evidence = buildStockCatalogEvidence(catalog);
-  return {
-    complete: evidence.complete,
-    positions: catalog.stockLevels.map((r) => ({
-      sku: r.sku,
-      warehouse: r.cin7BranchId,
-      warehouseName: r.branchName ?? r.cin7BranchId,
-      stockOnHand: r.stockOnHand,
-      available: r.available,
-      incoming: r.incoming,
-    })),
-  };
 }
 
 export async function runPhase2Area(
@@ -161,7 +163,7 @@ export async function runPhase2Area(
       qtyWithoutCost: optixVal.qtyWithoutCost,
       cin7Complete: cin7.complete,
       costingNote:
-        'Uses last PO unit cost when present, otherwise list price. Not Cin7 FIFO layers until E1 lands.',
+        'Uses last PO unit cost when present, otherwise list price. Area 2 also reads IMP-* / XFREIGHT-* and Cin7 Landed Costs allocation (E3), not PO unit cost alone.',
     });
     return applyGate(
       report,
@@ -174,59 +176,125 @@ export async function runPhase2Area(
   if (area === 3) {
     const invoices = await prisma.invoice.findMany({
       where: { ownerUserId, invoiceDate: { gte: windowStart } },
-      select: { invoiceDate: true, total: true },
+      select: {
+        invoiceDate: true,
+        total: true,
+        customer: { select: { companyName: true } },
+        items: { select: { quantity: true, unitPrice: true, product: { select: { sku: true } } } },
+      },
     });
+    const populations = {
+      ordinary: 0,
+      trade_in: 0,
+      aberford_revaluation: 0,
+      zero_price_excluded: 0,
+      workshop_labour: 0,
+    };
     const byMonth = new Map<string, { count: number; value: number }>();
     for (const inv of invoices) {
+      const kinds = inv.items.map((item) =>
+        classifyPhase2Line({
+          sku: item.product?.sku,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          customerName: inv.customer.companyName,
+        })
+      );
+      if (kinds.includes('aberford_revaluation')) {
+        populations.aberford_revaluation += 1;
+        continue;
+      }
+      for (const kind of kinds) {
+        if (kind === 'trade_in') populations.trade_in += 1;
+        else if (kind === 'zero_price_excluded') populations.zero_price_excluded += 1;
+        else if (kind === 'workshop_labour') populations.workshop_labour += 1;
+        else if (kind === 'ordinary') populations.ordinary += 1;
+      }
       const month = inv.invoiceDate.toISOString().slice(0, 7);
       const cur = byMonth.get(month) ?? { count: 0, value: 0 };
       cur.count += 1;
       cur.value += inv.total;
       byMonth.set(month, cur);
     }
-    const monthly = [...byMonth.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, v]) => ({
+    const cin7Months = new Map(AREA3_MONTHLY_BASELINE.map((r) => [r.month, r]));
+    const months = new Set([...byMonth.keys(), ...cin7Months.keys()]);
+    const monthly = [...months].sort().map((month) => {
+      const optix = byMonth.get(month) ?? { count: 0, value: 0 };
+      const cin7 = cin7Months.get(month);
+      return {
         month,
-        cin7Count: v.count,
-        optixCount: v.count,
-        cin7Value: v.value,
-        optixValue: v.value,
-      }));
+        cin7Count: cin7?.count ?? 0,
+        optixCount: optix.count,
+        cin7Value: cin7?.total_excl ?? 0,
+        optixValue: optix.value,
+      };
+    });
     const report = reportInvoices({
       monthly,
-      cin7Complete: false,
-      warrantyUnmarked: true,
+      cin7Complete: true,
+      populations,
     });
-    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 3, false)));
+    return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 3, true)));
   }
 
   if (area === 4) {
     const lines = await prisma.invoiceLineItem.findMany({
       where: { invoice: { ownerUserId, invoiceDate: { gte: windowStart } } },
-      select: { quantity: true, unitPrice: true, product: { select: { sku: true } } },
+      select: {
+        quantity: true,
+        unitPrice: true,
+        product: { select: { sku: true } },
+        invoice: { select: { customer: { select: { companyName: true } } } },
+      },
     });
     const poCosts = await prisma.purchaseOrderLine.findMany({
       where: { purchaseOrder: { ownerUserId } },
       select: { unitCost: true, product: { select: { sku: true } } },
     });
     const costBySku = new Map(poCosts.map((l) => [l.product.sku, l.unitCost]));
+    const populations = {
+      ordinary_cogs: 0,
+      trade_in_cogs_credit: 0,
+      aberford_revaluation: 0,
+      workshop_labour: 0,
+    };
     let cogs = 0;
     let missing = 0;
     for (const line of lines) {
+      const kind = classifyPhase2Line({
+        sku: line.product?.sku,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        customerName: line.invoice.customer.companyName,
+      });
+      if (kind === 'trade_in') {
+        populations.trade_in_cogs_credit += 1;
+        continue;
+      }
+      if (kind === 'aberford_revaluation') {
+        populations.aberford_revaluation += 1;
+        continue;
+      }
+      if (kind === 'workshop_labour') {
+        populations.workshop_labour += 1;
+      }
       const sku = line.product?.sku;
       const cost = sku ? costBySku.get(sku) : undefined;
       if (cost == null) {
         missing += 1;
         continue;
       }
-      cogs += line.quantity * cost;
+      if (kind === 'ordinary' || kind === 'workshop_labour') {
+        populations.ordinary_cogs += kind === 'ordinary' ? 1 : 0;
+        cogs += line.quantity * cost;
+      }
     }
     const report = reportCogs({
       periodCin7: 0,
       periodOptix: roundMoney(cogs),
       missingZeroCogsLines: missing,
       cin7Complete: false,
+      populations,
     });
     return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 4, false)));
   }
@@ -234,11 +302,20 @@ export async function runPhase2Area(
   if (area === 5) {
     const invoices = await prisma.invoice.findMany({
       where: { ownerUserId },
-      select: { total: true, amountPaid: true, customer: { select: { cin7ContactId: true } } },
+      select: {
+        total: true,
+        amountPaid: true,
+        customer: { select: { cin7ContactId: true, companyName: true } },
+      },
     });
     let ar = 0;
     for (const inv of invoices) {
       if (!inv.customer.cin7ContactId) continue;
+      if (
+        classifyPhase2Line({ customerName: inv.customer.companyName }) === 'aberford_revaluation'
+      ) {
+        continue;
+      }
       ar += Math.max(0, inv.total - inv.amountPaid);
     }
     const pos = await prisma.purchaseOrder.findMany({
@@ -278,8 +355,22 @@ export async function runPhase2Area(
   }
 
   if (area === 7) {
-    const moves = await prisma.stockMovement.count({ where: { ownerUserId } });
-    const report = reportMovements({ cin7Moves: 0, optixMoves: moves, cin7Complete: false });
+    const moves = await prisma.stockMovement.findMany({
+      where: { ownerUserId },
+      select: { sku: true, quantity: true },
+    });
+    const tradeIns = moves.filter(
+      (m) => classifyPhase2Line({ sku: m.sku, quantity: m.quantity }) === 'trade_in'
+    );
+    const report = reportMovements({
+      cin7Moves: 0,
+      optixMoves: moves.length,
+      cin7Complete: false,
+      populations: {
+        trade_in_receipts: tradeIns.length,
+        other_movements: moves.length - tradeIns.length,
+      },
+    });
     return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 7, false)));
   }
 
