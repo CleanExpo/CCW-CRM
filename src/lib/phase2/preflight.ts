@@ -1,61 +1,65 @@
+import { SCHEDULE_A } from '@/lib/phase2/schedule-a';
+
 export const PHASE2_PREFLIGHT = [
   {
     id: 'E1',
-    check: 'Count of products by stock control (FIFO / Batch / Serial / Non-Stock), plus the non-stock GP vs Xero COGS split.',
+    check: 'Stock control by primary product: FIFO 9,082 · Serial 452 · Batch 1 · Non-stock 9 (28 option rows). 23 of 28 non-stock carry a cost; none hold stock.',
     areas: [2, 4],
-    result: 'pending',
+    result: 'recorded_2026-09-23',
   },
   {
     id: 'E2',
-    check: 'Any purchase orders in the window not in AUD.',
+    check: 'POs since 1 Jul 2025: AUD 2,000 / USD 367 / GBP 1. Multi-currency is in scope for Areas 2 and 6.',
     areas: [2, 6],
-    result: 'pending',
+    result: 'recorded_2026-09-23',
   },
   {
     id: 'E3',
-    check: 'Do POs carry landed costs, and what share of stock value do they represent?',
+    check: 'Landed cost reaches product cost by two routes: IMP-* / XFREIGHT-* PO lines (and header freight), and Cin7 Landed Costs allocation. Area 2 reads both. Cin7→Xero Landed Costs mapping is unset until Toby sets it before E5.',
     areas: [2, 6],
-    result: 'pending',
+    result: 'recorded_2026-09-23',
   },
   {
     id: 'E4',
-    check: 'Sales lines since 1 July 2025 with missing or zero COGS, and which of the four Cin7 conditions is unmet.',
+    check: 'Lower bound of COGS-ineligible lines (56 no fully-dispatched date; 48 not fully moved; 195 without invoice date). Accounting status still to be completed from the API.',
     areas: [4],
-    result: 'pending',
+    result: 'partial_2026-09-23',
   },
   {
     id: 'E5',
-    check: 'Cin7 inventory asset and monthly COGS against the same figures in Xero.',
+    check: 'Not run. Cin7 Xero dashboard has a pending queue (four COGS journals, invoices, payments). CCW clears the queue before E5 and before Area 8 is scoped.',
     areas: [8],
-    result: 'pending',
+    result: 'pending_queue',
   },
   {
     id: 'E6',
-    check: 'Anything in Cin7 that marks a line as warranty.',
+    check: 'No consistent warranty marker. Area 3 excludes zero-priced lines from the pricing-exception check and reports them as their own population.',
     areas: [3, 4],
-    result: 'pending',
+    result: 'recorded_2026-09-23',
   },
   {
     id: 'E7',
-    check: 'Whether workshop labour (non-stock) lines carry a populated cost in Cin7.',
+    check: 'Workshop labour is costed: XLABOUR $80; XLABOUR-OS $86.36; XLABOUR-BOM $80. Area 4 reports labour as a non-stock population.',
     areas: [4],
-    result: 'pending',
+    result: 'recorded_2026-09-23',
   },
   {
     id: 'E8',
-    check: 'Whether Branches (12) and Warehouses / Cin7 branches (12) are the same 12 records.',
+    check: 'Branches (12) and Warehouses (12) are the same 12 Cin7 branch records. No separate warehouse entity.',
     areas: [1],
-    result: 'pending',
+    result: 'recorded_2026-09-23',
   },
 ] as const;
 
 export const PHASE2_SOURCE_MATRIX = [
-  { area: 1, cin7: 'Omni /v1/Stock StockOnHand (complete walk)', optix: 'cin7_stock_levels.stock_on_hand' },
-  { area: 2, cin7: 'Cin7 per-product cost × SOH (FIFO/Batch/Serial/Non-Stock)', optix: 'SOH × last Cin7 unit cost' },
-  { area: 3, cin7: 'Cin7 invoices — Shopify, counter, phone/email, workshop', optix: 'invoices from 1 July 2025' },
-  { area: 4, cin7: 'Cin7 period / invoice / line COGS', optix: 'Invoice lines × Cin7 cost basis' },
-  { area: 5, cin7: 'Cin7 AR/AP control totals', optix: 'Cin7-linked invoice outstanding + supplier POs' },
-  { area: 6, cin7: 'Cin7 purchase orders and goods receipts', optix: 'purchase_orders + goods_receipts' },
-  { area: 7, cin7: 'Cin7 inventory movements', optix: 'stock_movements' },
-  { area: 8, cin7: 'Cin7 inventory asset + monthly COGS journal', optix: 'Signed Area 2 / 4 vs Xero mapping' },
+  { area: 1, cin7: 'Anne SOH export at the declared as-of (Part 1.3), not live Cin7', optix: 'Frozen Optix snapshot at the same as-of' },
+  { area: 2, cin7: 'Per-product cost including both landed-cost routes (PO IMP-*/XFREIGHT-* + Landed Costs allocation)', optix: 'SOH × Cin7 cost basis, kits as their own population' },
+  { area: 3, cin7: 'Invoices + 700-MISC trade-ins + Aberford re-books as own populations; monthly control totals Part 3.2', optix: 'invoices from 1 July 2025, Aberford excluded from customer totals' },
+  { area: 4, cin7: 'COGS including 82900 trade-in credits; labour and kits as own populations', optix: 'Invoice lines × Cin7 cost basis' },
+  { area: 5, cin7: 'Cin7 AR/AP control totals', optix: 'Cin7-linked invoice outstanding; Aberford excluded from customer AR' },
+  { area: 6, cin7: 'POs including USD/GBP and both landed-cost routes', optix: 'purchase_orders + goods_receipts' },
+  { area: 7, cin7: 'Movements + 700-MISC trade-in receipts + 85140 monthly adjustments line by line', optix: 'stock_movements' },
+  { area: 8, cin7: 'Inventory 14000 / 14000-1; monthly COGS journals after the pending queue is cleared', optix: 'Signed Area 2 / 4 vs Xero. 81000/83339/85160 dormant. 82900 and 85140 explained by Part 1.5 — nothing booked twice.' },
 ] as const;
+
+export const SCHEDULE_A_NOTE = `${SCHEDULE_A.author} Schedule A Rev ${SCHEDULE_A.revision} (${SCHEDULE_A.date}) supersedes the morning copy and prevails over v1.1 where they differ. Not in effect until signed with v1.1.`;
