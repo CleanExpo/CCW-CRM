@@ -7,13 +7,28 @@ describe('Phase 2 materiality', () => {
     expect(quantityWithinTolerance(10, 9)).toBe(false);
   });
 
-  it('fails a +X / −X pair on the gross test', () => {
+  it('fails a +X / −X pair on the Schedule A gross test', () => {
     expect(
       dollarWithinTolerance({
-        differences: [50, -50],
+        differences: [300, -300],
+        tier: 'warehouse',
+      })
+    ).toBe(false);
+  });
+
+  it('uses Toby’s company-wide greater-of limits', () => {
+    expect(
+      dollarWithinTolerance({
+        differences: [40],
         tier: 'company',
-        netLimit: 0,
-        grossLimit: 0,
+        base: 100_000,
+      })
+    ).toBe(true);
+    expect(
+      dollarWithinTolerance({
+        differences: [80],
+        tier: 'company',
+        base: 100_000,
       })
     ).toBe(false);
   });
