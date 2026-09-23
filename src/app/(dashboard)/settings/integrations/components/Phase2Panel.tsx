@@ -76,8 +76,8 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
       <CardHeader>
         <CardTitle>Phase 2 · Area {area}</CardTitle>
         <CardDescription>
-          v1.1 operational and financial reconciliation. Cin7 stays the source of truth. Compares
-          are read-only. This document is not signed until Toby writes approval.
+          Working to v1.1 plus Schedule A Rev 1. Cin7 stays the source of truth. Compares are
+          read-only. 700-MISC trade-ins and Aberford re-books are their own populations.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -85,11 +85,10 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
           Order: Phase 1 close → complete stock → quantities → E2/E3 → valuation → price lists →
           invoices → COGS → balances → POs (sign after 2) → movements (sign after 4) → E5 → Xero.
         </p>
-        {scope?.unsigned ? (
-          <p className="text-xs">
-            v1.1 is still a draft. Quantity match is exact. Dollar tiers are TBC.
-          </p>
-        ) : null}
+        <p className="text-xs">
+          Schedule A Rev 1 materiality applies. Quantity is exact. E5 stays blocked until the
+          Cin7→Xero queue is cleared.
+        </p>
         <p className="text-muted-foreground text-xs">
           Phase 1 missing {scope?.phase1_missing ?? '—'} · price lists{' '}
           {scope?.price_lists_complete ? 'complete' : 'not complete'}
@@ -176,6 +175,14 @@ function Phase2ReportView({ report }: { report: Phase2AreaReport }) {
         Missing {report.counts.missing} · extra {report.counts.extra} · quantity mismatches{' '}
         {report.counts.quantity_mismatch}
       </p>
+      {report.populations && Object.keys(report.populations).length > 0 ? (
+        <p className="text-muted-foreground text-xs tabular-nums">
+          Own populations:{' '}
+          {Object.entries(report.populations)
+            .map(([name, count]) => `${name} ${count}`)
+            .join(' · ')}
+        </p>
+      ) : null}
       {report.warehouses.length > 0 ? (
         <ul className="text-muted-foreground space-y-0.5 text-xs tabular-nums">
           {report.warehouses.map((w) => (
