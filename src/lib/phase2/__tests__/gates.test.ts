@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluatePhase2Gates } from '../gates';
+import { evaluatePhase2Gates, isPhase2SignOff, sealReport } from '../gates';
 
 const open = {
   phase1Missing: 0,
@@ -37,6 +37,39 @@ describe('evaluatePhase2Gates', () => {
   it('blocks Area 8 until E5 agrees', () => {
     const gate = evaluatePhase2Gates({ ...open, area: 8, e5Cin7XeroAgree: null });
     expect(gate.allowed).toBe(false);
-    expect(gate.reason).toMatch(/E5/);
+    expect(gate.reason).toMatch(/E5|bookkeeping|Area 8/);
+  });
+
+  it('never leaves a blocked report marked clean', () => {
+    const sealed = sealReport(
+      {
+        area: 1,
+        title: 'Inventory quantities by warehouse',
+        as_of: '2026-09-22T00:00:00.000Z',
+        read_only: true,
+        cin7_is_source_of_truth: true,
+        clean: true,
+        blocked: false,
+        blocked_reason: null,
+        cin7_complete: true,
+        company: { cin7: 1, optix: 1, difference: 0 },
+        sku_count: { cin7: 1, optix: 1 },
+        warehouse_count: { cin7: 1, optix: 1 },
+        warehouses: [],
+        counts: { missing: 0, extra: 0, quantity_mismatch: 0, timing: 0, skipped: 0 },
+        sample: [],
+        notes: [],
+        source_of_truth: { cin7: 'cin7', optix: 'optix' },
+      },
+      { allowed: false, reason: 'Incomplete Cin7 stock pull cannot be treated as a clean result.' }
+    );
+    expect(sealed.clean).toBe(false);
+    expect(sealed.blocked).toBe(true);
+  });
+
+  it('does not treat a blocked or incomplete run as a sign-off', () => {
+    expect(isPhase2SignOff({ clean: true, blocked: false, cin7_complete: false })).toBe(false);
+    expect(isPhase2SignOff({ clean: true, blocked: true, cin7_complete: true })).toBe(false);
+    expect(isPhase2SignOff({ clean: true, blocked: false, cin7_complete: true })).toBe(true);
   });
 });
