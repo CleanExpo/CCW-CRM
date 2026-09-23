@@ -24,6 +24,16 @@ describe('Phase 2 ledger reports', () => {
     expect(report.sample[0]?.document).toBe('2025-07');
   });
 
+  it('carries Part 1.5 populations on the invoice report', () => {
+    const report = reportInvoices({
+      monthly: [],
+      cin7Complete: true,
+      populations: { trade_in: 3, aberford_revaluation: 1 },
+    });
+    expect(report.populations?.trade_in).toBe(3);
+    expect(report.populations?.aberford_revaluation).toBe(1);
+  });
+
   it('excludes legacy customers as skipped_on_sync on Area 5', () => {
     const report = reportBalances({
       arCin7: 10,
