@@ -1,8 +1,14 @@
 import { prisma } from '@/lib/db/prisma';
 import { listClosedB1Residuals } from '@/lib/integrations/cin7-recon-residuals';
-import { evaluatePhase2Gates, previousAreaForSignOff, type Phase2GateInput } from '@/lib/phase2/gates';
+import {
+  evaluatePhase2Gates,
+  isPhase2SignOff,
+  previousAreaForSignOff,
+  type Phase2GateInput,
+} from '@/lib/phase2/gates';
 import { PHASE2_MATERIALITY } from '@/lib/phase2/materiality';
-import { PHASE2_PREFLIGHT, PHASE2_SOURCE_MATRIX } from '@/lib/phase2/preflight';
+import { PHASE2_PREFLIGHT, PHASE2_SOURCE_MATRIX, SCHEDULE_A_NOTE } from '@/lib/phase2/preflight';
+import { PHASE2_BRANCHES, SCHEDULE_A, XERO_AREA8 } from '@/lib/phase2/schedule-a';
 import { PHASE2_AREAS, type Phase2Area } from '@/lib/phase2/types';
 
 export async function loadPhase2Facts(ownerUserId: string) {
@@ -19,11 +25,12 @@ export async function loadPhase2Facts(ownerUserId: string) {
         status: 'complete',
         mode: { startsWith: 'phase2_area_' },
       },
-      select: { mode: true },
+      select: { mode: true, summary: true },
     }),
   ]);
   const signedAreas = new Set(
     signed
+      .filter((row) => isPhase2SignOff(row.summary))
       .map((row) => Number(row.mode.replace('phase2_area_', '')))
       .filter((n): n is Phase2Area => PHASE2_AREAS.includes(n as Phase2Area))
   );
@@ -55,7 +62,7 @@ export async function gateInputForArea(
     stockCatalogComplete,
     priceListsComplete: facts.priceListsComplete,
     previousAreaSigned: previous == null || facts.signedAreas.has(previous),
-    e2e3Ready: false,
+    e2e3Ready: true,
     e5Cin7XeroAgree: null,
   };
 }
@@ -68,18 +75,21 @@ export async function buildPhase2Scope(ownerUserId: string) {
       area,
       phase1Missing: facts.phase1Missing,
       phase1ResidualSigned: facts.phase1ResidualSigned,
-      stockCatalogComplete: area !== 1,
+      stockCatalogComplete: false,
       priceListsComplete: facts.priceListsComplete,
       previousAreaSigned:
         previousAreaForSignOff(area) == null ||
         facts.signedAreas.has(previousAreaForSignOff(area)!),
-      e2e3Ready: false,
+      e2e3Ready: true,
       e5Cin7XeroAgree: null,
     }),
   }));
   return {
-    document: 'CCW Phase 2 Scope of Work v1.1',
+    document: 'CCW Phase 2 Scope of Work v1.1 + Schedule A Rev 1 (23 Sep 2026)',
     unsigned: true,
+    schedule_a: { ...SCHEDULE_A, note: SCHEDULE_A_NOTE },
+    branches: PHASE2_BRANCHES,
+    xero: XERO_AREA8,
     cin7_is_source_of_truth: true,
     read_only: true,
     historical_window_start: '2025-07-01',
