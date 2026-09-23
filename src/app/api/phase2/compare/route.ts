@@ -18,11 +18,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: 'area must be 1–8' }, { status: 400 });
   }
 
-  const report = await runPhase2Area(scope.userId, area);
-  const recon_run_id = await persistPhase2Snapshot({
-    ownerUserId: scope.userId,
-    report,
-  });
-
-  return NextResponse.json({ ...report, recon_run_id });
+  try {
+    const report = await runPhase2Area(scope.userId, area);
+    const recon_run_id = await persistPhase2Snapshot({
+      ownerUserId: scope.userId,
+      report,
+    });
+    return NextResponse.json({ ...report, recon_run_id });
+  } catch {
+    return NextResponse.json(
+      { detail: 'Phase 2 compare failed closed. Cin7 was not treated as clean.', clean: false },
+      { status: 503 }
+    );
+  }
 }
