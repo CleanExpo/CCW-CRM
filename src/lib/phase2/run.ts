@@ -3,6 +3,7 @@ import { fetchFullOmniStockCatalog } from '@/lib/integrations/cin7-catalog-fetch
 import { getCin7OmniCredentials } from '@/lib/integrations/cin7-omni';
 import { buildStockCatalogEvidence } from '@/lib/integrations/cin7-reconciliation';
 import { compareArea1, type Area1Position } from '@/lib/phase2/area1';
+import { buildCostBasis, valuePositions } from '@/lib/phase2/cost-basis';
 import { evaluatePhase2Gates, isPhase2SignOff, sealReport } from '@/lib/phase2/gates';
 import {
   reportBalances,
@@ -118,53 +119,48 @@ export async function runPhase2Area(
   }
 
   if (area === 2) {
-    const [optix, cin7, products, poCosts] = await Promise.all([
+    const [optix, cin7, products, orders] = await Promise.all([
       loadOptixStock(ownerUserId),
       loadCin7Stock(ownerUserId),
       prisma.product.findMany({ where: { ownerUserId }, select: { sku: true, price: true } }),
-      prisma.purchaseOrderLine.findMany({
-        where: { purchaseOrder: { ownerUserId } },
-        select: { unitCost: true, product: { select: { sku: true } } },
-        orderBy: { id: 'desc' },
+      prisma.purchaseOrder.findMany({
+        where: { ownerUserId },
+        select: {
+          shippingCost: true,
+          lines: { select: { unitCost: true, quantity: true, product: { select: { sku: true } } } },
+        },
       }),
     ]);
-    const costBySku = new Map<string, number>();
-    for (const p of products) costBySku.set(p.sku, p.price);
-    for (const line of poCosts) {
-      if (!costBySku.has(line.product.sku) || costBySku.get(line.product.sku) === 0) {
-        costBySku.set(line.product.sku, line.unitCost);
-      }
-    }
-    const valueSide = (rows: Area1Position[]) => {
-      const byWh = new Map<string, number>();
-      let qtyWithoutCost = 0;
-      for (const r of rows) {
-        const cost = costBySku.get(r.sku);
-        if (cost == null || cost === 0) {
-          if (r.stockOnHand !== 0) qtyWithoutCost += 1;
-          continue;
-        }
-        const name = r.warehouseName ?? r.warehouse;
-        byWh.set(name, (byWh.get(name) ?? 0) + r.stockOnHand * cost);
-      }
-      return {
-        warehouses: [...byWh.entries()].map(([warehouse, value]) => ({
-          warehouse,
-          value: roundMoney(value),
+    const basis = buildCostBasis({
+      productPrices: products,
+      orders: orders.map((po) => ({
+        shippingCost: po.shippingCost ?? 0,
+        lines: po.lines.map((line) => ({
+          sku: line.product.sku,
+          quantity: line.quantity,
+          unitCost: line.unitCost,
         })),
-        qtyWithoutCost,
-      };
-    };
-    const cin7Val = valueSide(cin7.positions);
-    const optixVal = valueSide(optix);
+      })),
+    });
+    const cin7Val = valuePositions(cin7.positions, basis.effectiveCostBySku);
+    const optixVal = valuePositions(optix, basis.effectiveCostBySku);
     const report = reportValuation({
       cin7ValueByWarehouse: cin7Val.warehouses,
       optixValueByWarehouse: optixVal.warehouses,
       qtyWithoutCost: optixVal.qtyWithoutCost,
       cin7Complete: cin7.complete,
       costingNote:
-        'Uses last PO unit cost when present, otherwise list price. Area 2 also reads IMP-* / XFREIGHT-* and Cin7 Landed Costs allocation (E3), not PO unit cost alone.',
+        'Route (a) is live: product cost plus IMP-* / XFREIGHT-* PO lines and header freight, allocated by line value. Route (b) Cin7 Landed Costs allocation is unread — Area 2 cannot sign off until that feed exists.',
+      populations: {
+        landed_po_line_aud: Math.round(basis.landedPoLineTotal * 100) / 100,
+        header_freight_aud: Math.round(basis.headerFreightTotal * 100) / 100,
+        cin7_allocation_unread: 1,
+      },
     });
+    report.clean = false;
+    report.notes.push(
+      'E3 route (b) Cin7 Landed Costs allocation is unread. This run is measurement only.'
+    );
     return applyGate(
       report,
       evaluatePhase2Gates(await gateInputForArea(ownerUserId, 2, cin7.complete))
@@ -340,10 +336,28 @@ export async function runPhase2Area(
   }
 
   if (area === 6) {
-    const [pos, receipts] = await Promise.all([
+    const [pos, receipts, poRows] = await Promise.all([
       prisma.purchaseOrder.count({ where: { ownerUserId } }),
       prisma.goodsReceipt.count({ where: { ownerUserId } }),
+      prisma.purchaseOrder.findMany({
+        where: { ownerUserId },
+        select: {
+          shippingCost: true,
+          lines: { select: { unitCost: true, quantity: true, product: { select: { sku: true } } } },
+        },
+      }),
     ]);
+    const basis = buildCostBasis({
+      productPrices: [],
+      orders: poRows.map((po) => ({
+        shippingCost: po.shippingCost ?? 0,
+        lines: po.lines.map((line) => ({
+          sku: line.product.sku,
+          quantity: line.quantity,
+          unitCost: line.unitCost,
+        })),
+      })),
+    });
     const report = reportPurchasing({
       poCin7: 0,
       poOptix: pos,
@@ -351,6 +365,10 @@ export async function runPhase2Area(
       grOptix: receipts,
       cin7Complete: false,
     });
+    report.populations = {
+      landed_po_line_aud: Math.round(basis.landedPoLineTotal * 100) / 100,
+      header_freight_aud: Math.round(basis.headerFreightTotal * 100) / 100,
+    };
     return applyGate(report, evaluatePhase2Gates(await gateInputForArea(ownerUserId, 6, false)));
   }
 
@@ -419,8 +437,9 @@ export async function buildSameAnswerPack(ownerUserId: string) {
       inventory_movements: a7.company.optix,
     },
     notes: [
-      'Margin is shown from Optix invoices minus estimated COGS until Cin7 COGS (E4) is attached.',
-      'Warranty-included vs warranty-excluded margin waits on E6.',
+      'Area 3 monthly Cin7 figures are Toby’s 23 Sep baseline (Total Excl). Aberford is excluded from those Optix counts.',
+      'Area 2 includes IMP-* / XFREIGHT-* and header freight. Cin7 Landed Costs allocation is still unread.',
+      'Zero-priced lines are excluded from pricing exceptions (E6). E5 waits on his Xero queue.',
     ],
   };
 }
