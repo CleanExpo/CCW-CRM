@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/api/phase2', () => ({
   getPhase2Scope: vi.fn(async () => ({
-    unsigned: true,
+    unsigned: false,
     phase1_missing: 0,
     price_lists_complete: false,
     preflight: [{ id: 'E1', check: 'stock control', result: 'pending' }],
