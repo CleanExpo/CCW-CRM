@@ -8,7 +8,7 @@ export const SCHEDULE_A = {
   date: '2026-09-23',
   author: 'Toby Bredhauer',
   supersedes: 'Schedule A copy sent the morning of 23 Sep 2026',
-  signed: false,
+  signed: true,
 } as const;
 
 export const USED_EQUIPMENT_SKU = '700-MISC';
@@ -24,7 +24,12 @@ export const PHASE2_BRANCHES = [
   { id: '5', name: 'CCW - NSW1 (Seven Hills)', status: 'active', kind: 'physical' },
   { id: '6503', name: 'PFS-Offshore (Cavite, FCMI)', status: 'active', kind: 'physical_temporary' },
   { id: '19561', name: 'CCW - Shopify', status: 'active', kind: 'virtual' },
-  { id: '6513', name: 'SHIP VIA – (AWA) American Worldwide Agencies', status: 'active', kind: 'in_transit' },
+  {
+    id: '6513',
+    name: 'SHIP VIA – (AWA) American Worldwide Agencies',
+    status: 'active',
+    kind: 'in_transit',
+  },
   { id: '15108', name: 'AWA (for CCW) Shenzhen Jifang', status: 'active', kind: 'in_transit' },
   { id: '16377', name: 'SHIP VIA – Shipito Torrance CA', status: 'active', kind: 'in_transit' },
   { id: '15469', name: 'SHIP VIA – SM-2548-1714 Oregon', status: 'disabled', kind: 'in_transit' },
