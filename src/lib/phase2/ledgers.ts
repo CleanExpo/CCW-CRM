@@ -47,6 +47,7 @@ export function reportValuation(input: {
   qtyWithoutCost: number;
   cin7Complete: boolean;
   costingNote: string;
+  populations?: Record<string, number>;
 }): Phase2AreaReport {
   const cin7Map = new Map(input.cin7ValueByWarehouse.map((r) => [r.warehouse, r.value]));
   const optixMap = new Map(input.optixValueByWarehouse.map((r) => [r.warehouse, r.value]));
