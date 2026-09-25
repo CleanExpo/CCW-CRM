@@ -13,22 +13,40 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { resolveDatabaseUrl } from './database-url.mjs';
 import {
-    formatOptixStockTotals,
-    loadOptixStockTotals,
-    parseOptixStockTotalsCliArgs,
+  OPTIX_STOCK_TOTALS_USAGE,
+  describeOptixStockTotalsFailure,
+  formatOptixStockTotals,
+  loadOptixStockTotals,
+  parseOptixStockTotalsCliArgs,
 } from './lib/optix-stock-totals.mjs';
 
-config({ path: join(dirname(fileURLToPath(import.meta.url)), '..', '.env') });
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+config({ path: join(root, '.env'), quiet: true });
+config({ path: join(root, '.env.local'), quiet: true, override: true });
 
 function isLocalHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
 }
 
 async function main() {
-  const parsed = parseOptixStockTotalsCliArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (argv.length === 0) {
+    console.error(OPTIX_STOCK_TOTALS_USAGE);
+    process.exitCode = 1;
+    return;
+  }
+
+  const parsed = parseOptixStockTotalsCliArgs(argv);
+  if (parsed.help) {
+    console.error(OPTIX_STOCK_TOTALS_USAGE);
+    return;
+  }
+
   const resolved = resolveDatabaseUrl();
   if (!resolved?.url || !resolved.parsed) {
-    throw new Error('DATABASE_URL is not configured.');
+    throw new Error(
+      'DATABASE_URL is not configured. Set it in .env (or DB_HOST / DB_USER / DB_PASSWORD). This script will not invent one.'
+    );
   }
 
   const remote = !isLocalHost(resolved.parsed.hostname);
@@ -43,9 +61,11 @@ async function main() {
   const client = new pg.Client({
     connectionString: resolved.url,
     ssl: remote ? { rejectUnauthorized: true } : false,
+    connectionTimeoutMillis: 15_000,
   });
-  await client.connect();
+
   try {
+    await client.connect();
     const result = await loadOptixStockTotals({
       email: parsed.email,
       findUserByEmail: async (email) => {
@@ -59,7 +79,8 @@ async function main() {
         const { rows } = await client.query(
           `SELECT COUNT(*)::int AS keys,
                   COALESCE(SUM(stock_on_hand), 0)::bigint AS qty,
-                  COUNT(*) FILTER (WHERE stock_on_hand > 0)::int AS nonzero
+                  COUNT(*) FILTER (WHERE stock_on_hand <> 0)::int AS nonzero,
+                  COUNT(*) FILTER (WHERE stock_on_hand < 0)::int AS negative
            FROM cin7_stock_levels
            WHERE owner_user_id = $1`,
           [ownerUserId]
@@ -70,7 +91,7 @@ async function main() {
         const { rows } = await client.query(
           `SELECT COALESCE(NULLIF(BTRIM(branch_name), ''), cin7_branch_id) AS branch,
                   COALESCE(SUM(stock_on_hand), 0)::bigint AS qty,
-                  COUNT(*) FILTER (WHERE stock_on_hand > 0)::int AS nonzero
+                  COUNT(*) FILTER (WHERE stock_on_hand <> 0)::int AS nonzero
            FROM cin7_stock_levels
            WHERE owner_user_id = $1
            GROUP BY 1
@@ -82,11 +103,15 @@ async function main() {
     });
     console.log(formatOptixStockTotals(result));
   } finally {
-    await client.end();
+    await client.end().catch(() => {});
   }
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(describeOptixStockTotalsFailure(error));
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.includes('--email') || message.startsWith('Unknown argument:')) {
+    console.error(OPTIX_STOCK_TOTALS_USAGE);
+  }
   process.exitCode = 1;
 });
