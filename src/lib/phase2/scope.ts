@@ -86,7 +86,7 @@ export async function buildPhase2Scope(ownerUserId: string) {
   }));
   return {
     document: 'CCW Phase 2 Scope of Work v1.1 + Schedule A Rev 1 (23 Sep 2026)',
-    unsigned: true,
+    unsigned: false,
     schedule_a: { ...SCHEDULE_A, note: SCHEDULE_A_NOTE },
     branches: PHASE2_BRANCHES,
     xero: XERO_AREA8,
