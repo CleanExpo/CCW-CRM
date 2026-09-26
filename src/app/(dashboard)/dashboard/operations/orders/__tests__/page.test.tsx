@@ -62,3 +62,28 @@ describe('OrdersPage load failure', () => {
     expect(screen.queryByText("Couldn't load orders")).not.toBeInTheDocument();
   });
 });
+
+describe('OrdersPage header count after a failed load', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  it('does not show a zero count when the load fails', async () => {
+    get.mockRejectedValue(new Error('Network down'));
+
+    render(<OrdersPage />);
+
+    await screen.findByText("Couldn't load orders");
+    expect(screen.queryByText(/equipment orders on file/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Updated .* ago/)).not.toBeInTheDocument();
+  });
+
+  it('still shows the zero count when the load succeeds with no rows', async () => {
+    get.mockResolvedValue(EMPTY);
+
+    render(<OrdersPage />);
+
+    expect(await screen.findByText('0 equipment orders on file')).toBeInTheDocument();
+  });
+});

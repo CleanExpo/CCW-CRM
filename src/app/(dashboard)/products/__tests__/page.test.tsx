@@ -71,3 +71,28 @@ describe('ProductsPage load failure', () => {
     expect(screen.queryByText("Couldn't load products")).not.toBeInTheDocument();
   });
 });
+
+describe('ProductsPage header count after a failed load', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  it('does not show a zero count when the load fails', async () => {
+    get.mockRejectedValue(new Error('Network down'));
+
+    render(<ProductsPage />);
+
+    await screen.findByText("Couldn't load products");
+    expect(screen.queryByText(/product SKUs in stock/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Updated .* ago/)).not.toBeInTheDocument();
+  });
+
+  it('still shows the zero count when the load succeeds with no rows', async () => {
+    get.mockResolvedValue(EMPTY);
+
+    render(<ProductsPage />);
+
+    expect(await screen.findByText('0 product SKUs in stock')).toBeInTheDocument();
+  });
+});

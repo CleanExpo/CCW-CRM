@@ -62,3 +62,28 @@ describe('CustomersPage load failure', () => {
     expect(screen.queryByText("Couldn't load customers")).not.toBeInTheDocument();
   });
 });
+
+describe('CustomersPage header count after a failed load', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  it('does not show a zero count when the load fails', async () => {
+    get.mockRejectedValue(new Error('Network down'));
+
+    render(<CustomersPage />);
+
+    await screen.findByText("Couldn't load customers");
+    expect(screen.queryByText(/cleaning businesses and trade contractors on file/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Updated .* ago/)).not.toBeInTheDocument();
+  });
+
+  it('still shows the zero count when the load succeeds with no rows', async () => {
+    get.mockResolvedValue(EMPTY);
+
+    render(<CustomersPage />);
+
+    expect(await screen.findByText('0 cleaning businesses and trade contractors on file')).toBeInTheDocument();
+  });
+});

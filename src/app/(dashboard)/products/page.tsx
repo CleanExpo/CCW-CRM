@@ -307,8 +307,8 @@ export default function ProductsPage() {
               <div>
                 <CardTitle>Product Catalogue</CardTitle>
                 <CardDescription>
-                  {total} product SKUs in stock
-                  {lastUpdated && (
+                  {!loadError && `${total} product SKUs in stock`}
+                  {lastUpdated && !loadError && (
                     <span className="text-muted-foreground ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>

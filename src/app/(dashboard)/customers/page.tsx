@@ -218,8 +218,8 @@ export default function CustomersPage() {
               <div>
                 <CardTitle>Contractor &amp; Business Directory</CardTitle>
                 <CardDescription>
-                  {total} cleaning businesses and trade contractors on file
-                  {lastUpdated && (
+                  {!loadError && `${total} cleaning businesses and trade contractors on file`}
+                  {lastUpdated && !loadError && (
                     <span className="text-muted-foreground ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>

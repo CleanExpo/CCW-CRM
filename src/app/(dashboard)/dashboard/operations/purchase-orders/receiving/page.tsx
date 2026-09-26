@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { ErrorState } from '@/components/ui/empty-state';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, PackageCheck, Trash2, Check, ChevronDown, ChevronRight } from 'lucide-react';
@@ -133,6 +134,7 @@ export default function GoodsReceivingPage() {
   const { toast } = useToast();
   const [grns, setGrns] = useState<GoodsReceipt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -177,8 +179,10 @@ export default function GoodsReceivingPage() {
       const filterStatus = statusFilter === 'all' ? undefined : statusFilter;
       const response = await cin7GrnApi.listGoodsReceipts(filterStatus);
       setGrns(response.items);
+      setLoadError(false);
     } catch {
       setGrns([]);
+      setLoadError(true);
       toast({
         title: 'Error',
         description: 'Failed to load goods receiving records.',
@@ -352,6 +356,8 @@ export default function GoodsReceivingPage() {
         <div className="text-muted-foreground py-12 text-center dark:text-foreground/70">
           Loading receipts…
         </div>
+      ) : loadError ? (
+        <ErrorState title="Couldn't load goods receipts" onRetry={loadGrns} />
       ) : grns.length === 0 ? (
         <div
           className={cn(

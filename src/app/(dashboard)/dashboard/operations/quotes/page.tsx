@@ -190,8 +190,8 @@ export default function QuotesPage() {
               <div>
                 <CardTitle>Quotations</CardTitle>
                 <CardDescription className="dark:text-foreground/70">
-                  {total} quotes in system
-                  {lastUpdated && (
+                  {!loadError && `${total} quotes in system`}
+                  {lastUpdated && !loadError && (
                     <span className="text-muted-foreground dark:text-foreground/60 ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>
