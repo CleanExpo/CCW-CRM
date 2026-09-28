@@ -177,6 +177,10 @@ model Product {
   sku               String
   category          String?
   price             Float    @default(0)
+  /// Cin7 product Cost — never RetailPrice. Area 2 only.
+  cin7Cost          Float?   @map("cin7_cost")
+  /// Cin7 Average Landed Cost when the option carries it.
+  cin7AverageLandedCost Float? @map("cin7_average_landed_cost")
   stock             Int      @default(0)
   isActive          Boolean  @default(true) @map("is_active")
   cin7StyleCode     String?  @map("cin7_style_code")
@@ -806,10 +810,10 @@ model Cin7StockLevel {
   cin7BranchId String   @map("cin7_branch_id")
   sku          String
   branchName   String?  @map("branch_name")
-  available    Int      @default(0)
-  stockOnHand  Int      @default(0) @map("stock_on_hand")
-  incoming     Int      @default(0)
-  openSales    Int      @default(0) @map("open_sales")
+  available    Decimal  @default(0) @db.Decimal(14, 4)
+  stockOnHand  Decimal  @default(0) @map("stock_on_hand") @db.Decimal(14, 4)
+  incoming     Decimal  @default(0) @db.Decimal(14, 4)
+  openSales    Decimal  @default(0) @map("open_sales") @db.Decimal(14, 4)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
