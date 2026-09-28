@@ -164,6 +164,8 @@ export function flattenOmniProducts(
   sku: string;
   name: string;
   price: number;
+  cin7Cost: number | null;
+  cin7AverageLandedCost: number | null;
   stock: number;
   visibility: string;
   styleCode: string;
@@ -174,6 +176,8 @@ export function flattenOmniProducts(
     sku: string;
     name: string;
     price: number;
+    cin7Cost: number | null;
+    cin7AverageLandedCost: number | null;
     stock: number;
     visibility: string;
     styleCode: string;
@@ -202,14 +206,17 @@ export function flattenOmniProducts(
           .join(' ');
         const name = optLabel ? `${productName} (${optLabel})` : productName;
         const price = Number(pick(o, 'RetailPrice', 'retailPrice') ?? 0) || 0;
-        const stock = Math.max(
-          0,
-          Math.floor(Number(pick(o, 'StockAvailable', 'stockAvailable') ?? 0))
+        const cin7Cost = readPositiveCost(pick(o, 'Cost', 'cost'));
+        const cin7AverageLandedCost = readPositiveCost(
+          pick(o, 'AverageLandedCost', 'averageLandedCost', 'LandedCost', 'landedCost', 'AverageCost', 'averageCost')
         );
+        const stock = normalizeOmniStockQty(pick(o, 'StockAvailable', 'stockAvailable') ?? 0);
         out.push({
           sku,
           name,
           price,
+          cin7Cost,
+          cin7AverageLandedCost,
           stock,
           visibility: styleStatus,
           styleCode: styleCode || sku,
@@ -221,6 +228,8 @@ export function flattenOmniProducts(
         sku: styleCode,
         name: productName,
         price: 0,
+        cin7Cost: null,
+        cin7AverageLandedCost: null,
         stock: 0,
         visibility: styleStatus,
         styleCode,
@@ -541,6 +550,7 @@ export async function fetchOmniBranchesPage(
 }
 
 /** Best-effort sales order total (uses API Total when present). */
+/** Count only. Optix never PUT/PATCH SalesOrders — Update permission on the API connection is unused. */
 export async function fetchOmniSalesOrderCount(creds: Cin7OmniCredentials): Promise<number> {
   const { ok, data } = await cin7OmniGet<unknown>(`/v1/SalesOrders?page=1&rows=1`, creds);
   if (!ok) return 0;
@@ -618,9 +628,17 @@ export type Cin7OmniStockLevelRow = {
   openSales: number;
 };
 
+export function readPositiveCost(n: unknown): number | null {
+  const v = Number(n);
+  if (!Number.isFinite(v) || v <= 0) return null;
+  return Math.round(v * 10000) / 10000;
+}
+
+/** Keep Cin7 fractional SOH (Anne 97,307.06). Do not floor. Negatives stay. */
 export function normalizeOmniStockQty(n: unknown): number {
-  const v = Math.floor(Number(n));
-  return Number.isFinite(v) ? Math.max(0, v) : 0;
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.round(v * 10000) / 10000;
 }
 
 /** Dedupe Omni stock rows by branch:sku (last write wins — matches upsert order). */
