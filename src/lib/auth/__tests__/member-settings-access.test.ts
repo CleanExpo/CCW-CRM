@@ -7,10 +7,11 @@ describe('memberMayAccessPath', () => {
     expect(memberMayAccessPath('/dashboard/settings/account')).toBe(true);
     expect(memberMayAccessPath('/settings/account')).toBe(true);
     expect(memberMayAccessPath('/onboarding')).toBe(true);
+    expect(memberMayAccessPath('/settings/integrations')).toBe(true);
+    expect(memberMayAccessPath('/dashboard/settings/integrations')).toBe(true);
   });
 
   it('does not open the rest of workspace settings', () => {
     expect(memberMayAccessPath('/dashboard/settings/team')).toBe(false);
-    expect(memberMayAccessPath('/dashboard/settings/integrations')).toBe(false);
   });
 });
