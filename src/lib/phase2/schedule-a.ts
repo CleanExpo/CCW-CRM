@@ -83,6 +83,46 @@ export const XERO_AREA8 = {
   landed_costs_mapping_unset: true,
 } as const;
 
+/** Tuesday 29 Sep 2026, 11:00 AEST (01:00 UTC). Schedule A Part 1.3. */
+export const AREA1_FREEZE = {
+  date: '2026-09-29',
+  time_aest: '11:00',
+  utc: '2026-09-29T01:00:00.000Z',
+  walk_done_by_aest: '10:55',
+  capture_window_minutes: 15,
+  anne_export: 'Stock On Hand & Availability, all products, all locations, zero rows included',
+  supersedes: 'Anne 14 September export',
+} as const;
+
+/** Toby 27 Sep 2026. Cin7 has no AR/AP ledger — Xero is Area 8; Cin7 walk is invoiced-unpaid. */
+export const AREA5_CONTROLS_2026_09_27 = {
+  xero_ar_12010: { amount: 187350.94, invoices: 321, customers: 166 },
+  xero_ap_51200: {
+    amount: -31622.04,
+    bills: 189,
+    suppliers: 70,
+    note: 'Negative: supplier prepayments (USD e.g. Air-Care, AlorAir) exceed open bills. Own population in Areas 5 and 8.',
+  },
+  cin7_open_sales_order_payments: {
+    owing: 197747,
+    open_orders: 291333.19,
+    qld1: 113769.9,
+    vic1: 65963.6,
+    nsw1: 16597.15,
+    shopify: 1416.36,
+  },
+} as const;
+
+/** Toby 27 Sep 2026. Area 2 must match Cin7's valuation, not a self-tie. */
+export const CIN7_STOCK_VALUATION_2026_09_27 = {
+  dashboard: 1_600_000,
+  anne_19_aug: 1_487_977.13,
+  soh_x_cost: 1_613_429,
+  soh_x_average_landed_cost: 1_601_866,
+  primary: 1_601_866,
+  primary_label: 'SOH × Average Landed Cost (product master 23 Sep)',
+} as const;
+
 export const AREA3_MONTHLY_BASELINE = [
   { month: '2025-07', count: 521, total_excl: 308776 },
   { month: '2025-08', count: 560, total_excl: 433696 },
