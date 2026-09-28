@@ -51,7 +51,15 @@ describe('flattenOmniProducts — client requires inactive included by default',
     StyleCode: 'PUB-1',
     Name: 'Public style',
     Status: 'Public',
-    ProductOptions: [{ ProductOptionCode: 'SKU-1', RetailPrice: 10, StockAvailable: 5 }],
+    ProductOptions: [
+      {
+        ProductOptionCode: 'SKU-1',
+        RetailPrice: 10,
+        Cost: 4,
+        AverageLandedCost: 4.2,
+        StockAvailable: 5.25,
+      },
+    ],
   };
 
   it('includes inactive products when excludeInactive is not set', () => {
@@ -70,6 +78,14 @@ describe('flattenOmniProducts — client requires inactive included by default',
     const rows = flattenOmniProducts([publicStyle]);
     expect(rows[0]?.styleCode).toBe('PUB-1');
     expect(rows[0]?.visibility).toBe('Public');
+  });
+
+  it('keeps Cost / AverageLandedCost separate from RetailPrice and does not floor SOH', () => {
+    const rows = flattenOmniProducts([publicStyle]);
+    expect(rows[0]?.price).toBe(10);
+    expect(rows[0]?.cin7Cost).toBe(4);
+    expect(rows[0]?.cin7AverageLandedCost).toBe(4.2);
+    expect(rows[0]?.stock).toBe(5.25);
   });
 });
 
