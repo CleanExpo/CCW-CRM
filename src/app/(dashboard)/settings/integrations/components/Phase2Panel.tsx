@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  capturePhase2AsOf,
   comparePhase2Area,
   getPhase2EvidenceUrl,
   getPhase2SameAnswer,
@@ -30,6 +31,7 @@ type ScopePayload = {
   out_of_scope?: string[];
   phase1_missing?: number;
   price_lists_complete?: boolean;
+  area1_freeze?: { date: string; time_aest: string; utc: string; walk_done_by_aest: string };
 };
 
 export function Phase2Panel({ isConnected }: Phase2PanelProps) {
@@ -39,6 +41,8 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
   const [scope, setScope] = useState<ScopePayload | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [asOfId, setAsOfId] = useState<string | null>(null);
 
   useEffect(() => {
     void getPhase2Scope()
@@ -54,6 +58,19 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
       setReport(await comparePhase2Area(next));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Compare failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function captureAsOf() {
+    setBusy(true);
+    setError(null);
+    try {
+      const row = await capturePhase2AsOf();
+      setAsOfId(row.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'As-of capture failed');
     } finally {
       setBusy(false);
     }
@@ -86,8 +103,14 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
           invoices → COGS → balances → POs (sign after 2) → movements (sign after 4) → E5 → Xero.
         </p>
         <p className="text-xs">
-          Schedule A Rev 1 materiality applies. Quantity is exact. E5 stays blocked until the
-          Cin7→Xero queue is cleared.
+          Part 1.3 as-of: {scope?.area1_freeze?.date ?? '2026-09-29'} {scope?.area1_freeze?.time_aest ?? '11:00'}{' '}
+          AEST. Finish the stock walk before {scope?.area1_freeze?.walk_done_by_aest ?? '10:55'}, capture Optix,
+          then Anne’s SOH & Availability at 11:00. No prune/sync between. One snapshot ID.
+          {asOfId ? ` Last Optix snapshot: ${asOfId}` : ''}
+        </p>
+        <p className="text-xs">
+          Schedule A Rev 1 materiality applies. Quantity is exact (decimals). E5 stays blocked until
+          the Cin7→Xero queue is cleared.
         </p>
         <p className="text-muted-foreground text-xs">
           Phase 1 missing {scope?.phase1_missing ?? '—'} · price lists{' '}
@@ -105,6 +128,9 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
               {n === 1 ? 'Compare on-hand quantities' : `Area ${n}`}
             </Button>
           ))}
+          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void captureAsOf()}>
+            Capture Optix as-of
+          </Button>
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => void loadPack()}>
             Same-answer pack
           </Button>
@@ -158,11 +184,14 @@ export function Phase2Panel({ isConnected }: Phase2PanelProps) {
 function Phase2ReportView({ report }: { report: Phase2AreaReport }) {
   return (
     <div className="space-y-3 text-sm">
-      <p>
-        As of {report.as_of}
-        {report.blocked ? ' · blocked' : report.clean ? ' · clean' : ' · differences'}
-        {report.blocked_reason ? ` — ${report.blocked_reason}` : ''}
-      </p>
+        <p>
+          As of {report.as_of}
+          {report.blocked ? ' · blocked' : report.clean ? ' · clean' : ' · differences'}
+          {report.blocked_reason ? ` — ${report.blocked_reason}` : ''}
+          {'recon_run_id' in report && report.recon_run_id
+            ? ` · snapshot ${(report as Phase2AreaReport & { recon_run_id?: string }).recon_run_id}`
+            : ''}
+        </p>
       <p className="tabular-nums">
         Company totals · Cin7 {report.company.cin7.toLocaleString()} · Optix{' '}
         {report.company.optix.toLocaleString()} · diff {report.company.difference.toLocaleString()}
@@ -189,6 +218,16 @@ function Phase2ReportView({ report }: { report: Phase2AreaReport }) {
             <li key={w.warehouse}>
               {w.warehouse}: Cin7 {w.cin7.toLocaleString()} · Optix {w.optix.toLocaleString()} ·
               diff {w.difference.toLocaleString()}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {report.cost_basis && report.cost_basis.length > 0 ? (
+        <ul className="space-y-0.5 font-mono text-xs tabular-nums">
+          {report.cost_basis.slice(0, 40).map((row) => (
+            <li key={`${row.sku}-${row.warehouse}-${row.source}`}>
+              {row.sku} · qty {row.quantity} · unit {row.unitCost ?? 'none'} · {row.source} · $
+              {row.value}
             </li>
           ))}
         </ul>
