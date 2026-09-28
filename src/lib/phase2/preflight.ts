@@ -18,23 +18,23 @@ export const PHASE2_PREFLIGHT = [
   {
     id: 'E3',
     check:
-      'Landed cost reaches product cost by two routes: IMP-* / XFREIGHT-* PO lines (and header freight), and Cin7 Landed Costs allocation. Area 2 reads both. Cin7→Xero Landed Costs mapping is unset until Toby sets it before E5.',
+      'Landed cost: product Cost / AverageLandedCost on the option (route a). Allocation API is probed at Area 2 runtime; if unexposed, Toby supplies a PO landed-cost UI export from 1 Jul 2025. Cin7→Xero mapping is his this week before E5.',
     areas: [2, 6],
-    result: 'recorded_2026-09-23',
+    result: 'probe_at_area2',
   },
   {
     id: 'E4',
     check:
-      'Lower bound of COGS-ineligible lines (56 no fully-dispatched date; 48 not fully moved; 195 without invoice date). Accounting status still to be completed from the API.',
+      'COGS-eligible only when FullyDispatchedDate, invoice date, and AccountingStatus are set (classifyCogsEligibility). First SalesOrders page is tallied on each Area 4 run.',
     areas: [4],
-    result: 'partial_2026-09-23',
+    result: 'condition_in_code_catalog_open',
   },
   {
     id: 'E5',
     check:
-      'Not run. Cin7 Xero dashboard has a pending queue (four COGS journals, invoices, payments). CCW clears the queue before E5 and before Area 8 is scoped.',
+      'Toby 27 Sep: mapping and queue push this week. Errors tab: $800 Dhamark payment and $17.25 PO-121510 allocation. Area 8 waits until he says the queue is clear.',
     areas: [8],
-    result: 'pending_queue',
+    result: 'toby_this_week',
   },
   {
     id: 'E6',
