@@ -5,8 +5,24 @@ export type CostBasisPo = {
   lines: Array<{ sku: string; quantity: number; unitCost: number }>;
 };
 
+export type CostSource =
+  | 'cin7_average_landed_cost'
+  | 'cin7_cost'
+  | 'po_unit_cost'
+  | 'none';
+
+export type CostBasisRow = {
+  sku: string;
+  warehouse: string;
+  quantity: number;
+  unitCost: number | null;
+  source: CostSource;
+  value: number;
+};
+
 export type CostBasis = {
   unitCostBySku: Map<string, number>;
+  sourceBySku: Map<string, CostSource>;
   landedPerUnitBySku: Map<string, number>;
   effectiveCostBySku: Map<string, number>;
   landedPoLineTotal: number;
@@ -15,61 +31,68 @@ export type CostBasis = {
 };
 
 /**
- * Area 2 route (a): product cost + IMP-* / XFREIGHT-* lines + PO header freight,
- * allocated across that PO's product lines by line value.
- * Route (b) Cin7 Landed Costs allocation is not in the Omni stock walk — left unread.
+ * Area 2 uses Cin7's own cost fields. RetailPrice is never a cost.
+ * Homemade IMP-* / header freight is recorded, not added on top of Cin7 ALC/Cost
+ * (that was the 2.4× self-tie). Route (b) allocation stays unread.
  */
 export function buildCostBasis(input: {
-  productPrices: Array<{ sku: string; price: number }>;
+  products: Array<{
+    sku: string;
+    cin7Cost?: number | null;
+    cin7AverageLandedCost?: number | null;
+  }>;
   orders: CostBasisPo[];
 }): CostBasis {
   const unitCostBySku = new Map<string, number>();
-  for (const p of input.productPrices) {
-    if (p.sku) unitCostBySku.set(p.sku, p.price);
+  const sourceBySku = new Map<string, CostSource>();
+
+  for (const p of input.products) {
+    if (!p.sku) continue;
+    const alc = p.cin7AverageLandedCost;
+    const cost = p.cin7Cost;
+    if (alc != null && alc > 0) {
+      unitCostBySku.set(p.sku, alc);
+      sourceBySku.set(p.sku, 'cin7_average_landed_cost');
+    } else if (cost != null && cost > 0) {
+      unitCostBySku.set(p.sku, cost);
+      sourceBySku.set(p.sku, 'cin7_cost');
+    }
   }
 
   let landedPoLineTotal = 0;
   let headerFreightTotal = 0;
-  const landedAllocated = new Map<string, { landed: number; qty: number }>();
+  const lastPoUnit = new Map<string, number>();
 
   for (const order of input.orders) {
     const header = Number.isFinite(order.shippingCost) ? Math.max(0, order.shippingCost) : 0;
     headerFreightTotal += header;
-    let lineLanded = 0;
-    const productLines: CostBasisPo['lines'] = [];
     for (const line of order.lines) {
       if (!line.sku) continue;
       if (isLandedCostSku(line.sku)) {
-        lineLanded += line.quantity * line.unitCost;
+        landedPoLineTotal += line.quantity * line.unitCost;
         continue;
       }
-      productLines.push(line);
-      if (line.unitCost > 0) unitCostBySku.set(line.sku, line.unitCost);
+      if (line.unitCost > 0) lastPoUnit.set(line.sku, line.unitCost);
     }
-    landedPoLineTotal += lineLanded;
-    const pool = lineLanded + header;
-    const productValue = productLines.reduce((s, l) => s + l.quantity * l.unitCost, 0);
-    for (const line of productLines) {
-      const share = productValue > 0 ? (line.quantity * line.unitCost) / productValue : 0;
-      const add = pool * share;
-      const cur = landedAllocated.get(line.sku) ?? { landed: 0, qty: 0 };
-      cur.landed += add;
-      cur.qty += line.quantity;
-      landedAllocated.set(line.sku, cur);
+  }
+
+  for (const [sku, unit] of lastPoUnit) {
+    if (!unitCostBySku.has(sku)) {
+      unitCostBySku.set(sku, unit);
+      sourceBySku.set(sku, 'po_unit_cost');
     }
   }
 
   const landedPerUnitBySku = new Map<string, number>();
   const effectiveCostBySku = new Map<string, number>();
   for (const [sku, unit] of unitCostBySku) {
-    const alloc = landedAllocated.get(sku);
-    const perUnit = alloc && alloc.qty > 0 ? alloc.landed / alloc.qty : 0;
-    landedPerUnitBySku.set(sku, perUnit);
-    effectiveCostBySku.set(sku, unit + perUnit);
+    landedPerUnitBySku.set(sku, 0);
+    effectiveCostBySku.set(sku, unit);
   }
 
   return {
     unitCostBySku,
+    sourceBySku,
     landedPerUnitBySku,
     effectiveCostBySku,
     landedPoLineTotal,
@@ -100,4 +123,31 @@ export function valuePositions(
     })),
     qtyWithoutCost,
   };
+}
+
+export function qld1HighestValueRows(
+  rows: Array<{ sku: string; warehouse: string; warehouseName?: string; stockOnHand: number }>,
+  basis: CostBasis,
+  limit = 20
+): CostBasisRow[] {
+  const ranked: CostBasisRow[] = [];
+  for (const r of rows) {
+    const name = r.warehouseName ?? r.warehouse;
+    if (!/QLD1/i.test(name)) continue;
+    if (r.stockOnHand === 0) continue;
+    const unitCost = basis.effectiveCostBySku.get(r.sku) ?? null;
+    const source = basis.sourceBySku.get(r.sku) ?? 'none';
+    ranked.push({
+      sku: r.sku,
+      warehouse: name,
+      quantity: r.stockOnHand,
+      unitCost,
+      source: unitCost == null ? 'none' : source,
+      value: unitCost == null ? 0 : Math.round(r.stockOnHand * unitCost * 100) / 100,
+    });
+  }
+  ranked.sort((a, b) => b.value - a.value || b.quantity - a.quantity);
+  const top = ranked.filter((r) => r.source !== 'none').slice(0, limit);
+  const uncosted = ranked.filter((r) => r.source === 'none');
+  return [...top, ...uncosted];
 }
