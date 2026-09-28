@@ -24,4 +24,34 @@ describe('evidenceCsv', () => {
     expect(csv).toContain('A,Brisbane');
     expect(csv).toContain('value_mismatch');
   });
+
+  it('exports QLD1 cost basis and uncosted rows', () => {
+    const report = {
+      area: 2,
+      as_of: '2026-09-27T00:00:00.000Z',
+      sample: [],
+      cost_basis: [
+        {
+          sku: 'A',
+          warehouse: 'QLD1',
+          quantity: 2,
+          unitCost: 10,
+          source: 'cin7_average_landed_cost',
+          value: 20,
+        },
+        {
+          sku: 'B',
+          warehouse: 'QLD1',
+          quantity: 1,
+          unitCost: null,
+          source: 'none',
+          value: 0,
+        },
+      ],
+    } as unknown as Phase2AreaReport;
+    const csv = evidenceCsv(report);
+    expect(csv).toContain('qld1_cost_basis');
+    expect(csv).toContain('no_cost_basis');
+    expect(csv).toContain('cin7_average_landed_cost');
+  });
 });
