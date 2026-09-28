@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { classifyPhase2Line, isLandedCostSku, USED_EQUIPMENT_SKU } from '../schedule-a';
+import {
+  AREA1_FREEZE,
+  CIN7_STOCK_VALUATION_2026_09_27,
+  classifyPhase2Line,
+  isLandedCostSku,
+  USED_EQUIPMENT_SKU,
+} from '../schedule-a';
 
 describe('Schedule A Rev 1 line classification', () => {
   it('treats 700-MISC negative qty as a trade-in, not an ordinary sale', () => {
-    expect(
-      classifyPhase2Line({ sku: USED_EQUIPMENT_SKU, quantity: -1, unitPrice: 22400 })
-    ).toBe('trade_in');
+    expect(classifyPhase2Line({ sku: USED_EQUIPMENT_SKU, quantity: -1, unitPrice: 22400 })).toBe(
+      'trade_in'
+    );
   });
 
   it('keeps Aberford Holdings invoices as a revaluation population', () => {
@@ -32,5 +38,10 @@ describe('Schedule A Rev 1 line classification', () => {
     expect(classifyPhase2Line({ sku: 'NA0701', quantity: 1, unitPrice: 0 })).toBe(
       'zero_price_excluded'
     );
+  });
+
+  it('records Tuesday as-of and Cin7 ALC control', () => {
+    expect(AREA1_FREEZE.utc).toBe('2026-09-29T01:00:00.000Z');
+    expect(CIN7_STOCK_VALUATION_2026_09_27.primary).toBe(1_601_866);
   });
 });
