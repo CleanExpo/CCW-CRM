@@ -2,6 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { reportBalances, reportInvoices, reportValuation, reportXero } from '../ledgers';
 
 describe('Phase 2 ledger reports', () => {
+  it('uses Cin7 company control instead of a reconstructed self-tie', () => {
+    const report = reportValuation({
+      cin7ValueByWarehouse: [{ warehouse: 'BNE', value: 3_891_883.95 }],
+      optixValueByWarehouse: [{ warehouse: 'BNE', value: 3_891_883.95 }],
+      qtyWithoutCost: 0,
+      cin7Complete: true,
+      costingNote: 'test',
+      cin7CompanyControl: 1_601_866,
+      cin7CompanyControlLabel: 'SOH × Average Landed Cost',
+    });
+    expect(report.company.cin7).toBe(1_601_866);
+    expect(report.company.optix).toBe(3_891_883.95);
+    expect(report.sample[0]?.document).toMatch(/Average Landed Cost/);
+    expect(report.clean).toBe(false);
+  });
+
   it('blocks valuation when the Cin7 stock pull is incomplete', () => {
     const report = reportValuation({
       cin7ValueByWarehouse: [{ warehouse: 'BNE', value: 100 }],
