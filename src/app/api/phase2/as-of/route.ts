@@ -7,12 +7,6 @@ export const maxDuration = 120;
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
   if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
-  if (scope.role === 'member') {
-    return NextResponse.json(
-      { detail: 'Your role does not have access to this resource' },
-      { status: 403 }
-    );
-  }
   const row = await loadLatestPhase2AsOf(scope.userId);
   if (!row) return NextResponse.json({ detail: 'No Part 1.3 as-of snapshot yet.' }, { status: 404 });
   return NextResponse.json(row);
@@ -21,12 +15,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const scope = await requireAuthScope(request);
   if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
-  if (scope.role === 'member') {
-    return NextResponse.json(
-      { detail: 'Your role does not have access to this resource' },
-      { status: 403 }
-    );
-  }
   try {
     const captured = await capturePhase2AsOf(scope.userId);
     return NextResponse.json({
@@ -42,12 +30,6 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const scope = await requireAuthScope(request);
   if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
-  if (scope.role === 'member') {
-    return NextResponse.json(
-      { detail: 'Your role does not have access to this resource' },
-      { status: 403 }
-    );
-  }
   const body = (await request.json().catch(() => null)) as {
     snapshotId?: string;
     runTimestamp?: string;
