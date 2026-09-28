@@ -48,16 +48,17 @@ describe('POST /api/phase2/compare', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects a member', async () => {
+  it('lets a member run Area 2 after they have synced stock', async () => {
     vi.mocked(requireAuthScope).mockResolvedValue({
       userId: 'u1',
       role: 'member',
       isAdmin: false,
     });
     const res = await POST(
-      new NextRequest('http://localhost/api/phase2/compare?area=1', { method: 'POST' })
+      new NextRequest('http://localhost/api/phase2/compare?area=2', { method: 'POST' })
     );
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
+    expect(runPhase2Area).toHaveBeenCalledWith('u1', 2);
   });
 
   it('runs Area 1 for an admin and stores a snapshot', async () => {
