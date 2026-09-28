@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildCostBasis, valuePositions } from '../cost-basis';
+import { buildCostBasis, qld1HighestValueRows, valuePositions } from '../cost-basis';
 
 describe('buildCostBasis', () => {
-  it('adds IMP-* line cost and header freight onto the product, not as a second stock SKU', () => {
+  it('uses Cin7 average landed cost and never RetailPrice', () => {
     const basis = buildCostBasis({
-      productPrices: [{ sku: 'WIDGET', price: 10 }],
+      products: [{ sku: 'WIDGET', cin7Cost: 40, cin7AverageLandedCost: 42 }],
       orders: [
         {
           shippingCost: 20,
@@ -15,15 +15,23 @@ describe('buildCostBasis', () => {
         },
       ],
     });
+    expect(basis.effectiveCostBySku.get('WIDGET')).toBe(42);
+    expect(basis.sourceBySku.get('WIDGET')).toBe('cin7_average_landed_cost');
     expect(basis.landedPoLineTotal).toBe(80);
     expect(basis.headerFreightTotal).toBe(20);
-    expect(basis.effectiveCostBySku.get('WIDGET')).toBe(150);
-    expect(basis.landedCostAllocationUnread).toBe(true);
+  });
+
+  it('does not treat a sell price as a cost when Cin7 cost is missing', () => {
+    const basis = buildCostBasis({
+      products: [{ sku: 'RETAIL-ONLY', cin7Cost: null, cin7AverageLandedCost: null }],
+      orders: [],
+    });
+    expect(basis.effectiveCostBySku.has('RETAIL-ONLY')).toBe(false);
   });
 
   it('does not treat XFREIGHT as on-hand stock value of its own', () => {
     const basis = buildCostBasis({
-      productPrices: [],
+      products: [],
       orders: [
         {
           shippingCost: 0,
@@ -35,16 +43,20 @@ describe('buildCostBasis', () => {
     expect(basis.landedPoLineTotal).toBe(19);
   });
 
-  it('values warehouse SOH on the effective cost', () => {
+  it('values warehouse SOH on Cin7 cost and ranks QLD1', () => {
     const basis = buildCostBasis({
-      productPrices: [{ sku: 'A', price: 5 }],
-      orders: [{ shippingCost: 0, lines: [{ sku: 'A', quantity: 1, unitCost: 5 }] }],
+      products: [{ sku: 'A', cin7Cost: 5, cin7AverageLandedCost: null }],
+      orders: [],
     });
     const valued = valuePositions(
-      [{ sku: 'A', warehouse: '3', warehouseName: 'QLD1', stockOnHand: 4 }],
+      [{ sku: 'A', warehouse: '3', warehouseName: 'CCW - QLD1, QLD', stockOnHand: 4 }],
       basis.effectiveCostBySku
     );
-    expect(valued.warehouses[0]).toEqual({ warehouse: 'QLD1', value: 20 });
-    expect(valued.qtyWithoutCost).toBe(0);
+    expect(valued.warehouses[0]).toEqual({ warehouse: 'CCW - QLD1, QLD', value: 20 });
+    const rows = qld1HighestValueRows(
+      [{ sku: 'A', warehouse: '3', warehouseName: 'CCW - QLD1, QLD', stockOnHand: 4 }],
+      basis
+    );
+    expect(rows[0]).toMatchObject({ sku: 'A', source: 'cin7_cost', unitCost: 5, value: 20 });
   });
 });
