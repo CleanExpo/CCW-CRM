@@ -33,6 +33,8 @@ export type Cin7CatalogProductSku = {
   sku: string;
   name: string;
   price: number;
+  cin7Cost: number | null;
+  cin7AverageLandedCost: number | null;
   stock: number;
   visibility: string;
   styleCode: string;
@@ -315,6 +317,8 @@ export async function fetchFullOmniProductCatalog(
         sku: row.sku,
         name: row.name,
         price: row.price,
+        cin7Cost: row.cin7Cost,
+        cin7AverageLandedCost: row.cin7AverageLandedCost,
         stock: row.stock,
         visibility: row.visibility,
         styleCode: row.styleCode,
