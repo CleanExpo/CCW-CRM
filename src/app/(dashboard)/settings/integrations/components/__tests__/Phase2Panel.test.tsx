@@ -13,6 +13,7 @@ vi.mock('@/lib/api/phase2', () => ({
   })),
   getPhase2EvidenceUrl: vi.fn(() => '/api/phase2/evidence?area=1'),
   getPhase2SameAnswer: vi.fn(),
+  capturePhase2AsOf: vi.fn(),
   comparePhase2Area: vi.fn(async () => ({
     area: 1,
     title: 'Inventory quantities by warehouse',
