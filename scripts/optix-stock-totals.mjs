@@ -78,7 +78,7 @@ async function main() {
       queryTotals: async (ownerUserId) => {
         const { rows } = await client.query(
           `SELECT COUNT(*)::int AS keys,
-                  COALESCE(SUM(stock_on_hand), 0)::bigint AS qty,
+                  COALESCE(SUM(stock_on_hand), 0)::numeric AS qty,
                   COUNT(*) FILTER (WHERE stock_on_hand <> 0)::int AS nonzero,
                   COUNT(*) FILTER (WHERE stock_on_hand < 0)::int AS negative
            FROM cin7_stock_levels
@@ -90,7 +90,7 @@ async function main() {
       queryPerBranch: async (ownerUserId) => {
         const { rows } = await client.query(
           `SELECT COALESCE(NULLIF(BTRIM(branch_name), ''), cin7_branch_id) AS branch,
-                  COALESCE(SUM(stock_on_hand), 0)::bigint AS qty,
+                  COALESCE(SUM(stock_on_hand), 0)::numeric AS qty,
                   COUNT(*) FILTER (WHERE stock_on_hand <> 0)::int AS nonzero
            FROM cin7_stock_levels
            WHERE owner_user_id = $1
