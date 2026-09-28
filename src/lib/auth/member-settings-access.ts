@@ -3,6 +3,9 @@ const MEMBER_ACCOUNT_PATHS = [
   '/dashboard/settings/account',
   '/settings/account',
   '/onboarding',
+  // Same card as Cin7 product/stock sync, which members can already call.
+  '/dashboard/settings/integrations',
+  '/settings/integrations',
 ];
 
 export function memberMayAccessPath(pathname: string): boolean {
