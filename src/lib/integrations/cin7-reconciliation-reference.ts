@@ -114,7 +114,13 @@ export async function loadOptixReferenceSnapshot(
     priceLists,
     taxCodes,
     uoms,
-    stockRows,
+    stockRows: stockRows.map((row) => ({
+      cin7BranchId: row.cin7BranchId,
+      sku: row.sku,
+      available: Number(row.available),
+      stockOnHand: Number(row.stockOnHand),
+      incoming: Number(row.incoming),
+    })),
     warehouseCount,
   };
 }
