@@ -65,6 +65,15 @@ export type Phase2AreaReport = {
   source_of_truth: { cin7: string; optix: string };
   /** Schedule A Rev 1 own populations — not blended into ordinary sales/COGS. */
   populations?: Record<string, number>;
+  /** Area 2: QLD1 top value rows plus uncosted positions, for Toby. */
+  cost_basis?: Array<{
+    sku: string;
+    warehouse: string;
+    quantity: number;
+    unitCost: number | null;
+    source: string;
+    value: number;
+  }>;
 };
 
 export const HISTORICAL_WINDOW_START = '2025-07-01';
