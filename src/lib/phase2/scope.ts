@@ -8,7 +8,13 @@ import {
 } from '@/lib/phase2/gates';
 import { PHASE2_MATERIALITY } from '@/lib/phase2/materiality';
 import { PHASE2_PREFLIGHT, PHASE2_SOURCE_MATRIX, SCHEDULE_A_NOTE } from '@/lib/phase2/preflight';
-import { PHASE2_BRANCHES, SCHEDULE_A, XERO_AREA8 } from '@/lib/phase2/schedule-a';
+import {
+  AREA1_FREEZE,
+  AREA5_CONTROLS_2026_09_27,
+  PHASE2_BRANCHES,
+  SCHEDULE_A,
+  XERO_AREA8,
+} from '@/lib/phase2/schedule-a';
 import { PHASE2_AREAS, type Phase2Area } from '@/lib/phase2/types';
 
 export async function loadPhase2Facts(ownerUserId: string) {
@@ -93,6 +99,8 @@ export async function buildPhase2Scope(ownerUserId: string) {
     cin7_is_source_of_truth: true,
     read_only: true,
     historical_window_start: '2025-07-01',
+    area1_freeze: AREA1_FREEZE,
+    area5_controls_2026_09_27: AREA5_CONTROLS_2026_09_27,
     warehouses_in_scope: 12,
     materiality: PHASE2_MATERIALITY,
     preflight: PHASE2_PREFLIGHT,
