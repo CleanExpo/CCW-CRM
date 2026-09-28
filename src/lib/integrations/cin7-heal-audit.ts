@@ -166,9 +166,9 @@ async function captureFieldHealBeforeRows(
       const c = cin7ByKey.get(key);
       if (!c) continue;
       if (
-        o.available === c.available &&
-        o.stockOnHand === c.stockOnHand &&
-        o.incoming === c.incoming
+        Number(o.available) === c.available &&
+        Number(o.stockOnHand) === c.stockOnHand &&
+        Number(o.incoming) === c.incoming
       ) {
         continue;
       }
@@ -305,10 +305,10 @@ async function applyAuditedStockKeysetDelete(input: {
             cin7BranchId: r.cin7BranchId,
             sku: r.sku,
             branchName: r.branchName,
-            available: r.available,
-            stockOnHand: r.stockOnHand,
-            incoming: r.incoming,
-            openSales: r.openSales,
+            available: Number(r.available),
+            stockOnHand: Number(r.stockOnHand),
+            incoming: Number(r.incoming),
+            openSales: Number(r.openSales),
           } as Prisma.InputJsonValue,
         })),
       },
