@@ -21,3 +21,7 @@ export function getPhase2Scope(): Promise<Record<string, unknown>> {
 export function getPhase2EvidenceUrl(area: Phase2Area): string {
   return `/api/phase2/evidence?area=${area}`;
 }
+
+export function capturePhase2AsOf(): Promise<{ id: string; summary: Record<string, unknown> }> {
+  return apiClient.post('/api/phase2/as-of', {}, undefined, 120_000);
+}
