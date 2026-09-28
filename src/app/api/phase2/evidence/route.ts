@@ -10,12 +10,6 @@ export async function GET(request: NextRequest) {
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
-  if (scope.role === 'member') {
-    return NextResponse.json(
-      { detail: 'Your role does not have access to this resource' },
-      { status: 403 }
-    );
-  }
   const area = parsePhase2Area(request.nextUrl.searchParams.get('area'));
   if (!area) {
     return NextResponse.json({ detail: 'area must be 1–8' }, { status: 400 });
