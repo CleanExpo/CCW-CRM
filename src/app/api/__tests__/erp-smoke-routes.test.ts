@@ -133,7 +133,7 @@ function customerRow() {
   };
 }
 
-function req(url: string, init?: RequestInit) {
+function req(url: string, init?: ConstructorParameters<typeof NextRequest>[1]) {
   return new NextRequest(url, init);
 }
 
