@@ -32,6 +32,8 @@ export type Cin7ProductSyncRow = {
   sku: string;
   name: string;
   price: number;
+  cin7Cost?: number | null;
+  cin7AverageLandedCost?: number | null;
   stock: number;
   category: string;
   isActive: boolean;
@@ -93,6 +95,8 @@ export async function batchUpsertProducts(
           sku: row.sku,
           name: row.name,
           price: row.price,
+          cin7Cost: row.cin7Cost ?? null,
+          cin7AverageLandedCost: row.cin7AverageLandedCost ?? null,
           stock: row.stock,
           category: row.category,
           isActive: row.isActive,
@@ -102,6 +106,8 @@ export async function batchUpsertProducts(
         update: {
           name: row.name,
           price: row.price,
+          cin7Cost: row.cin7Cost ?? null,
+          cin7AverageLandedCost: row.cin7AverageLandedCost ?? null,
           stock: row.stock,
           category: row.category,
           isActive: row.isActive,
@@ -530,6 +536,7 @@ export function mapCoreProductRows(
     Name?: string;
     Price?: number;
     SellPrice?: number;
+    AverageCost?: number;
     Available?: number;
   }>
 ): Cin7ProductSyncRow[] {
@@ -537,11 +544,13 @@ export function mapCoreProductRows(
   for (const row of rows) {
     const sku = String(row.Sku ?? '').trim();
     if (!sku) continue;
+    const alc = Number(row.AverageCost);
     out.push({
       sku,
       name: String(row.Name ?? sku).trim() || sku,
       price: Number(row.Price ?? row.SellPrice ?? 0) || 0,
-      stock: Math.max(0, Math.floor(Number(row.Available ?? 0))),
+      cin7AverageLandedCost: Number.isFinite(alc) && alc > 0 ? alc : null,
+      stock: Number(row.Available ?? 0) || 0,
       category: 'Cin7',
       isActive: true,
     });
@@ -573,6 +582,8 @@ export function mapOmniProductRows(
     sku: string;
     name: string;
     price: number;
+    cin7Cost?: number | null;
+    cin7AverageLandedCost?: number | null;
     stock: number;
     visibility: string;
     styleCode?: string;
@@ -584,6 +595,8 @@ export function mapOmniProductRows(
       sku: row.sku.trim(),
       name: row.name.trim() || row.sku.trim(),
       price: row.price,
+      cin7Cost: row.cin7Cost ?? null,
+      cin7AverageLandedCost: row.cin7AverageLandedCost ?? null,
       stock: row.stock,
       category: `Cin7 Omni · ${row.visibility}`,
       isActive: row.isActive,
