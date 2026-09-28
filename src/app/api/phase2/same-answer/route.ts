@@ -9,9 +9,6 @@ export async function GET(request: NextRequest) {
   if (!scope) {
     return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   }
-  if (scope.role === 'member') {
-    return NextResponse.json({ detail: 'Your role does not have access to this resource' }, { status: 403 });
-  }
   try {
     const pack = await buildSameAnswerPack(scope.userId);
     return NextResponse.json(pack);
