@@ -48,6 +48,9 @@ export function reportValuation(input: {
   cin7Complete: boolean;
   costingNote: string;
   populations?: Record<string, number>;
+  /** Cin7's own valuation (dashboard / SOH × ALC). Not a reconstructed self-tie. */
+  cin7CompanyControl?: number;
+  cin7CompanyControlLabel?: string;
 }): Phase2AreaReport {
   const cin7Map = new Map(input.cin7ValueByWarehouse.map((r) => [r.warehouse, r.value]));
   const optixMap = new Map(input.optixValueByWarehouse.map((r) => [r.warehouse, r.value]));
@@ -57,8 +60,11 @@ export function reportValuation(input: {
     const optix = optixMap.get(warehouse) ?? 0;
     return { warehouse, cin7, optix, difference: roundMoney(optix - cin7) };
   });
-  const cin7 = roundMoney(input.cin7ValueByWarehouse.reduce((s, r) => s + r.value, 0));
+  const reconstructedCin7 = roundMoney(input.cin7ValueByWarehouse.reduce((s, r) => s + r.value, 0));
   const optix = roundMoney(input.optixValueByWarehouse.reduce((s, r) => s + r.value, 0));
+  const cin7 =
+    input.cin7CompanyControl != null ? roundMoney(input.cin7CompanyControl) : reconstructedCin7;
+  const companyDiff = roundMoney(optix - cin7);
   const sample: Phase2Variance[] = warehouses
     .filter((w) => Math.abs(w.difference) > 0.005)
     .map((w) => ({
@@ -68,6 +74,15 @@ export function reportValuation(input: {
       optix: w.optix,
       difference: w.difference,
     }));
+  if (input.cin7CompanyControl != null && Math.abs(companyDiff) > 0.005) {
+    sample.unshift({
+      classification: 'value_mismatch',
+      document: input.cin7CompanyControlLabel ?? 'Cin7 stock valuation control',
+      cin7,
+      optix,
+      difference: companyDiff,
+    });
+  }
   const blocked = !input.cin7Complete;
   return emptyReport(2, {
     clean: !blocked && sample.length === 0 && input.qtyWithoutCost === 0,
@@ -76,7 +91,7 @@ export function reportValuation(input: {
       ? 'Incomplete Cin7 stock pull cannot be treated as a clean valuation.'
       : null,
     cin7_complete: input.cin7Complete,
-    company: { cin7, optix, difference: roundMoney(optix - cin7) },
+    company: { cin7, optix, difference: companyDiff },
     warehouse_count: { cin7: cin7Map.size, optix: optixMap.size },
     warehouses,
     counts: {
@@ -93,7 +108,7 @@ export function reportValuation(input: {
       input.qtyWithoutCost
         ? `${input.qtyWithoutCost} quantity positions have no cost basis (visible exception).`
         : 'Every quantity position has a cost basis.',
-      'Landed cost reaches product cost by two routes (Schedule A E3): IMP-* / XFREIGHT-* PO lines plus Cin7 Landed Costs allocation. Area 2 reads both. FX is in scope (E2).',
+      'Cin7 valuation is Insights → Stock Management → Current Stock Valuation Analysis (or SOH value). Optix must match that number, not a self-tie.',
       'Kits (144, 10 with SOH) are their own population. Cin7→Xero Landed Costs mapping is unset until Toby sets it before E5.',
     ],
     source_of_truth: {
