@@ -166,8 +166,8 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                         className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
                       >
                         Sign up
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
                     ) : (
                       <Link
                         href="/login"
@@ -185,7 +185,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                       <ArrowUpRight className="ml-2 h-4 w-4" />
                     </Link>
                   </div>
-                </div>
+              </div>
 
                 {/* Dominant product plane — shares the first viewport on large screens */}
                 <div className="min-w-0 lg:-mr-2 xl:-mr-4">
@@ -202,7 +202,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
             <div className={shell}>
               <MarketingReveal>
                 <div className="grid gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
-                  <MarketingSectionHeading
+              <MarketingSectionHeading
                     index="01 — Pressure"
                     title="Your team isn’t slow. Your systems are noisy."
                     description="Equipment suppliers win on delivery dates, trust, and margin. None of that survives when every department keeps its own shadow copy of the truth."
@@ -228,12 +228,12 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                           </h3>
                           <p className="mt-2 max-w-md text-[15px] leading-relaxed text-zinc-400">
                             {item.body}
-                          </p>
-                        </div>
+                      </p>
+                    </div>
                       </li>
-                    ))}
+                ))}
                   </ol>
-                </div>
+              </div>
               </MarketingReveal>
             </div>
           </section>
@@ -267,8 +267,8 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                       <p className="mt-3 text-xl font-semibold text-white" style={display}>
                         {cell.detail}
                       </p>
-                    </div>
-                  ))}
+                      </div>
+                    ))}
                 </div>
               </MarketingReveal>
 
@@ -285,7 +285,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
           <section id="features" className={cn(sectionY, sectionRule)}>
             <div className={shell}>
               <MarketingReveal>
-                <MarketingSectionHeading
+              <MarketingSectionHeading
                   index="03 — Capabilities"
                   title="What the floor and front office actually fight about"
                   description="Start where the pain is loudest. Expand when the team is ready—not when a vendor forces a big-bang cutover."
@@ -301,7 +301,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                         style={display}
                       >
                         {cap.n}
-                      </span>
+                        </span>
                       <div className="max-w-xl">
                         <h3
                           className="text-xl font-semibold text-white md:text-2xl"
@@ -330,8 +330,8 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                       </div>
                     </article>
                   </MarketingReveal>
-                ))}
-              </div>
+                    ))}
+                  </div>
             </div>
           </section>
 
@@ -339,7 +339,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
           <section id="how" className={cn(sectionY, sectionRule, 'bg-[#08080c]')}>
             <div className={shell}>
               <MarketingReveal>
-                <MarketingSectionHeading
+              <MarketingSectionHeading
                   index="04 — Rollout"
                   title="A disciplined path—not a miracle weekend"
                   description="Four stages. Same spine. No theatre."
@@ -364,7 +364,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                         style={display}
                       >
                         {step.n}
-                      </span>
+                    </span>
                       <h3 className="text-lg font-semibold text-white md:text-xl" style={display}>
                         {step.title}
                       </h3>
@@ -383,7 +383,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
             <div className={shell}>
               <MarketingReveal>
                 <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-end lg:gap-20">
-                  <MarketingSectionHeading
+              <MarketingSectionHeading
                     index="05 — Outcomes"
                     title="Built for operators who measure work, not slides"
                   />
@@ -427,13 +427,13 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
           <section id="faq" className={cn(sectionY, sectionRule, 'bg-[#08080c]')}>
             <div className={shell}>
               <MarketingReveal>
-                <MarketingSectionHeading
+              <MarketingSectionHeading
                   index="06 — FAQ"
-                  title="Straight answers for buyers"
+                title="Straight answers for buyers"
                   description="Still evaluating? Start here—then talk to us about branches, SKUs, and integrations."
                   align="center"
                   className="mx-auto"
-                />
+              />
               </MarketingReveal>
               <div className="mt-14 md:mt-16">
                 <LandingFaq />
@@ -462,7 +462,7 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                       style={display}
                     >
                       Give your team one place to run the day
-                    </h2>
+              </h2>
                     <p className="mt-5 max-w-md text-base leading-relaxed text-zinc-400">
                       Sign in to your workspace, or walk stakeholders through quotes, inventory, and
                       fulfilment without drowning in jargon.
@@ -473,16 +473,16 @@ export default function MarketingLanding({ statsSlot }: MarketingLandingProps) {
                         className="inline-flex h-12 items-center justify-center bg-sky-500 px-7 text-[15px] font-semibold text-zinc-950 transition hover:bg-sky-400"
                       >
                         Sign in
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                       <Link
                         href="/pricing"
                         className="inline-flex h-12 items-center justify-center border border-white/20 px-7 text-[15px] font-semibold text-white transition hover:bg-white/[0.06]"
                       >
                         View pricing
                       </Link>
-                    </div>
-                  </div>
+              </div>
+            </div>
 
                   <div className="border border-white/[0.08] bg-[#0a0a0e] p-6 sm:p-8">
                     <h3 className="text-lg font-semibold text-white" style={display}>

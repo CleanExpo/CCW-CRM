@@ -1,14 +1,23 @@
 import { requireAuthScope } from '@/lib/auth/data-scope';
-import { attachAnneToPhase2AsOf, capturePhase2AsOf, loadLatestPhase2AsOf } from '@/lib/phase2/as-of';
+import {
+  attachAnneToPhase2AsOf,
+  capturePhase2AsOf,
+  loadLatestPhase2AsOf,
+} from '@/lib/phase2/as-of';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 120;
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204 });
+}
 
 export async function GET(request: NextRequest) {
   const scope = await requireAuthScope(request);
   if (!scope) return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
   const row = await loadLatestPhase2AsOf(scope.userId);
-  if (!row) return NextResponse.json({ detail: 'No Part 1.3 as-of snapshot yet.' }, { status: 404 });
+  if (!row)
+    return NextResponse.json({ detail: 'No Part 1.3 as-of snapshot yet.' }, { status: 404 });
   return NextResponse.json(row);
 }
 

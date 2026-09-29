@@ -4,6 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/auth/data-scope', () => ({
   requireAuthScope: vi.fn(),
 }));
+vi.mock('@/lib/phase2/as-of', () => ({
+  capturePhase2AsOf: vi.fn(async () => ({
+    id: 'asof-1',
+    summary: { kind: 'phase2_asof', optix_qty_total: 89775.928 },
+  })),
+}));
 vi.mock('@/lib/phase2/run', () => ({
   parsePhase2Area: vi.fn((raw: string | null) => {
     const n = Number(raw);
@@ -32,6 +38,7 @@ vi.mock('@/lib/phase2/run', () => ({
 }));
 
 import { requireAuthScope } from '@/lib/auth/data-scope';
+import { capturePhase2AsOf } from '@/lib/phase2/as-of';
 import { runPhase2Area } from '@/lib/phase2/run';
 import { POST } from '../route';
 
@@ -46,6 +53,22 @@ describe('POST /api/phase2/compare', () => {
       new NextRequest('http://localhost/api/phase2/compare?area=1', { method: 'POST' })
     );
     expect(res.status).toBe(401);
+  });
+
+  it('captures Optix as-of on the compare POST so production is not stuck on /as-of 405', async () => {
+    vi.mocked(requireAuthScope).mockResolvedValue({
+      userId: 'u1',
+      role: 'member',
+      isAdmin: false,
+    });
+    const res = await POST(
+      new NextRequest('http://localhost/api/phase2/compare?capture=as-of', { method: 'POST' })
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.id).toBe('asof-1');
+    expect(capturePhase2AsOf).toHaveBeenCalledWith('u1');
+    expect(runPhase2Area).not.toHaveBeenCalled();
   });
 
   it('lets a member run Area 2 after they have synced stock', async () => {

@@ -23,5 +23,7 @@ export function getPhase2EvidenceUrl(area: Phase2Area): string {
 }
 
 export function capturePhase2AsOf(): Promise<{ id: string; summary: Record<string, unknown> }> {
-  return apiClient.post('/api/phase2/as-of', {}, undefined, 120_000);
+  // Same POST as Area 1 compare — /api/phase2/as-of 405s on the dyno that already
+  // serves compare.
+  return apiClient.post('/api/phase2/compare?capture=as-of', {}, undefined, 120_000);
 }
