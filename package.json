@@ -22,6 +22,7 @@
     "list-accounts": "node scripts/list-accounts.mjs",
     "cin7:store-anne-export": "node scripts/store-anne-export.mjs",
     "cin7:optix-stock-totals": "node scripts/optix-stock-totals.mjs",
+    "cin7:phase2-anne-diff": "node scripts/phase2-anne-diff.mjs",
     "proof:runtime-receipt": "node scripts/proof-runtime-receipt.mjs",
     "cin7:dedupe-customers": "node scripts/cin7-dedupe-customers.mjs"
   },
@@ -120,7 +121,8 @@
     "rollup": "^4.20.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "xlsx": "^0.18.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
