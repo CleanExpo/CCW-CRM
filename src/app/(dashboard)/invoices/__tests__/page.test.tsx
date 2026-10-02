@@ -60,3 +60,31 @@ describe('InvoicesPage load failure', () => {
     expect(screen.queryByText("Couldn't load invoices")).not.toBeInTheDocument();
   });
 });
+
+describe('InvoicesPage summary counts after a failed load', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  it('does not show zero totals when the load fails', async () => {
+    get.mockRejectedValue(new Error('Network down'));
+
+    render(<InvoicesPage />);
+
+    await screen.findByText("Couldn't load invoices");
+    expect(screen.queryByText(/\d+ paid, \d+ overdue/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+ of \d+ paid/)).not.toBeInTheDocument();
+    expect(screen.queryAllByText('$0.00')).toHaveLength(0);
+    expect(screen.queryByText(/Last updated:/)).not.toBeInTheDocument();
+  });
+
+  it('still shows zero totals when the load succeeds with no rows', async () => {
+    get.mockResolvedValue(EMPTY);
+
+    render(<InvoicesPage />);
+
+    expect(await screen.findByText('0 paid, 0 overdue')).toBeInTheDocument();
+    expect(screen.getByText('0 of 0 paid')).toBeInTheDocument();
+  });
+});

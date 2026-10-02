@@ -362,8 +362,8 @@ export default function OrdersPage() {
               <div>
                 <CardTitle>Equipment Sales Orders</CardTitle>
                 <CardDescription className="dark:text-foreground/70">
-                  {total} equipment orders on file
-                  {lastUpdated && (
+                  {!loadError && `${total} equipment orders on file`}
+                  {lastUpdated && !loadError && (
                     <span className="text-muted-foreground dark:text-foreground/60 ml-2 text-xs">
                       • Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}
                     </span>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -114,6 +115,7 @@ export default function CcwPhoneAgentPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -133,8 +135,10 @@ export default function CcwPhoneAgentPage() {
       setAgents(agentData.items);
       setFollowUps(followUpData.items);
       setEvents(eventData.items);
+      setLoadError(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -307,12 +311,20 @@ export default function CcwPhoneAgentPage() {
         </div>
       </div>
 
-      {error ? (
+      {error && !loadError ? (
         <Card className="border-destructive/50 bg-destructive/5">
           <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
         </Card>
       ) : null}
 
+      {loadError ? (
+        <ErrorState
+          title="Couldn't load phone agent data"
+          description={error ?? undefined}
+          onRetry={loadAll}
+        />
+      ) : (
+      <>
       <div className="grid gap-4 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -672,6 +684,8 @@ export default function CcwPhoneAgentPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </>
+      )}
     </div>
   );
 }

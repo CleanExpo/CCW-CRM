@@ -24,6 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ErrorState } from '@/components/ui/empty-state';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -78,6 +79,7 @@ export default function MarketplacePage() {
   const [syncStatus, setSyncStatus] = useState<Record<string, SyncStatusChannel>>({});
   const [orders, setOrders] = useState<MarketplaceOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncingInventory, setSyncingInventory] = useState(false);
 
@@ -90,6 +92,7 @@ export default function MarketplacePage() {
   const [viewProducts, setViewProducts] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductListing[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productsError, setProductsError] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -102,7 +105,9 @@ export default function MarketplacePage() {
       setChannels(channelRes.channels);
       setSyncStatus(statusRes.channels);
       setOrders(orderRes.orders);
+      setLoadError(false);
     } catch (error: unknown) {
+      setLoadError(true);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -213,8 +218,10 @@ export default function MarketplacePage() {
     try {
       const prods = await marketplaceApi.getProducts(channelType);
       setProducts(prods);
+      setProductsError(false);
     } catch {
       setProducts([]);
+      setProductsError(true);
     } finally {
       setLoadingProducts(false);
     }
@@ -258,6 +265,9 @@ export default function MarketplacePage() {
         </div>
       )}
 
+      {loadError ? (
+        <ErrorState title="Couldn't load marketplace channels" onRetry={loadData} />
+      ) : (
       <Tabs defaultValue="channels" className="space-y-4">
         <TabsList>
           <TabsTrigger value="channels">Channels ({channels.length})</TabsTrigger>
@@ -481,6 +491,7 @@ export default function MarketplacePage() {
           )}
         </TabsContent>
       </Tabs>
+      )}
 
       {/* ─── Setup Wizard Dialog ─────────────────────────────────────── */}
       <Dialog open={!!setupChannel} onOpenChange={(open) => !open && setSetupChannel(null)}>
@@ -549,6 +560,11 @@ export default function MarketplacePage() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
+          ) : productsError ? (
+            <ErrorState
+              title="Couldn't load products for this channel"
+              onRetry={() => viewProducts && handleViewProducts(viewProducts)}
+            />
           ) : (
             <Table>
               <TableHeader>

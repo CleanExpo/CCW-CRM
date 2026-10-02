@@ -159,7 +159,7 @@ export default function ServiceRequestsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Service Request Queue</CardTitle>
-            <CardDescription>{total} requests total</CardDescription>
+            <CardDescription>{!loadError && `${total} requests total`}</CardDescription>
             <div className="mt-4 flex flex-wrap gap-3">
               <Input
                 placeholder="Search equipment or issue..."

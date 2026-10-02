@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { ErrorState } from '@/components/ui/empty-state';
 import { apiClient } from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -132,6 +133,8 @@ export default function CustomerDetailPage() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [pricingTier, setPricingTier] = useState<PricingTier | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [certificationsError, setCertificationsError] = useState(false);
 
   // Contact dialog states
   const [contactFormOpen, setContactFormOpen] = useState(false);
@@ -146,6 +149,7 @@ export default function CustomerDetailPage() {
 
   const loadCustomerData = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       // Load customer details
       const customerData = await apiClient.get<Customer>(`/api/customers/${customerId}`);
@@ -173,8 +177,10 @@ export default function CustomerDetailPage() {
           `/api/certifications?customer_id=${customerId}&page_size=100`
         );
         setCertifications(certData || []);
+        setCertificationsError(false);
       } catch {
         setCertifications([]);
+        setCertificationsError(true);
       }
 
       // Load pricing tier
@@ -187,6 +193,7 @@ export default function CustomerDetailPage() {
         setPricingTier(null);
       }
     } catch (error: unknown) {
+      setLoadError(true);
       const message = error instanceof Error ? error.message : 'Failed to load customer data';
       toast({
         variant: 'destructive',
@@ -214,6 +221,10 @@ export default function CustomerDetailPage() {
         <Skeleton className="h-96" />
       </div>
     );
+  }
+
+  if (loadError) {
+    return <ErrorState title="Couldn't load this customer" onRetry={loadCustomerData} />;
   }
 
   if (!customer) {
@@ -433,7 +444,7 @@ export default function CustomerDetailPage() {
           <TabsTrigger value="activities">Activities</TabsTrigger>
           <TabsTrigger value="certifications">
             <Award className="mr-1 h-4 w-4" />
-            Certifications ({certifications.length})
+            Certifications{certificationsError ? '' : ` (${certifications.length})`}
           </TabsTrigger>
           <TabsTrigger value="pricing">
             <Tag className="mr-1 h-4 w-4" />
@@ -689,7 +700,9 @@ export default function CustomerDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {certifications.length === 0 ? (
+              {certificationsError ? (
+                <ErrorState title="Couldn't load certifications" onRetry={loadCustomerData} />
+              ) : certifications.length === 0 ? (
                 <div className="text-muted-foreground py-8 text-center">
                   <Award className="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <p>No certifications on record</p>

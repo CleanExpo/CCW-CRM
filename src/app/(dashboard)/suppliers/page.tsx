@@ -31,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { ErrorState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Search, Edit, Trash2, Download } from 'lucide-react';
 import { Cin7MasterDataNav } from '@/components/integrations/Cin7MasterDataNav';
@@ -41,6 +42,7 @@ import { SupplierForm } from './components/SupplierForm';
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -64,7 +66,10 @@ export default function SuppliersPage() {
       });
       setSuppliers(response.items);
       setTotalPages(response.total_pages);
+      setLoadError(false);
     } catch (error: unknown) {
+      setLoadError(true);
+      setSuppliers([]);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to load suppliers',
@@ -189,6 +194,15 @@ export default function SuppliersPage() {
               <TableRow>
                 <TableCell colSpan={9} className="text-center">
                   Loading suppliers...
+                </TableCell>
+              </TableRow>
+            ) : loadError ? (
+              <TableRow>
+                <TableCell colSpan={9}>
+                  <ErrorState
+                    title="Couldn't load suppliers"
+                    onRetry={() => void fetchSuppliers()}
+                  />
                 </TableCell>
               </TableRow>
             ) : suppliers.length === 0 ? (

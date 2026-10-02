@@ -294,7 +294,7 @@ export default function ContactsPage() {
               </CardTitle>
               <CardDescription>
                 Manage trade contacts and cleaning business representatives
-                {lastUpdated && (
+                {lastUpdated && !loadError && (
                   <span className="ml-2 text-xs">
                     (Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })})
                   </span>
@@ -331,9 +331,11 @@ export default function ContactsPage() {
                 className="max-w-md"
               />
             </div>
-            <div className="text-muted-foreground text-sm">
-              {total} contact{total !== 1 ? 's' : ''} found
-            </div>
+            {!loadError && (
+              <div className="text-muted-foreground text-sm">
+                {total} contact{total !== 1 ? 's' : ''} found
+              </div>
+            )}
           </div>
 
           {/* Table or loading state */}

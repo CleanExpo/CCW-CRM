@@ -69,6 +69,9 @@ export function LocationAwareProductSelect({
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [catalogError, setCatalogError] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const triggerWrapRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState<number | undefined>(undefined);
@@ -113,10 +116,16 @@ export function LocationAwareProductSelect({
             getStockAtLocation(b, selectedLocation) -
             getStockAtLocation(a, selectedLocation)
         );
-        if (!cancelled) setCatalogProducts(sorted);
+        if (!cancelled) {
+          setCatalogProducts(sorted);
+          setCatalogError(false);
+        }
       } catch (e) {
         console.error("Failed to load products:", e);
-        if (!cancelled) setCatalogProducts([]);
+        if (!cancelled) {
+          setCatalogProducts([]);
+          setCatalogError(true);
+        }
       } finally {
         if (!cancelled) setLoadingCatalog(false);
       }
@@ -124,16 +133,22 @@ export function LocationAwareProductSelect({
     return () => {
       cancelled = true;
     };
-  }, [open, selectedLocation]);
+  }, [open, selectedLocation, reloadKey]);
 
   useEffect(() => {
     if (!open || !searchActive) {
       setSearchResults([]);
+      setSearchError(false);
+      setLoadingSearch(false);
       return;
     }
 
     let cancelled = false;
     const q = searchQuery;
+    // A new term is "searching" from the first keystroke, so an earlier failure never
+    // shows against it during the debounce.
+    setSearchError(false);
+    setLoadingSearch(true);
     const handle = setTimeout(() => {
       void (async () => {
         setLoadingSearch(true);
@@ -168,10 +183,16 @@ export function LocationAwareProductSelect({
               getStockAtLocation(b, selectedLocation) -
               getStockAtLocation(a, selectedLocation)
           );
-          if (!cancelled) setSearchResults(enriched);
+          if (!cancelled) {
+            setSearchResults(enriched);
+            setSearchError(false);
+          }
         } catch (e) {
           console.error("Product search failed:", e);
-          if (!cancelled) setSearchResults([]);
+          if (!cancelled) {
+            setSearchResults([]);
+            setSearchError(true);
+          }
         } finally {
           if (!cancelled) setLoadingSearch(false);
         }
@@ -182,7 +203,7 @@ export function LocationAwareProductSelect({
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [open, searchActive, searchQuery, selectedLocation]);
+  }, [open, searchActive, searchQuery, selectedLocation, reloadKey]);
 
   useEffect(() => {
     if (!value) {
@@ -248,6 +269,8 @@ export function LocationAwareProductSelect({
   const emptyMessage = () => {
     if (loading && displayProducts.length === 0) return "Loading products…";
     if (searchActive && loadingSearch) return "Searching…";
+    if (searchActive && searchError) return "Couldn't search products.";
+    if (!searchActive && catalogError) return "Couldn't load products.";
     if (displayProducts.length === 0 && searchActive) return "No products match your search.";
     if (displayProducts.length === 0 && !searchActive)
       return "No products in catalog. Add products under Inventory.";
@@ -339,6 +362,16 @@ export function LocationAwareProductSelect({
                 <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center text-sm dark:text-zinc-400">
                   {loading && <Loader2 className="h-5 w-5 animate-spin" />}
                   {emptyMessage()}
+                  {!loading && (searchActive ? searchError : catalogError) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReloadKey((k) => k + 1)}
+                    >
+                      Retry
+                    </Button>
+                  )}
                 </div>
               ) : null)}
 

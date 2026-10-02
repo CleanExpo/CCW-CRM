@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiClient } from '@/lib/api/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/empty-state';
 import {
   Users,
   UserCircle,
@@ -84,15 +85,24 @@ const MODULES: Array<{
 export default function CrmHubPage() {
   const [stats, setStats] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     void (async () => {
       try {
         const data = await apiClient.get<Overview>('/api/crm/overview');
-        if (!cancelled) setStats(data);
+        if (!cancelled) {
+          setStats(data);
+          setLoadError(false);
+        }
       } catch {
-        if (!cancelled) setStats(null);
+        if (!cancelled) {
+          setStats(null);
+          setLoadError(true);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -100,7 +110,7 @@ export default function CrmHubPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   return (
     <div className="space-y-8">
@@ -120,6 +130,13 @@ export default function CrmHubPage() {
             <Skeleton className="h-28 rounded-xl" />
             <Skeleton className="h-28 rounded-xl" />
           </>
+        ) : loadError ? (
+          <ErrorState
+            className="sm:col-span-2 lg:col-span-4"
+            title="Couldn't load CRM overview"
+            description="The modules below still work."
+            onRetry={() => setReloadKey((k) => k + 1)}
+          />
         ) : (
           <>
             <Card>
@@ -127,11 +144,6 @@ export default function CrmHubPage() {
                 <CardDescription>Active customers</CardDescription>
                 <CardTitle className="text-3xl tabular-nums">{stats?.customers ?? 0}</CardTitle>
               </CardHeader>
-              {!stats && (
-                <CardContent className="pt-0">
-                  <p className="text-muted-foreground text-xs">Overview stats unavailable — modules below still work.</p>
-                </CardContent>
-              )}
             </Card>
             <Card>
               <CardHeader className="pb-2">
